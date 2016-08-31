@@ -1,15 +1,12 @@
-# Aseprite
+# Aseprite (GPL fork)
 *Copyright (C) 2001-2016 David Capello*
 
 [![Build Status](https://travis-ci.org/aseprite/aseprite.svg)](https://travis-ci.org/aseprite/aseprite)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/aseprite/aseprite?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-> THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY<br/>
-> See the [license section](#license) for more information.
-
 ## Introduction
 
-**Aseprite** is an open source program to create animated sprites.
+**Aseprite (GPL fork)** is an open source program to create animated sprites.
 Its main features are:
 
 * Sprites are composed by [**layers** &amp; **frames**](http://www.aseprite.org/docs/timeline/) (as separated concepts).
@@ -97,16 +94,5 @@ And it uses the following third-party libraries:
 
 ## License
 
-This program is distributed under three different licenses:
-
-1. Source code is distributed under
-   [GNU General Public License](LICENSE.txt) version 2,
-   which means that compiled versions can be generated under GPL terms.
-   (Useful for Linux distributions.)
-2. Official releases are distributed under a
-   [commercial EULA](EULA.txt) or a special [educational license](http://www.aseprite.org/faq/#is-there-an-educational-license).
-3. And Steam releases are distributed under the terms of the
-   [Steam Subscriber Agreement](http://store.steampowered.com/subscriber_agreement/).
-
-As a side note, to distribute Aseprite under these licenses we don't
-use third party GPL libraries.
+This program is distributed under the [GNU General Public License](LICENSE.txt)
+version 2, which means that compiled versions can be generated under GPL terms.
