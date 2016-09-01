@@ -22,41 +22,17 @@ Its main features are:
 * Pixel-art specific tools like filled **Contour**, **Polygon**, [**Shading**](http://www.aseprite.org/docs/shading/) mode, etc.
 * **Onion skinning**
 
-## Issues
-
-There is a list of
-[Known Issues](https://github.com/aseprite/aseprite/issues) (things
-to be fixed or that aren't yet implemented).
-
-If you found a bug or have a new idea/feature for the program,
-[you can report them](https://github.com/aseprite/aseprite/issues/new).
-
-## Support
-
-You can ask for help in:
-
-* Our official support email address: [support@aseprite.org](mailto:support@aseprite.org)
-* [Aseprite Steam Community](https://steamcommunity.com/app/431730/discussions/)
-* [Aseprite mailing list](http://groups.google.com/group/aseprite-discuss) ([subscribe](mailto:aseprite-discuss+subscribe@googlegroups.com))
-* Social networks and community-driven places:
-  [Twitter](https://twitter.com/aseprite/),
-  [Facebook](https://facebook.com/aseprite/),
-  [YouTube](https://www.youtube.com/user/aseprite),
-  [Google+](https://plus.google.com/+AsepriteOrg/posts),
-  [IRC](http://webchat.freenode.net/?channels=aseprite),
-  [DeviantArt](https://aseprite.deviantart.com/).
-
 ## Authors
 
 * David Capello [davidcapello@gmail.com](mailto:davidcapello@gmail.com) <br />
-  Programmer, designer, and maintainer. <br />
+  Programmer, designer, and maintainer or the original Aseprite version (he is not involved with this fork)<br />
   http://davidcapello.com/
 * Ilija Melentijevic <br />
   New GUI skin for Aseprite v0.8. A lot of good ideas. <br />
   http://ilkke.blogspot.com/ <br />
   http://www.pixeljoint.com/p/9270.htm
 * Contributors <br />
-  http://www.aseprite.org/contributors/
+  https://github.com/aseprite-gpl/aseprite/graphs/contributors
 
 Thanks to all the people who have contributed ideas, patches, bugs
 report, feature requests, donations, and help me developing Aseprite.
