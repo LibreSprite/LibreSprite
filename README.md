@@ -25,7 +25,7 @@ Its main features are:
 ## Authors
 
 * David Capello [davidcapello@gmail.com](mailto:davidcapello@gmail.com) <br />
-  Programmer, designer, and maintainer or the original Aseprite version (he is not involved with this fork)<br />
+  Programmer, designer, and maintainer of the original Aseprite version (he is not involved with this fork)<br />
   http://davidcapello.com/
 * Ilija Melentijevic <br />
   New GUI skin for Aseprite v0.8. A lot of good ideas. <br />
