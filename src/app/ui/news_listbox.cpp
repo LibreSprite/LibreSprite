@@ -186,6 +186,7 @@ NewsListBox::NewsListBox()
   : m_timer(250, this)
   , m_loader(nullptr)
 {
+#if 0
   m_timer.Tick.connect(&NewsListBox::onTick, this);
 
   std::string cache = Preferences::instance().news.cacheFile();
@@ -193,6 +194,7 @@ NewsListBox::NewsListBox()
     parseFile(cache);
   else
     reload();
+#endif
 }
 
 NewsListBox::~NewsListBox()
