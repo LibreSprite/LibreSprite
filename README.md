@@ -1,6 +1,7 @@
 # LibreSprite
 
-*Copyright (C) 2001-2016 David Capello*
+*Copyright (C) 2001-2016 David Capello* <br />
+*Copyright (C) 2016-2018 LibreSprite contributors* <br />
 
 ## Introduction
 
@@ -20,17 +21,17 @@ Its main features are:
 * Pixel-art specific tools like filled **Contour**, **Polygon**, [**Shading**](http://www.aseprite.org/docs/shading/) mode, etc.
 * **Onion skinning**
 
-## Authors
+## History
 
-* David Capello [davidcapello@gmail.com](mailto:davidcapello@gmail.com) <br />
-  Programmer, designer, and maintainer of the original Aseprite version (he is not involved with this fork)<br />
-  http://davidcapello.com/
-* Ilija Melentijevic <br />
-  New GUI skin for Aseprite v0.8. A lot of good ideas. <br />
-  http://ilkke.blogspot.com/ <br />
-  http://www.pixeljoint.com/p/9270.htm
-* Contributors <br />
-  https://github.com/LibreSprite/LibreSprite/graphs/contributors
+LibreSprite originated as a fork of the [Aseprite](https://www.aseprite.org/)
+application, developed by [David Capello](https://github.com/dacap).
+Aseprite used to be distributed under the [GNU General Public License](LICENSE.txt)
+version 2, but was moved to a proprietary license on
+[August 26th, 2016](https://github.com/aseprite/aseprite/commit/5ecc356a41c8e29977f8608d8826489d24f5fa6c).
+
+This fork was made on the [last commit](https://github.com/aseprite/aseprite/commit/03be4aa23db465219962f4c62410f628e7392545)
+covered by the GPL-2.0+ license, and is now developed independently of the
+proprietary Aseprite.
 
 ## Credits
 
