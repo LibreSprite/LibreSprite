@@ -19,7 +19,7 @@
 
 # Platforms
 
-You should be able to compile Aseprite successfully on the following
+You should be able to compile LibreSprite successfully on the following
 platforms:
 
 * Windows 10 + VS2015 Community Edition + Windows 10 SDK
@@ -28,19 +28,19 @@ platforms:
 
 # Get the source code
 
-You can get the source code downloading a `Aseprite-v1.x-Source.zip`
-file from the latest Aseprite release:
+You can get the source code by downloading a zip or tar.gz snapshot of the
+master branch of the LibreSprite repository:
 
-https://github.com/aseprite-gpl/aseprite/releases
+https://github.com/LibreSprite/LibreSprite
 
 Or you can clone the repository and all its submodules using the
 following command:
 
-    git clone --recursive https://github.com/aseprite-gpl/aseprite.git
+    git clone --recursive https://github.com/LibreSprite/LibreSprite
 
 To update an existing clone you can use the following commands:
 
-    cd aseprite
+    cd LibreSprite
     git pull
     git submodule update --init --recursive
 
@@ -49,12 +49,12 @@ clone the repository on Windows.
 
 # Dependencies
 
-To compile Aseprite you will need:
+To compile LibeSprite you will need:
 
 * The latest version of [CMake](http://www.cmake.org/) (3.4 or greater)
 * [Ninja](https://ninja-build.org) build system
 
-Aseprite can be compiled with two different back-ends:
+LibreSprite can be compiled with two different back-ends:
 
 1. Allegro back-end (Windows, Linux): You will not need any extra
    library because the repository already contains a modified version
@@ -103,20 +103,20 @@ The `libxcursor-dev` package is needed to
 
 # Compiling
 
-1. [Get Aseprite code](#get-the-source-code), put it in a folder like
-   `C:\aseprite`, and create a `build` directory inside to leave all
+1. [Get LibreSprite code](#get-the-source-code), put it in a folder like
+   `C:\LibreSprite`, and create a `build` directory inside to leave all
    the files that are result of the compilation process (`.exe`,
    `.lib`, `.obj`, `.a`, `.o`, etc).
 
-        cd C:\aseprite
+        cd C:\LibreSprite
         mkdir build
 
-   In this way, if you want to start with a fresh copy of Aseprite
+   In this way, if you want to start with a fresh copy of LibreSprite
    source code, you can remove the `build` directory and start again.
 
 2. Enter in the new directory and execute `cmake`:
 
-        cd C:\aseprite\build
+        cd C:\LibreSprite\build
         cmake -G Ninja ..
 
    Here `cmake` needs different options depending on your
@@ -129,11 +129,11 @@ The `libxcursor-dev` package is needed to
 3. After you have executed and configured `cmake`, you have to compile
    the project:
 
-        cd C:\aseprite\build
-        ninja aseprite
+        cd C:\LibreSprite\build
+        ninja libresprite
 
 4. When `ninja` finishes the compilation, you can find the executable
-   inside `C:\aseprite\build\bin\aseprite.exe`.
+   inside `C:\LibreSprite\build\bin\libresprite.exe`.
 
 ## Windows details
 
@@ -141,11 +141,11 @@ To choose the Skia back-end
 ([after you've compiled Skia](#skia-on-windows)) you can execute `cmake`
 with the following arguments:
 
-    cd aseprite
+    cd LibreSprite
     mkdir build
     cd build
     cmake -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND=ON -DSKIA_DIR=C:\deps\skia -G Ninja ..
-    ninja aseprite
+    ninja libresprite
 
 In this case, `C:\deps\skia` is the directory where Skia was compiled
 as described in [Skia on Windows](#skia-on-windows) section.
@@ -155,7 +155,7 @@ as described in [Skia on Windows](#skia-on-windows) section.
 After [compiling Skia](#skia-on-mac-os-x), you should run `cmake` with
 the following parameters and then `ninja`:
 
-    cd aseprite
+    cd LibreSprite
     mkdir build
     cd build
     cmake \
@@ -168,7 +168,7 @@ the following parameters and then `ninja`:
       -DWITH_HarfBuzz=OFF \
       -G Ninja \
       ..
-    ninja aseprite
+    ninja libresprite
 
 In this case, `$HOME/deps/skia` is the directory where Skia was
 compiled as described in [Skia on Mac OS X](#skia-on-mac-os-x) section.
@@ -181,17 +181,17 @@ If you have a Retina display, check the following issue:
 
 ## Linux details
 
-On Linux you can specify a specific directory to install Aseprite
+On Linux you can specify a specific directory to install LibreSprite
 after a `ninja install` command. For example:
 
-    cd aseprite
+    cd LibreSprite
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX=~/software -G Ninja ..
-    ninja aseprite
+    ninja libresprite
 
 Then, you can invoke `ninja install` and it will copy the program in
-the given location (e.g. `~/software/bin/aseprite` on Linux).
+the given location (e.g. `~/software/bin/libresprite` on Linux).
 
 # Using shared third party libraries
 
@@ -208,25 +208,25 @@ library that you want to be linked dynamically.
 If you use the official version of Allegro 4.4 library (i.e. you
 compile with `USE_SHARED_ALLEGRO4=ON`) you will experience a couple of
 known issues solved in
-[our patched version of Allegro 4.4 library](https://github.com/aseprite-gpl/aseprite/tree/master/src/allegro):
+[our patched version of Allegro 4.4 library](https://github.com/LibreSprite/LibreSprite/tree/master/src/allegro):
 
 * You will
   [not be able to resize the window](https://github.com/aseprite/aseprite/issues/192)
-  ([patch](https://github.com/aseprite/aseprite/commit/920f6275d55113507121afcbcda80adb44cc0563)).
+  ([patch](https://github.com/LibreSprite/LibreSprite/commit/920f6275d55113507121afcbcda80adb44cc0563)).
 * You will have problems
-  [adding HSV colors in non-English systems](https://github.com/aseprite-gpl/aseprite/commit/27b55030e26e93c5e8d9e7e21206c8709d46ff22)
+  [adding HSV colors in non-English systems](https://github.com/LibreSprite/LibreSprite/commit/27b55030e26e93c5e8d9e7e21206c8709d46ff22)
   using the warning icon.
 
 # Building Skia dependency
 
-When you compile Aseprite with [Skia](https://skia.org) as back-end on
+When you compile LibreSprite with [Skia](https://skia.org) as back-end on
 Windows or OS X, you need to compile a specific version of Skia. In
 the following sections you will find straightforward steps to compile
 Skia.
 
 You can always check the
 [official Skia instructions](https://skia.org/user/quick) and select
-the OS you are building for. Aseprite uses the `aseprite-m53` Skia
+the OS you are building for. LibreSprite uses the `aseprite-m53` Skia
 branch from `https://github.com/aseprite/skia`.
 
 ## Skia on Windows
@@ -278,7 +278,7 @@ several minutes to finish:
     ninja -C out/Release dm
 
 After this you should have all Skia libraries compiled.  When you
-[compile Aseprite](#compiling), remember to add
+[compile LibreSprite](#compiling), remember to add
 `-DSKIA_DIR=$HOME/deps/skia` parameter to your `cmake` call as
 described in the [Mac OS X details](#mac-os-x-details) section.
 

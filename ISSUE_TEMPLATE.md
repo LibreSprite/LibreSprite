@@ -3,7 +3,7 @@ Describe your bug report or feature request here
 ...
 ...
 
-### Aseprite and System version
+### LibreSprite and System version
 
-* Aseprite (version number, installer/portable/Steam/beta/dev):
+* LibreSprite (version number or commit hash):
 * System (Win/OSX/Linux, version, distribution):
