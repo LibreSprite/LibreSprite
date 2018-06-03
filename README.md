@@ -1,12 +1,11 @@
-# Aseprite (GPL fork)
-*Copyright (C) 2001-2016 David Capello*
+# LibreSprite
 
-[![Build Status](https://travis-ci.org/aseprite/aseprite.svg)](https://travis-ci.org/aseprite/aseprite)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/aseprite/aseprite?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+*Copyright (C) 2001-2016 David Capello* <br />
+*Copyright (C) 2016-2018 LibreSprite contributors* <br />
 
 ## Introduction
 
-**Aseprite (GPL fork)** is an open source program to create animated sprites.
+**LibreSprite** is a free and open source program to create animated sprites.
 Its main features are:
 
 * Sprites are composed by [**layers** &amp; **frames**](http://www.aseprite.org/docs/timeline/) (as separated concepts).
@@ -22,24 +21,21 @@ Its main features are:
 * Pixel-art specific tools like filled **Contour**, **Polygon**, [**Shading**](http://www.aseprite.org/docs/shading/) mode, etc.
 * **Onion skinning**
 
-## Authors
+## History
 
-* David Capello [davidcapello@gmail.com](mailto:davidcapello@gmail.com) <br />
-  Programmer, designer, and maintainer of the original Aseprite version (he is not involved with this fork)<br />
-  http://davidcapello.com/
-* Ilija Melentijevic <br />
-  New GUI skin for Aseprite v0.8. A lot of good ideas. <br />
-  http://ilkke.blogspot.com/ <br />
-  http://www.pixeljoint.com/p/9270.htm
-* Contributors <br />
-  https://github.com/aseprite-gpl/aseprite/graphs/contributors
+LibreSprite originated as a fork of the [Aseprite](https://www.aseprite.org/)
+application, developed by [David Capello](https://github.com/dacap).
+Aseprite used to be distributed under the [GNU General Public License](LICENSE.txt)
+version 2, but was moved to a proprietary license on
+[August 26th, 2016](https://github.com/aseprite/aseprite/commit/5ecc356a41c8e29977f8608d8826489d24f5fa6c).
 
-Thanks to all the people who have contributed ideas, patches, bugs
-report, feature requests, donations, and help me developing Aseprite.
+This fork was made on the [last commit](https://github.com/aseprite/aseprite/commit/03be4aa23db465219962f4c62410f628e7392545)
+covered by the GPL-2.0+ license, and is now developed independently of the
+proprietary Aseprite.
 
 ## Credits
 
-Aseprite includes color palettes created by:
+LibreSprite includes color palettes created by:
 
 * [Richard "DawnBringer" Fhager](http://pixeljoint.com/p/23821.htm) palettes, [16 colors](http://pixeljoint.com/forum/forum_posts.asp?TID=12795),  [32 colors](http://pixeljoint.com/forum/forum_posts.asp?TID=16247).
 * [Arne Niklas Jansson](http://androidarts.com/) palettes, [16 colors](http://androidarts.com/palette/16pal.htm), [32 colors](http://wayofthepixel.net/index.php?topic=15824.msg144494).
@@ -51,22 +47,22 @@ It tries to replicate some pixel-art algorithms:
 
 And it uses the following third-party libraries:
 
-* [Allegro 4](http://alleg.sourceforge.net/) - [allegro4 license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/allegro4-LICENSE.txt)
-* [FreeType](http://www.freetype.org/) - [FTL license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/FTL.txt)
-* [Google Test](https://github.com/google/googletest) - [gtest license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/gtest-LICENSE.txt)
-* [XFree86](http://www.x.org/) - [XFree86 license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/XFree86-LICENSE.txt)
-* [curl](http://curl.haxx.se/) - [curl license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/curl-LICENSE.txt)
-* [duktape](http://duktape.org/) - [MIT license](https://github.com/aseprite/aseprite/tree/master/third_party/duktape/LICENSE.txt)
-* [giflib](http://sourceforge.net/projects/giflib/) - [giflib license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/giflib-LICENSE.txt)
-* [libjpeg](http://www.ijg.org/) - [libjpeg license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/libjpeg-LICENSE.txt)
-* [libpng](http://www.libpng.org/pub/png/) - [libpng license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/libpng-LICENSE.txt)
+* [Allegro 4](http://alleg.sourceforge.net/) - [allegro4 license](https://github.com/LibreSprite/tree/master/docs/licenses/allegro4-LICENSE.txt)
+* [FreeType](http://www.freetype.org/) - [FTL license](https://github.com/LibreSprite/tree/master/docs/licenses/FTL.txt)
+* [Google Test](https://github.com/google/googletest) - [gtest license](https://github.com/LibreSprite/tree/master/docs/licenses/gtest-LICENSE.txt)
+* [XFree86](http://www.x.org/) - [XFree86 license](https://github.com/LibreSprite/tree/master/docs/licenses/XFree86-LICENSE.txt)
+* [curl](http://curl.haxx.se/) - [curl license](https://github.com/LibreSprite/tree/master/docs/licenses/curl-LICENSE.txt)
+* [duktape](http://duktape.org/) - [MIT license](https://github.com/LibreSprite/tree/master/third_party/duktape/LICENSE.txt)
+* [giflib](http://sourceforge.net/projects/giflib/) - [giflib license](https://github.com/LibreSprite/tree/master/docs/licenses/giflib-LICENSE.txt)
+* [libjpeg](http://www.ijg.org/) - [libjpeg license](https://github.com/LibreSprite/tree/master/docs/licenses/libjpeg-LICENSE.txt)
+* [libpng](http://www.libpng.org/pub/png/) - [libpng license](https://github.com/LibreSprite/tree/master/docs/licenses/libpng-LICENSE.txt)
 * [libwebp](https://developers.google.com/speed/webp/) - [libwebp license](https://chromium.googlesource.com/webm/libwebp/+/master/COPYING)
-* [loadpng](http://tjaden.strangesoft.net/loadpng/) - [zlib license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/ZLIB.txt)
-* [modp_b64](https://github.com/aseprite/aseprite/tree/master/third_party/modp_b64/modp_b64.h) - [BSD license](https://github.com/aseprite/aseprite/tree/master/third_party/modp_b64/LICENSE)
+* [loadpng](http://tjaden.strangesoft.net/loadpng/) - [zlib license](https://github.com/LibreSprite/tree/master/docs/licenses/ZLIB.txt)
+* [modp_b64](https://github.com/LibreSprite/tree/master/third_party/modp_b64/modp_b64.h) - [BSD license](https://github.com/LibreSprite/tree/master/third_party/modp_b64/LICENSE)
 * [pixman](http://www.pixman.org/) - [MIT license](http://cgit.freedesktop.org/pixman/plain/COPYING)
 * [simpleini](https://github.com/aseprite/simpleini/) - [MIT license](https://github.com/aseprite/simpleini/blob/aseprite/LICENCE.txt)
-* [tinyxml](http://www.sourceforge.net/projects/tinyxml) - [zlib license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/ZLIB.txt)
-* [zlib](http://www.gzip.org/zlib/) - [ZLIB license](https://github.com/aseprite/aseprite/tree/master/docs/licenses/ZLIB.txt)
+* [tinyxml](http://www.sourceforge.net/projects/tinyxml) - [zlib license](https://github.com/LibreSprite/tree/master/docs/licenses/ZLIB.txt)
+* [zlib](http://www.gzip.org/zlib/) - [ZLIB license](https://github.com/LibreSprite/tree/master/docs/licenses/ZLIB.txt)
 
 ## License
 

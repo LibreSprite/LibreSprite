@@ -1,5 +1,6 @@
-# Aseprite
+# LibreSprite
 # Copyright (C) 2001-2016  David Capello
+# Copyright (C) 2016-2018  LibreSprite contributors
 #
 # Parts of this file come from the Allegro 4.4 CMakeLists.txt
 
@@ -34,8 +35,8 @@ endif()
 # Note: This needs to be done before the project command
 set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE INTERNAL "internal")
 
-# Aseprite project
-project(aseprite C CXX)
+# LibreSprite project
+project(libresprite C CXX)
 
 # This required for KDE/Qt destop integration, which sets BUILD_SHARED_LIBS to
 # TRUE by default
@@ -55,6 +56,7 @@ option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 option(USE_STATIC_LIBC    "Use static version of C and C++ runtimes" off)
 option(USE_SHARED_CURL    "Use your installed copy of curl" off)
 option(USE_SHARED_GIFLIB  "Use your installed copy of giflib" off)
+option(USE_SHARED_GTEST   "Use your installed copy of gtest" off)
 option(USE_SHARED_JPEGLIB "Use your installed copy of jpeglib" off)
 option(USE_SHARED_ZLIB    "Use your installed copy of zlib" off)
 option(USE_SHARED_LIBPNG  "Use your installed copy of libpng" off)
@@ -65,7 +67,7 @@ option(USE_SHARED_PIXMAN  "Use your installed copy of pixman" off)
 option(USE_SHARED_FREETYPE "Use shared FreeType library" off)
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
-option(ENABLE_UPDATER     "Enable automatic check for updates" on)
+option(ENABLE_UPDATER     "Enable automatic check for updates" off)
 option(ENABLE_WEBSERVER   "Enable support to run a webserver (for HTML5 gamedev)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
 option(ENABLE_TRIAL_MODE  "Compile the trial version" off)
@@ -254,6 +256,11 @@ else()
   set(GIF_INCLUDE_DIRS ${GIFLIB_DIR}/lib)
 endif()
 include_directories(${GIF_INCLUDE_DIRS})
+
+if(USE_SHARED_GTEST)
+  find_package(GTest REQUIRED)
+endif()
+include_directories(${GTEST_INCLUDE_DIRS})
 
 if(USE_SHARED_JPEGLIB)
   find_package(JPEG REQUIRED)
