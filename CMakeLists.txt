@@ -1,5 +1,6 @@
-# Aseprite
+# LibreSprite
 # Copyright (C) 2001-2016  David Capello
+# Copyright (C) 2016-2018  LibreSprite contributors
 #
 # Parts of this file come from the Allegro 4.4 CMakeLists.txt
 
@@ -34,8 +35,8 @@ endif()
 # Note: This needs to be done before the project command
 set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE INTERNAL "internal")
 
-# Aseprite project
-project(aseprite C CXX)
+# LibreSprite project
+project(libresprite C CXX)
 
 # This required for KDE/Qt destop integration, which sets BUILD_SHARED_LIBS to
 # TRUE by default

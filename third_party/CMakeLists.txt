@@ -1,4 +1,4 @@
-# ASEPRITE
+# LibreSprite
 # Copyright (C) 2001-2016  David Capello
 
 include_directories(.)

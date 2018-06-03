@@ -1,4 +1,4 @@
-# Aseprite Desktop Integration Module
+# LibreSprite Desktop Integration Module
 # Copyright (C) 2016  Gabriel Rauter
 # Copyright (C) 2016  David Capello
 # Copyright (C) 2016  Matthias Mailänder
@@ -7,19 +7,19 @@
 
 if(UNIX AND NOT APPLE)
   # Desktop shortcut
-  install(FILES aseprite.desktop
+  install(FILES libresprite.desktop
           DESTINATION share/applications)
 
   # Package gallery integration
-  install(FILES aseprite.appdata.xml
+  install(FILES libresprite.appdata.xml
           DESTINATION share/appdata)
 
   # GNOME Thumbnailer
   install(FILES mime/aseprite.xml
           DESTINATION share/mime/packages)
-  install(PROGRAMS aseprite-thumbnailer
+  install(PROGRAMS libresprite-thumbnailer
           DESTINATION bin)
-  install(FILES gnome/aseprite.thumbnailer
+  install(FILES gnome/libresprite.thumbnailer
           DESTINATION share/thumbnailers)
 
   # Qt Thumbnailer

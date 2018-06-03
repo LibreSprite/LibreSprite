@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
 Encoding=UTF-8
-Name=Aseprite
+Name=LibreSprite
 GenericName=Sprite Editor
 Comment=Animated sprite editor & pixel art tool
-Icon=aseprite
+Icon=libresprite
 Categories=Graphics;2DGraphics;RasterGraphics;
-Exec=aseprite %U
-TryExec=aseprite
+Exec=libresprite %U
+TryExec=libresprite
 Terminal=false
 StartupNotify=false
 StartupWMClass=allegro
