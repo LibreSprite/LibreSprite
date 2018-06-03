@@ -1,9 +1,9 @@
-# Aseprite (GPL fork)
+# LibreSprite
 *Copyright (C) 2001-2016 David Capello*
 
 ## Introduction
 
-**Aseprite (GPL fork)** is an open source program to create animated sprites.
+**LibreSprite** is an open source program to create animated sprites.
 Its main features are:
 
 * Sprites are composed by [**layers** &amp; **frames**](http://www.aseprite.org/docs/timeline/) (as separated concepts).
