@@ -14,3 +14,10 @@
 
 # CMake output
 build
+
+# Snap related
+/parts
+/prime
+/stage
+/*.snap
+/snap/.snapcraft/
