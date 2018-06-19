@@ -24,7 +24,7 @@ LoggerModule::LoggerModule(bool createLogInDesktop)
   if (createLogInDesktop)
     rf.includeDesktopDir(PACKAGE "-v" VERSION "-DebugOutput.txt");
   else
-    rf.includeUserDir("aseprite.log");
+    rf.includeUserDir("libresprite.log");
 
   auto filename = rf.defaultFilename();
   base::set_log_filename(filename.c_str());

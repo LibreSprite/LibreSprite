@@ -670,7 +670,7 @@ void App::run()
 #endif
 
 #if _DEBUG
-    // On OS X, when we compile Aseprite on Debug mode, we're using it
+    // On OS X, when we compile LibreSprite on Debug mode, we're using it
     // outside an app bundle, so we must active the app explicitly.
     she::instance()->activateApp();
 #endif
@@ -734,13 +734,13 @@ void App::run()
   m_modules->deleteDataRecovery();
 }
 
-// Finishes the Aseprite application.
+// Finishes the LibreSprite application.
 App::~App()
 {
   try {
     ASSERT(m_instance == this);
 
-    // Remove Aseprite handlers
+    // Remove LibreSprite handlers
     LOG("ASE: Uninstalling\n");
 
     // Delete file formats.
@@ -785,7 +785,7 @@ bool App::isPortable()
       new bool(
         base::is_file(base::join_path(
             base::get_file_path(base::get_app_path()),
-            "aseprite.ini")));
+            "libresprite.ini")));
   }
   return *is_portable;
 }

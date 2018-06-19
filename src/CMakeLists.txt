@@ -155,24 +155,24 @@ if(UNIX AND NOT APPLE AND USE_ALLEG4_BACKEND)
   set(x11_resources main/xpm_icon.c)
 endif()
 
-add_executable(aseprite WIN32
+add_executable(libresprite WIN32
   main/main.cpp
   ${win32_resources}
   ${x11_resources})
-target_link_libraries(aseprite app-lib ${PLATFORM_LIBS})
-add_dependencies(aseprite copy_data)
+target_link_libraries(libresprite app-lib ${PLATFORM_LIBS})
+add_dependencies(libresprite copy_data)
 
 if(MSVC AND USE_SKIA_BACKEND)
   # Add support to expand filename wildcards in argc/argv
-  set_target_properties(aseprite
+  set_target_properties(libresprite
     PROPERTIES LINK_FLAGS "-LINK wsetargv.obj -ENTRY:\"wWinMainCRTStartup\"")
 endif()
 
-install(TARGETS aseprite
+install(TARGETS libresprite
   RUNTIME DESTINATION bin)
 
 install(DIRECTORY ../data
-  DESTINATION share/aseprite)
+  DESTINATION share/libresprite)
 
 ######################################################################
 # Tests

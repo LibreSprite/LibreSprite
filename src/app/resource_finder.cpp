@@ -90,13 +90,13 @@ void ResourceFinder::includeDataDir(const char* filename)
 #ifdef _WIN32
 
   sprintf(buf, "data/%s", filename);
-  includeHomeDir(buf); // %AppData%/Aseprite/data/filename
+  includeHomeDir(buf); // %AppData%/LibreSprite/data/filename
   includeBinDir(buf);  // $BINDIR/data/filename
 
 #elif __APPLE__
 
   sprintf(buf, "data/%s", filename);
-  includeUserDir(buf); // $HOME/Library/Application Support/Aseprite/data/filename
+  includeUserDir(buf); // $HOME/Library/Application Support/LibreSprite/data/filename
   includeBinDir(buf);  // $BINDIR/data/filename (outside the bundle)
 
   sprintf(buf, "../Resources/data/%s", filename);
@@ -104,16 +104,16 @@ void ResourceFinder::includeDataDir(const char* filename)
 
 #else
 
-  // $HOME/.config/aseprite/filename
-  sprintf(buf, ".config/aseprite/data/%s", filename);
+  // $HOME/.config/libresprite/filename
+  sprintf(buf, ".config/libresprite/data/%s", filename);
   includeHomeDir(buf);
 
   // $BINDIR/data/filename
   sprintf(buf, "data/%s", filename);
   includeBinDir(buf);
 
-  // $BINDIR/../share/aseprite/data/filename (installed in /usr/ or /usr/local/)
-  sprintf(buf, "../share/aseprite/data/%s", filename);
+  // $BINDIR/../share/libresprite/data/filename (installed in /usr/ or /usr/local/)
+  sprintf(buf, "../share/libresprite/data/%s", filename);
   includeBinDir(buf);
 
 #endif
@@ -123,10 +123,10 @@ void ResourceFinder::includeHomeDir(const char* filename)
 {
 #ifdef _WIN32
 
-  // %AppData%/Aseprite/filename
+  // %AppData%/LibreSprite/filename
   wchar_t* env = _wgetenv(L"AppData");
   if (env) {
-    std::string path = base::join_path(base::to_utf8(env), "Aseprite");
+    std::string path = base::join_path(base::to_utf8(env), "LibreSprite");
     path = base::join_path(path, filename);
     addPath(path);
     m_default = path;
@@ -159,13 +159,13 @@ void ResourceFinder::includeUserDir(const char* filename)
     includeBinDir(filename);
   }
   else {
-    // %AppData%/Aseprite/filename
+    // %AppData%/LibreSprite/filename
     includeHomeDir(filename);
   }
 
 #elif __APPLE__
 
-  // $HOME/Library/Application Support/Aseprite/filename
+  // $HOME/Library/Application Support/LibreSprite/filename
   addPath(
     base::join_path(
       base::join_path(base::get_lib_app_support_path(), PACKAGE),
@@ -173,8 +173,8 @@ void ResourceFinder::includeUserDir(const char* filename)
 
 #else
 
-  // $HOME/.config/aseprite/filename
-  includeHomeDir((std::string(".config/aseprite/") + filename).c_str());
+  // $HOME/.config/libresprite/filename
+  includeHomeDir((std::string(".config/libresprite/") + filename).c_str());
 
 #endif
 }

@@ -39,58 +39,11 @@ static std::vector<cfg::CfgFile*> g_configs;
 ConfigModule::ConfigModule()
 {
   ResourceFinder rf;
-  rf.includeUserDir("aseprite.ini");
+  rf.includeUserDir("libresprite.ini");
 
-  // getFirstOrCreateDefault() will create the Aseprite directory
-  // inside the OS configuration folder (~/.config/aseprite/, etc.).
+  // getFirstOrCreateDefault() will create the LibreSprite directory
+  // inside the OS configuration folder (~/.config/libresprite/, etc.).
   std::string fn = rf.getFirstOrCreateDefault();
-
-#ifdef __APPLE__
-
-  // On OS X we migrate from ~/.config/aseprite/* -> "~/Library/Application Support/Aseprite/*"
-  if (!base::is_file(fn)) {
-    try {
-      std::string new_dir = base::get_file_path(fn);
-
-      // Now we try to move all old configuration files into the new
-      // directory.
-      ResourceFinder old_rf;
-      old_rf.includeHomeDir(".config/aseprite/aseprite.ini");
-      std::string old_config_fn = old_rf.defaultFilename();
-      if (base::is_file(old_config_fn)) {
-        std::string old_dir = base::get_file_path(old_config_fn);
-        for (std::string old_fn : base::list_files(old_dir)) {
-          std::string from = base::join_path(old_dir, old_fn);
-          std::string to = base::join_path(new_dir, old_fn);
-          base::move_file(from, to);
-        }
-        base::remove_directory(old_dir);
-      }
-    }
-    // Something failed
-    catch (const std::exception& ex) {
-      std::string err = "Error in configuration migration: ";
-      err += ex.what();
-
-      auto system = she::instance();
-      if (system && system->logger())
-        system->logger()->logError(err.c_str());
-    }
-  }
-
-#elif !defined(_WIN32)
-
-  // On Linux we migrate the old configuration file name
-  // (.asepriterc -> ~/.config/aseprite/aseprite.ini)
-  {
-    ResourceFinder old_rf;
-    old_rf.includeHomeDir(".asepriterc");
-    std::string old_fn = old_rf.defaultFilename();
-    if (base::is_file(old_fn))
-      base::move_file(old_fn, fn);
-  }
-
-#endif
 
   set_config_file(fn.c_str());
   g_configFilename = fn;
