@@ -300,6 +300,7 @@ set(PLATFORM_LIBS)
 # Allegro 4 backend
 if(USE_ALLEG4_BACKEND)
   add_definitions(-DUSE_ALLEG4_BACKEND)
+  add_definitions(-DALLEGRO_NO_FIX_ALIASES)
 
   if(USE_SHARED_ALLEGRO4)
     # Find the shared Allegro 4 library
