@@ -1,5 +1,7 @@
 # LibreSprite
 
+![LibreSprite logo](https://github.com/LibreSprite/LibreSprite/raw/master/data/icons/ase64.png)
+
 *Copyright (C) 2001-2016 David Capello* <br />
 *Copyright (C) 2016-2018 LibreSprite contributors* <br />
 
