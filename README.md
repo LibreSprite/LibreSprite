@@ -3,6 +3,15 @@
 *Copyright (C) 2001-2016 David Capello* <br />
 *Copyright (C) 2016-2018 LibreSprite contributors* <br />
 
+## Looking for new maintainers
+
+This fork of Aseprite (see below) was only started for archiving purposes.
+It was later renamed to LibreSprite to avoid confusion with the proprietary
+Aseprite which is still being developed.
+
+There is currently no active developer/maintainer for this project. If you
+are interested in taking over the reins, please make yourself known :)
+
 ## Introduction
 
 **LibreSprite** is a free and open source program to create animated sprites.
