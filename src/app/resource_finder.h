@@ -48,7 +48,8 @@ namespace app {
     // - If the app is installed, the filename will be inside
     //   %AppData% location
     // For Unix-like platforms:
-    // - The filename will be in $HOME/.config/libresprite/
+    // - The filename will be in $XDG_CONFIG_HOME/libresprite/
+    // or if $XDG_CONFIG_HOME is not defined, $HOME/.config/libresprite/
     void includeUserDir(const char* filename);
 
     void includeDesktopDir(const char* filename);
