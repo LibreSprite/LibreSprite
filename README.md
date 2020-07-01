@@ -20,7 +20,7 @@ This fork was made on the [last commit](https://github.com/aseprite/aseprite/com
 As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) and checkout our our guide on [contributing](CONTRIBUTING.md).
 
 ## Compiling
-Currently we don’t have binaries available, this means you will have to roll up your sleeves and compile LibreSprite if you want to try it out. Don't worry, it isn't as hard as you might think! Remember, we’re there to help you out at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) if you get stuck.
+If you're a Windows user, you're in luck! If you head over to the [not-just-ready website](https://LibreSprite.github.io), you can find an installer for Windows. Currently we don’t have binaries available for Linux or Mac (more binaries incoming!), this means you will have to roll up your sleeves and compile LibreSprite if you want to try it out. Don't worry, it isn't as hard as you might think! Remember, we’re there to help you out at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) if you get stuck.
 
 The instructions are detailed [here](INSTALL.md).
 
