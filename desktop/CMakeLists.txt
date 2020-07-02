@@ -10,6 +10,10 @@ if(UNIX AND NOT APPLE)
   install(FILES libresprite.desktop
           DESTINATION share/applications)
 
+  # Icons
+  install(DIRECTORY icons
+          DESTINATION share)
+
   # Package gallery integration
   install(FILES libresprite.appdata.xml
           DESTINATION share/appdata)
