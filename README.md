@@ -11,6 +11,9 @@ LibreSprite is a free and open source program for creating and animating your sp
 * Pixel precise tools like filled contour, polygon, shading mode, etc.
 * Several file types supported for your sprites and animations.
 
+## Download
+Grab an [AppImage](https://github.com/LibreSprite/LibreSprite/releases/tag/continuous) for Linux, or get the [Windows installer](https://libresprite.github.io/LibreSpriteWin.exe).
+
 ## History
 LibreSprite originated as a fork of [Aseprite](https://www.aseprite.org), developed by [David Capello](https://github.com/dacap). Aseprite used to be distributed under the GNU General Public License version 2, but was moved to a proprietary license on [August 26th, 2016](https://github.com/aseprite/aseprite/commit/5ecc356a41c8e29977f8608d8826489d24f5fa6c).
 
@@ -20,7 +23,7 @@ This fork was made on the [last commit](https://github.com/aseprite/aseprite/com
 As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) and checkout our our guide on [contributing](CONTRIBUTING.md).
 
 ## Compiling
-If you're a Windows user, you're in luck! If you head over to the [not-just-ready website](https://LibreSprite.github.io), you can find an installer for Windows. Currently we don’t have binaries available for Linux or Mac (more binaries incoming!), this means you will have to roll up your sleeves and compile LibreSprite if you want to try it out. Don't worry, it isn't as hard as you might think! Remember, we’re there to help you out at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) if you get stuck.
+Don't worry, it isn't as hard as you might think! Remember, we’re there to help you out at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) if you get stuck.
 
 The instructions are detailed [here](INSTALL.md).
 
