@@ -1,5 +1,7 @@
 # LibreSprite
 
+![Build Status](https://travis-ci.org/LibreSprite/LibreSprite.svg?branch=master)
+
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
 * Real-time animation previews.
