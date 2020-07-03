@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Aseprite -->
+<!-- LibreSprite -->
 <!-- Copyright (C) 2001-2015 by David Capello -->
 <gui>
 <window text="Frame Properties" id="frame_properties">

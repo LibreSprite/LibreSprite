@@ -1,4 +1,4 @@
-<!-- ASEPRITE -->
+<!-- LibreSprite -->
 <!-- Copyright (C) 2015 by David Capello -->
 <gui>
   <window id="undo_history" text="Undo History">

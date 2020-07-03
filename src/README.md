@@ -1,12 +1,12 @@
-# Aseprite Source Code
+# LibreSprite Source Code
 
-If you are here is because you want to learn about Aseprite source
+If you are here is because you want to learn about LibreSprite source
 code. We'll try to write in these `README.md` files a summary of each
 module/library.
 
 # Modules & Libraries
 
-Aseprite is separated in the following layers/modules:
+LibreSprite is separated in the following layers/modules:
 
 ## Level 0: Completely independent modules
 

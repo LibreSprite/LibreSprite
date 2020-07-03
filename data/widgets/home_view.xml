@@ -1,4 +1,4 @@
-<!-- Aseprite -->
+<!-- LibreSprite -->
 <!-- Copyright (C) 2001-2015 by David Capello -->
 <gui>
   <vbox noborders="true" id="home_view" border="4" childspacing="2" expansive="true">
