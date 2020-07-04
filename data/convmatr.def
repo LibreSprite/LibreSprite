@@ -1,4 +1,4 @@
-# Aseprite convolution matrices            -*- Shell-script -*-
+# LibreSprite convolution matrices            -*- Shell-script -*-
 # Copyright (C) 2001-2011, 2015 by David Capello
 #
 # Parser in "src/effect/convmatr.c"
