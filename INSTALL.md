@@ -1,5 +1,7 @@
 # Table of contents
 
+ [Instrucciones en español](INSTALL_es.md)
+
 * [Platforms](#platforms)
 * [Get the source code](#get-the-source-code)
 * [Dependencies](#dependencies)
@@ -18,6 +20,8 @@
   * [Skia on Mac OS X](#skia-on-mac-os-x)
 
 # Platforms
+
+Remember it's no longer necessary to compile LibreSprite by yourself, you can download the installers [here](https://libresprite.github.io/)
 
 You should be able to compile LibreSprite successfully on the following
 platforms:
@@ -144,7 +148,8 @@ with the following arguments:
     cd LibreSprite
     mkdir build
     cd build
-    cmake -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND=ON -DSKIA_DIR=C:\deps\skia -G Ninja ..
+    cmake -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND
+    ON -DSKIA_DIR=C:\deps\skia -G Ninja ..
     ninja libresprite
 
 In this case, `C:\deps\skia` is the directory where Skia was compiled

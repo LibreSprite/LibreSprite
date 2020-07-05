@@ -1,5 +1,7 @@
 # Contributing
 
+Si estas buscando la version en español, esta [aqui](CONTRIBUTING_es.md)
+
 ## Code
 Contributing code is very easy to do once you get the hang of it. We use GitHub for our online repository and issue tracker, so you'll need an account first. After you've done that and are comfortable with how the platform and git itself works, read on.
 
@@ -7,8 +9,8 @@ Contributing code is very easy to do once you get the hang of it. We use GitHub 
 1. Fork [LibreSprite](https://github.com/LibreSprite/LibreSprite) so you have a personal repository to push to.
 2. Clone your personal repository with `git clone --recursive https://github.com/YOUR-USERNAME/LibreSprite`. Remember to change the URL to your repository's. The `--recursive` is used to download the third party libraries for building.
 3. Move into the directory, on Linux this is done with `cd LibreSprite`.
-3. Follow the [instructions](INSTALL.md) to create a build and make sure your local copy is working.
-4. Add an upstream remote so you can get other developer's updates with `git remote add upstream https://github.com/LibreSprite/LibreSprite`.
+4. Follow the [instructions](INSTALL.md) to create a build and make sure your local copy is working.
+5. Add an upstream remote so you can get other developer's updates with `git remote add upstream https://github.com/LibreSprite/LibreSprite`.
 
 ### Updating Your Repository
 These instructions will update both your local repository and online fork.
