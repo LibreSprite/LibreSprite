@@ -1,5 +1,8 @@
 # LibreSprite
 
+
+![Build Status](https://travis-ci.org/LibreSprite/LibreSprite.svg?branch=master)
+
 [README en español](README_es.txt).
 
 ## Introduction

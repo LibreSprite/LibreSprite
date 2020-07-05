@@ -104,9 +104,16 @@ void ResourceFinder::includeDataDir(const char* filename)
 
 #else
 
-  // $HOME/.config/libresprite/filename
-  sprintf(buf, ".config/libresprite/data/%s", filename);
-  includeHomeDir(buf);
+
+  const char* xdgdir = std::getenv("XDG_CONFIG_HOME");
+  if((xdgdir) && (*xdgdir)) {
+    sprintf(buf, "%s/libresprite/data/%s", xdgdir, filename); // $XDG_CONFIG_HOME/libresprite/data/filename
+    addPath(buf);
+  }
+  else {
+    sprintf(buf, ".config/libresprite/data/%s", filename); // $HOME/.config/libresprite/data/filename
+    includeHomeDir(buf);
+  }
 
   // $BINDIR/data/filename
   sprintf(buf, "data/%s", filename);
@@ -173,8 +180,15 @@ void ResourceFinder::includeUserDir(const char* filename)
 
 #else
 
-  // $HOME/.config/libresprite/filename
-  includeHomeDir((std::string(".config/libresprite/") + filename).c_str());
+  char buf[4096];
+  const char* xdgdir = std::getenv("XDG_CONFIG_HOME");
+  if((xdgdir) && (*xdgdir)) {
+    sprintf(buf, "%s/libresprite/%s", xdgdir, filename); // $XDG_CONFIG_HOME/libresprite/filename
+    addPath(buf);
+  }
+  else
+    includeHomeDir((std::string(".config/libresprite/") + filename).c_str());   // $HOME/.config/libresprite/filename
+
 
 #endif
 }
