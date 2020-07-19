@@ -1,6 +1,4 @@
-# LibreSprite
-
-![Build Status](https://travis-ci.org/LibreSprite/LibreSprite.svg?branch=master)
+# LibreSprite ![Build Status](https://travis-ci.org/LibreSprite/LibreSprite.svg?branch=master)
 
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
@@ -22,12 +20,12 @@ LibreSprite originated as a fork of [Aseprite](https://www.aseprite.org), develo
 This fork was made on the [last commit](https://github.com/aseprite/aseprite/commit/03be4aa23db465219962f4c62410f628e7392545) covered by the GPL version 2 license, and is now developed independently of Aseprite.
 
 ## Contributing
-As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) and checkout our our guide on [contributing](CONTRIBUTING.md).
+As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) and checkout our our guide on [contributing](http://libresprite.org/wiki/index.php/Developer_Quick_Start).
 
 ## Compiling
 Don't worry, it isn't as hard as you might think! Remember, we’re there to help you out at [#LibreSprite](https://webchat.freenode.net/#LibreSprite) if you get stuck.
 
-The instructions are detailed [here](INSTALL.md).
+The instructions are detailed [here](http://libresprite.org/wiki/index.php/Development_Environment_Setup).
 
 ## License
 This program is distributed under the [GNU General Public License Version 2](LICENSE.txt).

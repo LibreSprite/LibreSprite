@@ -1,9 +1,0 @@
-Describe your bug report or feature request here
-...
-...
-...
-
-### LibreSprite and System version
-
-* LibreSprite (version number or commit hash):
-* System (Win/OSX/Linux, version, distribution):
