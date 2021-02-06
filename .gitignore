@@ -10,6 +10,7 @@
 *.exe.manifest
 *.log
 *.res
+*.vs
 
 # CMake output
 build
