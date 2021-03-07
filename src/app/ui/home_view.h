@@ -22,7 +22,6 @@ namespace ui {
 namespace app {
 
   class DataRecoveryView;
-  class NewsListBox;
   class RecentFilesListBox;
   class RecentFoldersListBox;
 
@@ -60,7 +59,6 @@ namespace app {
 
     RecentFilesListBox* m_files;
     RecentFoldersListBox* m_folders;
-    NewsListBox* m_news;
     crash::DataRecovery* m_dataRecovery;
     DataRecoveryView* m_dataRecoveryView;
   };
