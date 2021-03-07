@@ -117,10 +117,6 @@ if(ENABLE_UPDATER)
   add_subdirectory(updater)
 endif()
 
-if(ENABLE_WEBSERVER)
-  add_subdirectory(webserver)
-endif()
-
 add_subdirectory(app)
 
 ######################################################################
