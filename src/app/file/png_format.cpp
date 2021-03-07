@@ -44,9 +44,7 @@ class PngFormat : public FileFormat {
   }
 
   bool onLoad(FileOp* fop) override;
-#ifdef ENABLE_SAVE
   bool onSave(FileOp* fop) override;
-#endif
 };
 
 FileFormat* CreatePngFormat()
@@ -338,7 +336,6 @@ bool PngFormat::onLoad(FileOp* fop)
   return true;
 }
 
-#ifdef ENABLE_SAVE
 bool PngFormat::onSave(FileOp* fop)
 {
   const Image* image = fop->sequenceImage();
@@ -563,6 +560,5 @@ bool PngFormat::onSave(FileOp* fop)
   /* all right */
   return true;
 }
-#endif
 
 } // namespace app

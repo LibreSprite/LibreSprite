@@ -79,9 +79,7 @@ class GifFormat : public FileFormat {
   }
 
   bool onLoad(FileOp* fop) override;
-#ifdef ENABLE_SAVE
   bool onSave(FileOp* fop) override;
-#endif
   base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
@@ -811,8 +809,6 @@ bool GifFormat::onLoad(FileOp* fop)
     return false;
 }
 
-#ifdef ENABLE_SAVE
-
 class GifEncoder {
 public:
   GifEncoder(FileOp* fop, GifFileType* gifFile)
@@ -1296,8 +1292,6 @@ bool GifFormat::onSave(FileOp* fop)
   GifEncoder encoder(fop, gif_file);
   return encoder.encode();
 }
-
-#endif  // ENABLE_SAVE
 
 base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
 {

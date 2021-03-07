@@ -51,15 +51,6 @@ if (CMAKE_USE_PTHREADS_INIT)
 endif()
 
 ######################################################################
-# Full-version or trial-mode?
-
-if(NOT ENABLE_TRIAL_MODE)
-  add_definitions(-DENABLE_SAVE -DENABLE_DATA_RECOVERY)
-else()
-  add_definitions(-DENABLE_TRIAL_MODE)
-endif()
-
-######################################################################
 # Aseprite Libraries (in preferred order to be built)
 
 # Disable observable tests
