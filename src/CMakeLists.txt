@@ -28,10 +28,6 @@ if(MSVC)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif(MSVC)
 
-if(ENABLE_UPDATER)
-  add_definitions(-DENABLE_UPDATER)
-endif()
-
 # Directories where .h files can be found
 include_directories(. .. ../third_party)
 
@@ -52,13 +48,6 @@ endif()
 
 if (CMAKE_USE_PTHREADS_INIT)
   list(APPEND PLATFORM_LIBS ${CMAKE_THREAD_LIBS_INIT})
-endif()
-
-######################################################################
-# Custom Aseprite website (for testing server-side)
-
-if(NOT "${CUSTOM_WEBSITE_URL}" STREQUAL "")
-  add_definitions(-DCUSTOM_WEBSITE_URL="${CUSTOM_WEBSITE_URL}")
 endif()
 
 ######################################################################
@@ -112,11 +101,6 @@ add_subdirectory(render)
 add_subdirectory(script)
 add_subdirectory(she)
 add_subdirectory(ui)
-
-if(ENABLE_UPDATER)
-  add_subdirectory(updater)
-endif()
-
 add_subdirectory(app)
 
 ######################################################################

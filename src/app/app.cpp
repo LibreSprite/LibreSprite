@@ -12,7 +12,6 @@
 #include "app/app.h"
 
 #include "app/app_options.h"
-#include "app/check_update.h"
 #include "app/color_utils.h"
 #include "app/commands/cmd_save_file.h"
 #include "app/commands/cmd_sprite_size.h"
@@ -661,13 +660,6 @@ void App::run()
     // On OS X, when we compile LibreSprite on Debug mode, we're using it
     // outside an app bundle, so we must active the app explicitly.
     she::instance()->activateApp();
-#endif
-
-#ifdef ENABLE_UPDATER
-    // Launch the thread to check for updates.
-    app::CheckUpdateThreadLauncher checkUpdate(
-      m_mainWindow->getCheckUpdateDelegate());
-    checkUpdate.launch();
 #endif
 
     app::SendCrash sendCrash;

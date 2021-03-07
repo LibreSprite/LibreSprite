@@ -95,7 +95,6 @@ add_library(app-lib
   app_menus.cpp
   app_options.cpp
   app_render.cpp
-  check_update.cpp
   cmd.cpp
   cmd/add_cel.cpp
   cmd/add_frame.cpp
@@ -466,7 +465,3 @@ target_link_libraries(app-lib
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${FREETYPE_LIBRARIES})
-
-if(ENABLE_UPDATER)
-  target_link_libraries(app-lib updater-lib)
-endif()

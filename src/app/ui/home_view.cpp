@@ -56,7 +56,6 @@ HomeView::HomeView()
   foldersView()->attachToView(m_folders);
   newsView()->attachToView(m_news);
 
-  checkUpdate()->setVisible(false);
   recoverSpritesPlaceholder()->setVisible(false);
 }
 
@@ -128,46 +127,6 @@ void HomeView::onResize(ui::ResizeEvent& ev)
 
   ui::VBox::onResize(ev);
 }
-
-#ifdef ENABLE_UPDATER
-
-void HomeView::onCheckingUpdates()
-{
-  checkUpdate()->setText("Checking Updates...");
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-void HomeView::onUpToDate()
-{
-  checkUpdate()->setText(PACKAGE " is up to date");
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-void HomeView::onNewUpdate(const std::string& url, const std::string& version)
-{
-  SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
-
-  checkUpdate()->setText("New " PACKAGE " v" + version + " available!");
-  checkUpdate()->setUrl(url);
-  checkUpdate()->setProperty(
-    SkinStylePropertyPtr(new SkinStyleProperty(theme->styles.workspaceUpdateLink())));
-
-  // TODO this should be in a skin.xml's <style>
-  gfx::Size iconSize = theme->styles.workspaceUpdateLink()->sizeHint(
-    nullptr, Style::State());
-  checkUpdate()->setBorder(gfx::Border(6*guiscale())+gfx::Border(
-      0, 0, iconSize.w, 0));
-
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-#endif // ENABLE_UPDATER
 
 void HomeView::onRecoverSprites()
 {

@@ -67,11 +67,9 @@ option(USE_SHARED_PIXMAN  "Use your installed copy of pixman" off)
 option(USE_SHARED_FREETYPE "Use shared FreeType library" off)
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
-option(ENABLE_UPDATER     "Enable automatic check for updates" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
 option(ENABLE_TRIAL_MODE  "Compile the trial version" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
-set(CUSTOM_WEBSITE_URL "" CACHE STRING "Enable custom local webserver to check updates")
 
 if(APPLE)
   # On OS X Allegro isn't supported anymore
