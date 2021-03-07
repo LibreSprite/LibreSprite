@@ -437,7 +437,6 @@ add_library(app-lib
   util/new_image_from_mask.cpp
   util/pic_file.cpp
   util/range_utils.cpp
-  webserver.cpp
   widget_loader.cpp
   xml_document.cpp
   xml_exception.cpp
@@ -470,8 +469,4 @@ target_link_libraries(app-lib
 
 if(ENABLE_UPDATER)
   target_link_libraries(app-lib updater-lib)
-endif()
-
-if(ENABLE_WEBSERVER)
-  target_link_libraries(app-lib webserver-lib)
 endif()
