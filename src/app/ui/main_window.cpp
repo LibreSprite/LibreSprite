@@ -140,13 +140,6 @@ HomeView* MainWindow::getHomeView()
   return m_homeView;
 }
 
-#ifdef ENABLE_UPDATER
-CheckUpdateDelegate* MainWindow::getCheckUpdateDelegate()
-{
-  return getHomeView();
-}
-#endif
-
 void MainWindow::reloadMenus()
 {
   m_menuBar->reload();
