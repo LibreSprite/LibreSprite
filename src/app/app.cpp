@@ -78,10 +78,6 @@
 
 #include <iostream>
 
-#ifdef ENABLE_STEAM
-  #include "steam/steam.h"
-#endif
-
 namespace app {
 
 using namespace ui;
@@ -662,13 +658,6 @@ void App::run()
 {
   // Run the GUI
   if (isGui()) {
-    // Initialize Steam API
-#ifdef ENABLE_STEAM
-    steam::SteamAPI steam;
-    if (steam.initialized())
-      she::instance()->activateApp();
-#endif
-
 #if _DEBUG
     // On OS X, when we compile LibreSprite on Debug mode, we're using it
     // outside an app bundle, so we must active the app explicitly.

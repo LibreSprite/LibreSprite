@@ -22,7 +22,6 @@ because they don't depend on any other component.
   * [gfx](gfx/): Abstract graphics structures like point, size, rectangle, region, color, etc.
   * [observable](https://github.com/dacap/observable): Signal/slot functions.
   * [scripting](scripting/): JavaScript engine.
-  * [steam](steam/): Steam API wrapper to avoid static linking to the .lib file.
   * [undo](https://github.com/aseprite/undo): Generic library to manage a history of undoable commands.
   * [wacom](wacom/): Wacom definitions to use Wintab API.
 
