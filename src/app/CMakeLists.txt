@@ -63,16 +63,13 @@ endif()
 ######################################################################
 # app-lib target
 
-set(data_recovery_files)
-if(NOT ENABLE_TRIAL_MODE)
-  set(data_recovery_files
-    crash/backup_observer.cpp
-    crash/data_recovery.cpp
-    crash/read_document.cpp
-    crash/session.cpp
-    crash/write_document.cpp
-    ui/data_recovery_view.cpp)
-endif()
+set(data_recovery_files
+  crash/backup_observer.cpp
+  crash/data_recovery.cpp
+  crash/read_document.cpp
+  crash/session.cpp
+  crash/write_document.cpp
+  ui/data_recovery_view.cpp)
 
 set(file_formats
   file/ase_format.cpp

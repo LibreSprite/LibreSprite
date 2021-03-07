@@ -36,9 +36,7 @@ class PcxFormat : public FileFormat {
   }
 
   bool onLoad(FileOp* fop) override;
-#ifdef ENABLE_SAVE
   bool onSave(FileOp* fop) override;
-#endif
 };
 
 FileFormat* CreatePcxFormat()
@@ -176,7 +174,6 @@ bool PcxFormat::onLoad(FileOp* fop)
   }
 }
 
-#ifdef ENABLE_SAVE
 bool PcxFormat::onSave(FileOp* fop)
 {
   const Image* image = fop->sequenceImage();
@@ -296,6 +293,5 @@ bool PcxFormat::onSave(FileOp* fop)
     return true;
   }
 }
-#endif
 
 } // namespace app

@@ -614,7 +614,6 @@ void FileOp::operate(IFileOpProgress* progress)
   else if (m_type == FileOpSave &&
            m_format != NULL &&
            m_format->support(FILE_SUPPORT_SAVE)) {
-#ifdef ENABLE_SAVE
     // Save a sequence
     if (isSequence()) {
       ASSERT(m_format->support(FILE_SUPPORT_SEQUENCES));
@@ -664,11 +663,6 @@ void FileOp::operate(IFileOpProgress* progress)
         setError("Error saving the sprite in the file \"%s\"\n",
                  m_filename.c_str());
     }
-#else
-    setError(
-      "Save operation is not supported in trial version.\n"
-      "Go to " WEBSITE_DOWNLOAD " and get the full-version.");
-#endif
   }
 
   // Progress = 100%
