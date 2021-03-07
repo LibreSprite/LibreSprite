@@ -54,7 +54,6 @@ option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 
 option(USE_STATIC_LIBC    "Use static version of C and C++ runtimes" off)
-option(USE_SHARED_CURL    "Use your installed copy of curl" off)
 option(USE_SHARED_GIFLIB  "Use your installed copy of giflib" off)
 option(USE_SHARED_GTEST   "Use your installed copy of gtest" off)
 option(USE_SHARED_JPEGLIB "Use your installed copy of jpeglib" off)
@@ -128,7 +127,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 
-set(CURL_DIR            ${CMAKE_SOURCE_DIR}/third_party/curl)
 set(GIFLIB_DIR          ${CMAKE_SOURCE_DIR}/third_party/giflib)
 set(LIBJPEG_DIR         ${CMAKE_SOURCE_DIR}/third_party/jpeg)
 set(LIBPNG_DIR          ${CMAKE_SOURCE_DIR}/third_party/libpng)
@@ -169,10 +167,6 @@ endif()
 
 if(APPLE AND USE_SKIA_BACKEND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
-endif()
-
-if(NOT USE_SHARED_CURL)
-  set(CURL_STATICLIB ON BOOL)
 endif()
 
 # zlib
@@ -276,14 +270,6 @@ if(USE_ALLEG4_BACKEND)
   endif()
   include_directories(${LOADPNG_INCLUDE_DIR})
 endif()
-
-if(USE_SHARED_CURL)
-  find_package(CURL REQUIRED)
-else()
-  set(CURL_LIBRARIES libcurl)
-  set(CURL_INCLUDE_DIRS ${CURL_DIR}/include)
-endif()
-include_directories(${CURL_INCLUDE_DIRS})
 
 # simpleini
 include_directories(${SIMPLEINI_DIR})

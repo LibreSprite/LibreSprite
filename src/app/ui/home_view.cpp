@@ -17,7 +17,6 @@
 #include "app/commands/params.h"
 #include "app/ui/data_recovery_view.h"
 #include "app/ui/main_window.h"
-#include "app/ui/news_listbox.h"
 #include "app/ui/recent_listbox.h"
 #include "app/ui/skin/skin_style_property.h"
 #include "app/ui/skin/skin_theme.h"
@@ -40,7 +39,6 @@ using namespace app::skin;
 HomeView::HomeView()
   : m_files(new RecentFilesListBox)
   , m_folders(new RecentFoldersListBox)
-  , m_news(new NewsListBox)
   , m_dataRecovery(nullptr)
   , m_dataRecoveryView(nullptr)
 {
@@ -54,7 +52,6 @@ HomeView::HomeView()
 
   filesView()->attachToView(m_files);
   foldersView()->attachToView(m_folders);
-  newsView()->attachToView(m_news);
 
   recoverSpritesPlaceholder()->setVisible(false);
 }
@@ -123,7 +120,6 @@ void HomeView::onResize(ui::ResizeEvent& ev)
 {
   headerPlaceholder()->setVisible(ev.bounds().h > 200*ui::guiscale());
   foldersPlaceholder()->setVisible(ev.bounds().h > 150*ui::guiscale());
-  newsPlaceholder()->setVisible(ev.bounds().w > 200*ui::guiscale());
 
   ui::VBox::onResize(ev);
 }

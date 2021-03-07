@@ -122,9 +122,6 @@
       <option id="use_native_file_dialog" type="bool" default="false" />
       <option id="flash_layer" type="bool" default="false" migrate="Options.FlashLayer" />
     </section>
-    <section id="news">
-      <option id="cache_file" type="std::string" />
-    </section>
     <section id="status_bar">
       <option id="focus_frame_field_on_mouseover" type="bool" default="false" />
     </section>

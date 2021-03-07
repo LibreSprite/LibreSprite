@@ -54,12 +54,6 @@ if(NOT USE_SHARED_GTEST)
   endif()
 endif()
 
-if(NOT USE_SHARED_CURL)
-  set(BUILD_RELEASE_DEBUG_DIRS ON BOOL)
-  set(CMAKE_USE_OPENSSL OFF CACHE BOOL "Use OpenSSL code. Experimental")
-  add_subdirectory(curl)
-endif()
-
 if(USE_ALLEG4_BACKEND AND NOT USE_SHARED_LIBLOADPNG)
   add_subdirectory(loadpng)
 endif()

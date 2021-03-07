@@ -53,13 +53,6 @@ endif()
 ######################################################################
 # Full-version or trial-mode?
 
-if(NOT USE_SHARED_CURL AND CURL_STATICLIB)
-  add_definitions(-DCURL_STATICLIB)
-endif()
-
-######################################################################
-# Full-version or trial-mode?
-
 if(NOT ENABLE_TRIAL_MODE)
   add_definitions(-DENABLE_SAVE -DENABLE_DATA_RECOVERY)
 else()
@@ -96,7 +89,6 @@ add_subdirectory(fixmath)
 add_subdirectory(flic)
 add_subdirectory(gen)
 add_subdirectory(gfx)
-add_subdirectory(net)
 add_subdirectory(render)
 add_subdirectory(script)
 add_subdirectory(she)

@@ -28,10 +28,6 @@
           <view id="folders_view" expansive="true" style="workspace_view" />
         </vbox>
       </splitter>
-      <vbox id="news_placeholder" noborders="true" childspacing="2">
-        <label text="News:" style="workspace_label" />
-        <view id="news_view" expansive="true" style="workspace_view" />
-      </vbox>
     </splitter>
   </vbox>
 </gui>
