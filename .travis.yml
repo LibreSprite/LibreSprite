@@ -15,19 +15,29 @@ addons:
             - ccache
             - libx11-dev
             - libxcursor-dev
+            - libgif-dev
+            - libgtest-dev
+            - libfreetype6-dev
+            - libjpeg-dev
+            - libz-dev
+            - libpng-dev
+            - libtinyxml-dev
+            - libpixman-1-dev
 
 env:
   - SHARED=OFF
 
 before_install:
-  - if [ "$SHARED" == "ON" ]; then sudo apt-get install -y libcurl4-openssl-dev libgif-dev libfreetype6-dev libjpeg-dev libz-dev libpng-dev libtinyxml-dev libpixman-1-dev liballegro4.2-dev ; fi
+  - if [ "$SHARED" == "ON" ]; then sudo apt-get install -y liballegro4.2-dev ; fi
   - if [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
 
 before_script:
+  - cd /usr/src/gtest; sudo mkdir build; cd build; sudo cmake ..; sudo make; sudo make install
+  - cd $TRAVIS_BUILD_DIR
   - ccache -z
   - mkdir build
   - cd build
-  - cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/build/install -DWITH_DESKTOP_INTEGRATION=ON -DUSE_SHARED_CURL=$SHARED -DUSE_SHARED_GIFLIB=$SHARED -DUSE_SHARED_FREETYPE=$SHARED -DUSE_SHARED_JPEGLIB=$SHARED -DUSE_SHARED_ZLIB=$SHARED -DUSE_SHARED_LIBPNG=$SHARED -DUSE_SHARED_TINYXML=$SHARED -DUSE_SHARED_PIXMAN=$SHARED -DUSE_SHARED_ALLEGRO4=$SHARED -DENABLE_TESTS=ON
+  - cmake -G Ninja .. -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/build/install -DWITH_DESKTOP_INTEGRATION=ON -DUSE_SHARED_ALLEGRO4=$SHARED -DENABLE_TESTS=ON
 
 script:
   - ninja libresprite
