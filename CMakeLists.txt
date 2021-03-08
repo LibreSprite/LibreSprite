@@ -54,16 +54,7 @@ option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 
 option(USE_STATIC_LIBC    "Use static version of C and C++ runtimes" off)
-option(USE_SHARED_GIFLIB  "Use your installed copy of giflib" off)
-option(USE_SHARED_GTEST   "Use your installed copy of gtest" off)
-option(USE_SHARED_JPEGLIB "Use your installed copy of jpeglib" off)
-option(USE_SHARED_ZLIB    "Use your installed copy of zlib" off)
-option(USE_SHARED_LIBPNG  "Use your installed copy of libpng" off)
 option(USE_SHARED_LIBLOADPNG "Use your installed copy of libloadpng" off)
-option(USE_SHARED_LIBWEBP "Use your installed copy of libwebp" off)
-option(USE_SHARED_TINYXML "Use your installed copy of tinyxml" off)
-option(USE_SHARED_PIXMAN  "Use your installed copy of pixman" off)
-option(USE_SHARED_FREETYPE "Use shared FreeType library" off)
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
@@ -126,16 +117,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 
-set(GIFLIB_DIR          ${CMAKE_SOURCE_DIR}/third_party/giflib)
-set(LIBJPEG_DIR         ${CMAKE_SOURCE_DIR}/third_party/jpeg)
-set(LIBPNG_DIR          ${CMAKE_SOURCE_DIR}/third_party/libpng)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
-set(LIBWEBP_DIR         ${CMAKE_SOURCE_DIR}/third_party/libwebp)
-set(PIXMAN_DIR          ${CMAKE_SOURCE_DIR}/third_party/pixman)
-set(FREETYPE_DIR        ${CMAKE_SOURCE_DIR}/third_party/freetype2)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
-set(TINYXML_DIR         ${CMAKE_SOURCE_DIR}/third_party/tinyxml)
-set(ZLIB_DIR            ${CMAKE_SOURCE_DIR}/third_party/zlib)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 
@@ -169,94 +152,46 @@ if(APPLE AND USE_SKIA_BACKEND)
 endif()
 
 # zlib
-if(USE_SHARED_ZLIB)
-  find_package(ZLIB REQUIRED)
-else()
-  set(ZLIB_LIBRARIES zlibstatic)
-  set(ZLIB_INCLUDE_DIRS
-    ${ZLIB_DIR}
-    ${CMAKE_BINARY_DIR}/third_party/zlib) # Zlib generated zconf.h file
-endif()
+find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 # libpng
-if(USE_SHARED_LIBPNG)
-  find_package(PNG REQUIRED)
-  add_definitions(${PNG_DEFINITIONS})
-else()
-  set(PNG_LIBRARIES png_static)
-  set(PNG_INCLUDE_DIRS
-    ${LIBPNG_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}/third_party/libpng) # Libpng generated pnglibconf.h file
-endif()
+find_package(PNG REQUIRED)
+add_definitions(${PNG_DEFINITIONS})
 include_directories(${PNG_INCLUDE_DIRS})
 add_definitions(-DPNG_NO_MMX_CODE) # Do not use MMX optimizations in PNG code
 
 # libwebp
 if(WITH_WEBP_SUPPORT)
-  if(USE_SHARED_LIBWEBP)
-    find_package(PkgConfig)
-    pkg_check_modules(WEBP libwebp)
-    if(NOT WEBP_FOUND)
-      message(FATAL_ERROR "libwebp not found")
-    endif()
-  else()
-    set(WEBP_LIBRARIES webp)
-    set(WEBP_INCLUDE_DIR ${LIBWEBP_DIR}/src)
+  find_package(PkgConfig)
+  pkg_check_modules(WEBP libwebp)
+  if(NOT WEBP_FOUND)
+    message(FATAL_ERROR "libwebp not found")
   endif()
   include_directories(${WEBP_INCLUDE_DIR})
 endif()
 
 # tinyxml
-if(USE_SHARED_TINYXML)
-  find_library(TINYXML_LIBRARY NAMES tinyxml)
-  find_path(TINYXML_INCLUDE_DIR NAMES tinyxml.h)
-else()
-  set(TINYXML_LIBRARY tinyxml)
-  set(TINYXML_INCLUDE_DIR ${TINYXML_DIR})
-endif()
+find_library(TINYXML_LIBRARY NAMES tinyxml)
+find_path(TINYXML_INCLUDE_DIR NAMES tinyxml.h)
 include_directories(${TINYXML_INCLUDE_DIR})
 
 # pixman
-if(USE_SHARED_PIXMAN)
-  find_library(PIXMAN_LIBRARY NAMES pixman pixman-1)
-  find_path(PIXMAN_INCLUDE_DIR NAMES pixman.h PATH_SUFFIXES pixman-1)
-else()
-  set(PIXMAN_LIBRARY pixman)
-  set(PIXMAN_INCLUDE_DIR
-    ${PIXMAN_DIR}/pixman
-    ${CMAKE_BINARY_DIR}) # For pixman-version.h
-endif()
+find_library(PIXMAN_LIBRARY NAMES pixman pixman-1)
+find_path(PIXMAN_INCLUDE_DIR NAMES pixman.h PATH_SUFFIXES pixman-1)
 include_directories(${PIXMAN_INCLUDE_DIR})
 
 # freetype
-if(USE_SHARED_FREETYPE)
-  find_package(Freetype REQUIRED)
-else()
-  set(FREETYPE_LIBRARIES freetype)
-  set(FREETYPE_INCLUDE_DIRS ${FREETYPE_DIR}/include)
-endif()
+find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
-if(USE_SHARED_GIFLIB)
-  find_package(GIF REQUIRED)
-else()
-  set(GIF_LIBRARIES giflib)
-  set(GIF_INCLUDE_DIRS ${GIFLIB_DIR}/lib)
-endif()
+find_package(GIF REQUIRED)
 include_directories(${GIF_INCLUDE_DIRS})
 
-if(USE_SHARED_GTEST)
-  find_package(GTest REQUIRED)
-endif()
+find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-if(USE_SHARED_JPEGLIB)
-  find_package(JPEG REQUIRED)
-else()
-  set(JPEG_LIBRARIES jpeg)
-  set(JPEG_INCLUDE_DIRS ${LIBJPEG_DIR})
-endif()
+find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
 if(USE_ALLEG4_BACKEND)
