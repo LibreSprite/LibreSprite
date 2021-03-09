@@ -120,7 +120,6 @@
     <section id="experimental" text="Experimental">
       <option id="ui_scale" type="int" default="1" />
       <option id="use_native_cursor" type="bool" default="false" migrate="Options.NativeCursor" />
-      <option id="use_native_file_dialog" type="bool" default="false" />
       <option id="flash_layer" type="bool" default="false" migrate="Options.FlashLayer" />
     </section>
     <section id="status_bar">

@@ -16,7 +16,6 @@
 #include "app/ui/file_selector.h"
 #include "base/split_string.h"
 #include "she/display.h"
-#include "she/native_dialogs.h"
 #include "she/system.h"
 
 namespace app {
@@ -28,35 +27,6 @@ std::string show_file_selector(
   FileSelectorType type,
   FileSelectorDelegate* delegate)
 {
-  if (Preferences::instance().experimental.useNativeFileDialog() &&
-      she::instance()->nativeDialogs()) {
-    she::FileDialog* dlg =
-      she::instance()->nativeDialogs()->createFileDialog();
-
-    if (dlg) {
-      std::string res;
-
-      dlg->setTitle(title);
-      dlg->setFileName(initialPath);
-
-      if (type == FileSelectorType::Save)
-        dlg->toSaveFile();
-      else
-        dlg->toOpenFile();
-
-      std::vector<std::string> tokens;
-      base::split_string(showExtensions, tokens, ",");
-      for (const auto& tok : tokens)
-        dlg->addFilter(tok, tok + " files (*." + tok + ")");
-
-      if (dlg->show(she::instance()->defaultDisplay()))
-        res = dlg->fileName();
-
-      dlg->dispose();
-      return res;
-    }
-  }
-
   FileSelector fileSelector(type, delegate);
   return fileSelector.show(title, initialPath, showExtensions);
 }

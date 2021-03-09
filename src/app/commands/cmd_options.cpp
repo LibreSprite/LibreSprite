@@ -138,9 +138,6 @@ public:
     if (m_pref.experimental.useNativeCursor())
       nativeCursor()->setSelected(true);
 
-    if (m_pref.experimental.useNativeFileDialog())
-      nativeFileDialog()->setSelected(true);
-
     if (m_pref.experimental.flashLayer())
       flashLayer()->setSelected(true);
 
@@ -285,7 +282,6 @@ public:
 
     // Experimental features
     m_pref.experimental.useNativeCursor(nativeCursor()->isSelected());
-    m_pref.experimental.useNativeFileDialog(nativeFileDialog()->isSelected());
     m_pref.experimental.flashLayer(flashLayer()->isSelected());
     ui::set_use_native_cursors(
       m_pref.experimental.useNativeCursor());

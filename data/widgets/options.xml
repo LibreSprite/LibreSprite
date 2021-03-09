@@ -175,7 +175,6 @@
         <vbox id="section_experimental">
           <separator text="User Interface" horizontal="true" />
           
-          <check id="native_file_dialog" text="Use native file dialog" />
           <check id="flash_layer" text="Flash layer when it is selected" />
         </vbox>
 

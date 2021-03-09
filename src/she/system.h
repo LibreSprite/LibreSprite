@@ -17,7 +17,6 @@ namespace she {
   class EventQueue;
   class Font;
   class Logger;
-  class NativeDialogs;
   class Surface;
 
   class DisplayCreationException : public std::runtime_error {
@@ -34,7 +33,6 @@ namespace she {
     virtual void finishLaunching() = 0;
     virtual Capabilities capabilities() const = 0;
     virtual Logger* logger() = 0;
-    virtual NativeDialogs* nativeDialogs() = 0;
     virtual EventQueue* eventQueue() = 0;
     virtual bool gpuAcceleration() const = 0;
     virtual void setGpuAcceleration(bool state) = 0;
