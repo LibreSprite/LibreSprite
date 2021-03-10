@@ -53,7 +53,6 @@ option(WITH_DEPRECATED_GLIB_SUPPORT "Enable support for older glib versions" off
 option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 
-option(USE_STATIC_LIBC    "Use static version of C and C++ runtimes" off)
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
