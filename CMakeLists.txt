@@ -155,9 +155,7 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 
 # libpng
 find_package(PNG REQUIRED)
-add_definitions(${PNG_DEFINITIONS})
 include_directories(${PNG_INCLUDE_DIRS})
-add_definitions(-DPNG_NO_MMX_CODE) # Do not use MMX optimizations in PNG code
 
 # libwebp
 if(WITH_WEBP_SUPPORT)
