@@ -9,7 +9,6 @@
 #pragma once
 
 #include "gfx/point.h"
-#include "she/display_handle.h"
 #include "she/native_cursor.h"
 
 #include <string>
@@ -68,7 +67,7 @@ namespace she {
     virtual void setLayout(const std::string& layout) = 0;
 
     // Returns the HWND on Windows.
-    virtual DisplayHandle nativeHandle() = 0;
+    virtual void* nativeHandle() = 0;
   };
 
 } // namespace she
