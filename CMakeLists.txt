@@ -1,17 +1,8 @@
 # LibreSprite
 # Copyright (C) 2001-2016  David Capello
 # Copyright (C) 2016-2018  LibreSprite contributors
-#
-# Parts of this file come from the Allegro 4.4 CMakeLists.txt
 
-# CMake setup
-if(WIN32)
-  # We need 3.4 to use manifests in the source files list for the main
-  # application target.
-  cmake_minimum_required(VERSION 3.4)
-else()
-  cmake_minimum_required(VERSION 2.6)
-endif()
+cmake_minimum_required(VERSION 3.4)
 
 enable_testing()
 
@@ -41,7 +32,6 @@ project(libresprite C CXX)
 # This required for KDE/Qt destop integration, which sets BUILD_SHARED_LIBS to
 # TRUE by default
 set(BUILD_SHARED_LIBS off)
-
 
 ######################################################################
 # Options (these can be specified in cmake command line or modifying
