@@ -162,10 +162,7 @@ add_definitions(-DPNG_NO_MMX_CODE) # Do not use MMX optimizations in PNG code
 # libwebp
 if(WITH_WEBP_SUPPORT)
   find_package(PkgConfig)
-  pkg_check_modules(WEBP libwebp)
-  if(NOT WEBP_FOUND)
-    message(FATAL_ERROR "libwebp not found")
-  endif()
+  pkg_check_modules(WEBP libwebp REQUIRED)
   include_directories(${WEBP_INCLUDE_DIR})
 endif()
 
