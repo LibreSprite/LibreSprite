@@ -68,7 +68,7 @@ void base::thread::join()
 #else
     ::pthread_join((pthread_t)m_native_handle, NULL);
 #endif
-    detach();
+    m_native_handle = (native_handle_type)0;
   }
 }
 
