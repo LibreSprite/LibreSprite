@@ -17,7 +17,6 @@
 #include "app/commands/params.h"
 #include "app/ui/data_recovery_view.h"
 #include "app/ui/main_window.h"
-#include "app/ui/news_listbox.h"
 #include "app/ui/recent_listbox.h"
 #include "app/ui/skin/skin_style_property.h"
 #include "app/ui/skin/skin_theme.h"
@@ -40,7 +39,6 @@ using namespace app::skin;
 HomeView::HomeView()
   : m_files(new RecentFilesListBox)
   , m_folders(new RecentFoldersListBox)
-  , m_news(new NewsListBox)
   , m_dataRecovery(nullptr)
   , m_dataRecoveryView(nullptr)
 {
@@ -54,29 +52,23 @@ HomeView::HomeView()
 
   filesView()->attachToView(m_files);
   foldersView()->attachToView(m_folders);
-  newsView()->attachToView(m_news);
 
-  checkUpdate()->setVisible(false);
   recoverSpritesPlaceholder()->setVisible(false);
 }
 
 HomeView::~HomeView()
 {
-#ifdef ENABLE_DATA_RECOVERY
   if (m_dataRecoveryView) {
     if (m_dataRecoveryView->parent())
       App::instance()->workspace()->removeView(m_dataRecoveryView);
     delete m_dataRecoveryView;
   }
-#endif
 }
 
 void HomeView::showDataRecovery(crash::DataRecovery* dataRecovery)
 {
-#ifdef ENABLE_DATA_RECOVERY
   m_dataRecovery = dataRecovery;
   recoverSpritesPlaceholder()->setVisible(true);
-#endif
 }
 
 std::string HomeView::getTabText()
@@ -124,54 +116,12 @@ void HomeView::onResize(ui::ResizeEvent& ev)
 {
   headerPlaceholder()->setVisible(ev.bounds().h > 200*ui::guiscale());
   foldersPlaceholder()->setVisible(ev.bounds().h > 150*ui::guiscale());
-  newsPlaceholder()->setVisible(ev.bounds().w > 200*ui::guiscale());
 
   ui::VBox::onResize(ev);
 }
 
-#ifdef ENABLE_UPDATER
-
-void HomeView::onCheckingUpdates()
-{
-  checkUpdate()->setText("Checking Updates...");
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-void HomeView::onUpToDate()
-{
-  checkUpdate()->setText(PACKAGE " is up to date");
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-void HomeView::onNewUpdate(const std::string& url, const std::string& version)
-{
-  SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
-
-  checkUpdate()->setText("New " PACKAGE " v" + version + " available!");
-  checkUpdate()->setUrl(url);
-  checkUpdate()->setProperty(
-    SkinStylePropertyPtr(new SkinStyleProperty(theme->styles.workspaceUpdateLink())));
-
-  // TODO this should be in a skin.xml's <style>
-  gfx::Size iconSize = theme->styles.workspaceUpdateLink()->sizeHint(
-    nullptr, Style::State());
-  checkUpdate()->setBorder(gfx::Border(6*guiscale())+gfx::Border(
-      0, 0, iconSize.w, 0));
-
-  checkUpdate()->setVisible(true);
-
-  layout();
-}
-
-#endif // ENABLE_UPDATER
-
 void HomeView::onRecoverSprites()
 {
-#ifdef ENABLE_DATA_RECOVERY
   if (!m_dataRecoveryView) {
     m_dataRecoveryView = new DataRecoveryView(m_dataRecovery);
 
@@ -188,7 +138,6 @@ void HomeView::onRecoverSprites()
     App::instance()->workspace()->addView(m_dataRecoveryView);
 
   App::instance()->mainWindow()->getTabsBar()->selectTab(m_dataRecoveryView);
-#endif
 }
 
 } // namespace app

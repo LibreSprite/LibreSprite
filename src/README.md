@@ -22,7 +22,6 @@ because they don't depend on any other component.
   * [gfx](gfx/): Abstract graphics structures like point, size, rectangle, region, color, etc.
   * [observable](https://github.com/dacap/observable): Signal/slot functions.
   * [scripting](scripting/): JavaScript engine.
-  * [steam](steam/): Steam API wrapper to avoid static linking to the .lib file.
   * [undo](https://github.com/aseprite/undo): Generic library to manage a history of undoable commands.
   * [wacom](wacom/): Wacom definitions to use Wintab API.
 
@@ -31,7 +30,6 @@ because they don't depend on any other component.
   * [cfg](cfg/) (base): Library to load/save .ini files.
   * [gen](gen/) (base): Helper utility to generate C++ files from different XMLs.
   * [net](net/) (base): Networking library to send HTTP requests.
-  * [webserver](webserver/) (base): HTTP web server
 
 ## Level 2
 
@@ -43,7 +41,6 @@ because they don't depend on any other component.
   * [filters](filters/) (base, doc, gfx): Effects for images.
   * [render](render/) (base, doc, gfx): Library to render documents.
   * [ui](ui/) (base, gfx, she): Portable UI library (buttons, windows, text fields, etc.)
-  * [updater](updater/) (base, net): Component to check for updates.
 
 ## Level 4
 
@@ -51,7 +48,7 @@ because they don't depend on any other component.
 
 ## Level 5
 
-  * [app](app/) (allegro, base, doc, filters, fixmath, gfx, iff, pen, render, scripting, she, ui, undo, updater, webserver)
+  * [app](app/) (allegro, base, doc, filters, fixmath, gfx, iff, pen, render, scripting, she, ui, undo)
 
 ## Level 6
 

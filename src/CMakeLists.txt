@@ -28,10 +28,6 @@ if(MSVC)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif(MSVC)
 
-if(ENABLE_UPDATER)
-  add_definitions(-DENABLE_UPDATER)
-endif()
-
 # Directories where .h files can be found
 include_directories(. .. ../third_party)
 
@@ -52,29 +48,6 @@ endif()
 
 if (CMAKE_USE_PTHREADS_INIT)
   list(APPEND PLATFORM_LIBS ${CMAKE_THREAD_LIBS_INIT})
-endif()
-
-######################################################################
-# Custom Aseprite website (for testing server-side)
-
-if(NOT "${CUSTOM_WEBSITE_URL}" STREQUAL "")
-  add_definitions(-DCUSTOM_WEBSITE_URL="${CUSTOM_WEBSITE_URL}")
-endif()
-
-######################################################################
-# Full-version or trial-mode?
-
-if(NOT USE_SHARED_CURL AND CURL_STATICLIB)
-  add_definitions(-DCURL_STATICLIB)
-endif()
-
-######################################################################
-# Full-version or trial-mode?
-
-if(NOT ENABLE_TRIAL_MODE)
-  add_definitions(-DENABLE_SAVE -DENABLE_DATA_RECOVERY)
-else()
-  add_definitions(-DENABLE_TRIAL_MODE)
 endif()
 
 ######################################################################
@@ -107,24 +80,10 @@ add_subdirectory(fixmath)
 add_subdirectory(flic)
 add_subdirectory(gen)
 add_subdirectory(gfx)
-add_subdirectory(net)
 add_subdirectory(render)
 add_subdirectory(script)
 add_subdirectory(she)
 add_subdirectory(ui)
-
-if(ENABLE_UPDATER)
-  add_subdirectory(updater)
-endif()
-
-if(ENABLE_WEBSERVER)
-  add_subdirectory(webserver)
-endif()
-
-if(ENABLE_STEAM)
-  add_subdirectory(steam)
-endif()
-
 add_subdirectory(app)
 
 ######################################################################

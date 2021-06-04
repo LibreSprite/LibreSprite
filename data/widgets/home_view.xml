@@ -15,9 +15,6 @@
         <link id="open_file" text="Open File..." style="workspace_link" />
       </vbox>
       <boxfiller />
-      <vbox border="4">
-        <link id="check_update" text="" style="workspace_link" />
-      </vbox>
     </hbox>
     <splitter horizontal="true" noborders="true" childspacing="2"
               expansive="true" by="percetage" position="50" >
@@ -31,10 +28,6 @@
           <view id="folders_view" expansive="true" style="workspace_view" />
         </vbox>
       </splitter>
-      <vbox id="news_placeholder" noborders="true" childspacing="2">
-        <label text="News:" style="workspace_label" />
-        <view id="news_view" expansive="true" style="workspace_view" />
-      </vbox>
     </splitter>
   </vbox>
 </gui>

@@ -57,9 +57,7 @@ class BmpFormat : public FileFormat {
   }
 
   bool onLoad(FileOp* fop) override;
-#ifdef ENABLE_SAVE
   bool onSave(FileOp* fop) override;
-#endif
 };
 
 FileFormat* CreateBmpFormat()
@@ -709,7 +707,6 @@ bool BmpFormat::onLoad(FileOp *fop)
   return true;
 }
 
-#ifdef ENABLE_SAVE
 bool BmpFormat::onSave(FileOp *fop)
 {
   const Image* image = fop->sequenceImage();
@@ -804,6 +801,5 @@ bool BmpFormat::onSave(FileOp *fop)
     return true;
   }
 }
-#endif
 
 } // namespace app

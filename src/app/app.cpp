@@ -12,7 +12,6 @@
 #include "app/app.h"
 
 #include "app/app_options.h"
-#include "app/check_update.h"
 #include "app/color_utils.h"
 #include "app/commands/cmd_save_file.h"
 #include "app/commands/cmd_sprite_size.h"
@@ -53,7 +52,6 @@
 #include "app/ui/workspace.h"
 #include "app/ui_context.h"
 #include "app/util/clipboard.h"
-#include "app/webserver.h"
 #include "base/convert_to.h"
 #include "base/exception.h"
 #include "base/fs.h"
@@ -77,10 +75,6 @@
 #include "ui/ui.h"
 
 #include <iostream>
-
-#ifdef ENABLE_STEAM
-  #include "steam/steam.h"
-#endif
 
 namespace app {
 
@@ -121,15 +115,11 @@ public:
   }
 
   void createDataRecovery() {
-#ifdef ENABLE_DATA_RECOVERY
     m_recovery = new app::crash::DataRecovery(&m_ui_context);
-#endif
   }
 
   void deleteDataRecovery() {
-#ifdef ENABLE_DATA_RECOVERY
     delete m_recovery;
-#endif
   }
 
 };
@@ -662,30 +652,10 @@ void App::run()
 {
   // Run the GUI
   if (isGui()) {
-    // Initialize Steam API
-#ifdef ENABLE_STEAM
-    steam::SteamAPI steam;
-    if (steam.initialized())
-      she::instance()->activateApp();
-#endif
-
 #if _DEBUG
     // On OS X, when we compile LibreSprite on Debug mode, we're using it
     // outside an app bundle, so we must active the app explicitly.
     she::instance()->activateApp();
-#endif
-
-#ifdef ENABLE_UPDATER
-    // Launch the thread to check for updates.
-    app::CheckUpdateThreadLauncher checkUpdate(
-      m_mainWindow->getCheckUpdateDelegate());
-    checkUpdate.launch();
-#endif
-
-#ifdef ENABLE_WEBSERVER
-    // Launch the webserver.
-    app::WebServer webServer;
-    webServer.start();
 #endif
 
     app::SendCrash sendCrash;

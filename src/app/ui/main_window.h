@@ -20,10 +20,6 @@ namespace ui {
 
 namespace app {
 
-#ifdef ENABLE_UPDATER
-  class CheckUpdateDelegate;
-#endif
-
   class ColorBar;
   class ContextBar;
   class DevConsoleView;
@@ -60,9 +56,6 @@ namespace app {
     Timeline* getTimeline() { return m_timeline; }
     Workspace* getWorkspace() { return m_workspace; }
     PreviewEditorWindow* getPreviewEditor() { return m_previewEditor; }
-#ifdef ENABLE_UPDATER
-    CheckUpdateDelegate* getCheckUpdateDelegate();
-#endif
 
     void start();
     void reloadMenus();

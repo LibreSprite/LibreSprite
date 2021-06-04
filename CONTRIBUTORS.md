@@ -15,7 +15,6 @@ And it uses the following third-party libraries:
 * [FreeType](http://www.freetype.org/) - [FTL license](https://github.com/LibreSprite/tree/master/docs/licenses/FTL.txt)
 * [Google Test](https://github.com/google/googletest) - [gtest license](https://github.com/LibreSprite/tree/master/docs/licenses/gtest-LICENSE.txt)
 * [XFree86](http://www.x.org/) - [XFree86 license](https://github.com/LibreSprite/tree/master/docs/licenses/XFree86-LICENSE.txt)
-* [curl](http://curl.haxx.se/) - [curl license](https://github.com/LibreSprite/tree/master/docs/licenses/curl-LICENSE.txt)
 * [duktape](http://duktape.org/) - [MIT license](https://github.com/LibreSprite/tree/master/third_party/duktape/LICENSE.txt)
 * [giflib](http://sourceforge.net/projects/giflib/) - [giflib license](https://github.com/LibreSprite/tree/master/docs/licenses/giflib-LICENSE.txt)
 * [libjpeg](http://www.ijg.org/) - [libjpeg license](https://github.com/LibreSprite/tree/master/docs/licenses/libjpeg-LICENSE.txt)

@@ -63,16 +63,13 @@ endif()
 ######################################################################
 # app-lib target
 
-set(data_recovery_files)
-if(NOT ENABLE_TRIAL_MODE)
-  set(data_recovery_files
-    crash/backup_observer.cpp
-    crash/data_recovery.cpp
-    crash/read_document.cpp
-    crash/session.cpp
-    crash/write_document.cpp
-    ui/data_recovery_view.cpp)
-endif()
+set(data_recovery_files
+  crash/backup_observer.cpp
+  crash/data_recovery.cpp
+  crash/read_document.cpp
+  crash/session.cpp
+  crash/write_document.cpp
+  ui/data_recovery_view.cpp)
 
 set(file_formats
   file/ase_format.cpp
@@ -95,7 +92,6 @@ add_library(app-lib
   app_menus.cpp
   app_options.cpp
   app_render.cpp
-  check_update.cpp
   cmd.cpp
   cmd/add_cel.cpp
   cmd/add_frame.cpp
@@ -319,7 +315,6 @@ add_library(app-lib
   pref/preferences.cpp
   project.cpp
   recent_files.cpp
-  res/http_loader.cpp
   res/palettes_loader_delegate.cpp
   res/resources_loader.cpp
   resource_finder.cpp
@@ -396,7 +391,6 @@ add_library(app-lib
   ui/keyboard_shortcuts.cpp
   ui/main_menu_bar.cpp
   ui/main_window.cpp
-  ui/news_listbox.cpp
   ui/notifications.cpp
   ui/palette_popup.cpp
   ui/palette_view.cpp
@@ -437,7 +431,6 @@ add_library(app-lib
   util/new_image_from_mask.cpp
   util/pic_file.cpp
   util/range_utils.cpp
-  webserver.cpp
   widget_loader.cpp
   xml_document.cpp
   xml_exception.cpp
@@ -454,7 +447,6 @@ target_link_libraries(app-lib
   fixmath-lib
   flic-lib
   gfx-lib
-  net-lib
   render-lib
   script-lib
   she
@@ -467,16 +459,3 @@ target_link_libraries(app-lib
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${FREETYPE_LIBRARIES})
-
-if(ENABLE_UPDATER)
-  target_link_libraries(app-lib updater-lib)
-endif()
-
-if(ENABLE_WEBSERVER)
-  target_link_libraries(app-lib webserver-lib)
-endif()
-
-if(ENABLE_STEAM)
-  add_definitions(-DENABLE_STEAM)
-  target_link_libraries(app-lib steam-lib)
-endif()

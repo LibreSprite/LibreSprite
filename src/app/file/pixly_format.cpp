@@ -43,9 +43,7 @@ class PixlyFormat : public FileFormat {
   }
 
   bool onLoad(FileOp* fop) override;
-#ifdef ENABLE_SAVE
   bool onSave(FileOp* fop) override;
-#endif
 };
 
 FileFormat* CreatePixlyFormat()
@@ -232,7 +230,6 @@ bool PixlyFormat::onLoad(FileOp* fop)
   return true;
 }
 
-#ifdef ENABLE_SAVE
 bool PixlyFormat::onSave(FileOp* fop)
 {
   const Sprite* sprite = fop->document()->sprite();
@@ -353,6 +350,5 @@ bool PixlyFormat::onSave(FileOp* fop)
 
   return true;
 }
-#endif
 
 } // namespace app
