@@ -8,6 +8,13 @@
   <description>
     <p>LibreSprite lets you create 2D animations for videogames. From sprites, to pixel-art, retro style graphics, and whatever you like about the 8-bit (and 16-bit) era.</p>
   </description>
+  <screenshots>
+    <screenshot>https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/screenshot.png</screenshot>
+  </screenshots>
   <url type="homepage">https://github.com/LibreSprite/LibreSprite</url>
   <url type="bugtracker">https://github.com/LibreSprite/LibreSprite/issues/</url>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release date="2021-02-18" version="1.0-dev" />
+  </releases>
 </application>
