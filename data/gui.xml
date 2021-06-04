@@ -58,6 +58,7 @@
       <key command="KeyboardShortcuts" shortcut="Ctrl+Alt+Shift+K" mac="Cmd+Alt+Shift+K" />
       <!-- Sprite -->
       <key command="SpriteProperties" shortcut="Ctrl+P" mac="Cmd+P" />
+      <key command="CanvasSize" shortcut="C" />
       <!-- Layer -->
       <key command="LayerProperties" shortcut="Shift+P" />
       <key command="LayerVisibility" shortcut="Shift+X" />
