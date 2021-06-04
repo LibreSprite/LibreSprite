@@ -3,8 +3,8 @@
 
 #define MyAppName "LibreSprite"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "LibreSprite"
-#define MyAppURL "https://www.libresprite.org/"
+#define MyAppPublisher "LibreSprite Team"
+#define MyAppURL "https://libresprite.github.io/"
 #define MyAppExeName "libresprite.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".ase"
@@ -12,6 +12,7 @@
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
+; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{E50A60CE-DF57-4FDE-AF8F-91D452A4C60D}
 AppName={#MyAppName}
@@ -24,12 +25,12 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-LicenseFile=D:\Programacion\LibreSprite\LICENSE.txt
+LicenseFile=..\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\Mauricio
-OutputBaseFilename=LibreSpriteWindowsSetup
-SetupIconFile=D:\Programacion\LibreSprite\data\icons\ase.ico
+OutputDir=.
+OutputBaseFilename=LibreSpriteInstaller
+SetupIconFile=..\data\icons\ase.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -41,16 +42,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\Programacion\LibreSprite\build\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\~libresprite.DDF"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\gen.ilk"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\gen.pdb"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\libresprite.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\libresprite.ilk"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\libresprite.pdb"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Programacion\LibreSprite\build\bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\bin\libresprite.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
