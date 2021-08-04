@@ -1268,13 +1268,13 @@ public:
     setMultipleSelection(true);
 
     SkinTheme* theme = SkinTheme::instance();
-    addItem(theme->parts.verticalSymmetry());
     addItem(theme->parts.horizontalSymmetry());
+    addItem(theme->parts.verticalSymmetry());
   }
 
   void setupTooltips(TooltipManager* tooltipManager) {
-    tooltipManager->addTooltipFor(at(0), "Vertical Symmetry", BOTTOM);
-    tooltipManager->addTooltipFor(at(1), "Horizontal Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(0), "Horizontal Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(1), "Vertical Symmetry", BOTTOM);
   }
 
   void updateWithCurrentDocument() {
@@ -1284,7 +1284,8 @@ public:
 
     DocumentPreferences& docPref = Preferences::instance().document(doc);
 
-    setSelectedItem((int)docPref.symmetry.mode());
+    at(0)->setSelected((int)docPref.symmetry.mode() == 1 || (int)docPref.symmetry.mode() == 3 ? true : false);
+    at(1)->setSelected((int)docPref.symmetry.mode() >= 2 ? true : false);
   }
 
 private:
@@ -1298,7 +1299,7 @@ private:
     DocumentPreferences& docPref =
       Preferences::instance().document(doc);
 
-    docPref.symmetry.mode((app::gen::SymmetryMode)selectedItem());
+    docPref.symmetry.mode((app::gen::SymmetryMode)(selectedItem() +1));
 
     // Redraw symmetry rules
     doc->notifyGeneralUpdate();

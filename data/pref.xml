@@ -74,8 +74,8 @@
     </enum>
     <enum id="SymmetryMode">
       <value id="NONE" value="0" />
-      <value id="VERTICAL" value="1" />
-      <value id="HORIZONTAL" value="2" />
+      <value id="HORIZONTAL" value="1" />
+      <value id="VERTICAL" value="2" />
       <value id="BOTH" value="3" />
     </enum>
   </types>

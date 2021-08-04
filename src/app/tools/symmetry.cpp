@@ -44,5 +44,12 @@ void VerticalSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& stroke
   strokes.push_back(stroke2);
 }
 
+void DoubleSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& strokes,
+                                       ToolLoop* loop)
+{
+  VerticalSymmetry(m_y).generateStrokes(mainStroke, strokes, loop);
+  HorizontalSymmetry(m_x).generateStrokes(mainStroke, strokes, loop);
+}
+
 } // namespace tools
 } // namespace app
