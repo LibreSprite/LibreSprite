@@ -1264,17 +1264,17 @@ protected:
 
 class ContextBar::SymmetryField : public ButtonSet {
 public:
-  SymmetryField() : ButtonSet(3) {
+  SymmetryField() : ButtonSet(2) {
+    setMultipleSelection(true);
+
     SkinTheme* theme = SkinTheme::instance();
-    addItem(theme->parts.noSymmetry());
-    addItem(theme->parts.horizontalSymmetry());
     addItem(theme->parts.verticalSymmetry());
+    addItem(theme->parts.horizontalSymmetry());
   }
 
   void setupTooltips(TooltipManager* tooltipManager) {
-    tooltipManager->addTooltipFor(at(0), "Without Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(0), "Vertical Symmetry", BOTTOM);
     tooltipManager->addTooltipFor(at(1), "Horizontal Symmetry", BOTTOM);
-    tooltipManager->addTooltipFor(at(2), "Vertical Symmetry", BOTTOM);
   }
 
   void updateWithCurrentDocument() {

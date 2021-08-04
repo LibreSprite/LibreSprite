@@ -9,7 +9,7 @@
 #include "config.h"
 #endif
 
-#include "app/tools/symmetries.h"
+#include "app/tools/symmetry.h"
 
 #include "app/tools/stroke.h"
 #include "app/tools/tool_loop.h"
