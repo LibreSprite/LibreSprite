@@ -11,6 +11,7 @@
 
 #include "app/transformation.h"
 #include "app/ui/editor/editor_decorator.h"
+#include "app/ui/editor/handle.h"
 #include "app/ui/editor/handle_type.h"
 #include "app/ui/editor/state_with_wheel_behavior.h"
 #include "base/connection.h"
@@ -58,7 +59,7 @@ namespace app {
       virtual ~Decorator();
 
       TransformHandles* getTransformHandles(Editor* editor);
-      bool getSymmetryHandles(Editor* editor, gfx::Rect& box1, gfx::Rect& box2);
+      bool getSymmetryHandles(Editor* editor, Handles& handles);
 
       bool onSetCursor(tools::Ink* ink, Editor* editor, const gfx::Point& mouseScreenPos);
 

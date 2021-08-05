@@ -10,6 +10,7 @@
 #pragma once
 
 #include "app/pref/preferences.h"
+#include "app/ui/editor/handle.h"
 #include "app/ui/editor/standby_state.h"
 
 namespace app {
@@ -18,8 +19,8 @@ namespace app {
   class MovingSymmetryState : public StandbyState {
   public:
     MovingSymmetryState(Editor* editor, ui::MouseMessage* msg,
-                        app::gen::SymmetryMode mode,
-                        Option<int>& symmetryAxis);
+                        Axis axis,
+                        Option<int>& axisPos);
     virtual ~MovingSymmetryState();
 
     virtual bool onMouseUp(Editor* editor, ui::MouseMessage* msg) override;
@@ -29,8 +30,8 @@ namespace app {
     virtual bool requireBrushPreview() override { return false; }
 
   private:
-    app::gen::SymmetryMode m_symmetryMode;
-    Option<int>& m_symmetryAxis;
+    Axis m_symmetryAxis;
+    Option<int>& m_symmetryAxisPos;
     int m_symmetryAxisStart;
     gfx::Point m_mouseStart;
   };

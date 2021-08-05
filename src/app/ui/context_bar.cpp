@@ -1300,13 +1300,13 @@ private:
       Preferences::instance().document(doc);
 
     if (selectedItem() == -1)
-      docPref.symmetry.mode((app::gen::SymmetryMode)0);
+      docPref.symmetry.mode(app::gen::SymmetryMode::NONE);
     else if (at(0)->isSelected() && at(1)->isSelected())
-      docPref.symmetry.mode((app::gen::SymmetryMode)3);
+      docPref.symmetry.mode(app::gen::SymmetryMode::BOTH);
     else if (at(0)->isSelected())
-      docPref.symmetry.mode((app::gen::SymmetryMode)1);
+      docPref.symmetry.mode(app::gen::SymmetryMode::HORIZONTAL);
     else
-      docPref.symmetry.mode((app::gen::SymmetryMode)2);
+      docPref.symmetry.mode(app::gen::SymmetryMode::VERTICAL);
 
     // Redraw symmetry rules
     doc->notifyGeneralUpdate();
