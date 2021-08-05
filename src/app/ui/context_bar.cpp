@@ -1299,7 +1299,14 @@ private:
     DocumentPreferences& docPref =
       Preferences::instance().document(doc);
 
-    docPref.symmetry.mode((app::gen::SymmetryMode)(selectedItem() +1));
+    if (selectedItem() == -1)
+      docPref.symmetry.mode((app::gen::SymmetryMode)0);
+    else if (at(0)->isSelected() && at(1)->isSelected())
+      docPref.symmetry.mode((app::gen::SymmetryMode)3);
+    else if (at(0)->isSelected())
+      docPref.symmetry.mode((app::gen::SymmetryMode)1);
+    else
+      docPref.symmetry.mode((app::gen::SymmetryMode)2);
 
     // Redraw symmetry rules
     doc->notifyGeneralUpdate();

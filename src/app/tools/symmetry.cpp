@@ -47,8 +47,10 @@ void VerticalSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& stroke
 void DoubleSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& strokes,
                                        ToolLoop* loop)
 {
-  VerticalSymmetry(m_y).generateStrokes(mainStroke, strokes, loop);
-  HorizontalSymmetry(m_x).generateStrokes(mainStroke, strokes, loop);
+  Strokes strokeSymmetry;
+  HorizontalSymmetry(m_x).generateStrokes(mainStroke, strokeSymmetry, loop);
+  for (const Stroke& stroke : strokeSymmetry)
+    VerticalSymmetry(m_y).generateStrokes(stroke, strokes, loop);
 }
 
 } // namespace tools
