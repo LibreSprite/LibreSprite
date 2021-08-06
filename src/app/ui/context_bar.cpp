@@ -1283,7 +1283,7 @@ public:
       return;
 
     DocumentPreferences& docPref = Preferences::instance().document(doc);
-    app::gen::SymmetryMode symmetryMode = docPref.symmetry.mode()
+    app::gen::SymmetryMode symmetryMode = docPref.symmetry.mode();
 
     at(0)->setSelected(symmetryMode == app::gen::SymmetryMode::HORIZONTAL
                         || symmetryMode == app::gen::SymmetryMode::BOTH);
