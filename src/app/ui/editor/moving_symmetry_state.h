@@ -10,8 +10,8 @@
 #pragma once
 
 #include "app/pref/preferences.h"
-#include "app/ui/editor/handle.h"
 #include "app/ui/editor/standby_state.h"
+#include "app/ui/editor/symmetry_handles.h"
 
 namespace app {
   class Editor;

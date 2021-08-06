@@ -1283,9 +1283,12 @@ public:
       return;
 
     DocumentPreferences& docPref = Preferences::instance().document(doc);
+    app::gen::SymmetryMode symmetryMode = docPref.symmetry.mode()
 
-    at(0)->setSelected((int)docPref.symmetry.mode() == 1 || (int)docPref.symmetry.mode() == 3 ? true : false);
-    at(1)->setSelected((int)docPref.symmetry.mode() >= 2 ? true : false);
+    at(0)->setSelected(symmetryMode == app::gen::SymmetryMode::HORIZONTAL
+                        || symmetryMode == app::gen::SymmetryMode::BOTH);
+    at(1)->setSelected(symmetryMode == app::gen::SymmetryMode::VERTICAL
+                        || symmetryMode == app::gen::SymmetryMode::BOTH);
   }
 
 private:

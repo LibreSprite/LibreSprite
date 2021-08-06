@@ -649,7 +649,7 @@ void Editor::drawSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& _rc)
       (m_flags & Editor::kShowSymmetryLine) &&
       Preferences::instance().symmetryMode.enabled()) {
 
-    int symmetryMode = (int)m_docPref.symmetry.mode();
+    auto symmetryMode = (int)m_docPref.symmetry.mode();
     if (symmetryMode & (int)app::gen::SymmetryMode::HORIZONTAL) {
       int x = m_docPref.symmetry.xAxis();
       if (x > 0) {

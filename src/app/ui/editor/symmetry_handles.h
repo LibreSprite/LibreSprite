@@ -5,8 +5,8 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_EDITOR_HANDLE_H_INCLUDED
-#define APP_UI_EDITOR_HANDLE_H_INCLUDED
+#ifndef APP_UI_EDITOR_SYMMETRY_HANDLES_H_INCLUDED
+#define APP_UI_EDITOR_SYMMETRY_HANDLES_H_INCLUDED
 #pragma once
 
 #include "gfx/rect.h"
@@ -20,20 +20,20 @@ namespace app {
       VERTICAL
     };
 
-    class Handle {
+    class SymmetryHandle {
     public:
-      Handle(const gfx::Rect& rect, const Axis axis) : m_rect(rect), m_axis(axis) {
+      SymmetryHandle(const gfx::Rect& rect, const Axis axis) : m_rect(rect), m_axis(axis) {
       }
 
-      gfx::Rect getRect() { return m_rect; }
-      Axis getAxis() { return m_axis; }
+      gfx::Rect rect() { return m_rect; }
+      Axis axis() { return m_axis; }
 
     private:
       gfx::Rect m_rect;
       Axis m_axis;
     };
 
-    typedef std::vector<Handle> Handles;
+    typedef std::vector<SymmetryHandle> SymmetryHandles;
 
 } // namespace app
 

@@ -280,12 +280,12 @@ bool StandbyState::onMouseDown(Editor* editor, MouseMessage* msg)
   }
 
   // Move symmetry
-  Handles handles;
+  SymmetryHandles handles;
   if (m_decorator->getSymmetryHandles(editor, handles)) {
     for (auto& handle : handles) {
-      if (handle.getRect().contains(msg->position())) {
+      if (handle.rect().contains(msg->position())) {
         auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
-        const auto& axis = handle.getAxis();
+        const auto& axis = handle.axis();
         auto& axisPos = axis == Axis::HORIZONTAL ? symmetry.xAxis : symmetry.yAxis;
 
         editor->setState(
@@ -673,11 +673,11 @@ bool StandbyState::Decorator::onSetCursor(tools::Ink* ink, Editor* editor, const
     return true;
   }
 
-  Handles handles;
+  SymmetryHandles handles;
   if (getSymmetryHandles(editor, handles)) {
     for (auto& handle : handles) {
-      if (handle.getRect().contains(mouseScreenPos)) {
-        if (handle.getAxis() == Axis::HORIZONTAL)
+      if (handle.rect().contains(mouseScreenPos)) {
+        if (handle.axis() == Axis::HORIZONTAL)
           editor->showMouseCursor(kSizeWECursor);
         else
           editor->showMouseCursor(kSizeNSCursor);
@@ -714,26 +714,26 @@ void StandbyState::Decorator::postRenderDecorator(EditorPostRender* render)
   }
 
   // Draw transformation handles (if the mask is visible and isn't frozen).
-  Handles handles;
+  SymmetryHandles handles;
   if (StandbyState::Decorator::getSymmetryHandles(editor, handles)) {
     skin::SkinTheme* theme = static_cast<skin::SkinTheme*>(CurrentTheme::get());
     she::Surface* part = theme->parts.transformationHandle()->bitmap(0);
     ScreenGraphics g;
     for (auto& handle : handles)
-      g.drawRgbaSurface(part, handle.getRect().x, handle.getRect().y);
+      g.drawRgbaSurface(part, handle.rect().x, handle.rect().y);
   }
 }
 
 void StandbyState::Decorator::getInvalidDecoratoredRegion(Editor* editor, gfx::Region& region)
 {
-  Handles handles;
+  SymmetryHandles handles;
   if (getSymmetryHandles(editor, handles)) {
     for (auto& handle : handles)
-      region.createUnion(region, gfx::Region(handle.getRect()));
+      region.createUnion(region, gfx::Region(handle.rect()));
   }
 }
 
-bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, Handles& handles)
+bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, SymmetryHandles& handles)
 {
   // Draw transformation handles (if the mask is visible and isn't frozen).
   if (editor->isActive() &&
@@ -762,8 +762,10 @@ bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, Handles& handle
       pt1.x -= part->width()/2;
       pt2.x -= part->width()/2;
 
-      handles.push_back(Handle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::HORIZONTAL));
-      handles.push_back(Handle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::HORIZONTAL));
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::HORIZONTAL));
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::HORIZONTAL));
     }
 
     if (mode & (int)app::gen::SymmetryMode::VERTICAL) {
@@ -777,8 +779,10 @@ bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, Handles& handle
       pt1.y -= part->height()/2;
       pt2.y -= part->height()/2;
 
-      handles.push_back(Handle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::VERTICAL));
-      handles.push_back(Handle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::VERTICAL));
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::VERTICAL));
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::VERTICAL));
     }
 
     return true;
