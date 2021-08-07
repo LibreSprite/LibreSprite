@@ -1264,17 +1264,17 @@ protected:
 
 class ContextBar::SymmetryField : public ButtonSet {
 public:
-  SymmetryField() : ButtonSet(3) {
+  SymmetryField() : ButtonSet(2) {
+    setMultipleSelection(true);
+
     SkinTheme* theme = SkinTheme::instance();
-    addItem(theme->parts.noSymmetry());
     addItem(theme->parts.horizontalSymmetry());
     addItem(theme->parts.verticalSymmetry());
   }
 
   void setupTooltips(TooltipManager* tooltipManager) {
-    tooltipManager->addTooltipFor(at(0), "Without Symmetry", BOTTOM);
-    tooltipManager->addTooltipFor(at(1), "Horizontal Symmetry", BOTTOM);
-    tooltipManager->addTooltipFor(at(2), "Vertical Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(0), "Horizontal Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(1), "Vertical Symmetry", BOTTOM);
   }
 
   void updateWithCurrentDocument() {
@@ -1283,8 +1283,12 @@ public:
       return;
 
     DocumentPreferences& docPref = Preferences::instance().document(doc);
+    app::gen::SymmetryMode symmetryMode = docPref.symmetry.mode();
 
-    setSelectedItem((int)docPref.symmetry.mode());
+    at(0)->setSelected(symmetryMode == app::gen::SymmetryMode::HORIZONTAL
+                        || symmetryMode == app::gen::SymmetryMode::BOTH);
+    at(1)->setSelected(symmetryMode == app::gen::SymmetryMode::VERTICAL
+                        || symmetryMode == app::gen::SymmetryMode::BOTH);
   }
 
 private:
@@ -1298,7 +1302,14 @@ private:
     DocumentPreferences& docPref =
       Preferences::instance().document(doc);
 
-    docPref.symmetry.mode((app::gen::SymmetryMode)selectedItem());
+    if (selectedItem() == -1)
+      docPref.symmetry.mode(app::gen::SymmetryMode::NONE);
+    else if (at(0)->isSelected() && at(1)->isSelected())
+      docPref.symmetry.mode(app::gen::SymmetryMode::BOTH);
+    else if (at(0)->isSelected())
+      docPref.symmetry.mode(app::gen::SymmetryMode::HORIZONTAL);
+    else
+      docPref.symmetry.mode(app::gen::SymmetryMode::VERTICAL);
 
     // Redraw symmetry rules
     doc->notifyGeneralUpdate();

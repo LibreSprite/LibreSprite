@@ -20,11 +20,11 @@ namespace app {
 using namespace ui;
 
 MovingSymmetryState::MovingSymmetryState(Editor* editor, MouseMessage* msg,
-                                         app::gen::SymmetryMode mode,
-                                         Option<int>& symmetryAxis)
-  : m_symmetryMode(mode)
-  , m_symmetryAxis(symmetryAxis)
-  , m_symmetryAxisStart(symmetryAxis())
+                                         Axis axis,
+                                         Option<int>& axisPos)
+  : m_symmetryAxis(axis)
+  , m_symmetryAxisPos(axisPos)
+  , m_symmetryAxisStart(axisPos())
 {
   m_mouseStart = editor->screenToEditor(msg->position());
   editor->captureMouse();
@@ -47,17 +47,15 @@ bool MovingSymmetryState::onMouseMove(Editor* editor, MouseMessage* msg)
   gfx::Point delta = newCursorPos - m_mouseStart;
   int pos = 0;
 
-  switch (m_symmetryMode) {
-    case app::gen::SymmetryMode::HORIZONTAL:
-      pos = m_symmetryAxisStart + delta.x;
-      pos = MID(1, pos, editor->sprite()->width()-1);
-      break;
-    case app::gen::SymmetryMode::VERTICAL:
-      pos = m_symmetryAxisStart + delta.y;
-      pos = MID(1, pos, editor->sprite()->height()-1);
-      break;
+  if (m_symmetryAxis == Axis::HORIZONTAL) {
+    pos = m_symmetryAxisStart + delta.x;
+    pos = MID(1, pos, editor->sprite()->width()-1);
   }
-  m_symmetryAxis(pos);
+  else {
+    pos = m_symmetryAxisStart + delta.y;
+    pos = MID(1, pos, editor->sprite()->height()-1);
+  }
+  m_symmetryAxisPos(pos);
 
   // Redraw the editor.
   editor->invalidate();
@@ -68,14 +66,14 @@ bool MovingSymmetryState::onMouseMove(Editor* editor, MouseMessage* msg)
 
 bool MovingSymmetryState::onUpdateStatusBar(Editor* editor)
 {
-  if (m_symmetryMode == app::gen::SymmetryMode::HORIZONTAL)
+  if (m_symmetryAxis == Axis::HORIZONTAL)
     StatusBar::instance()->setStatusText
-      (0, "Left %3d Right %3d", m_symmetryAxis(),
-       editor->sprite()->width() - m_symmetryAxis());
+      (0, "Left %3d Right %3d", m_symmetryAxisPos(),
+       editor->sprite()->width() - m_symmetryAxisPos());
   else
     StatusBar::instance()->setStatusText
-      (0, "Top %3d Bottom %3d", m_symmetryAxis(),
-       editor->sprite()->height() - m_symmetryAxis());
+      (0, "Top %3d Bottom %3d", m_symmetryAxisPos(),
+       editor->sprite()->height() - m_symmetryAxisPos());
 
   return true;
 }

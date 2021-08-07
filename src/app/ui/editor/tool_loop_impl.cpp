@@ -26,7 +26,7 @@
 #include "app/tools/freehand_algorithm.h"
 #include "app/tools/ink.h"
 #include "app/tools/point_shape.h"
-#include "app/tools/symmetries.h"
+#include "app/tools/symmetry.h"
 #include "app/tools/tool.h"
 #include "app/tools/tool_box.h"
 #include "app/tools/tool_loop.h"
@@ -163,6 +163,10 @@ public:
 
         case app::gen::SymmetryMode::VERTICAL:
           m_symmetry.reset(new app::tools::VerticalSymmetry(m_docPref.symmetry.yAxis()));
+          break;
+
+        case app::gen::SymmetryMode::BOTH:
+          m_symmetry.reset(new app::tools::DoubleSymmetry(m_docPref.symmetry.xAxis(), m_docPref.symmetry.yAxis()));
           break;
       }
     }

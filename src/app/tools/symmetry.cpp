@@ -9,7 +9,7 @@
 #include "config.h"
 #endif
 
-#include "app/tools/symmetries.h"
+#include "app/tools/symmetry.h"
 
 #include "app/tools/stroke.h"
 #include "app/tools/tool_loop.h"
@@ -42,6 +42,15 @@ void VerticalSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& stroke
   for (const auto& pt : mainStroke)
     stroke2.addPoint(gfx::Point(pt.x, m_y - (pt.y - m_y + adjust)));
   strokes.push_back(stroke2);
+}
+
+void DoubleSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& strokes,
+                                       ToolLoop* loop)
+{
+  Strokes strokeSymmetry;
+  HorizontalSymmetry(m_x).generateStrokes(mainStroke, strokeSymmetry, loop);
+  for (const Stroke& stroke : strokeSymmetry)
+    VerticalSymmetry(m_y).generateStrokes(stroke, strokes, loop);
 }
 
 } // namespace tools
