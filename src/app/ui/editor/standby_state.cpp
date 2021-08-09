@@ -26,6 +26,7 @@
 #include "app/ui/editor/drawing_state.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui/editor/editor_customization_delegate.h"
+#include "app/ui/editor/handle_type.h"
 #include "app/ui/editor/moving_cel_state.h"
 #include "app/ui/editor/moving_pixels_state.h"
 #include "app/ui/editor/moving_symmetry_state.h"
@@ -280,19 +281,19 @@ bool StandbyState::onMouseDown(Editor* editor, MouseMessage* msg)
   }
 
   // Move symmetry
-  SymmetryHandles handles;
-  if (m_decorator->getSymmetryHandles(editor, handles)) {
-    for (auto& handle : handles) {
-      if (handle.rect().contains(msg->position())) {
-        auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
-        const auto& axis = handle.axis();
-        auto& axisPos = axis == Axis::HORIZONTAL ? symmetry.xAxis : symmetry.yAxis;
-
-        editor->setState(
-          EditorStatePtr(new MovingSymmetryState(editor, msg, axis, axisPos)));
-        return true;
-      }
-    }
+  gfx::Rect box1, box2;
+  if (m_decorator->getSymmetryHandles(editor, box1, box2) &&
+      (box1.contains(msg->position()) ||
+       box2.contains(msg->position()))) {
+    auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
+    auto mode = symmetry.mode();
+    bool horz = (mode == app::gen::SymmetryMode::HORIZONTAL);
+    auto& axis = (horz ? symmetry.xAxis:
+                         symmetry.yAxis);
+    editor->setState(
+      EditorStatePtr(new MovingSymmetryState(editor, msg,
+                                             mode, axis)));
+    return true;
   }
 
   // Start the Tool-Loop
@@ -673,18 +674,21 @@ bool StandbyState::Decorator::onSetCursor(tools::Ink* ink, Editor* editor, const
     return true;
   }
 
-  SymmetryHandles handles;
-  if (getSymmetryHandles(editor, handles)) {
-    for (auto& handle : handles) {
-      if (handle.rect().contains(mouseScreenPos)) {
-        if (handle.axis() == Axis::HORIZONTAL)
-          editor->showMouseCursor(kSizeWECursor);
-        else
-          editor->showMouseCursor(kSizeNSCursor);
-        return true;
-      }
+  gfx::Rect box1, box2;
+  if (getSymmetryHandles(editor, box1, box2) &&
+      (box1.contains(mouseScreenPos) ||
+       box2.contains(mouseScreenPos))) {
+    switch (Preferences::instance().document(editor->document()).symmetry.mode()) {
+      case app::gen::SymmetryMode::HORIZONTAL:
+        editor->showMouseCursor(kSizeWECursor);
+        break;
+      case app::gen::SymmetryMode::VERTICAL:
+        editor->showMouseCursor(kSizeNSCursor);
+        break;
     }
+    return true;
   }
+
   return false;
 }
 
@@ -714,78 +718,68 @@ void StandbyState::Decorator::postRenderDecorator(EditorPostRender* render)
   }
 
   // Draw transformation handles (if the mask is visible and isn't frozen).
-  SymmetryHandles handles;
-  if (StandbyState::Decorator::getSymmetryHandles(editor, handles)) {
+  gfx::Rect box1, box2;
+  if (StandbyState::Decorator::getSymmetryHandles(editor, box1, box2)) {
     skin::SkinTheme* theme = static_cast<skin::SkinTheme*>(CurrentTheme::get());
     she::Surface* part = theme->parts.transformationHandle()->bitmap(0);
     ScreenGraphics g;
-    for (auto& handle : handles)
-      g.drawRgbaSurface(part, handle.rect().x, handle.rect().y);
+    g.drawRgbaSurface(part, box1.x, box1.y);
+    g.drawRgbaSurface(part, box2.x, box2.y);
   }
 }
 
 void StandbyState::Decorator::getInvalidDecoratoredRegion(Editor* editor, gfx::Region& region)
 {
-  SymmetryHandles handles;
-  if (getSymmetryHandles(editor, handles)) {
-    for (auto& handle : handles)
-      region.createUnion(region, gfx::Region(handle.rect()));
+  gfx::Rect box1, box2;
+  if (getSymmetryHandles(editor, box1, box2)) {
+    region.createUnion(region, gfx::Region(box1));
+    region.createUnion(region, gfx::Region(box2));
   }
 }
 
-bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, SymmetryHandles& handles)
+bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, gfx::Rect& box1, gfx::Rect& box2)
 {
   // Draw transformation handles (if the mask is visible and isn't frozen).
   if (editor->isActive() &&
       editor->editorFlags() & Editor::kShowSymmetryLine &&
       Preferences::instance().symmetryMode.enabled()) {
     const auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
-    auto mode = (int)symmetry.mode();
+    auto mode = symmetry.mode();
+    if (mode != app::gen::SymmetryMode::NONE) {
+      bool horz = (mode == app::gen::SymmetryMode::HORIZONTAL);
+      int pos = (horz ? symmetry.xAxis():
+                        symmetry.yAxis());
+      gfx::Rect spriteBounds = editor->sprite()->bounds();
+      gfx::Rect editorViewport = View::getView(editor)->viewportBounds();
+      skin::SkinTheme* theme = static_cast<skin::SkinTheme*>(CurrentTheme::get());
+      she::Surface* part = theme->parts.transformationHandle()->bitmap(0);
+      gfx::Point pt1, pt2;
 
-    if (mode == (int)app::gen::SymmetryMode::NONE)
-      return false;
+      if (horz) {
+        pt1 = gfx::Point(spriteBounds.x+pos, spriteBounds.y);
+        pt1 = editor->editorToScreen(pt1);
+        pt2 = gfx::Point(spriteBounds.x+pos, spriteBounds.y+spriteBounds.h);
+        pt2 = editor->editorToScreen(pt2);
+        pt1.y = std::max(pt1.y-part->height(), editorViewport.y);
+        pt2.y = std::min(pt2.y, editorViewport.point2().y-part->height());
+        pt1.x -= part->width()/2;
+        pt2.x -= part->width()/2;
+      }
+      else {
+        pt1 = gfx::Point(spriteBounds.x, spriteBounds.y+pos);
+        pt1 = editor->editorToScreen(pt1);
+        pt2 = gfx::Point(spriteBounds.x+spriteBounds.w, spriteBounds.y+pos);
+        pt2 = editor->editorToScreen(pt2);
+        pt1.x = std::max(pt1.x-part->width(), editorViewport.x);
+        pt2.x = std::min(pt2.x, editorViewport.point2().x-part->width());
+        pt1.y -= part->height()/2;
+        pt2.y -= part->height()/2;
+      }
 
-    gfx::Rect spriteBounds = editor->sprite()->bounds();
-    gfx::Rect editorViewport = View::getView(editor)->viewportBounds();
-    skin::SkinTheme* theme = static_cast<skin::SkinTheme*>(CurrentTheme::get());
-    she::Surface* part = theme->parts.transformationHandle()->bitmap(0);
-    gfx::Point pt1, pt2;
-
-    if (mode & (int)app::gen::SymmetryMode::HORIZONTAL) {
-      int pos = symmetry.xAxis();
-      pt1 = gfx::Point(spriteBounds.x + pos, spriteBounds.y);
-      pt1 = editor->editorToScreen(pt1);
-      pt2 = gfx::Point(spriteBounds.x+ pos, spriteBounds.y+spriteBounds.h);
-      pt2 = editor->editorToScreen(pt2);
-      pt1.y = std::max(pt1.y-part->height(), editorViewport.y);
-      pt2.y = std::min(pt2.y, editorViewport.point2().y-part->height());
-      pt1.x -= part->width()/2;
-      pt2.x -= part->width()/2;
-
-      handles.push_back(
-        SymmetryHandle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::HORIZONTAL));
-      handles.push_back(
-        SymmetryHandle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::HORIZONTAL));
+      box1 = gfx::Rect(pt1.x, pt1.y, part->width(), part->height());
+      box2 = gfx::Rect(pt2.x, pt2.y, part->width(), part->height());
+      return true;
     }
-
-    if (mode & (int)app::gen::SymmetryMode::VERTICAL) {
-      int pos = symmetry.yAxis();
-      pt1 = gfx::Point(spriteBounds.x, spriteBounds.y + pos);
-      pt1 = editor->editorToScreen(pt1);
-      pt2 = gfx::Point(spriteBounds.x+spriteBounds.w, spriteBounds.y + pos);
-      pt2 = editor->editorToScreen(pt2);
-      pt1.x = std::max(pt1.x-part->width(), editorViewport.x);
-      pt2.x = std::min(pt2.x, editorViewport.point2().x-part->width());
-      pt1.y -= part->height()/2;
-      pt2.y -= part->height()/2;
-
-      handles.push_back(
-        SymmetryHandle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::VERTICAL));
-      handles.push_back(
-        SymmetryHandle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::VERTICAL));
-    }
-
-    return true;
   }
   return false;
 }
