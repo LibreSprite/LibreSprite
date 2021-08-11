@@ -394,11 +394,10 @@ add_library(app-lib
   ui/notifications.cpp
   ui/palette_popup.cpp
   ui/palette_view.cpp
-  ui/palettes_listbox.cpp
+  ui/palette_listbox.cpp
   ui/popup_window_pin.cpp
   ui/preview_editor.cpp
   ui/recent_listbox.cpp
-  ui/resources_listbox.cpp
   ui/search_entry.cpp
   ui/select_accelerator.cpp
   ui/skin/button_icon_impl.cpp

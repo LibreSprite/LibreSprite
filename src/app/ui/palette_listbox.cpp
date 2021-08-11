@@ -9,10 +9,11 @@
 #include "config.h"
 #endif
 
-#include "app/ui/resources_listbox.h"
+#include "app/ui/palette_listbox.h"
 
+#include "app/res/palettes_loader_delegate.h"
+#include "app/res/palette_resource.h"
 #include "app/res/resource.h"
-#include "app/res/resources_loader.h"
 #include "app/ui/skin/skin_theme.h"
 #include "base/bind.h"
 #include "ui/graphics.h"
@@ -27,14 +28,14 @@ namespace app {
 using namespace ui;
 using namespace skin;
 
-class ResourceListItem : public ListItem {
+class PaletteListItem : public ListItem {
 public:
-  ResourceListItem(Resource* resource)
-    : ListItem(resource->name()), m_resource(resource) {
+  PaletteListItem(PaletteResource* palResource)
+    : ListItem(palResource->name()), m_palResource(palResource) {
   }
 
-  Resource* resource() const {
-    return m_resource;
+  PaletteResource* paletteResource() const {
+    return m_palResource;
   }
 
 protected:
@@ -53,6 +54,7 @@ protected:
     Graphics* g = ev.graphics();
     gfx::Rect bounds = clientBounds();
     gfx::Color bgcolor, fgcolor;
+    doc::Palette* palette = m_palResource->palette();
 
     if (isSelected()) {
       bgcolor = theme->colors.listitemSelectedFace();
@@ -65,19 +67,20 @@ protected:
 
     g->fillRect(bgcolor, bounds);
 
-    static_cast<ResourcesListBox*>(parent())->
-      paintResource(g, bounds, m_resource);
+    gfx::Rect box(
+      bounds.x, bounds.y + bounds.h-6*guiscale(),
+      4*guiscale(), 4*guiscale());
 
-    // for (int i=0; i<m_palette->size(); ++i) {
-    //   doc::color_t c = m_resource->getEntry(i);
+    for (int i=0; i<palette->size(); ++i) {
+      doc::color_t c = palette->getEntry(i);
 
-    //   g->fillRect(gfx::rgba(
-    //       doc::rgba_getr(c),
-    //       doc::rgba_getg(c),
-    //       doc::rgba_getb(c)), box);
+      g->fillRect(gfx::rgba(
+          doc::rgba_getr(c),
+          doc::rgba_getg(c),
+          doc::rgba_getb(c)), box);
 
-    //   box.x += box.w;
-    // }
+      box.x += box.w;
+    }
 
     g->drawString(text(), fgcolor, gfx::ColorNone,
       gfx::Point(
@@ -86,16 +89,14 @@ protected:
   }
 
   void onSizeHint(SizeHintEvent& ev) override {
-    ev.setSizeHint(
-      static_cast<ResourcesListBox*>(parent())->
-        resourceSizeHint(m_resource));
+    ev.setSizeHint(gfx::Size(0, (2+16+2)*guiscale()));
   }
 
 private:
-  base::UniquePtr<Resource> m_resource;
+  base::UniquePtr<PaletteResource> m_palResource;
 };
 
-class ResourcesListBox::LoadingItem : public ListItem {
+class PaletteListBox::LoadingItem : public ListItem {
 public:
   LoadingItem()
     : ListItem("Loading")
@@ -119,35 +120,23 @@ private:
   int m_state;
 };
 
-ResourcesListBox::ResourcesListBox(ResourcesLoader* resourcesLoader)
-  : m_resourcesLoader(resourcesLoader)
+PaletteListBox::PaletteListBox()
+  : m_resourcesLoader(new ResourcesLoader(new PalettesLoaderDelegate))
   , m_resourcesTimer(100)
   , m_loadingItem(NULL)
 {
-  m_resourcesTimer.Tick.connect(base::Bind<void>(&ResourcesListBox::onTick, this));
+  m_resourcesTimer.Tick.connect(base::Bind<void>(&PaletteListBox::onTick, this));
 }
 
-Resource* ResourcesListBox::selectedResource()
+doc::Palette* PaletteListBox::selectedPalette()
 {
-  if (ResourceListItem* listItem = dynamic_cast<ResourceListItem*>(getSelectedChild()))
-    return listItem->resource();
+  if (PaletteListItem* listItem = dynamic_cast<PaletteListItem*>(getSelectedChild()))
+    return listItem->paletteResource()->palette();
   else
     return NULL;
 }
 
-void ResourcesListBox::paintResource(Graphics* g, const gfx::Rect& bounds, Resource* resource)
-{
-  onPaintResource(g, bounds, resource);
-}
-
-gfx::Size ResourcesListBox::resourceSizeHint(Resource* resource)
-{
-  gfx::Size pref(0, 0);
-  onResourceSizeHint(resource, pref);
-  return pref;
-}
-
-bool ResourcesListBox::onProcessMessage(ui::Message* msg)
+bool PaletteListBox::onProcessMessage(ui::Message* msg)
 {
   switch (msg->type()) {
 
@@ -160,24 +149,14 @@ bool ResourcesListBox::onProcessMessage(ui::Message* msg)
   return ListBox::onProcessMessage(msg);
 }
 
-void ResourcesListBox::onChange()
+void PaletteListBox::onChange()
 {
-  Resource* resource = selectedResource();
-  if (resource)
-    onResourceChange(resource);
+  doc::Palette* palette = selectedPalette();
+  if (palette)
+    PalChange(palette);
 }
 
-void ResourcesListBox::onResourceChange(Resource* resource)
-{
-  // Do nothing
-}
-
-void ResourcesListBox::onPaintResource(Graphics* g, const gfx::Rect& bounds, Resource* resource)
-{
-  // Do nothing
-}
-
-void ResourcesListBox::onTick()
+void PaletteListBox::onTick()
 {
   if (m_resourcesLoader == NULL) {
     stop();
@@ -202,7 +181,8 @@ void ResourcesListBox::onTick()
     return;
   }
 
-  base::UniquePtr<ResourceListItem> listItem(new ResourceListItem(resource));
+  PaletteResource* palResource = static_cast<PaletteResource*>(resource.get());
+  base::UniquePtr<PaletteListItem> listItem(new PaletteListItem(palResource));
   insertChild(getItemsCount()-1, listItem);
   layout();
 
@@ -214,7 +194,7 @@ void ResourcesListBox::onTick()
   listItem.release();
 }
 
-void ResourcesListBox::stop()
+void PaletteListBox::stop()
 {
   if (m_loadingItem) {
     removeChild(m_loadingItem);
