@@ -97,16 +97,7 @@ the [compilation](#compiling).
 
 You will need the following dependencies (Ubuntu, Debian):
 
-- libfreetype6-dev
-- libgif-dev
-- libgtest-dev
-- libjpeg-dev
-- libpixman-1-dev
-- libpng-dev
-- libtinyxml-dev
-- libx11-dev
-- libxcursor-dev
-- zlib1g-dev
+    sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev
 
 The `libxcursor-dev` package is needed to
 [hide the hardware cursor](https://github.com/aseprite/aseprite/issues/913).
