@@ -1,5 +1,5 @@
-<!-- LibreSprite -->
-<!-- Copyright (C) 2001-2015 by David Capello -->
+<!-- Aseprite    | Copyright (C) 2001-2015  David Capello -->
+<!-- LibreSprite | Copyright (C) 2021       LibreSprite contributors -->
 <gui>
   <vbox noborders="true" id="home_view" border="4" childspacing="2" expansive="true">
     <hbox noborders="true" id="recover_sprites_placeholder">
