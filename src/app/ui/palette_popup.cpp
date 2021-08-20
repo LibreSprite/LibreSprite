@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2015  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -15,7 +15,6 @@
 #include "app/commands/commands.h"
 #include "app/launcher.h"
 #include "app/res/palettes_loader_delegate.h"
-#include "app/ui/palettes_listbox.h"
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "ui/box.h"
