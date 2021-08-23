@@ -55,6 +55,8 @@ To compile LibeSprite you will need:
 
 * The latest version of [CMake](http://www.cmake.org/) (3.4 or greater)
 * [Ninja](https://ninja-build.org) build system
+* (Windows and MacOS only) [vcpkg](https://vcpkg.io/en/getting-started.html)
+  package manager
 
 LibreSprite can be compiled with two different back-ends:
 
@@ -70,9 +72,12 @@ LibreSprite can be compiled with two different back-ends:
 
 ## Windows dependencies
 
-First of all, you will need an extra little utility: `awk`, used to
-compile the libpng library. You can get this utility from MSYS2
-distributions like [MozillaBuild](https://wiki.mozilla.org/MozillaBuild).
+Run
+
+    vcpkg install freetype giflib gtest libjpeg-turbo libpng libwebp pixman tinyxml zlib --triplet x64-windows
+    
+ Beware: `--triplet x64-windows` is only necessary for a 64 architecture
+ build.
 
 After that you have to choose the back-end:
 
@@ -114,52 +119,48 @@ The `libxcursor-dev` package is needed to
 
    In this way, if you want to start with a fresh copy of LibreSprite
    source code, you can remove the `build` directory and start again.
-
-2. Enter in the new directory and execute `cmake`:
-
-        cd C:\LibreSprite\build
-        cmake -G Ninja ..
-
-   Here `cmake` needs different options depending on your
-   platform. You must check the details for
-   [Windows](#windows-details), [OS X](#mac-os-x-details), and
-   [Linux](#linux-details). Some `cmake` options can be modified using tools like
-   [`ccmake`](https://cmake.org/cmake/help/latest/manual/ccmake.1.html)
-   or [`cmake-gui`](https://cmake.org/cmake/help/latest/manual/cmake-gui.1.html).
-
-3. After you have executed and configured `cmake`, you have to compile
-   the project:
-
-        cd C:\LibreSprite\build
-        ninja libresprite
-
-4. When `ninja` finishes the compilation, you can find the executable
-   inside `C:\LibreSprite\build\bin\libresprite.exe`.
+   
+   Now, move into the folder and follow your OS instructions down below.
+   You might want to use [`ccmake`](https://cmake.org/cmake/help/latest/manual/ccmake.1.html)
+   or [`cmake-gui`](https://cmake.org/cmake/help/latest/manual/cmake-gui.1.html)
+   to modify some options
+   
+       cd build
 
 ## Windows details
 
-To choose the Skia back-end
-([after you've compiled Skia](#skia-on-windows)) you can execute `cmake`
-with the following arguments:
+If you're using a command prompt and aiming for a x64 build, be sure to
+use the [x64 prompt](https://i.stack.imgur.com/qeR0b.png) or it won't
+find `vcpkg` libraries.
 
-    cd LibreSprite
-    mkdir build
-    cd build
-    cmake -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND
-    ON -DSKIA_DIR=C:\deps\skia -G Ninja ..
-    ninja libresprite
+Now run
+
+    cmake ^
+      -DCMAKE_TOOLCHAIN_FILE=put_your_vcpkg_path_here\vcpkg\scripts\buildsystems\vcpkg.cmake ^
+      -G Ninja ^
+      ..
+
+To choose the Skia back-end
+([after you've compiled Skia](#skia-on-windows)) add the following
+arguments to cmake:
+
+    -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND=ON -DSKIA_DIR=C:\deps\skia
 
 In this case, `C:\deps\skia` is the directory where Skia was compiled
 as described in [Skia on Windows](#skia-on-windows) section.
 
+Now build with Ninja, and you'll find the executable
+in `\build\bin`
+
+    ninja libresprite
+
 ## Mac OS X details
+
+> [ ! ] MacOS is currently not available due to some issues with Skia
 
 After [compiling Skia](#skia-on-mac-os-x), you should run `cmake` with
 the following parameters and then `ninja`:
 
-    cd LibreSprite
-    mkdir build
-    cd build
     cmake \
       -DCMAKE_OSX_ARCHITECTURES=x86_64 \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 \
@@ -183,17 +184,19 @@ If you have a Retina display, check the following issue:
 
 ## Linux details
 
-On Linux you can specify a specific directory to install LibreSprite
-after a `ninja install` command. For example:
+Run
 
-    cd LibreSprite
-    mkdir build
-    cd build
-    cmake -DCMAKE_INSTALL_PREFIX=~/software -G Ninja ..
+    cmake -G Ninja ..
+    
+And build with
+
     ninja libresprite
 
-Then, you can invoke `ninja install` and it will copy the program in
-the given location (e.g. `~/software/bin/libresprite` on Linux).
+If you want to build LibreSprite in a different directory
+(by default `\build\bin`) add the following cmake flag, and run
+`ninja install` after having built LibreSprite
+
+    -DCMAKE_INSTALL_PREFIX=~/the_path/you_want
 
 # Using shared third party libraries
 
