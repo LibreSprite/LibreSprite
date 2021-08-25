@@ -10,6 +10,7 @@
 #endif
 
 #include "app/app_menus.h"
+#include "app/file_system.h"
 
 #include "base/string.h"
 #include "app/app.h"
@@ -94,6 +95,8 @@ void AppMenus::reload()
   m_palettePopupMenu.reset(loadMenuById(handle, "palette_popup"));
   m_inkPopupMenu.reset(loadMenuById(handle, "ink_popup"));
 
+  rebuildScriptsList();
+
   ////////////////////////////////////////
   // Load keyboard shortcuts for commands
 
@@ -164,6 +167,53 @@ bool AppMenus::rebuildRecentList()
   return true;
 }
 
+bool AppMenus::rebuildScriptsList()
+{
+  Menu* menu = m_scriptsListMenu;
+  printf("Rebuilding scripts list\n");
+
+  // Update the recent file list menu item
+  if (!menu)
+      return false;
+
+  auto& children = menu->children();
+  while (children.size() > 1) {
+      menu->removeChild(children.back());
+  }
+
+  Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
+  ResourceFinder rf;
+  rf.includeUserDir(base::join_path("scripts", ".").c_str());
+  std::string scriptsDir = rf.getFirstOrCreateDefault();
+
+  if (!base::is_directory(scriptsDir))
+      base::make_directory(scriptsDir);
+
+  FileSystemModule* fs = FileSystemModule::instance();
+  LockFS lock(fs);
+  fs->refresh();
+  IFileItem* item = fs->getFileItemFromPath(scriptsDir);
+  if (item) {
+      printf("Got an item\n");
+      Params params;
+      FileItemList list = item->children();
+      for (auto child : list) {
+          if (child->isFolder()) {
+              continue;
+          }
+          std::string fullPath = base::fix_path_separators(child->fileName());
+          printf("Found script: %s %s\n", fullPath.c_str(), child->displayName().c_str());
+          params.set("filename", fullPath.c_str());
+          auto menuitem = new AppMenuItem(
+              child->displayName().c_str(),
+              cmd_run_script,
+              params);
+          menu->addChild(menuitem);
+      }
+  }
+  return true;
+}
+
 Menu* AppMenus::loadMenuById(TiXmlHandle& handle, const char* id)
 {
   ASSERT(id != NULL);
@@ -192,6 +242,11 @@ Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
   Menu* menu = new Menu();
 
   //LOG("convertXmlelemToMenu(%s, %s, %s)\n", elem->Value(), elem->Attribute("id"), elem->Attribute("text"));
+
+  auto id = elem->Attribute("id");
+  if (id && strcmp(id, "script_list") == 0) {
+      m_scriptsListMenu = menu;
+  }
 
   TiXmlElement* child = elem->FirstChildElement();
   while (child) {

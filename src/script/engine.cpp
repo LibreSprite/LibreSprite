@@ -505,6 +505,9 @@ void Engine::evalFile(const std::string& file)
     ContextHandle handle = m_ctx.handle();
 
     base::FileHandle fhandle(base::open_file(file, "rb"));
+    if (!fhandle)
+        return;
+
     FILE* f = fhandle.get();
     if (!f)
       return;
@@ -523,9 +526,6 @@ void Engine::evalFile(const std::string& file)
     ASSERT(buf != nullptr);
     if (fread(buf, 1, sz, f) != sz)
       return;
-
-    fclose(f);
-    f = nullptr;
 
     duk_push_string(handle, duk_to_string(handle, -1));
     duk_eval_raw(handle, nullptr, 0, DUK_COMPILE_EVAL);
