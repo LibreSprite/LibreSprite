@@ -55,7 +55,7 @@ protected:
     gfx::Rect bounds = clientBounds();
     gfx::Color bgcolor, fgcolor;
     doc::Palette* palette = m_palResource->palette();
-    const int leftBorder = 4*guiscale();
+    const int leftPadding = 4*guiscale();
 
     if (isSelected()) {
       bgcolor = theme->colors.listitemSelectedFace();
@@ -70,7 +70,7 @@ protected:
 
     // draw the palette
     gfx::Rect box(
-      bounds.x + leftBorder, bounds.y + bounds.h-6*guiscale(),
+      bounds.x + leftPadding, bounds.y + bounds.h-6*guiscale(),
       4*guiscale(), 4*guiscale());
 
     int maxColShown = bounds.w / box.w;
@@ -99,7 +99,7 @@ protected:
     // and draw the name
     g->drawString(text(), fgcolor, gfx::ColorNone,
       gfx::Point(
-        bounds.x + leftBorder,
+        bounds.x + leftPadding,
         bounds.y + bounds.h/2 - g->measureUIString(text()).h/2));
   }
 
