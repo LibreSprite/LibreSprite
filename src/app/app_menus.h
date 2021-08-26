@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -37,6 +38,7 @@ namespace app {
 
     // Updates the menu of recent files.
     bool rebuildRecentList();
+    bool rebuildScriptsList();
 
     Menu* getRootMenu() { return m_rootMenu; }
     MenuItem* getRecentListMenuitem() { return m_recentListMenuitem; }
@@ -61,6 +63,7 @@ namespace app {
 
     base::UniquePtr<Menu> m_rootMenu;
     MenuItem* m_recentListMenuitem;
+    Menu* m_scriptsListMenu;
     base::UniquePtr<Menu> m_tabPopupMenu;
     base::UniquePtr<Menu> m_documentTabPopupMenu;
     base::UniquePtr<Menu> m_layerPopupMenu;

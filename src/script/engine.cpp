@@ -1,5 +1,6 @@
 // Aseprite Scripting Library
 // Copyright (c) 2015-2016 David Capello
+// Copyright (C) 2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -96,7 +97,7 @@ void on_fatal_handler(duk_context* ctx, duk_errcode_t code, const char* msg)
   throw ScriptEngineException(code, msg);
 }
 
-}
+} // namespace
 
 void Context::dump()
 {
@@ -505,6 +506,9 @@ void Engine::evalFile(const std::string& file)
     ContextHandle handle = m_ctx.handle();
 
     base::FileHandle fhandle(base::open_file(file, "rb"));
+    if (!fhandle)
+        return;
+
     FILE* f = fhandle.get();
     if (!f)
       return;
@@ -521,14 +525,13 @@ void Engine::evalFile(const std::string& file)
 
     char* buf = (char*)duk_push_fixed_buffer(handle, sz);
     ASSERT(buf != nullptr);
-    if (fread(buf, 1, sz, f) != sz)
+    if (fread(buf, 1, sz, f) != static_cast<size_t>(sz))
       return;
 
-    fclose(f);
-    f = nullptr;
-
     duk_push_string(handle, duk_to_string(handle, -1));
-    duk_eval_raw(handle, nullptr, 0, DUK_COMPILE_EVAL);
+    if (duk_peval(handle) != 0) {
+      printLastResult();
+    }
 
     if (m_printLastResult &&
         !duk_is_null_or_undefined(handle, -1)) {

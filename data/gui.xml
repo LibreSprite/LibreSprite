@@ -604,11 +604,6 @@
           <item command="Despeckle" text="&amp;Despeckle (median filter)" />
         </menu>
         <item command="PasteText" text="Insert Text" />
-        <!--menu text="Scripts">
-          <item command="RunScript" text="Transparency from White Background">
-            <param name="filename" value="white_to_alpha.js" />
-          </item>
-        </menu-->
         <separator />
         <item command="KeyboardShortcuts" text="&amp;Keyboard Shortcuts..." />
         <item command="Options" text="Pre&amp;ferences..." />
@@ -781,6 +776,10 @@
         <item command="Home" text="&amp;Home" />
         <separator />
         <item command="Refresh" text="&amp;Refresh &amp;&amp; Reload Skin" />
+      </menu>
+      <menu id="script_list" text="S&amp;cripts">
+        <item command="RescanScripts" text="Rescan scripts"/>
+        <separator />
       </menu>
       <menu text="&amp;Help">
         <item command="Launch" text="Readme">
