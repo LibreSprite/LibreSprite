@@ -608,9 +608,6 @@
         <item command="KeyboardShortcuts" text="&amp;Keyboard Shortcuts..." />
         <item command="Options" text="Pre&amp;ferences..." />
       </menu>
-      <menu id="script_list" text="S&amp;cripts">
-        <item command="RescanScripts" text="Rescan scripts"/>
-      </menu>
       <menu text="&amp;Sprite">
         <item command="SpriteProperties" text="&amp;Properties..." />
         <menu text="Color &amp;Mode">
@@ -779,6 +776,10 @@
         <item command="Home" text="&amp;Home" />
         <separator />
         <item command="Refresh" text="&amp;Refresh &amp;&amp; Reload Skin" />
+      </menu>
+      <menu id="script_list" text="S&amp;cripts">
+        <item command="RescanScripts" text="Rescan scripts"/>
+        <separator />
       </menu>
       <menu text="&amp;Help">
         <item command="Launch" text="Readme">

@@ -170,14 +170,13 @@ bool AppMenus::rebuildRecentList()
 bool AppMenus::rebuildScriptsList()
 {
   Menu* menu = m_scriptsListMenu;
-  printf("Rebuilding scripts list\n");
 
   // Update the recent file list menu item
   if (!menu)
       return false;
 
-  auto& children = menu->children();
-  while (children.size() > 1) {
+  const WidgetsList& children = menu->children();
+  while (children.size() && children.back()->type() != kSeparatorWidget) {
       menu->removeChild(children.back());
   }
 
@@ -194,7 +193,6 @@ bool AppMenus::rebuildScriptsList()
   fs->refresh();
   IFileItem* item = fs->getFileItemFromPath(scriptsDir);
   if (item) {
-      printf("Got an item\n");
       Params params;
       FileItemList list = item->children();
       for (auto child : list) {
@@ -202,7 +200,6 @@ bool AppMenus::rebuildScriptsList()
               continue;
           }
           std::string fullPath = base::fix_path_separators(child->fileName());
-          printf("Found script: %s %s\n", fullPath.c_str(), child->displayName().c_str());
           params.set("filename", fullPath.c_str());
           auto menuitem = new AppMenuItem(
               child->displayName().c_str(),
