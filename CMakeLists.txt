@@ -119,7 +119,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
-set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
+set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape1.8)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 
 # Search in the "cmake" directory for additional CMake modules.
