@@ -20,7 +20,6 @@
 #include "app/commands/params.h"
 #include "app/console.h"
 #include "app/gui_xml.h"
-#include "app/recent_files.h"
 #include "app/resource_finder.h"
 #include "app/tools/tool_box.h"
 #include "app/ui/app_menuitem.h"
@@ -57,14 +56,6 @@ AppMenus* AppMenus::instance()
   return instance;
 }
 
-AppMenus::AppMenus()
-  : m_recentListMenuitem(NULL)
-{
-  m_recentFilesConn =
-    App::instance()->recentFiles()->Changed.connect(
-      base::Bind(&AppMenus::rebuildRecentList, this));
-}
-
 void AppMenus::reload()
 {
   XmlDocumentRef doc(GuiXml::instance()->doc());
@@ -76,7 +67,8 @@ void AppMenus::reload()
 
   LOG(" - Loading menus from \"%s\"...\n", path);
 
-  m_rootMenu.reset(loadMenuById(handle, "main_menu"));
+  loadMenus(handle);
+
 
 #if _DEBUG
   // Add a warning element because the user is not using the last well-known gui.xml file.
@@ -85,16 +77,6 @@ void AppMenus::reload()
 #endif
 
   LOG("Main menu loaded.\n");
-
-  m_tabPopupMenu.reset(loadMenuById(handle, "tab_popup"));
-  m_documentTabPopupMenu.reset(loadMenuById(handle, "document_tab_popup"));
-  m_layerPopupMenu.reset(loadMenuById(handle, "layer_popup"));
-  m_framePopupMenu.reset(loadMenuById(handle, "frame_popup"));
-  m_celPopupMenu.reset(loadMenuById(handle, "cel_popup"));
-  m_celMovementPopupMenu.reset(loadMenuById(handle, "cel_movement_popup"));
-  m_frameTagPopupMenu.reset(loadMenuById(handle, "frame_tag_popup"));
-  m_palettePopupMenu.reset(loadMenuById(handle, "palette_popup"));
-  m_inkPopupMenu.reset(loadMenuById(handle, "ink_popup"));
 
   rebuildScriptsList();
 
@@ -120,119 +102,41 @@ void AppMenus::reload()
   }
 }
 
-bool AppMenus::rebuildRecentList()
-{
-  MenuItem* list_menuitem = m_recentListMenuitem;
-  MenuItem* menuitem;
-
-  // Update the recent file list menu item
-  if (list_menuitem) {
-    if (list_menuitem->hasSubmenuOpened())
-      return false;
-
-    Command* cmd_open_file = CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
-
-    Menu* submenu = list_menuitem->getSubmenu();
-    if (submenu) {
-      list_menuitem->setSubmenu(NULL);
-      submenu->deferDelete();
-    }
-
-    // Build the menu of recent files
-    submenu = new Menu();
-    list_menuitem->setSubmenu(submenu);
-
-    auto it = App::instance()->recentFiles()->files_begin();
-    auto end = App::instance()->recentFiles()->files_end();
-    if (it != end) {
-      Params params;
-
-      for (; it != end; ++it) {
-        const char* filename = it->c_str();
-        params.set("filename", filename);
-
-        menuitem = new AppMenuItem(
-          base::get_file_name(filename).c_str(),
-          cmd_open_file,
-          params);
-        submenu->addChild(menuitem);
-      }
-    }
-    else {
-      menuitem = new AppMenuItem("Nothing", NULL, Params());
-      menuitem->setEnabled(false);
-      submenu->addChild(menuitem);
-    }
-  }
-
-  return true;
+void AppMenus::rebuildRecentList() {
+    m_recentFilesMenu.rebuildRecentList();
 }
 
-bool AppMenus::rebuildScriptsList()
-{
-  Menu* menu = m_scriptsListMenu;
-
-  // Update the recent file list menu item
-  if (!menu)
-    return false;
-
-  const WidgetsList& children = menu->children();
-  while (children.size() && children.back()->type() != kSeparatorWidget) {
-    menu->removeChild(children.back());
-  }
-
-  Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
-  ResourceFinder rf;
-  rf.includeUserDir(base::join_path("scripts", ".").c_str());
-  std::string scriptsDir = rf.getFirstOrCreateDefault();
-
-  if (!base::is_directory(scriptsDir))
-    base::make_directory(scriptsDir);
-
-  FileSystemModule* fs = FileSystemModule::instance();
-  LockFS lock(fs);
-  fs->refresh();
-  IFileItem* item = fs->getFileItemFromPath(scriptsDir);
-  if (item) {
-    Params params;
-    FileItemList list = item->children();
-    for (auto child : list) {
-      if (child->isFolder()) {
-        continue;
-      }
-      std::string fullPath = base::fix_path_separators(child->fileName());
-      params.set("filename", fullPath.c_str());
-      auto menuitem = new AppMenuItem(
-        child->displayName().c_str(),
-        cmd_run_script,
-        params);
-      menu->addChild(menuitem);
+void AppMenus::clearIdentifiedWidgets() {
+    for (auto entry : m_identifiedWidgets) {
+        if (auto parent = entry.second->parent()) {
+            parent->removeChild(entry.second);
+        }
     }
-  }
-  return true;
+    for (auto entry : m_identifiedWidgets) {
+        delete entry.second;
+    }
+    m_identifiedWidgets.clear();
 }
 
-Menu* AppMenus::loadMenuById(TiXmlHandle& handle, const char* id)
+void AppMenus::rebuildScriptsList() {
+  m_scriptMenu.rebuildScriptsList(getById("script_list"));
+}
+
+void AppMenus::loadMenus(TiXmlHandle& handle)
 {
-  ASSERT(id != NULL);
+    clearIdentifiedWidgets();
 
-  //LOG("loadMenuById(%s)\n", id);
-
-  // <gui><menus><menu>
-  TiXmlElement* xmlMenu = handle
-    .FirstChild("gui")
-    .FirstChild("menus")
-    .FirstChild("menu").ToElement();
-  while (xmlMenu) {
-    const char* menu_id = xmlMenu->Attribute("id");
-
-    if (menu_id && strcmp(menu_id, id) == 0)
-      return convertXmlelemToMenu(xmlMenu);
-
-    xmlMenu = xmlMenu->NextSiblingElement();
-  }
-
-  throw base::Exception("Error loading menu '%s'\nReinstall the application.", id);
+    // <gui><menus><menu>
+    TiXmlElement* xmlMenu = handle
+        .FirstChild("gui")
+        .FirstChild("menus")
+        .FirstChild("menu").ToElement();
+    for (; xmlMenu; xmlMenu = xmlMenu->NextSiblingElement()) {
+        auto menu = convertXmlelemToMenu(xmlMenu);
+        if ( menu->id().empty()) {
+            delete menu;
+        }
+    }
 }
 
 Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
@@ -242,8 +146,9 @@ Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
   //LOG("convertXmlelemToMenu(%s, %s, %s)\n", elem->Value(), elem->Attribute("id"), elem->Attribute("text"));
 
   auto id = elem->Attribute("id");
-  if (id && strcmp(id, "script_list") == 0) {
-    m_scriptsListMenu = menu;
+  if (id) {
+      menu->setId(id);
+      m_identifiedWidgets[id] = menu;
   }
 
   TiXmlElement* child = elem->FirstChildElement();
@@ -293,12 +198,9 @@ Widget* AppMenus::convertXmlelemToMenuitem(TiXmlElement* elem)
     return NULL;
 
   /* has it a ID? */
-  const char* id = elem->Attribute("id");
-  if (id) {
-    /* recent list menu */
-    if (strcmp(id, "recent_list") == 0) {
-      m_recentListMenuitem = menuitem;
-    }
+  
+  if (const char* id = elem->Attribute("id")) {
+    m_identifiedWidgets[id] = menuitem;
   }
 
   // Has it a sub-menu (<menu>)?
@@ -333,16 +235,17 @@ void AppMenus::applyShortcutToMenuitemsWithCommand(Command* command, const Param
   // TODO redesign the list of popup menus, it might be an
   //      autogenerated widget from 'gen'
   Menu* menus[] = {
-    m_rootMenu,
-    m_tabPopupMenu,
-    m_documentTabPopupMenu,
-    m_layerPopupMenu,
-    m_framePopupMenu,
-    m_celPopupMenu,
-    m_celMovementPopupMenu,
-    m_frameTagPopupMenu,
-    m_palettePopupMenu,
-    m_inkPopupMenu
+    getRootMenu(),
+    getTabPopupMenu(),
+    getDocumentTabPopupMenu(),
+    getLayerPopupMenu(),
+    getFramePopupMenu(),
+    getCelPopupMenu(),
+    getCelMovementPopupMenu(),
+    getFrameTagPopupMenu(),
+    getPalettePopupMenu(),
+    getInkPopupMenu(),
+    getById("script_list")
   };
 
   for (Menu* menu : menus)

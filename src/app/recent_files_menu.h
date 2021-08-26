@@ -1,0 +1,25 @@
+// LibreSprite
+// Copyright (C) 2021 LibreSprite contributors
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License version 2 as
+// published by the Free Software Foundation.
+
+#pragma once
+
+#include "base/signal.h"
+#include "base/connection.h"
+#include "ui/menu.h"
+
+namespace app {
+
+class RecentFilesMenu {
+public:
+    RecentFilesMenu();
+    void rebuildRecentList();
+
+private:
+    base::ScopedConnection m_recentFilesConn;
+};
+
+}
