@@ -96,7 +96,7 @@ void on_fatal_handler(duk_context* ctx, duk_errcode_t code, const char* msg)
   throw ScriptEngineException(code, msg);
 }
 
-}
+} // namespace
 
 void Context::dump()
 {
@@ -524,11 +524,13 @@ void Engine::evalFile(const std::string& file)
 
     char* buf = (char*)duk_push_fixed_buffer(handle, sz);
     ASSERT(buf != nullptr);
-    if (fread(buf, 1, sz, f) != sz)
+    if (fread(buf, 1, sz, f) != static_cast<size_t>(sz))
       return;
 
     duk_push_string(handle, duk_to_string(handle, -1));
-    duk_eval_raw(handle, nullptr, 0, DUK_COMPILE_EVAL);
+    if (duk_peval(handle) != 0) {
+      printLastResult();
+    }
 
     if (m_printLastResult &&
         !duk_is_null_or_undefined(handle, -1)) {

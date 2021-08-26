@@ -173,11 +173,11 @@ bool AppMenus::rebuildScriptsList()
 
   // Update the recent file list menu item
   if (!menu)
-      return false;
+    return false;
 
   const WidgetsList& children = menu->children();
   while (children.size() && children.back()->type() != kSeparatorWidget) {
-      menu->removeChild(children.back());
+    menu->removeChild(children.back());
   }
 
   Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
@@ -186,27 +186,27 @@ bool AppMenus::rebuildScriptsList()
   std::string scriptsDir = rf.getFirstOrCreateDefault();
 
   if (!base::is_directory(scriptsDir))
-      base::make_directory(scriptsDir);
+    base::make_directory(scriptsDir);
 
   FileSystemModule* fs = FileSystemModule::instance();
   LockFS lock(fs);
   fs->refresh();
   IFileItem* item = fs->getFileItemFromPath(scriptsDir);
   if (item) {
-      Params params;
-      FileItemList list = item->children();
-      for (auto child : list) {
-          if (child->isFolder()) {
-              continue;
-          }
-          std::string fullPath = base::fix_path_separators(child->fileName());
-          params.set("filename", fullPath.c_str());
-          auto menuitem = new AppMenuItem(
-              child->displayName().c_str(),
-              cmd_run_script,
-              params);
-          menu->addChild(menuitem);
+    Params params;
+    FileItemList list = item->children();
+    for (auto child : list) {
+      if (child->isFolder()) {
+        continue;
       }
+      std::string fullPath = base::fix_path_separators(child->fileName());
+      params.set("filename", fullPath.c_str());
+      auto menuitem = new AppMenuItem(
+        child->displayName().c_str(),
+        cmd_run_script,
+        params);
+      menu->addChild(menuitem);
+    }
   }
   return true;
 }
@@ -242,7 +242,7 @@ Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
 
   auto id = elem->Attribute("id");
   if (id && strcmp(id, "script_list") == 0) {
-      m_scriptsListMenu = menu;
+    m_scriptsListMenu = menu;
   }
 
   TiXmlElement* child = elem->FirstChildElement();
