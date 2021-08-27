@@ -577,9 +577,10 @@ private:
   }
 
   void fillList(ListBox* listbox, Menu* menu, int level) {
+    auto recentList = AppMenus::instance()->getById<MenuItem>("recent_list");
     for (auto child : menu->children()) {
       if (AppMenuItem* menuItem = dynamic_cast<AppMenuItem*>(child)) {
-        if (menuItem == AppMenus::instance()->getRecentListMenuitem())
+        if (menuItem == recentList)
           continue;
 
         KeyItem* keyItem = new KeyItem(
