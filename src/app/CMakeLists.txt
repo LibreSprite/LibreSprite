@@ -226,6 +226,7 @@ add_library(app-lib
   commands/cmd_onionskin.cpp
   commands/cmd_open_file.cpp
   commands/cmd_open_in_folder.cpp
+  commands/cmd_open_scripts_folder.cpp
   commands/cmd_open_with_app.cpp
   commands/cmd_options.cpp
   commands/cmd_palette_editor.cpp
