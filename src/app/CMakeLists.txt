@@ -316,9 +316,11 @@ add_library(app-lib
   pref/preferences.cpp
   project.cpp
   recent_files.cpp
+  recent_files_menu.cpp
   res/palettes_loader_delegate.cpp
   res/resources_loader.cpp
   resource_finder.cpp
+  script/script_menu.cpp
   script/app_object.cpp
   script/app_scripting.cpp
   script/console_object.cpp
