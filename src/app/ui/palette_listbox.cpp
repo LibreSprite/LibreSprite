@@ -55,6 +55,7 @@ protected:
     gfx::Rect bounds = clientBounds();
     gfx::Color bgcolor, fgcolor;
     doc::Palette* palette = m_palResource->palette();
+    const int leftPadding = 4*guiscale();
 
     if (isSelected()) {
       bgcolor = theme->colors.listitemSelectedFace();
@@ -67,11 +68,15 @@ protected:
 
     g->fillRect(bgcolor, bounds);
 
+    // draw the palette
     gfx::Rect box(
-      bounds.x, bounds.y + bounds.h-6*guiscale(),
+      bounds.x + leftPadding, bounds.y + bounds.h-6*guiscale(),
       4*guiscale(), 4*guiscale());
 
-    for (int i=0; i<palette->size(); ++i) {
+    int maxColShown = bounds.w / box.w;
+    maxColShown = std::min(palette->size(), maxColShown - 5);
+
+    for (int i=0; i<maxColShown; ++i) {
       doc::color_t c = palette->getEntry(i);
 
       g->fillRect(gfx::rgba(
@@ -82,9 +87,19 @@ protected:
       box.x += box.w;
     }
 
+    // draw ellipsis if it's too long
+    gfx::Color dotsColor = theme->colors.disabled();
+    const int ellipsisY = box.y + 2*guiscale();
+    if (maxColShown < palette->size()) {
+      g->putPixel(dotsColor, box.x + 2*guiscale(), ellipsisY);
+      g->putPixel(dotsColor, box.x + 4*guiscale(), ellipsisY);
+      g->putPixel(dotsColor, box.x + 6*guiscale(), ellipsisY);
+    }
+
+    // and draw the name
     g->drawString(text(), fgcolor, gfx::ColorNone,
       gfx::Point(
-        bounds.x + guiscale()*2,
+        bounds.x + leftPadding,
         bounds.y + bounds.h/2 - g->measureUIString(text()).h/2));
   }
 
