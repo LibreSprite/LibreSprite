@@ -42,9 +42,11 @@ option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 if(APPLE)
   # On OS X Allegro isn't supported anymore
   set(USE_ALLEG4_BACKEND off)
-  set(USE_SKIA_BACKEND on)
+  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 else()
-  option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" on)
+  option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" off)
+  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
   option(USE_SKIA_BACKEND   "Use Skia backend" off)
 endif()
 
@@ -215,6 +217,27 @@ if(USE_ALLEG4_BACKEND)
 
     set(LIBALLEGRO4_LINK_FLAGS allegro)
   endif()
+endif()
+
+# SDL2 backend
+if(USE_SDL2_BACKEND)
+  add_definitions(-DUSE_SDL2_BACKEND)
+  execute_process(COMMAND sdl2-config --libs --shared
+    OUTPUT_VARIABLE LIBSDL2_LINK_FLAGS
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  execute_process(COMMAND sdl2-config --cflags --shared
+    OUTPUT_VARIABLE LIBSDL2_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  if(NOT LIBSDL2_LINK_FLAGS)
+    message(FATAL_ERROR "SDL2 not found")
+  endif()
+
+  # Get flags to link programs using allegro-config program
+
+  set(LIBSDL2_LINK_FLAGS ${LIBSDL2_LINK_FLAGS} -lSDL2_image ${PLATFORM_LIBS})
+  include_directories(${LIBSDL2_INCLUDE_DIR})
 endif()
 
 # Skia backend

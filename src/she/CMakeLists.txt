@@ -39,6 +39,40 @@ if(USE_ALLEG4_BACKEND)
 endif()
 
 ######################################################################
+# SDL2 backend
+
+if(USE_SDL2_BACKEND)
+  add_definitions(-DUSE_KEY_POLLER)
+  # if(WIN32)
+  #   find_package(DXGuid)
+  #   if(NOT DXGUID_FOUND)
+  #     if(MSVC)
+  #       message(FATAL_ERROR "DirectX required for Windows port. You might need to add DirectX include and lib directories to your INCLUDE and LIB environment variables.")
+  #     else()
+  #       message(FATAL_ERROR "DirectX required for Windows port.")
+  #     endif()
+  #   endif()
+  #   include_directories(SYSTEM ${DXGUID_INCLUDE_DIR})
+  # else()
+    add_definitions(-DUSE_MOUSE_POLLER)
+  # endif()
+
+  list(APPEND SHE_SOURCES
+    sdl2/sdl2_display.cpp
+    sdl2/sdl2_surface.cpp
+    sdl2/display_events.cpp
+    sdl2/key_poller.cpp
+    sdl2/mouse_poller.cpp
+    sdl2/she.cpp)
+
+  if(APPLE)
+    if(NOT USE_SHARED_SDL2)
+      list(APPEND SHE_SOURCES sdl2/app.mm)
+    endif()
+  endif()
+endif()
+
+######################################################################
 # Skia backend
 
 if(USE_SKIA_BACKEND)
@@ -243,6 +277,10 @@ if(USE_ALLEG4_BACKEND)
     ${LIBALLEGRO4_LINK_FLAGS}
     ${DXGUID_LIBRARIES}
     ${X11_LIBRARIES})
+endif()
+
+if(USE_SDL2_BACKEND)
+  target_link_libraries(she ${LIBSDL2_LINK_FLAGS})
 endif()
 
 if(USE_SKIA_BACKEND)
