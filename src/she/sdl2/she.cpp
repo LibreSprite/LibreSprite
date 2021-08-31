@@ -256,6 +256,19 @@ namespace sdl {
                 case SDL_KEYUP: {
                     auto it = keyCodeMapping.find((SDL_KeyCode) sdlEvent.key.keysym.sym);
                     event.setType(sdlEvent.type == SDL_KEYUP ? Event::KeyUp : Event::KeyDown);
+                    int mod = 0;
+
+                    if (sdlEvent.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
+                        mod |= she::kKeyShiftModifier;
+                    if (sdlEvent.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
+                        mod |= she::kKeyCtrlModifier;
+                    if (sdlEvent.key.keysym.mod & (KMOD_LALT | KMOD_RALT))
+                        mod |= she::kKeyAltModifier;
+                    if (sdlEvent.key.keysym.mod & (KMOD_LGUI | KMOD_RGUI))
+                        mod |= she::kKeyCmdModifier;
+
+                    event.setModifiers((she::KeyModifiers) mod);
+
                     if (it != keyCodeMapping.end()) {
                         event.setScancode(it->second);
                         std::cout << "scancode: " << sdlEvent.key.keysym.sym << std::endl;
