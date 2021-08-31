@@ -513,8 +513,8 @@ void SDL2Surface::drawSurface(const Surface* src, int dstx, int dsty)
     auto dlocked = m_bmp->locked;
     if (slocked) SDL_UnlockSurface(srcbmp);
     if (dlocked) SDL_UnlockSurface(m_bmp);
-    SDL_FillRect(m_bmp, &rect, random());
-//     SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
+    // SDL_FillRect(m_bmp, &rect, random());
+    SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
     if (slocked) SDL_LockSurface(srcbmp);
     if (dlocked) SDL_LockSurface(m_bmp);
 }
@@ -527,7 +527,7 @@ void SDL2Surface::drawRgbaSurface(const Surface* src, int dstx, int dsty)
     auto dlocked = m_bmp->locked;
     if (slocked) SDL_UnlockSurface(srcbmp);
     if (dlocked) SDL_UnlockSurface(m_bmp);
-    SDL_FillRect(m_bmp, &rect, random());
+    // SDL_FillRect(m_bmp, &rect, random());
     SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
     if (slocked) SDL_LockSurface(srcbmp);
     if (dlocked) SDL_LockSurface(m_bmp);

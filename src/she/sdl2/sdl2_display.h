@@ -62,7 +62,7 @@ namespace she {
         NativeCursor m_nativeCursor;
         int m_restoredWidth;
         int m_restoredHeight;
-        bool dirty = true;
+        bool m_dirty = true;
     };
 
     extern SDL2Display* unique_display;

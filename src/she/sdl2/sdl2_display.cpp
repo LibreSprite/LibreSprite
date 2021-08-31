@@ -373,10 +373,6 @@ SDL2Display::SDL2Display(int width, int height, int scale) :
   width = 800;
   height = 600;
 
-  // if (SDL_CreateWindowAndRenderer(width, height, flags, &m_window, &m_renderer) < 0) {
-  //     throw DisplayCreationException(SDL_GetError());
-  // }
-
   m_window = SDL_CreateWindow("",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
@@ -385,22 +381,11 @@ SDL2Display::SDL2Display(int width, int height, int scale) :
   if (!m_window)
       throw DisplayCreationException(SDL_GetError());
 
-  // m_renderer = SDL_CreateRenderer(
-  //     m_window,
-  //     -1,
-  //     SDL_RENDERER_SOFTWARE// | SDL_RENDERER_PRESENTVSYNC
-  //     );
-
-  // if (!m_renderer)
-  //     throw DisplayCreationException(SDL_GetError());
-
   sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
   m_width = width;
   m_height = height;
 
   SDL_ShowCursor(SDL_DISABLE);
-  // SDL_SetRenderDrawColor( m_renderer, 0, 0, 0, 255 );
-  // SDL_RenderClear( m_renderer );
 
   setScale(scale);
 
@@ -438,11 +423,13 @@ int SDL2Display::height() const
 
 void SDL2Display::setWidth(int newWidth)
 {
+    std::cout << "New width: " << std::to_string(newWidth) << std::endl;
     m_width = newWidth;
 }
 
 void SDL2Display::setHeight(int newHeight)
 {
+    std::cout << "New height: " << std::to_string(newHeight) << std::endl;
     m_height = newHeight;
 }
 
@@ -458,11 +445,13 @@ int SDL2Display::originalHeight() const
 
 void SDL2Display::setOriginalWidth(int width)
 {
+  std::cout << "New Original width: " << std::to_string(width) << std::endl;
   m_restoredWidth = width;
 }
 
 void SDL2Display::setOriginalHeight(int height)
 {
+  std::cout << "New Original height: " << std::to_string(height) << std::endl;
   m_restoredHeight = height;
 }
 
@@ -484,12 +473,13 @@ void SDL2Display::setScale(int scale)
 void SDL2Display::recreateSurface()
 {
     auto  newSurface = new SDL2Surface(width() / m_scale, height() / m_scale, SDL2Surface::DeleteAndDestroy);
-  if (m_surface) {
-      // m_surface->blitTo(newSurface, 0, 0, 0, 0, width(), height());
-      m_surface->dispose();
-  }
-  m_surface = newSurface;
-  she::sdl::screen = newSurface;
+    if (m_surface) {
+        m_surface->blitTo(newSurface, 0, 0, 0, 0, width(), height());
+        m_surface->dispose();
+    }
+    m_dirty = true;
+    m_surface = newSurface;
+    she::sdl::screen = newSurface;
 }
 
 Surface* SDL2Display::getSurface()
@@ -498,15 +488,15 @@ Surface* SDL2Display::getSurface()
 }
 
 void SDL2Display::present() {
-    if (!dirty)
+    if (!m_dirty)
         return;
-    dirty = false;
+    m_dirty = false;
     SDL_UpdateWindowSurface(m_window);
 }
 
 void SDL2Display::flip(const gfx::Rect& bounds)
 {
-  dirty = true;
+    m_dirty = true;
 
     auto nativeSurface = SDL_GetWindowSurface(m_window);
     if (m_nativeSurface != nativeSurface) {
