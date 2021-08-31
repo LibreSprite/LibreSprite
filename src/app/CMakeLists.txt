@@ -226,6 +226,7 @@ add_library(app-lib
   commands/cmd_onionskin.cpp
   commands/cmd_open_file.cpp
   commands/cmd_open_in_folder.cpp
+  commands/cmd_open_scripts_folder.cpp
   commands/cmd_open_with_app.cpp
   commands/cmd_options.cpp
   commands/cmd_palette_editor.cpp
@@ -243,6 +244,7 @@ add_library(app-lib
   commands/cmd_reverse_frames.cpp
   commands/cmd_rotate.cpp
   commands/cmd_run_script.cpp
+  commands/cmd_rescan_scripts.cpp
   commands/cmd_save_file.cpp
   commands/cmd_save_mask.cpp
   commands/cmd_save_palette.cpp
@@ -315,9 +317,11 @@ add_library(app-lib
   pref/preferences.cpp
   project.cpp
   recent_files.cpp
+  recent_files_menu.cpp
   res/palettes_loader_delegate.cpp
   res/resources_loader.cpp
   resource_finder.cpp
+  script/script_menu.cpp
   script/app_object.cpp
   script/app_scripting.cpp
   script/console_object.cpp

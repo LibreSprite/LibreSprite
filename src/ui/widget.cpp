@@ -999,7 +999,7 @@ bool Widget::paintEvent(Graphics* graphics)
   // For transparent widgets we have to draw the parent first.
   if (isTransparent()) {
 #if _DEBUG
-    // In debug mode we can fill the area with Red so we know if the
+    // In debug mode we can fill the area with Red so we know if
     // we are drawing the parent correctly.
     graphics->fillRect(gfx::rgba(255, 0, 0), clientBounds());
 #endif

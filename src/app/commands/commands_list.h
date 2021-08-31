@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -83,6 +84,7 @@ FOR_EACH_COMMAND(NewLayerSet)
 FOR_EACH_COMMAND(NewSpriteFromSelection)
 FOR_EACH_COMMAND(OpenFile)
 FOR_EACH_COMMAND(OpenInFolder)
+FOR_EACH_COMMAND(OpenScriptsFolder)
 FOR_EACH_COMMAND(OpenWithApp)
 FOR_EACH_COMMAND(Options)
 FOR_EACH_COMMAND(PaletteEditor)
@@ -102,6 +104,7 @@ FOR_EACH_COMMAND(ReselectMask)
 FOR_EACH_COMMAND(ReverseFrames)
 FOR_EACH_COMMAND(Rotate)
 FOR_EACH_COMMAND(RunScript)
+FOR_EACH_COMMAND(RescanScripts)
 FOR_EACH_COMMAND(SaveFile)
 FOR_EACH_COMMAND(SaveFileAs)
 FOR_EACH_COMMAND(SaveFileCopyAs)
