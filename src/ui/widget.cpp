@@ -107,6 +107,25 @@ void Widget::deferDelete()
   manager()->addToGarbage(this);
 }
 
+PropertyPtr Widget::getProperty(const std::string& name) const
+{
+  auto it = m_properties.find(name);
+  if (it != m_properties.end())
+    return it->second;
+  else
+    return PropertyPtr();
+}
+
+void Widget::setProperty(PropertyPtr property)
+{
+  m_properties[property->getName()] = property;
+}
+
+const Widget::Properties& Widget::getProperties() const
+{
+  return m_properties;
+}
+
 void Widget::initTheme()
 {
   InitThemeEvent ev(this, m_theme);

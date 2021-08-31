@@ -10,7 +10,7 @@
 
 namespace ui {
 
-  class Component;
+  class Widget;
 
   // Base class for every kind of event.
   class Event
@@ -18,15 +18,15 @@ namespace ui {
   public:
     // Creates a new event specifying that it was generated from the
     // source component.
-    Event(Component* source);
+    Event(Widget* source);
     virtual ~Event();
 
     // Returns the component which generated the event.
-    Component* getSource();
+    Widget* getSource();
 
   private:
     // The component which generates the event.
-    Component* m_source;
+    Widget* m_source;
   };
 
 } // namespace ui

@@ -14,7 +14,6 @@
 #include "ui/box.h"
 #include "ui/button.h"
 #include "ui/combobox.h"
-#include "ui/component.h"
 #include "ui/cursor.h"
 #include "ui/cursor_type.h"
 #include "ui/custom_label.h"

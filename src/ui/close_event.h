@@ -15,7 +15,7 @@ namespace ui {
   class CloseEvent : public Event
   {
   public:
-    CloseEvent(Component* source)
+    CloseEvent(Widget* source)
       : Event(source) { }
   };
 

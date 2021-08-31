@@ -114,7 +114,7 @@ namespace app {
                             ColorSliders::Mode mode,
                             const app::Color& color,
                             int delta,
-                            ui::Component* source)
+                            ui::Widget* source)
       : Event(source)
       , m_channel(channel)
       , m_mode(mode)

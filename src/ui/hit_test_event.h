@@ -28,7 +28,7 @@ namespace ui {
 
   class HitTestEvent : public Event {
   public:
-    HitTestEvent(Component* source, const gfx::Point& point, HitTest hit)
+    HitTestEvent(Widget* source, const gfx::Point& point, HitTest hit)
       : Event(source)
       , m_point(point)
       , m_hit(hit) { }

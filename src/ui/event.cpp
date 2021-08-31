@@ -12,7 +12,7 @@
 
 namespace ui {
 
-Event::Event(Component* source)
+Event::Event(Widget* source)
   : m_source(source)
 {
 }
@@ -21,7 +21,7 @@ Event::~Event()
 {
 }
 
-Component* Event::getSource()
+Widget* Event::getSource()
 {
   return m_source;
 }

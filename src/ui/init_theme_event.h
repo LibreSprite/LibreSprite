@@ -16,7 +16,7 @@ namespace ui {
 
   class InitThemeEvent : public Event {
   public:
-    InitThemeEvent(Component* source, Theme* theme)
+    InitThemeEvent(Widget* source, Theme* theme)
       : Event(source)
       , m_theme(theme){ }
 

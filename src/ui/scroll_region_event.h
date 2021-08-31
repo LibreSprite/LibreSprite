@@ -15,7 +15,7 @@ namespace ui {
 
   class ScrollRegionEvent : public Event {
   public:
-    ScrollRegionEvent(Component* source, gfx::Region& region)
+    ScrollRegionEvent(Widget* source, gfx::Region& region)
       : Event(source), m_region(region) {
     }
 
