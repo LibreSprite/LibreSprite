@@ -240,6 +240,15 @@ namespace sdl {
                         });
                     return;
 
+                case SDL_MOUSEWHEEL:
+                    event.setType(Event::MouseWheel);
+                    event.setWheelDelta({0, -sdlEvent.wheel.y});
+                    event.setPosition({
+                            sdlEvent.wheel.x / unique_display->scale(),
+                            sdlEvent.wheel.y / unique_display->scale()
+                        });
+                    return;
+
                 case SDL_MOUSEBUTTONUP:
                 case SDL_MOUSEBUTTONDOWN: {
                     auto type = sdlEvent.type == SDL_MOUSEBUTTONDOWN ? Event::MouseDown : Event::MouseUp;
