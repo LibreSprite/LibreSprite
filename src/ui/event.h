@@ -1,5 +1,5 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2013  David Capello
+// Aseprite    | Copyright (C) 2001-2013  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -10,23 +10,23 @@
 
 namespace ui {
 
-  class Component;
+  class Widget;
 
   // Base class for every kind of event.
   class Event
   {
   public:
     // Creates a new event specifying that it was generated from the
-    // source component.
-    Event(Component* source);
+    // source widget.
+    Event(Widget* source);
     virtual ~Event();
 
-    // Returns the component which generated the event.
-    Component* getSource();
+    // Returns the widget which generated the event.
+    Widget* getSource();
 
   private:
-    // The component which generates the event.
-    Component* m_source;
+    // The widget which generates the event.
+    Widget* m_source;
   };
 
 } // namespace ui

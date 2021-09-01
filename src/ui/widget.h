@@ -1,5 +1,5 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -8,6 +8,7 @@
 #define UI_WIDGET_H_INCLUDED
 #pragma once
 
+#include "base/disable_copying.h"
 #include "gfx/border.h"
 #include "gfx/color.h"
 #include "gfx/point.h"
@@ -15,11 +16,12 @@
 #include "gfx/region.h"
 #include "gfx/size.h"
 #include "ui/base.h"
-#include "ui/component.h"
 #include "ui/graphics.h"
+#include "ui/property.h"
 #include "ui/widget_type.h"
 #include "ui/widgets_list.h"
 
+#include <map>
 #include <string>
 
 #define ASSERT_VALID_WIDGET(widget) ASSERT((widget) != NULL)
@@ -42,7 +44,10 @@ namespace ui {
   class Theme;
   class Window;
 
-  class Widget : public Component {
+  /* Widgets are the basic visual object in LibreSprite, such as menus and grids.
+
+  Widgets are non-copyable */
+  class Widget {
   public:
 
     // ===============================================================
@@ -55,6 +60,15 @@ namespace ui {
     // Safe way to delete a widget when it is not in the manager message
     // queue anymore.
     void deferDelete();
+
+    // Properties handler
+
+    typedef std::map<std::string, PropertyPtr> Properties;
+
+    PropertyPtr getProperty(const std::string& name) const;
+    void setProperty(PropertyPtr property);
+
+    const Properties& getProperties() const;
 
     // Main properties.
 
@@ -392,12 +406,15 @@ namespace ui {
     WidgetsList m_children;       // Sub-widgets
     Widget* m_parent;             // Who is the parent?
     gfx::Size* m_sizeHint;
+    Properties m_properties;
 
     // Widget size limits
     gfx::Size m_minSize, m_maxSize;
 
     gfx::Border m_border;       // Border separation with the parent
     int m_childSpacing;         // Separation between children
+
+    DISABLE_COPYING(Widget);
   };
 
   WidgetType register_widget_type();

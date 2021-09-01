@@ -1,5 +1,5 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -105,6 +105,25 @@ Widget::~Widget()
 void Widget::deferDelete()
 {
   manager()->addToGarbage(this);
+}
+
+PropertyPtr Widget::getProperty(const std::string& name) const
+{
+  auto it = m_properties.find(name);
+  if (it != m_properties.end())
+    return it->second;
+  else
+    return PropertyPtr();
+}
+
+void Widget::setProperty(PropertyPtr property)
+{
+  m_properties[property->getName()] = property;
+}
+
+const Widget::Properties& Widget::getProperties() const
+{
+  return m_properties;
 }
 
 void Widget::initTheme()

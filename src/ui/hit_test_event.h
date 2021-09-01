@@ -1,5 +1,5 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2013, 2015  David Capello
+// Aseprite    | Copyright (C) 2001-2013, 2015  David Capello
+// LibreSprite | Copyright (C) 2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -28,7 +28,7 @@ namespace ui {
 
   class HitTestEvent : public Event {
   public:
-    HitTestEvent(Component* source, const gfx::Point& point, HitTest hit)
+    HitTestEvent(Widget* source, const gfx::Point& point, HitTest hit)
       : Event(source)
       , m_point(point)
       , m_hit(hit) { }

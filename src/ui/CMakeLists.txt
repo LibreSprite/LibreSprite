@@ -11,7 +11,6 @@ add_library(ui-lib
   box.cpp
   button.cpp
   combobox.cpp
-  component.cpp
   cursor.cpp
   custom_label.cpp
   entry.cpp

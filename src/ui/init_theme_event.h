@@ -1,5 +1,5 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2013, 2015  David Capello
+// Aseprite    | Copyright (C) 2001-2013, 2015  David Capello
+// LibreSprite | Copyright (C) 2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -16,7 +16,7 @@ namespace ui {
 
   class InitThemeEvent : public Event {
   public:
-    InitThemeEvent(Component* source, Theme* theme)
+    InitThemeEvent(Widget* source, Theme* theme)
       : Event(source)
       , m_theme(theme){ }
 
