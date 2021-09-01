@@ -496,13 +496,40 @@ void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, 
 
 void SDL2Surface::scrollTo(const gfx::Rect& rc, int dx, int dy)
 {
-  // blit(m_bmp, m_bmp,
-  //      rc.x, rc.y,
-  //      rc.x+dx, rc.y+dy,
-  //      rc.w, rc.h);
-  SDL_Rect srect{rc.x, rc.y, width(), height()},
-           drect{rc.x + dx, rc.y + dy};
-  SDL_BlitSurface(m_bmp, &srect, m_bmp, &drect);
+  // SDL_Rect srect{rc.x, rc.y, width(), height()},
+  //          drect{rc.x + dx, rc.y + dy};
+  // SDL_BlitSurface(m_bmp, &srect, m_bmp, &drect);
+
+    int w = width();
+    int h = height();
+    gfx::Clip clip(rc.x+dx, rc.y+dy, rc);
+    if (!clip.clip(w, h, w, h))
+      return;
+
+    int bytesPerPixel = m_bmp->format->BytesPerPixel;
+    int rowBytes = (int)m_bmp->pitch;
+    int rowDelta;
+
+    if (dy > 0) {
+      clip.src.y += clip.size.h-1;
+      clip.dst.y += clip.size.h-1;
+      rowDelta = -rowBytes;
+    }
+    else
+      rowDelta = rowBytes;
+
+    char* dst = (char*)m_bmp->pixels;
+    const char* src = dst;
+    dst += rowBytes*clip.dst.y + bytesPerPixel*clip.dst.x;
+    src += rowBytes*clip.src.y + bytesPerPixel*clip.src.x;
+    w = bytesPerPixel*clip.size.w;
+    h = clip.size.h;
+
+    while (--h >= 0) {
+      memmove(dst, src, w);
+      dst += rowDelta;
+      src += rowDelta;
+    }
 }
 
 void SDL2Surface::drawSurface(const Surface* src, int dstx, int dsty)
