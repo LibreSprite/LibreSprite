@@ -6,6 +6,7 @@ labels: ''
 assignees: ''
 
 ---
+**LibreSprite version** On the bottom left corner when you open the software
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -20,14 +21,15 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**OS/Hardware**
+- Operative System:
+- CPU:
+- GPU:
 
 
 **Additional context**
 Add any other context about the problem here.
+
+***Screenshots***
+If applicable, add screenshots to help explain your problem.
