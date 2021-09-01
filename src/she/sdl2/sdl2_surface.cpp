@@ -442,7 +442,7 @@ void SDL2Surface::drawRect(gfx::Color color, const gfx::Rect& rc)
   // solid_mode();
     drawHLine(color, rc.x, rc.y, rc.w - 1);
     drawHLine(color, rc.x, rc.y + rc.h - 1, rc.w - 1);
-    drawVLine(color, rc.x, rc.y, rc.w - 1);
+    drawVLine(color, rc.x, rc.y, rc.h - 1);
     drawVLine(color, rc.x + rc.w - 1, rc.y, rc.h);
 }
 
