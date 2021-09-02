@@ -86,7 +86,16 @@ ImageWrap* SpriteWrap::activeImage()
 
   doc::Site site;
   m_view->getSite(&site);
-  return wrapImage(site.image());
+  auto image = site.image();
+  if (!image) {
+      auto doc = static_cast<app::Document*>(site.document());
+      DocumentApi api(doc, transaction());
+      ImageRef imgref(Image::create(sprite()->pixelFormat(), sprite()->width(), sprite()->height()));
+      Cel* cel = new Cel(site.frame(), imgref);
+      api.addCel((doc::LayerImage*)site.layer(), cel);
+      image = site.image();
+  }
+  return wrapImage(image);
 }
 
 ImageWrap* SpriteWrap::wrapImage(doc::Image* img)
