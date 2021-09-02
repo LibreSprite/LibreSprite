@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#include <SDL2/SDL_blendmode.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_surface.h>
 #ifdef HAVE_CONFIG_H
@@ -81,6 +82,7 @@ SDL2Surface::SDL2Surface(SDL_Surface* bmp, DestroyFlag destroy)
   , m_destroy(destroy)
   , m_lock(0)
 {
+    SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_BLEND);
 }
 
 SDL2Surface::SDL2Surface(int width, int height, DestroyFlag destroy)
@@ -90,6 +92,8 @@ SDL2Surface::SDL2Surface(int width, int height, DestroyFlag destroy)
 {
     if (!m_bmp) {
         std::cout << "Failed to create surface" << std::endl;
+    } else {
+        SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_BLEND);
     }
 }
 
@@ -100,6 +104,8 @@ SDL2Surface::SDL2Surface(int width, int height, int bpp, DestroyFlag destroy)
 {
     if (!m_bmp) {
         std::cout << "Failed to create surface" << std::endl;
+    } else {
+        SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_BLEND);
     }
 }
 
@@ -137,39 +143,19 @@ bool SDL2Surface::isDirectToScreen() const
 
 gfx::Rect SDL2Surface::getClipBounds()
 {
-  // return gfx::Rect(
-  //   m_bmp->cl,
-  //   m_bmp->ct,
-  //   m_bmp->cr - m_bmp->cl,
-  //   m_bmp->cb - m_bmp->ct);
     SDL_Rect rect;
     SDL_GetClipRect(m_bmp, &rect);
-    return gfx::Rect(rect.x, rect.y, rect.w, rect.h);
+    return {rect.x, rect.y, rect.w, rect.h};
 }
 
 void SDL2Surface::setClipBounds(const gfx::Rect& rc)
 {
     SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
     SDL_SetClipRect(m_bmp, &rect);
-  // set_clip_rect(m_bmp,
-  //               rc.x,
-  //               rc.y,
-  //               rc.x+rc.w-1,
-  //               rc.y+rc.h-1);
 }
 
 bool SDL2Surface::intersectClipRect(const gfx::Rect& rc)
 {
-  // add_clip_rect(m_bmp,
-  //               rc.x,
-  //               rc.y,
-  //               rc.x+rc.w-1,
-  //               rc.y+rc.h-1);
-  // return
-  //   (m_bmp->cl < m_bmp->cr &&
-  //    m_bmp->ct < m_bmp->cb);
-    // return true;
-
     SDL_Rect rect = m_bmp->clip_rect;
     // SDL_GetClipRect(m_bmp, &rect);
 
@@ -270,14 +256,6 @@ void SDL2Surface::clear()
 uint8_t* SDL2Surface::getData(int x, int y) const
 {
     return reinterpret_cast<uint8_t*>(m_bmp->pixels) + y * m_bmp->pitch + x * m_bmp->format->BytesPerPixel;
-  // switch (bitmap_color_depth(m_bmp)) {
-  //   case 8: return (uint8_t*)(((uint8_t*)bmp_write_line(m_bmp, y)) + x);
-  //   case 15:
-  //   case 16: return (uint8_t*)(((uint16_t*)bmp_write_line(m_bmp, y)) + x);
-  //   case 24: return (uint8_t*)(((uint8_t*)bmp_write_line(m_bmp, y)) + x*3);
-  //   case 32: return (uint8_t*)(((uint32_t*)bmp_write_line(m_bmp, y)) + x);
-  // }
-  // return NULL;
 }
 
 void SDL2Surface::getFormat(SurfaceFormatData* formatData) const
@@ -469,12 +447,6 @@ void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, 
   ASSERT(dest);
   ASSERT(static_cast<SDL2Surface*>(dest)->m_bmp);
 
-  // blit(m_bmp,
-  //      static_cast<SDL2Surface*>(dest)->m_bmp,
-  //      srcx, srcy,
-  //      dstx, dsty,
-  //      width, height);
-
   SDL_Rect srect{srcx, srcy, width, height},
            drect{dstx, dsty, width, height};
 
@@ -541,6 +513,8 @@ void SDL2Surface::drawSurface(const Surface* src, int dstx, int dsty)
     if (slocked) SDL_UnlockSurface(srcbmp);
     if (dlocked) SDL_UnlockSurface(m_bmp);
     // SDL_FillRect(m_bmp, &rect, random());
+    // SDL_SetSurfaceBlendMode(srcbmp, SDL_BLENDMODE_NONE);
+    // SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_NONE);
     SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
     if (slocked) SDL_LockSurface(srcbmp);
     if (dlocked) SDL_LockSurface(m_bmp);
@@ -552,12 +526,63 @@ void SDL2Surface::drawRgbaSurface(const Surface* src, int dstx, int dsty)
     auto srcbmp = static_cast<const SDL2Surface*>(src)->m_bmp;
     auto slocked = srcbmp->locked;
     auto dlocked = m_bmp->locked;
-    if (slocked) SDL_UnlockSurface(srcbmp);
-    if (dlocked) SDL_UnlockSurface(m_bmp);
-    // SDL_FillRect(m_bmp, &rect, random());
-    SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
-    if (slocked) SDL_LockSurface(srcbmp);
-    if (dlocked) SDL_LockSurface(m_bmp);
+
+    SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_BLEND);
+
+    if (srcbmp->format->BitsPerPixel == 32 && m_bmp->format->BitsPerPixel == 32) {
+        ((Surface*)src)->lock();
+        lock();
+
+        int skipX = 0;
+        int skipY = 0;
+        if (rect.x < m_bmp->clip_rect.x){
+            skipX = m_bmp->clip_rect.x - rect.x;
+            rect.w -= skipX;
+            rect.x = m_bmp->clip_rect.x;
+        }
+
+        if (rect.y < m_bmp->clip_rect.y){
+            skipY = m_bmp->clip_rect.y - rect.y;
+            rect.h -= skipY;
+            rect.y = m_bmp->clip_rect.y;
+        }
+
+        if (rect.x + rect.w >= m_bmp->clip_rect.x + m_bmp->clip_rect.w)
+            rect.w = (m_bmp->clip_rect.x + m_bmp->clip_rect.w) - rect.x;
+
+        if (rect.y + rect.h >= m_bmp->clip_rect.y + m_bmp->clip_rect.h)
+            rect.h = (m_bmp->clip_rect.y + m_bmp->clip_rect.h) - rect.y;
+
+        // SDL_FillRect(m_bmp, &rect, random());
+
+        auto srcPixels = static_cast<unsigned char*>(srcbmp->pixels);
+        auto dstPixels = static_cast<unsigned char*>(m_bmp->pixels);
+        for (int y=0; y<rect.h; y++)  {
+            unsigned char* destP = dstPixels + (y + rect.y)*m_bmp->pitch + rect.x * 4;
+            unsigned char* srcP = srcPixels + (y + skipY)*srcbmp->pitch + skipX * 4;
+            // memcpy(destP, srcP, bytesToMove);
+            for (int x=0; x<rect.w; ++x){
+                // dstRGB = srcRGB + (dstRGB * (1-srcA))
+                // dstA = srcA + (dstA * (1-srcA))
+                auto srcA = srcP[x*4+3];
+                auto isrcA = 255 - srcA;
+                destP[x*4+0] = srcP[x*4+0];// + (destP[x*4+0] * isrcA / 255);
+                destP[x*4+1] = srcP[x*4+1];// + (destP[x*4+1] * isrcA / 255);
+                destP[x*4+2] = srcP[x*4+2];// + (destP[x*4+2] * isrcA / 255);
+                destP[x*4+3] = 0xFF; // srcA        + (destP[x*4+3] * isrcA / 255);
+            }
+        }
+
+        ((Surface*)src)->unlock();
+        unlock();
+    } else
+    {
+        if (slocked) SDL_UnlockSurface(srcbmp);
+        if (dlocked) SDL_UnlockSurface(m_bmp);
+        SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
+        if (slocked) SDL_LockSurface(srcbmp);
+        if (dlocked) SDL_LockSurface(m_bmp);
+    }
 }
 
 } // namespace she

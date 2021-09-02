@@ -9,6 +9,7 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
+#include <cstdint>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -187,12 +188,42 @@ namespace sdl {
 
     class SDL2EventQueue : public EventQueue {
     public:
-        static SDL2EventQueue g_queue;
+        struct Modifier {
+            const int sheModifier;
+            bool isPressed = false;
+            Modifier(int sheModifier) : sheModifier(sheModifier) {}
+        };
+
+        std::unordered_map<SDL_KeyCode, Modifier> modifiers = {
+            {SDLK_SPACE, she::kKeySpaceModifier},
+
+            {SDLK_LALT, she::kKeyAltModifier},
+            {SDLK_RALT, she::kKeyAltModifier},
+
+            {SDLK_LCTRL, she::kKeyCtrlModifier},
+            {SDLK_RCTRL, she::kKeyCtrlModifier},
+
+            {SDLK_LGUI, she::kKeyCmdModifier},
+            {SDLK_RGUI, she::kKeyCmdModifier},
+
+            {SDLK_LSHIFT, she::kKeyShiftModifier},
+            {SDLK_RSHIFT, she::kKeyShiftModifier}
+        };
+
+        she::KeyModifiers getSheModifiers() {
+            int mod = 0;
+            for (auto& entry : modifiers) {
+                if (entry.second.isPressed)
+                    mod |= entry.second.sheModifier;
+            }
+            return (she::KeyModifiers) mod;
+        }
 
         void getEvent(Event& event, bool) override {
             for (auto& entry : sdl::windowIdToDisplay) {
                 entry.second->present();
             }
+
             SDL_Event sdlEvent;
             while (SDL_PollEvent(&sdlEvent)) {
                 switch (sdlEvent.type){
@@ -234,6 +265,7 @@ namespace sdl {
 
                 case SDL_MOUSEMOTION:
                     event.setType(Event::MouseMove);
+                    event.setModifiers(getSheModifiers());
                     event.setPosition({
                             sdlEvent.motion.x / unique_display->scale(),
                             sdlEvent.motion.y / unique_display->scale()
@@ -242,6 +274,7 @@ namespace sdl {
 
                 case SDL_MOUSEWHEEL:
                     event.setType(Event::MouseWheel);
+                    event.setModifiers(getSheModifiers());
                     event.setWheelDelta({0, -sdlEvent.wheel.y});
                     event.setPosition({
                             sdlEvent.wheel.x / unique_display->scale(),
@@ -258,29 +291,34 @@ namespace sdl {
                             sdlEvent.button.y / unique_display->scale()
                         });
                     event.setButton(mouseButtonMapping[sdlEvent.button.button]);
+                    event.setModifiers(getSheModifiers());
                     return;
                 }
 
                 case SDL_KEYDOWN:
                 case SDL_KEYUP: {
+                    auto modifierIt = modifiers.find((SDL_KeyCode) sdlEvent.key.keysym.sym);
+                    if (modifierIt != modifiers.end()) {
+                        modifierIt->second.isPressed = sdlEvent.type == SDL_KEYDOWN;
+                    }
+
                     auto it = keyCodeMapping.find((SDL_KeyCode) sdlEvent.key.keysym.sym);
                     event.setType(sdlEvent.type == SDL_KEYUP ? Event::KeyUp : Event::KeyDown);
-                    int mod = 0;
+                    event.setModifiers(getSheModifiers());
 
-                    if (sdlEvent.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
-                        mod |= she::kKeyShiftModifier;
-                    if (sdlEvent.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
-                        mod |= she::kKeyCtrlModifier;
-                    if (sdlEvent.key.keysym.mod & (KMOD_LALT | KMOD_RALT))
-                        mod |= she::kKeyAltModifier;
-                    if (sdlEvent.key.keysym.mod & (KMOD_LGUI | KMOD_RGUI))
-                        mod |= she::kKeyCmdModifier;
-
-                    event.setModifiers((she::KeyModifiers) mod);
+                    if (sdlEvent.key.keysym.sym >= ' ' && sdlEvent.key.keysym.sym < 127)
+                        event.setUnicodeChar(sdlEvent.key.keysym.sym);
+                    else
+                        event.setUnicodeChar(-1);
 
                     if (it != keyCodeMapping.end()) {
                         event.setScancode(it->second);
-                        std::cout << "scancode: " << sdlEvent.key.keysym.sym << std::endl;
+                        if (sdlEvent.key.repeat) {
+                            event.setRepeat(sdlEvent.key.repeat);
+                        } else {
+                            std::cout << "scancode: " << sdlEvent.key.keysym.sym;
+                            std::cout << "   mod: " << getSheModifiers() << std::endl;
+                        }
                     } else {
                         std::cout << "Unknown scancode: " << sdlEvent.key.keysym.sym << std::endl;
                         event.setScancode(she::kKeyUnknown1);
@@ -304,6 +342,8 @@ namespace sdl {
                     event.setType(Event::CloseDisplay);
                     return;
 
+                case SDL_TEXTEDITING:
+                case SDL_TEXTINPUT:
                 case SDL_KEYMAPCHANGED:
                     continue;
 
@@ -326,9 +366,8 @@ namespace sdl {
         base::concurrent_queue<Event> m_events;
     };
 
-    SDL2EventQueue g_queue;
-
     EventQueue* EventQueue::instance() {
+        static SDL2EventQueue g_queue;
         return &g_queue;
     }
 
@@ -418,6 +457,28 @@ namespace sdl {
             SDL_Surface* bmp = IMG_Load(filename);
             if (!bmp)
               throw std::runtime_error("Error loading image");
+
+            // if (bmp->format->BitsPerPixel == 32) {
+            //     auto surface = new SDL2Surface(bmp->w, bmp->h, 32, SDL2Surface::DeleteAndDestroy);
+            //     // SDL_BlitSurface(bmp, nullptr, (SDL_Surface*) surface->nativeHandle(), nullptr);
+
+            //     int max = bmp->h * bmp->w;
+            //     auto data = reinterpret_cast<uint8_t*>(bmp->pixels);
+            //     auto out = reinterpret_cast<uint8_t*>(((SDL_Surface*)surface->nativeHandle())->pixels);
+            //     for (int i = 0; i < max; i++, data += 4, out += 4) {
+            //         int a = data[3];
+            //         int b = data[0];// * a / 255;
+            //         int g = data[1];// * a / 255;
+            //         int r = data[2];// * a / 255;
+            //         out[0] = b;
+            //         out[1] = g;
+            //         out[2] = r;
+            //         out[3] = a;
+            //     }
+
+            //     SDL_FreeSurface(bmp);
+            //     return surface;
+            // }
 
             std::cout << "Loading " << filename << " "
                       << std::to_string(bmp->format->BitsPerPixel) << " "
