@@ -7,29 +7,30 @@ assignees: ''
 
 ---
 ##### LibreSprite version
-On the bottom left corner when you open the software.
+<!-- Paste LibreSprite version down below: you'll find it on the bottom left
+corner when you open the software. If you're on a dev version, please specify
+the commit hash too -->
+```
+
+```
 
 ##### Describe the bug
-A clear and concise description of what the bug is.
+<!-- A clear and concise description of what the bug is -->
 
 ##### To Reproduce
-Steps to reproduce the behaviour:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+<!-- Steps to reproduce the behaviour -->
 
 ##### Expected behaviour
-A clear and concise description of what you expected to happen.
+<!-- A clear and concise description of what you expected to happen -->
 
 ##### OS/Hardware
 - Operative System:
 - CPU:
-- GPU: <!-- for graphical issues only -->
+- GPU: <!-- GPU for graphical issues only. Delete otherwise -->
 
 <!-- Delete these sections if you don't need them -->
 ##### Screenshots  
-Screenshots or videos to help explain your problem.
+<!-- Screenshots or videos to help explain your problem -->
 
 ##### Additional context  
-Add any other context about the problem here.
+<!-- Add any other context about the problem here -->
