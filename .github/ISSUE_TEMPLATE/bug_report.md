@@ -22,11 +22,10 @@ Steps to reproduce the behaviour:
 ##### Expected behaviour
 A clear and concise description of what you expected to happen.
 
-**OS/Hardware**
+##### OS/Hardware
 - Operative System:
 - CPU:
-<!-- GPU for graphical issues only -->
-- GPU:
+- GPU: <!-- for graphical issues only -->
 
 <!-- Delete these sections if you don't need them -->
 ##### Screenshots  
