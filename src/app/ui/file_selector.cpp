@@ -29,7 +29,6 @@
 #include "base/fs.h"
 #include "base/path.h"
 #include "base/split_string.h"
-#include "base/unique_ptr.h"
 #include "ui/ui.h"
 
 #include "new_folder_window.xml.h"
@@ -39,7 +38,6 @@
 #include <cerrno>
 #include <iterator>
 #include <set>
-#include <string>
 #include <vector>
 
 #ifndef MAX_PATH

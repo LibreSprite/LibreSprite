@@ -13,7 +13,6 @@
 
 #include "app/app.h"
 #include "app/cmd/set_palette.h"
-#include "app/color.h"
 #include "app/console.h"
 #include "app/context.h"
 #include "app/context_access.h"

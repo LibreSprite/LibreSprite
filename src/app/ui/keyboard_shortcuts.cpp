@@ -15,7 +15,6 @@
 #include "app/app_menus.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
-#include "app/commands/params.h"
 #include "app/document.h"
 #include "app/tools/ink.h"
 #include "app/tools/tool.h"
@@ -23,7 +22,6 @@
 #include "app/ui_context.h"
 #include "app/xml_document.h"
 #include "app/xml_exception.h"
-#include "ui/accelerator.h"
 #include "ui/message.h"
 
 #define XML_KEYBOARD_FILE_VERSION "1"

@@ -18,8 +18,6 @@
 #include "ui/entry.h"
 #include "ui/message.h"
 #include "ui/system.h"
-#include "ui/textbox.h"
-#include "ui/view.h"
 
 namespace app {
 

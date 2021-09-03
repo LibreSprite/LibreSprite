@@ -57,7 +57,6 @@
 #include "base/fs.h"
 #include "base/path.h"
 #include "base/split_string.h"
-#include "base/unique_ptr.h"
 #include "doc/document_observer.h"
 #include "doc/frame_tag.h"
 #include "doc/image.h"

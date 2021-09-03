@@ -20,7 +20,6 @@
 #include "app/pref/preferences.h"
 #include "app/tools/tool.h"
 #include "app/ui/app_menuitem.h"
-#include "app/ui/button_set.h"
 #include "app/ui/context_bar.h"
 #include "app/ui/keyboard_shortcuts.h"
 #include "app/ui/main_window.h"

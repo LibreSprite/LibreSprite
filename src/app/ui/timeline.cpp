@@ -52,7 +52,6 @@
 #include "ui/ui.h"
 
 #include <cstdio>
-#include <vector>
 
 // Size of the thumbnail in the screen (width x height), the really
 // size of the thumbnail bitmap is specified in the

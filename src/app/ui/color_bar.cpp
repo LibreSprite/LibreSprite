@@ -17,7 +17,6 @@
 #include "app/cmd/replace_image.h"
 #include "app/cmd/set_palette.h"
 #include "app/cmd/set_transparent_color.h"
-#include "app/color.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
@@ -53,7 +52,6 @@
 #include "doc/primitives.h"
 #include "doc/remap.h"
 #include "doc/rgbmap.h"
-#include "doc/sort_palette.h"
 #include "doc/sprite.h"
 #include "she/surface.h"
 #include "ui/alert.h"
@@ -62,9 +60,7 @@
 #include "ui/message.h"
 #include "ui/paint_event.h"
 #include "ui/separator.h"
-#include "ui/splitter.h"
 #include "ui/system.h"
-#include "ui/tooltips.h"
 
 
 #include <cstring>

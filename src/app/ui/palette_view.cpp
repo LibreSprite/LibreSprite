@@ -10,7 +10,6 @@
 #endif
 
 #include "app/app.h"
-#include "app/color.h"
 #include "app/color_utils.h"
 #include "app/commands/commands.h"
 #include "app/modules/editors.h"
@@ -39,7 +38,6 @@
 #include "ui/system.h"
 #include "ui/theme.h"
 #include "ui/view.h"
-#include "ui/widget.h"
 
 #include <algorithm>
 #include <cstdlib>

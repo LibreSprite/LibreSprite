@@ -21,7 +21,6 @@
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
 #include "app/tools/tool.h"
-#include "app/ui/button_set.h"
 #include "app/ui/color_button.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui/keyboard_shortcuts.h"

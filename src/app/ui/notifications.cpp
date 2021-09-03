@@ -15,7 +15,6 @@
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/skin/style.h"
 #include "base/launcher.h"
-#include "ui/menu.h"
 #include "ui/paint_event.h"
 #include "ui/size_hint_event.h"
 
