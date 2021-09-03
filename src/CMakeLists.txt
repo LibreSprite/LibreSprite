@@ -118,7 +118,7 @@ add_executable(libresprite WIN32
   main/main.cpp
   ${win32_resources}
   ${x11_resources})
-target_link_libraries(libresprite app-lib ${PLATFORM_LIBS})
+target_link_libraries(libresprite -Wl,--whole-archive app-lib ${PLATFORM_LIBS})
 add_dependencies(libresprite copy_data)
 
 if(MSVC AND USE_SKIA_BACKEND)

@@ -5,16 +5,17 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "base/string.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "app/commands/command.h"
 #include "app/commands/params.h"
-#include "app/console.h"
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
 #include "base/path.h"
+#include "script/engine.h"
 #include "script/engine_delegate.h"
 #include "ui/manager.h"
 
@@ -22,15 +23,6 @@
 
 namespace app {
 
-class ConsoleEngineDelegate : public script::EngineDelegate {
-public:
-  void onConsolePrint(const char* text) override {
-    m_console.printf("%s\n", text);
-  }
-
-private:
-  Console m_console;
-};
 
 class RunScriptCommand : public Command {
 public:
@@ -65,8 +57,9 @@ void RunScriptCommand::onLoadParams(const Params& params)
 
 void RunScriptCommand::onExecute(Context* context)
 {
-  ConsoleEngineDelegate delegate;
-  AppScripting engine(&delegate);
+  script::EngineDelegate::setDefault("gui");
+  script::Engine::setDefault(base::string_to_lower(base::get_file_extension(m_filename)), false);
+  AppScripting engine;
   engine.evalFile(m_filename);
 
   ui::Manager::getDefault()->invalidate();

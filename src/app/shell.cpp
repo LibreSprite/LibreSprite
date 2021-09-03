@@ -11,7 +11,7 @@
 
 #include "app/shell.h"
 
-#include "script/engine.h"
+#include "app/script/app_scripting.h"
 
 #include <iostream>
 #include <string>
@@ -26,7 +26,7 @@ Shell::~Shell()
 {
 }
 
-void Shell::run(script::Engine& engine)
+void Shell::run(AppScripting& engine)
 {
   std::cout << "Welcome to " PACKAGE " v" VERSION " interactive console" << std::endl;
   std::string line;

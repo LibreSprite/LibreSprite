@@ -5,6 +5,8 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+/*
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -120,3 +122,5 @@ void register_selection_class(script::index_t idx, script::Context& ctx)
 }
 
 } // namespace app
+
+*/

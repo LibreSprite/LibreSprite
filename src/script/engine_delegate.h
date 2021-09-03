@@ -1,21 +1,20 @@
 // Aseprite Scripting Library
 // Copyright (c) 2015-2016 David Capello
+// Copyright (c) 2021 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SCRIPT_ENGINE_DELEGATE_H_INCLUDED
-#define SCRIPT_ENGINE_DELEGATE_H_INCLUDED
 #pragma once
+
+#include "base/injection.h"
 
 namespace script {
 
-  class EngineDelegate {
-  public:
-    virtual ~EngineDelegate() { }
-    virtual void onConsolePrint(const char* text) = 0;
-  };
+    class EngineDelegate : public Injectable<EngineDelegate> {
+    public:
+        virtual ~EngineDelegate() { }
+        virtual void onConsolePrint(const char* text) = 0;
+    };
 
 }
-
-#endif
