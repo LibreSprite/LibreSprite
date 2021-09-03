@@ -1,3 +1,6 @@
+<!-- be sure to check the copyright year of every file you've modified, and
+in case, update it -->
+
 Add compact, short information about your PR for easier understanding:
 
 - Goal of the PR
