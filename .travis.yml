@@ -23,6 +23,7 @@ addons:
             - libpng-dev
             - libtinyxml-dev
             - libpixman-1-dev
+            - zlib1g-dev
 
 env:
   - SHARED=OFF
