@@ -18,11 +18,11 @@ namespace ui {
   public:
     // Creates a new event specifying that it was generated from the
     // source widget.
-    Event(Widget* source);
-    virtual ~Event();
+    Event(Widget* source) : m_source(source) {}
+    virtual ~Event() {}
 
     // Returns the widget which generated the event.
-    Widget* getSource();
+    Widget* getSource() { return m_source; }
 
   private:
     // The widget which generates the event.

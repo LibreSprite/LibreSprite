@@ -14,7 +14,6 @@ add_library(ui-lib
   cursor.cpp
   custom_label.cpp
   entry.cpp
-  event.cpp
   graphics.cpp
   grid.cpp
   image_view.cpp
