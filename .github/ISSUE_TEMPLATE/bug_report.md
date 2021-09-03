@@ -7,9 +7,9 @@ assignees: ''
 
 ---
 ##### LibreSprite version
-<!-- Paste LibreSprite version down below: you'll find it on the bottom left
-corner when you open the software. If you're on a dev version, please specify
-the commit hash too -->
+<!-- Paste LibreSprite version between quotes down below: you'll find it on the
+bottom left corner when you open the software. If you're on a dev version,
+please specify the commit hash too -->
 ```
 
 ```
