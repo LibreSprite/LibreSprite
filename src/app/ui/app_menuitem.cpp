@@ -12,12 +12,10 @@
 #include "app/ui/app_menuitem.h"
 
 #include "app/commands/command.h"
-#include "app/commands/params.h"
 #include "app/modules/gui.h"
 #include "app/ui/keyboard_shortcuts.h"
 #include "app/ui_context.h"
 #include "ui/accelerator.h"
-#include "ui/menu.h"
 #include "ui/message.h"
 #include "ui/size_hint_event.h"
 #include "ui/widget.h"

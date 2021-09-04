@@ -12,7 +12,6 @@
 #include "app/ui/color_button.h"
 
 #include "app/app.h"
-#include "app/color.h"
 #include "app/color_utils.h"
 #include "app/modules/editors.h"
 #include "app/modules/gfx.h"

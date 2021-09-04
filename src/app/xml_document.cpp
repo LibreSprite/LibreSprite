@@ -14,8 +14,6 @@
 #include "app/xml_exception.h"
 #include "base/file_handle.h"
 
-#include "tinyxml.h"
-
 namespace app {
 
 using namespace base;

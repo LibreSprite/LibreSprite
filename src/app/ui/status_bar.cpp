@@ -50,7 +50,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include <vector>
 
 namespace app {
 

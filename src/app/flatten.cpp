@@ -11,7 +11,6 @@
 
 #include "base/unique_ptr.h"
 #include "doc/cel.h"
-#include "doc/frame.h"
 #include "doc/image.h"
 #include "doc/layer.h"
 #include "doc/sprite.h"

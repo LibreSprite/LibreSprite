@@ -12,7 +12,6 @@
 #include "app/gui_xml.h"
 
 #include "app/resource_finder.h"
-#include "app/xml_document.h"
 #include "app/xml_exception.h"
 #include "base/fs.h"
 

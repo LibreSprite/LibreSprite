@@ -18,7 +18,6 @@
 #include "ui/manager.h"
 #include "ui/message.h"
 #include "ui/popup_window.h"
-#include "ui/slider.h"
 #include "ui/system.h"
 #include "ui/theme.h"
 

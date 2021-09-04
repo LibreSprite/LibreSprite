@@ -28,7 +28,6 @@
 #include "ui/resize_event.h"
 #include "ui/size_hint_event.h"
 #include "ui/system.h"
-#include "ui/view.h"
 
 namespace app {
 

@@ -11,7 +11,6 @@
 
 #include "app/ui/select_accelerator.h"
 
-#include "app/ui/keyboard_shortcuts.h"
 #include "base/bind.h"
 #include "base/signal.h"
 

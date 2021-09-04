@@ -16,7 +16,6 @@
 #include "base/mutex.h"
 #include "base/scoped_lock.h"
 #include "base/thread.h"
-#include "ui/alert.h"
 #include "ui/widget.h"
 #include "ui/window.h"
 

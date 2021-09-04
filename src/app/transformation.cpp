@@ -11,7 +11,6 @@
 #include "app/transformation.h"
 
 #include "fixmath/fixmath.h"
-#include "gfx/point.h"
 #include "gfx/size.h"
 
 #include <cmath>
