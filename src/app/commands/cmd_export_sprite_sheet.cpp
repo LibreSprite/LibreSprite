@@ -337,6 +337,10 @@ public:
       bestFit()->setSelected(true);
       onBestFit();
     }
+    else if (m_docPref.spriteSheet.pertagEnabled()) {
+      pertagEnabled()->setSelected(true);
+      onPerTagEnabled();
+    }
     else {
       columns()->setTextf("%d", m_docPref.spriteSheet.columns());
       rows()->setTextf("%d", m_docPref.spriteSheet.rows());
@@ -782,6 +786,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     docPref.spriteSheet.width(window.fitWidthValue());
     docPref.spriteSheet.height(window.fitHeightValue());
     docPref.spriteSheet.bestFit(window.bestFitValue());
+    docPref.spriteSheet.pertagEnabled(window.pertagEnabledValue());
     docPref.spriteSheet.textureFilename(window.filenameValue());
     docPref.spriteSheet.dataFilename(window.dataFilenameValue());
     docPref.spriteSheet.dataFormat(window.dataFormatValue());
@@ -812,6 +817,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   int width = docPref.spriteSheet.width();
   int height = docPref.spriteSheet.height();
   bool bestFit = docPref.spriteSheet.bestFit();
+  bool pertagEnabled = docPref.spriteSheet.pertagEnabled();
   std::string filename = docPref.spriteSheet.textureFilename();
   std::string dataFilename = docPref.spriteSheet.dataFilename();
   DocumentExporter::DataFormat dataFormat = docPref.spriteSheet.dataFormat();
