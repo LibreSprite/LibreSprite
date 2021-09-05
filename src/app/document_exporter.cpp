@@ -173,6 +173,10 @@ public:
   bool isDuplicated() const { return m_isDuplicated; }
   SampleBoundsPtr sharedBounds() const { return m_bounds; }
 
+  void setDuplicated(bool duplicated) {
+    m_isDuplicated = duplicated;
+  }
+
   void setSharedBounds(const SampleBoundsPtr& bounds) {
     m_isDuplicated = true;
     m_bounds = bounds;
@@ -304,6 +308,88 @@ private:
   SpriteSheetType m_type;
 };
 
+class DocumentExporter::PerTagLayoutSamples :
+    public DocumentExporter::LayoutSamples {
+public:
+  PerTagLayoutSamples(SpriteSheetType type)
+    : m_type(type) {
+  }
+
+  void layoutSamples(Samples& samples, int borderPadding, int shapePadding, int& width, int& height) override {
+    const Sprite* oldSprite = NULL;
+    int bframe = -1;
+    int eframe = -1;
+    int lastframe = 0;
+
+    gfx::Point framePt(borderPadding, borderPadding);
+    gfx::Size rowSize(0, 0);
+
+    for (auto& sample : samples) {
+      const Sprite* sprite = sample.sprite();
+      gfx::Size size = sample.requiredSize();
+
+      //if we don't know the beginning and end frame we get it
+      if (eframe < 0){
+        sample.setDuplicated(true);
+        if(bframe < 0){
+          bframe = sample.frame();
+          lastframe = bframe;
+          continue;
+        }else if(lastframe < sample.frame()){
+          lastframe = sample.frame();
+          continue;
+        }else{
+          eframe = lastframe;
+          sample.setDuplicated(false);
+          sample.setInTextureBounds(gfx::Rect(framePt, size));
+        }
+      }
+
+      if (sample.isDuplicated())
+        continue;
+
+      //ignores the frames that are not selected
+      if(sample.frame() < bframe || sample.frame() > eframe){
+        sample.setDuplicated(true);
+        continue;
+      }
+
+      if (oldSprite) {
+        //Checks if a new tag starts
+        //if the difference from lastframe and sample is not 1 than it can't be the same tag
+        //but if it is we check the inner tag
+        if (sample.frame() - lastframe != 1 ||
+            sample.sprite()->frameTags().innerTag(sample.frame())->id() != sample.sprite()->frameTags().innerTag(lastframe)->id()){
+          if (m_type == SpriteSheetType::Columns) {
+            framePt.x = borderPadding;
+            framePt.y += rowSize.h + shapePadding;
+          }
+          else {
+            framePt.x += rowSize.w + shapePadding;
+            framePt.y = borderPadding;
+          }
+          rowSize = size;
+        }
+      }
+
+      sample.setInTextureBounds(gfx::Rect(framePt, size));
+
+      // Next frame position.
+      if (m_type == SpriteSheetType::Columns)
+        framePt.x += size.w + shapePadding;
+      else
+        framePt.y += size.h + shapePadding;
+
+      rowSize = rowSize.createUnion(size);
+
+      oldSprite = sprite;
+      lastframe = sample.frame();
+    }
+  }
+
+private:
+  SpriteSheetType m_type;
+};
 class DocumentExporter::BestFitLayoutSamples :
     public DocumentExporter::LayoutSamples {
 public:
@@ -394,10 +480,18 @@ Document* DocumentExporter::exportSheet()
       break;
     }
     default: {
-      SimpleLayoutSamples layout(m_sheetType);
-      layout.layoutSamples(
-        samples, m_borderPadding, m_shapePadding,
-        m_textureWidth, m_textureHeight);
+      if(m_perTag){
+        PerTagLayoutSamples layout(m_sheetType);
+        layout.layoutSamples(
+          samples, m_borderPadding, m_shapePadding,
+          m_textureWidth, m_textureHeight);
+      }
+      else{
+        SimpleLayoutSamples layout(m_sheetType);
+        layout.layoutSamples(
+          samples, m_borderPadding, m_shapePadding,
+          m_textureWidth, m_textureHeight);
+      }
       break;
     }
   }

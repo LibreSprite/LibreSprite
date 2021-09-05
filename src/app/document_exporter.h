@@ -79,6 +79,7 @@ namespace app {
     class Samples;
     class LayoutSamples;
     class SimpleLayoutSamples;
+    class PerTagLayoutSamples;
     class BestFitLayoutSamples;
 
     void captureSamples(Samples& samples);

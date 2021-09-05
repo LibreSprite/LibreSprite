@@ -1007,7 +1007,37 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     exporter.setListLayers(true);
   if (listFrameTags)
     exporter.setListFrameTags(true);
-  exporter.addDocument(document, layer, frameTag, isTemporalTag);
+  if(pertagEnabled){
+    //first one is a dummy for the function so it knows the selected frames
+    exporter.addDocument(document, layer, frameTag, isTemporalTag);
+    bool tempTag = isTemporalTag;
+    bool empty = true;
+    int bframe = (frameTag ? frameTag->fromFrame() : 0);
+    int eframe = (frameTag ? frameTag->toFrame() : sprite->lastFrame());
+    for (const FrameTag* tag : sprite->frameTags()) {
+      //It ignores the temporary tag for selected frame
+      if(tempTag){
+        if(tag->fromFrame() == bframe && tag->toFrame() == eframe){
+          if(tag->name() == "Tag"){
+            tempTag = false;
+            continue;
+          }
+        }
+      }
+
+      //Adds all included layers
+      if(bframe <= tag->toFrame() &&
+         eframe >= tag->fromFrame()){
+        exporter.addDocument(document, layer, const_cast<FrameTag*>(tag), false);
+        empty = false;
+      }
+    }
+    if(empty){
+      exporter.addDocument(document, layer, frameTag, isTemporalTag);
+    }
+  }else{
+    exporter.addDocument(document, layer, frameTag, isTemporalTag);
+  }
 
   base::UniquePtr<Document> newDocument(exporter.exportSheet());
   if (!newDocument)
