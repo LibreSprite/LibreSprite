@@ -1,4 +1,4 @@
-<!-- LibreSprite -->
+<!-- LibreSprite | Copyright (C) 2021-2021  LibreSprite contributors -->
 <!-- Copyright (C) 2001-2015 by David Capello -->
 <gui>
   <window id="export_sprite_sheet" text="Export Sprite Sheet">
