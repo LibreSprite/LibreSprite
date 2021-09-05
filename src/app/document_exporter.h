@@ -56,6 +56,7 @@ namespace app {
     void setScale(double scale) { m_scale = scale; }
     void setScaleMode(ScaleMode mode) { m_scaleMode = mode; }
     void setIgnoreEmptyCels(bool ignore) { m_ignoreEmptyCels = ignore; }
+    void setPerTag(bool pertag) { m_perTag = pertag; }
     void setBorderPadding(int padding) { m_borderPadding = padding; }
     void setShapePadding(int padding) { m_shapePadding = padding; }
     void setInnerPadding(int padding) { m_innerPadding = padding; }
@@ -117,6 +118,7 @@ namespace app {
     double m_scale;
     ScaleMode m_scaleMode;
     bool m_ignoreEmptyCels;
+    bool m_perTag;
     int m_borderPadding;
     int m_shapePadding;
     int m_innerPadding;

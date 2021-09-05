@@ -542,6 +542,12 @@ public:
   }
 
   bool pertagEnabledValue() const {
+    switch(spriteSheetTypeValue()){
+      case app::SpriteSheetType::Horizontal:
+      case app::SpriteSheetType::Vertical:
+        return false;
+        break;
+    }
     return pertagEnabled()->isSelected();
   }
 
@@ -993,6 +999,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   exporter.setTextureWidth(sheet_w);
   exporter.setTextureHeight(sheet_h);
   exporter.setSpriteSheetType(type);
+  exporter.setPerTag(pertagEnabled);
   exporter.setBorderPadding(borderPadding);
   exporter.setShapePadding(shapePadding);
   exporter.setInnerPadding(innerPadding);
