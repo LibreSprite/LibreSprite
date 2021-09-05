@@ -386,6 +386,7 @@ public:
     fitWidth()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onSizeChange, this));
     fitHeight()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onSizeChange, this));
     bestFit()->Click.connect(base::Bind<void>(&ExportSpriteSheetWindow::onBestFit, this));
+    pertagEnabled()->Click.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPerTagEnabled, this));
     borderPadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
     shapePadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
     innerPadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
@@ -399,6 +400,7 @@ public:
 
     onSheetTypeChange();
     onFileNamesChange();
+    updateSizeFields();
     updateExportButton();
   }
 
@@ -484,6 +486,10 @@ public:
       return 0;
   }
 
+  bool pertagEnabledValue() const {
+    return pertagEnabled()->isSelected();
+  }
+
   bool openGeneratedValue() const {
     return openGenerated()->isSelected();
   }
@@ -551,8 +557,11 @@ private:
     fitHeight()->setVisible(matrixState);
     bestFitFiller()->setVisible(matrixState);
     bestFit()->setVisible(matrixState);
+    pertagEnabledFiller()->setVisible(matrixState);
+    pertagEnabled()->setVisible(matrixState);
 
     resize();
+    updateSizeFields();
   }
 
   void onFileNamesChange() {
@@ -563,11 +572,13 @@ private:
 
   void onColumnsChange() {
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
     updateSizeFields();
   }
 
   void onRowsChange() {
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
     updateSizeFields();
   }
 
@@ -575,9 +586,16 @@ private:
     columns()->setTextf("%d", fitWidthValue() / m_sprite->width());
     rows()->setTextf("%d", fitHeightValue() / m_sprite->height());
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
   }
 
   void onBestFit() {
+    pertagEnabled()->setSelected(false);
+    updateSizeFields();
+  }
+
+  void onPerTagEnabled() {
+    bestFit()->setSelected(false);
     updateSizeFields();
   }
 
