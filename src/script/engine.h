@@ -5,11 +5,10 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#include "script/value.h"
 #pragma once
 
-#include <string>
-#include "script_object.h"
+#include "script/script_object.h"
+#include "script/value.h"
 
 namespace script {
   class Engine : public Injectable<Engine> {

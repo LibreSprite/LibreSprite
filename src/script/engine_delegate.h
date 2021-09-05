@@ -11,10 +11,10 @@
 
 namespace script {
 
-    class EngineDelegate : public Injectable<EngineDelegate> {
-    public:
-        virtual ~EngineDelegate() { }
-        virtual void onConsolePrint(const char* text) = 0;
-    };
+  class EngineDelegate : public Injectable<EngineDelegate> {
+  public:
+    virtual ~EngineDelegate() { }
+    virtual void onConsolePrint(const char* text) = 0;
+  };
 
 }

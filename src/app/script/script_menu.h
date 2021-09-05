@@ -13,7 +13,7 @@ namespace app {
 
 class ScriptMenu {
 public:
-    bool rebuildScriptsList(ui::Menu* menu);
+  bool rebuildScriptsList(ui::Menu* menu);
 };
 
 }

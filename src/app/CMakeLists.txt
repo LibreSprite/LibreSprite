@@ -327,7 +327,6 @@ add_library(app-lib
   script/console_delegate.cpp
   script/script_menu.cpp
   script/script_menu.h
-  script/selection_class.cpp
 
   script/api/app_script.cpp
   script/api/cel_script.cpp
@@ -338,6 +337,7 @@ add_library(app-lib
   script/api/layer_script.cpp
   script/api/pixelcolor_script.cpp
   script/api/sprite_script.cpp
+  script/api/selection_script.cpp
 
   send_crash.cpp
   shade.cpp

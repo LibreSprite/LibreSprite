@@ -10,11 +10,11 @@
 #include "config.h"
 #endif
 
+#include "app/document.h"
 #include "app/script/app_scripting.h"
+#include "base/file_handle.h"
 #include "script/engine.h"
 #include "script/engine_delegate.h"
-#include "app/document.h"
-#include "base/file_handle.h"
 
 namespace app {
 

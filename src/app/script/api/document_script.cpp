@@ -11,15 +11,15 @@
 
 class DocumentScriptObject : public script::ScriptObject {
 public:
-    DocumentScriptObject() {
-        addProperty("sprite", [this]{return m_sprite.get();});
-    }
+  DocumentScriptObject() {
+    addProperty("sprite", [this]{return m_sprite.get();});
+  }
 
-    void* getWrapped() override {return m_doc;}
+  void* getWrapped() override {return m_doc;}
 
-    Provides provides{this, "activeDocument"};
-    doc::Document* m_doc{app::UIContext::instance()->activeDocument()};
-    inject<ScriptObject> m_sprite{"SpriteScriptObject"};
+  Provides provides{this, "activeDocument"};
+  doc::Document* m_doc{app::UIContext::instance()->activeDocument()};
+  inject<ScriptObject> m_sprite{"SpriteScriptObject"};
 };
 
 static script::ScriptObject::Regular<DocumentScriptObject> reg("DocumentScriptObject");
