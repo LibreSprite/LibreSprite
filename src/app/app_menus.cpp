@@ -68,7 +68,7 @@ void AppMenus::reload()
   LOG(" - Loading menus from \"%s\"...\n", path);
 
   loadMenus(handle);
-
+  
 
 #if _DEBUG
   // Add a warning element because the user is not using the last well-known gui.xml file.

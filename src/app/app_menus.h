@@ -69,7 +69,6 @@ namespace app {
     Widget* createInvalidVersionMenuitem();
     void applyShortcutToMenuitemsWithCommand(Menu* menu, Command* command, const Params& params, Key* key);
     void clearIdentifiedWidgets();
-
     RecentFilesMenu m_recentFilesMenu;
     ScriptMenu m_scriptMenu;
     std::unordered_map<std::string, Widget*> m_identifiedWidgets;
