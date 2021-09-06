@@ -1,7 +1,5 @@
 # Contributing
 
-Si estas buscando la version en español, esta [aqui](CONTRIBUTING_es.md)
-
 ## Code
 Contributing code is very easy to do once you get the hang of it. We use GitHub for our online repository and issue tracker, so you'll need an account first. After you've done that and are comfortable with how the platform and git itself works, read on.
 
