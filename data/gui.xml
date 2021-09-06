@@ -62,9 +62,10 @@
       <!-- Layer -->
       <key command="LayerProperties" shortcut="Shift+P" />
       <key command="LayerVisibility" shortcut="Shift+X" />
-      <key command="NewLayer" shortcut="Ctrl+Shift+N" mac="Cmd+Shift+N"/>
+      <key command="NewLayer" shortcut="Ctrl+Shift+N" mac="Cmd+Shift+N" />
       <key command="DuplicateLayer" shortcut="Ctrl+J" mac="Cmd+J" />
       <key command="MergeDownLayer" shortcut="Ctrl+E" mac="Cmd+E" />
+      <key command="FlattenLayers" shortcut="Ctrl+Shift+E" mac="Cmd+Shift+E" />
       <key command="GotoPreviousLayer" shortcut="Down" context="Normal" />
       <key command="GotoNextLayer" shortcut="Up" context="Normal" />
       <!-- Frame -->
