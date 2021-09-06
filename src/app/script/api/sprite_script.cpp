@@ -27,27 +27,21 @@ class SpriteScriptObject : public script::ScriptObject {
 public:
   SpriteScriptObject() : m_sprite{doc()->sprite()} {
     addProperty("layerCount", [this]{return (int) m_sprite->countLayers();});
-
     addProperty("filename", [this]{return doc()->filename();});
-
     addProperty("width",
                 [this]{return m_sprite->width();},
                 [this](int width){
                   transaction().execute(new app::cmd::SetSpriteSize(m_sprite, width, m_sprite->height()));
                   return 0;
                 });
-
     addProperty("height",
                 [this]{return m_sprite->height();},
                 [this](int height){
                   transaction().execute(new app::cmd::SetSpriteSize(m_sprite, m_sprite->width(), height));
                   return 0;
                 });
-
     addProperty("colorMode", [this]{ return m_sprite->pixelFormat();});
-
     addProperty("selection", [this]{ return this; });
-
     addMethod("layer", &SpriteScriptObject::layer);
     addMethod("commit", &SpriteScriptObject::commit);
     addMethod("resize", &SpriteScriptObject::resize);

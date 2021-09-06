@@ -16,15 +16,11 @@ public:
     addProperty("x",
                 [this]{return m_cel->x();},
                 [this](int x){m_cel->setPosition(x, m_cel->y()); return x;});
-
     addProperty("y",
                 [this]{return m_cel->y();},
                 [this](int y){m_cel->setPosition(m_cel->x(), y); return y;});
-
     addProperty("image", [this]{return m_image.get();});
-
     addProperty("frame", [this]{return m_cel->frame();});
-
     addMethod("setPosition", &CelScriptObject::setPosition);
   }
 

@@ -17,34 +17,27 @@ public:
                   m_layer->setName(name);
                   return name;
                 });
-
     addProperty("isImage", [this]{return m_layer->isImage();});
-
     addProperty("isBackground", [this]{return m_layer->isBackground();});
-
     addProperty("isTransparent", [this]{return m_layer->isTransparent();});
-
     addProperty("isVisible",
                 [this]{return m_layer->isVisible();},
                 [this](bool i){
                   m_layer->setVisible(i);
                   return i;
                 });
-
     addProperty("isEditable",
                 [this]{return m_layer->isEditable();},
                 [this](bool i){
                   m_layer->setEditable(i);
                   return i;
                 });
-
     addProperty("isMovable", [this]{return m_layer->isMovable();});
     addProperty("isContinuous", [this]{return m_layer->isContinuous();});
     addProperty("flags", [this]{return (int) m_layer->flags();});
     addProperty("celCount", [this]{
       return m_layer->isImage() ? static_cast<doc::LayerImage*>(m_layer)->getCelsCount() : 0;
     });
-
     addMethod("cel", &LayerScriptObject::cel);
   }
 
