@@ -11,16 +11,30 @@
 class ImageScriptObject : public script::ScriptObject {
 public:
   ImageScriptObject() {
-    addProperty("width", [this]{return m_image->width();});
-    addProperty("height", [this]{return m_image->height();});
-    addProperty("format", [this]{return (int) m_image->pixelFormat();});
-    addFunction("getPixel", [this](int x, int y){return m_image->getPixel(x, y);});
-    addMethod("putPixel", &ImageScriptObject::putPixel);
-    addMethod("clear", &ImageScriptObject::clear);
+    addProperty("width", [this]{return m_image->width();})
+      .documentation("Read-only. The width of the image");
+    addProperty("height", [this]{return m_image->height();})
+      .documentation("Read-only. The height of the image");
+    addProperty("format", [this]{return (int) m_image->pixelFormat();})
+      .documentation("Read-only. The PixelFormat of the image");
+    addFunction("getPixel", [this](int x, int y){return m_image->getPixel(x, y);})
+      .arg("x", "Integer")
+      .arg("y", "Integer")
+      .returns("A color value")
+      .documentation("Reads a color from the given coordinate of the image.");
+    addMethod("putPixel", &ImageScriptObject::putPixel)
+      .arg("x", "Integer")
+      .arg("y", "Integer")
+      .arg("color", "A 32-bit color in 8888 RGBA format")
+      .documentation("Writes the color onto the image at the the given coordinate.");
+    addMethod("clear", &ImageScriptObject::clear)
+      .arg("color", "A 32-bit color in 8888 RGBA format")
+      .documentation("Clears the image with the specified color");
   }
 
   void putPixel(int x, int y, int color) {
-    m_image->putPixel(x, y, color);
+    if (unsigned(x) < m_image->width() && unsigned(y) < m_image->height())
+      m_image->putPixel(x, y, color);
   }
 
   void clear(int color) {

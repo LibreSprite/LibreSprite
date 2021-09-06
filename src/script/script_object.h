@@ -15,6 +15,44 @@ namespace script {
   struct ObjectProperty {
     Function getter;
     Function setter;
+    std::string doc;
+
+    ObjectProperty& documentation(const std::string& str) {
+      doc = str;
+      return *this;
+    }
+  };
+
+  struct DocumentedFunction : public Function {
+    std::string doc;
+
+    struct ArgDoc {
+      std::string name;
+      std::string doc;
+    };
+
+    std::vector<ArgDoc> argDoc;
+
+    std::string resultDoc = "Nothing";
+
+    DocumentedFunction(const Function& other) : Function(other) {}
+
+    DocumentedFunction(Function&& other) : Function(std::move(other)) {}
+
+    DocumentedFunction& documentation(const std::string& str) {
+      doc = str;
+      return *this;
+    }
+
+    DocumentedFunction& arg(const std::string& arg, const std::string& doc) {
+      argDoc.emplace_back(ArgDoc{arg, doc});
+      return *this;
+    }
+
+    DocumentedFunction& returns(const std::string& doc) {
+      resultDoc = doc;
+      return *this;
+    }
   };
 
   class InternalScriptObject : public Injectable<InternalScriptObject> {
@@ -22,19 +60,20 @@ namespace script {
     virtual void makeGlobal(const std::string& name) = 0;
     virtual void makeLocal() = 0;
 
-    virtual void addProperty(const std::string& name, const Function& get, const Function& set) {
+    virtual ObjectProperty& addProperty(const std::string& name, const Function& get, const Function& set) {
       auto& prop = properties[name];
       prop.getter = get;
       prop.setter = set;
+      return prop;
     }
 
-    virtual Function& addFunction(const std::string& name, const Function& func) {
+    virtual DocumentedFunction& addFunction(const std::string& name, const Function& func) {
       return functions.emplace(name, func).first->second;
     }
 
     inject<script::Engine> m_engine;
     std::unordered_map<std::string, ObjectProperty> properties;
-    std::unordered_map<std::string, Function> functions;
+    std::unordered_map<std::string, DocumentedFunction> functions;
   };
 
   class ScriptObject : public Injectable<ScriptObject> {
@@ -81,23 +120,23 @@ namespace script {
       m_internal->makeGlobal(name);
     }
 
-    void addProperty(const std::string& name, const Function& get = []{return Value{};}, const Function &set = [](const Value&){return Value{};}) {
-      m_internal->addProperty(name, get, set);
+    ObjectProperty& addProperty(const std::string& name, const Function& get = []{return Value{};}, const Function &set = [](const Value&){return Value{};}) {
+      return m_internal->addProperty(name, get, set);
     }
 
-    Function& addFunction(const std::string& name, const Function& func) {
+    DocumentedFunction& addFunction(const std::string& name, const Function& func) {
       return m_internal->addFunction(name, func);
     }
 
     template<typename Class, typename Ret, typename ... Args>
-    Function& addMethod(const std::string& name, Class* instance, Ret(Class::*method)(Args...)) {
+    DocumentedFunction& addMethod(const std::string& name, Class* instance, Ret(Class::*method)(Args...)) {
       return addFunction(name, [=](Args ... args){
         return (instance->*method)(std::forward<Args>(args)...);
       });
     }
 
     template<typename Class, typename ... Args>
-    Function& addMethod(const std::string& name, Class* instance, void(Class::*method)(Args...)) {
+    DocumentedFunction& addMethod(const std::string& name, Class* instance, void(Class::*method)(Args...)) {
       return addFunction(name, [=](Args ... args){
         (instance->*method)(std::forward<Args>(args)...);
         return Value{};
@@ -105,14 +144,14 @@ namespace script {
     }
 
     template<typename Class, typename Ret, typename ... Args>
-    Function& addMethod(const std::string& name, Ret(Class::*method)(Args...)) {
+    DocumentedFunction& addMethod(const std::string& name, Ret(Class::*method)(Args...)) {
       return addFunction(name, [=](Args ... args){
         return (static_cast<Class*>(this)->*method)(std::forward<Args>(args)...);
       });
     }
 
     template<typename Class, typename ... Args>
-    Function& addMethod(const std::string& name, void(Class::*method)(Args...)) {
+    DocumentedFunction& addMethod(const std::string& name, void(Class::*method)(Args...)) {
       return addFunction(name, [=](Args ... args){
         (static_cast<Class*>(this)->*method)(std::forward<Args>(args)...);
         return Value{};
