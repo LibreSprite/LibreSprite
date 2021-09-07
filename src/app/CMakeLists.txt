@@ -347,6 +347,7 @@ add_library(app-lib
   script/api/cel_script.cpp
   script/api/colormode_script.cpp
   script/api/console_script.cpp
+  script/api/dialog_script.cpp
   script/api/document_script.cpp
   script/api/image_script.cpp
   script/api/layer_script.cpp
