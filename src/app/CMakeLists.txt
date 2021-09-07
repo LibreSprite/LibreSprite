@@ -321,15 +321,24 @@ add_library(app-lib
   res/palettes_loader_delegate.cpp
   res/resources_loader.cpp
   resource_finder.cpp
-  script/script_menu.cpp
-  script/app_object.cpp
+
   script/app_scripting.cpp
-  script/console_object.cpp
-  script/image_class.cpp
-  script/image_wrap.cpp
-  script/selection_class.cpp
-  script/sprite_class.cpp
-  script/sprite_wrap.cpp
+  script/app_scripting.h
+  script/console_delegate.cpp
+  script/script_menu.cpp
+  script/script_menu.h
+
+  script/api/app_script.cpp
+  script/api/cel_script.cpp
+  script/api/colormode_script.cpp
+  script/api/console_script.cpp
+  script/api/document_script.cpp
+  script/api/image_script.cpp
+  script/api/layer_script.cpp
+  script/api/pixelcolor_script.cpp
+  script/api/sprite_script.cpp
+  script/api/selection_script.cpp
+
   send_crash.cpp
   shade.cpp
   shell.cpp
@@ -455,6 +464,7 @@ target_link_libraries(app-lib
   she
   ui-lib
   undo
+  -Wl,--no-whole-archive
   ${TINYXML_LIBRARY}
   ${JPEG_LIBRARIES}
   ${GIF_LIBRARIES}

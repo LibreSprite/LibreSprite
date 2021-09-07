@@ -62,7 +62,6 @@ DevConsoleView::DevConsoleView()
   , m_textBox("Welcome to Aseprite JavaScript Console\n(Experimental)", LEFT)
   , m_label(">")
   , m_entry(new CommmandEntry)
-  , m_engine(this)
 {
   SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 

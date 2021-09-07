@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2021 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -9,91 +10,51 @@
 #include "config.h"
 #endif
 
-#include "app/script/app_scripting.h"
-
 #include "app/document.h"
-#include "app/script/app_object.h"
-#include "app/script/console_object.h"
-#include "app/script/image_class.h"
-#include "app/script/image_wrap.h"
-#include "app/script/selection_class.h"
-#include "app/script/sprite_class.h"
-#include "app/script/sprite_wrap.h"
+#include "app/script/app_scripting.h"
+#include "base/file_handle.h"
+#include "script/engine.h"
+#include "script/engine_delegate.h"
 
 namespace app {
 
-namespace {
-
-const script::ConstantEntry ColorMode_constants[] = {
-  { "RGB", double(IMAGE_RGB) },
-  { "GRAYSCALE", double(IMAGE_GRAYSCALE) },
-  { "INDEXED", double(IMAGE_INDEXED) },
-  { nullptr, 0.0 }
-};
-
-}
-
-AppScripting::AppScripting(script::EngineDelegate* delegate)
-  : script::Engine(delegate)
-{
-  auto& ctx = context();
-  register_app_object(ctx);
-  register_console_object(ctx);
-
-  ctx.pushGlobalObject();
-
-  {
-    script::index_t obj = ctx.pushObject();
-    ctx.registerConstants(obj, ColorMode_constants);
-    ctx.setProp(-2, "ColorMode");
+  void AppScripting::eval(const std::string& code) {
+    if (m_engine) {
+      m_engine->eval(code);
+    } else {
+      inject<script::EngineDelegate>{}->onConsolePrint("No compatible scripting engine.");
+    }
   }
 
-  register_image_class(-1, ctx);
-  register_sprite_class(-1, ctx);
-  register_selection_class(-1, ctx);
+  void AppScripting::evalFile(const std::string& fileName) {
+    base::FileHandle fhandle(base::open_file(fileName, "rb"));
+    if (!fhandle)
+      return;
 
-  ctx.pushPointer(this);
-  ctx.setProp(-2, script::kPtrId);
+    FILE* f = fhandle.get();
+    if (!f)
+      return;
 
-  ctx.pop();
-}
+    if (fseek(f, 0, SEEK_END) < 0)
+      return;
 
-SpriteWrap* AppScripting::wrapSprite(app::Document* doc)
-{
-  auto it = m_sprites.find(doc->id());
-  if (it != m_sprites.end())
-    return it->second;
-  else {
-    auto wrap = new SpriteWrap(doc);
-    m_sprites[doc->id()] = wrap;
-    return wrap;
+    int sz = ftell(f);
+    if (sz < 0)
+      return;
+
+    if (fseek(f, 0, SEEK_SET) < 0)
+      return;
+
+    std::string code;
+    code.resize(sz + 1, 0);
+    if (fread(&code[0], 1, sz, f) != static_cast<size_t>(sz))
+      return;
+    eval(code);
   }
-}
 
-void AppScripting::onAfterEval(bool err)
-{
-  // Commit all transactions
-  if (!err) {
-    for (auto& it : m_sprites)
-      it.second->commit();
+  void AppScripting::printLastResult() {
+    if(m_engine)
+      m_engine->printLastResult();
   }
-  destroyWrappers();
-}
-
-void AppScripting::destroyWrappers()
-{
-  for (auto& it : m_sprites)
-    delete it.second;
-  m_sprites.clear();
-}
-
-AppScripting* unwrap_engine(script::Context& ctx)
-{
-  ctx.pushGlobalObject();
-  ctx.getProp(-1, script::kPtrId);
-  void* ptr = ctx.getPointer(-1);
-  ctx.pop(2);
-  return (AppScripting*)ptr;
-}
 
 }

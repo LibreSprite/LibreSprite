@@ -66,6 +66,7 @@
 #include "doc/site.h"
 #include "doc/sprite.h"
 #include "render/render.h"
+#include "script/engine.h"
 #include "script/engine_delegate.h"
 #include "she/display.h"
 #include "she/error.h"
@@ -121,13 +122,6 @@ public:
     delete m_recovery;
   }
 
-};
-
-class StdoutEngineDelegate : public script::EngineDelegate {
-public:
-  void onConsolePrint(const char* text) override {
-    printf("%s\n", text);
-  }
 };
 
 App* App::m_instance = NULL;
@@ -511,11 +505,10 @@ void App::initialize(const AppOptions& options)
         }
         // --script <filename>
         else if (opt == &options.script()) {
-          std::string script = value.value();
-
-          StdoutEngineDelegate delegate;
-          AppScripting engine(&delegate);
-          engine.evalFile(script);
+          script::EngineDelegate::setDefault("stdout");
+          script::Engine::setDefault("js");
+          AppScripting engine;
+          engine.evalFile(value.value());
         }
         // --list-layers
         else if (opt == &options.listLayers()) {
@@ -666,8 +659,9 @@ void App::run()
 
   // Start shell to execute scripts.
   if (m_isShell) {
-    StdoutEngineDelegate delegate;
-    AppScripting engine(&delegate);
+    script::EngineDelegate::setDefault("stdout");
+    script::Engine::setDefault("js");
+    AppScripting engine;
     engine.printLastResult();
     Shell shell;
     shell.run(engine);

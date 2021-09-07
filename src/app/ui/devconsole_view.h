@@ -54,6 +54,7 @@ namespace app {
     ui::HBox m_bottomBox;
     ui::Label m_label;
     CommmandEntry* m_entry;
+    Provides m_dev{this};
     AppScripting m_engine;
   };
 

@@ -9,18 +9,15 @@
 #define APP_SHELL_H_INCLUDED
 #pragma once
 
-namespace script {
-  class Engine;
-}
-
 namespace app {
+  class AppScripting;
 
   class Shell {
   public:
     Shell();
     ~Shell();
 
-    void run(script::Engine& engine);
+    void run(AppScripting& engine);
   };
 
 } // namespace app
