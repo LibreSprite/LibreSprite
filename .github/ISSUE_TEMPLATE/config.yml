@@ -2,5 +2,5 @@ blank_issues_enabled: false
 
 contact_links:
   - name: Feature request
-    url: https://github.com/LibreSprite/LibreSprite-proposals/issues/new/choose
+    url: https://github.com/LibreSprite/LibreSprite-proposals/issues/
     about: Please submit feature proposals and meta discussions on the LibreSprite proposals repository
