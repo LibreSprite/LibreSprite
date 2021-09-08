@@ -58,7 +58,7 @@ public:
   void setLayout(const std::string& layout) override;
 
   // Returns the HWND on Windows.
-  DisplayHandle nativeHandle() override;
+  void* nativeHandle() override;
 
 private:
   // Flag used to avoid accessing to an invalid m_surface in the first

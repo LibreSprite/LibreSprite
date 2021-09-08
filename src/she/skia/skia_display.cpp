@@ -172,9 +172,9 @@ void SkiaDisplay::setLayout(const std::string& layout)
   m_window.setLayout(layout);
 }
 
-DisplayHandle SkiaDisplay::nativeHandle()
+void* SkiaDisplay::nativeHandle()
 {
-  return (DisplayHandle)m_window.handle();
+  return m_window.handle();
 }
 
 } // namespace she
