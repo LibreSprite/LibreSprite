@@ -48,9 +48,17 @@ static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
     {SDL_BUTTON_RIGHT, she::Event::RightButton}
 };
 
-static std::unordered_map<SDL_KeyCode, she::KeyScancode> keyCodeMapping = {
+struct Modifier {
+    const int sheModifier;
+    bool isPressed = false;
+    Modifier(int sheModifier) : sheModifier(sheModifier) {}
+};
+
+static std::unordered_map<int, Modifier*> reverseKeyCodeMapping;
+
+static std::unordered_map<SDL_Keycode, Modifier> keyCodeMapping = {
     {SDLK_UNKNOWN, she::kKeyNil},
-    {SDL_KeyCode(13), she::kKeyEnter},
+    {SDL_Keycode(13), she::kKeyEnter},
     {SDLK_a, she::kKeyA},
     {SDLK_b, she::kKeyB},
     {SDLK_c, she::kKeyC},
@@ -171,13 +179,38 @@ static std::unordered_map<SDL_KeyCode, she::KeyScancode> keyCodeMapping = {
     {SDLK_RCTRL, she::kKeyRControl},
     {SDLK_LALT, she::kKeyAlt},
     {SDLK_RALT, she::kKeyAltGr},
-    {SDL_KeyCode(1073742051), she::kKeyLWin},
+    {SDL_Keycode(1073742051), she::kKeyLWin},
     // {SDLK_RWIN, she::kKeyRWin},
     {SDLK_MENU, she::kKeyMenu},
     {SDLK_SCROLLLOCK, she::kKeyScrLock},
     {SDLK_NUMLOCKCLEAR, she::kKeyNumLock},
     {SDLK_CAPSLOCK, she::kKeyCapsLock},
   };
+
+std::unordered_map<SDL_Keycode, Modifier> modifiers = {
+    {SDLK_SPACE, she::kKeySpaceModifier},
+
+    {SDLK_LALT, she::kKeyAltModifier},
+    {SDLK_RALT, she::kKeyAltModifier},
+
+    {SDLK_LCTRL, she::kKeyCtrlModifier},
+    {SDLK_RCTRL, she::kKeyCtrlModifier},
+
+    {SDLK_LGUI, she::kKeyCmdModifier},
+    {SDLK_RGUI, she::kKeyCmdModifier},
+
+    {SDLK_LSHIFT, she::kKeyShiftModifier},
+    {SDLK_RSHIFT, she::kKeyShiftModifier}
+};
+
+she::KeyModifiers getSheModifiers() {
+    int mod = 0;
+    for (auto& entry : modifiers) {
+        if (entry.second.isPressed)
+            mod |= entry.second.sheModifier;
+    }
+    return (she::KeyModifiers) mod;
+}
 
 namespace she {
 namespace sdl {
@@ -188,35 +221,12 @@ namespace sdl {
 
     class SDL2EventQueue : public EventQueue {
     public:
-        struct Modifier {
-            const int sheModifier;
-            bool isPressed = false;
-            Modifier(int sheModifier) : sheModifier(sheModifier) {}
-        };
-
-        std::unordered_map<SDL_KeyCode, Modifier> modifiers = {
-            {SDLK_SPACE, she::kKeySpaceModifier},
-
-            {SDLK_LALT, she::kKeyAltModifier},
-            {SDLK_RALT, she::kKeyAltModifier},
-
-            {SDLK_LCTRL, she::kKeyCtrlModifier},
-            {SDLK_RCTRL, she::kKeyCtrlModifier},
-
-            {SDLK_LGUI, she::kKeyCmdModifier},
-            {SDLK_RGUI, she::kKeyCmdModifier},
-
-            {SDLK_LSHIFT, she::kKeyShiftModifier},
-            {SDLK_RSHIFT, she::kKeyShiftModifier}
-        };
-
-        she::KeyModifiers getSheModifiers() {
-            int mod = 0;
-            for (auto& entry : modifiers) {
-                if (entry.second.isPressed)
-                    mod |= entry.second.sheModifier;
+        SDL2EventQueue() {
+            if (reverseKeyCodeMapping.empty()) {
+                for (auto& entry : keyCodeMapping) {
+                    reverseKeyCodeMapping[entry.second.sheModifier] = &entry.second;
+                }
             }
-            return (she::KeyModifiers) mod;
         }
 
         void getEvent(Event& event, bool) override {
@@ -297,13 +307,15 @@ namespace sdl {
 
                 case SDL_KEYDOWN:
                 case SDL_KEYUP: {
-                    auto modifierIt = modifiers.find((SDL_KeyCode) sdlEvent.key.keysym.sym);
+                    bool isPressed = sdlEvent.type == SDL_KEYDOWN;
+                    auto modifierIt = modifiers.find((SDL_Keycode) sdlEvent.key.keysym.sym);
                     if (modifierIt != modifiers.end()) {
                         modifierIt->second.isPressed = sdlEvent.type == SDL_KEYDOWN;
                     }
 
-                    auto it = keyCodeMapping.find((SDL_KeyCode) sdlEvent.key.keysym.sym);
-                    event.setType(sdlEvent.type == SDL_KEYUP ? Event::KeyUp : Event::KeyDown);
+                    auto it = keyCodeMapping.find((SDL_Keycode) sdlEvent.key.keysym.sym);
+                    it->second.isPressed = isPressed;
+                    event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
                     event.setModifiers(getSheModifiers());
 
                     if (sdlEvent.key.keysym.sym >= ' ' && sdlEvent.key.keysym.sym < 127)
@@ -312,7 +324,7 @@ namespace sdl {
                         event.setUnicodeChar(-1);
 
                     if (it != keyCodeMapping.end()) {
-                        event.setScancode(it->second);
+                        event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
                         if (sdlEvent.key.repeat) {
                             event.setRepeat(sdlEvent.key.repeat);
                         } else {
@@ -519,24 +531,15 @@ namespace sdl {
 
     bool is_key_pressed(KeyScancode scancode)
     {
-// #ifdef ALLEGRO_UNIX
-//   if (scancode == kKeyLShift || scancode == kKeyRShift) {
-//     return key_shifts & KB_SHIFT_FLAG;
-//   }
-//   else if (scancode == kKeyLControl || scancode == kKeyRControl) {
-//     return key_shifts & KB_CTRL_FLAG;
-//   }
-//   else if (scancode == kKeyAlt) {
-//     return key_shifts & KB_ALT_FLAG;
-//   }
-// #endif
-//   return key[scancode] ? true: false;
+        auto it = reverseKeyCodeMapping.find(scancode);
+        if (it != reverseKeyCodeMapping.end()) {
+            return it->second->isPressed;
+        }
         return false;
     }
 
     void clear_keyboard_buffer()
     {
-        // clear_keybuf();
     }
 
 } // namespace she

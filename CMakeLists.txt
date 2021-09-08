@@ -222,11 +222,12 @@ endif()
 # SDL2 backend
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
-  execute_process(COMMAND sdl2-config --libs --shared
+
+  execute_process(COMMAND sdl2-config --libs
     OUTPUT_VARIABLE LIBSDL2_LINK_FLAGS
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  execute_process(COMMAND sdl2-config --cflags --shared
+  execute_process(COMMAND sdl2-config --cflags
     OUTPUT_VARIABLE LIBSDL2_INCLUDE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
