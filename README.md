@@ -20,7 +20,7 @@ LibreSprite originated as a fork of [Aseprite](https://www.aseprite.org), develo
 This fork was made on the [last commit](https://github.com/aseprite/aseprite/commit/03be4aa23db465219962f4c62410f628e7392545) covered by the GPL version 2 license, and is now developed independently of Aseprite.
 
 ## Contributing
-As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://webchat.freenode.net/#LibreSprite), our [Discord](https://discord.gg/95gbyU5) or [Matrix](https://matrix.to/#/#libresprite-talk:matrix.org), and checkout our guide on [contributing](CONTRIBUTING.md).
+As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at [#LibreSprite](https://web.libera.chat/#libresprite), our [Discord](https://discord.gg/95gbyU5) or [Matrix](https://matrix.to/#/#libresprite-talk:matrix.org), and checkout our guide on [contributing](CONTRIBUTING.md).
 
 ## Compiling
 Don't worry, it isn't as hard as you might think! Just follow the instructions [here](INSTALL.md).
