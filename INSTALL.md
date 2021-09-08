@@ -1,104 +1,67 @@
-# Table of contents
+# Installation
+
+## Table of contents
 
 * [Platforms](#platforms)
 * [Get the source code](#get-the-source-code)
 * [Dependencies](#dependencies)
-  * [Windows dependencies](#windows-dependencies)
-  * [Mac OS X dependencies](#mac-os-x-dependencies)
   * [Linux dependencies](#linux-dependencies)
+  * [Windows dependencies](#windows-dependencies)
+  * [MacOS dependencies](#macos-dependencies)
 * [Compiling](#compiling)
-  * [Windows details](#windows-details)
-  * [Mac OS X details](#mac-os-x-details)
-    * [Issues with Retina displays](#issues-with-retina-displays)
   * [Linux details](#linux-details)
-* [Using shared third party libraries](#using-shared-third-party-libraries)
-  * [Linux issues](#linux-issues)
-* [Building Skia dependency](#building-skia-dependency)
+  * [Windows details](#windows-details)
+  * [MacOS details](#macos-details)
   * [Skia on Windows](#skia-on-windows)
-  * [Skia on Mac OS X](#skia-on-mac-os-x)
+  * [Skia on MacOS](#skia-on-macos)
+* [Installing](#installing)
 
-# Platforms
+## Platforms
 
-Remember it's no longer necessary to compile LibreSprite by yourself, you can download the installers [here](https://libresprite.github.io/)
+You can download installers from the [website](https://libresprite.github.io/).
+If you want to compile LibreSprite from source, continue reading.
 
-You should be able to compile LibreSprite successfully on the following
-platforms:
+You should be able to compile LibreSprite on the following platforms:
 
 * Windows 10 + VS2015 Community Edition + Windows 10 SDK
 * Mac OS X 10.11.4 El Capitan + Xcode 7.3 + OS X 10.11 SDK + Skia (without GPU)
 * Linux + gcc 4.8 with some C++11 support
 
-# Get the source code
+To compile LibreSprite you will need:
 
-You can get the source code by downloading a zip or tar.gz snapshot of the
-master branch of the LibreSprite repository:
+* [CMake](http://www.cmake.org/) (3.4 or greater)
+* [Ninja](https://ninja-build.org)
+* [vcpkg](https://vcpkg.io/en/getting-started.html) (Windows and MacOS only)
 
-https://github.com/LibreSprite/LibreSprite
+## Get the source code
 
-Or you can clone the repository and all its submodules using the
-following command:
+Clone the repository and its submodules using the following command:
 
     git clone --recursive https://github.com/LibreSprite/LibreSprite
 
-To update an existing clone you can use the following commands:
+(You can use [Git for Windows](https://git-for-windows.github.io/) to
+clone the repository on Windows.)
+
+To update an existing clone, use the following commands:
 
     cd LibreSprite
     git pull
     git submodule update --init --recursive
 
-You can use [Git for Windows](https://git-for-windows.github.io/) to
-clone the repository on Windows.
+## Backends
 
-# Dependencies
+LibreSprite can be compiled with two different backends:
 
-To compile LibeSprite you will need:
+1. Allegro backend (Windows, Linux)
+2. Skia backend (Windows, MacOS)
 
-* The latest version of [CMake](http://www.cmake.org/) (3.4 or greater)
-* [Ninja](https://ninja-build.org) build system
-* (Windows and MacOS only) [vcpkg](https://vcpkg.io/en/getting-started.html)
-  package manager
+**NOTE**: Work on a new backend to replace these is underway.
 
-LibreSprite can be compiled with two different back-ends:
+## Dependencies
 
-1. Allegro back-end (Windows, Linux): You will not need any extra
-   library because the repository already contains a modified version
-   of the Allegro library. This back-end is deprecated and will be
-   removed in future versions. All new development is being done in
-   the new Skia back-end.
+You'll need the following dependencies to compile LibreSprite:
 
-2. Skia back-end (Windows, Mac OS X): You will need a compiled version
-   of the Skia library. Please check the details about
-   [how to build Skia](#building-skia-dependency) on your platform.
-
-## Windows dependencies
-
-Run
-
-    vcpkg install freetype giflib gtest libjpeg-turbo libpng libwebp pixman tinyxml zlib --triplet x64-windows
-    
- Beware: `--triplet x64-windows` is only necessary for a 64 architecture
- build.
-
-After that you have to choose the back-end:
-
-1. If you choose the Allegro back-end, you can jump directly to the
-   [Compiling](#compiling) section.
-
-2. If you choose the Skia back-end, you will need to
-   [compile Skia](#skia-on-windows) before and then continue in the
-   [Compiling](#compiling) section. Remember to check the
-   [Windows details](#windows-details) section to know how to call
-   `cmake` correctly.
-
-## Mac OS X dependencies
-
-On OS X you will need Mac OS X 10.11 SDK and Xcode 7.3 (maybe older
-versions might work).
-
-Also, you must compile [Skia](#skia-on-mac-os-x) before starting with
-the [compilation](#compiling).
-
-## Linux dependencies
+### Linux dependencies
 
 Debian/Ubuntu:
 
@@ -107,140 +70,101 @@ Debian/Ubuntu:
 The `libxcursor-dev` package is needed to
 [hide the hardware cursor](https://github.com/aseprite/aseprite/issues/913).
 
-# Compiling
+### Windows dependencies
 
-1. [Get LibreSprite code](#get-the-source-code), put it in a folder like
-   `C:\LibreSprite`, and create a `build` directory inside to leave all
-   the files that are result of the compilation process (`.exe`,
-   `.lib`, `.obj`, `.a`, `.o`, etc).
+To install the required dependencies with vcpkg, run:
 
-        cd C:\LibreSprite
-        mkdir build
+    vcpkg install freetype giflib gtest libjpeg-turbo libpng libwebp pixman tinyxml zlib --triplet x64-windows
+    
+Beware: `--triplet x64-windows` is only necessary for a 64 architecture
+build.
 
-   In this way, if you want to start with a fresh copy of LibreSprite
-   source code, you can remove the `build` directory and start again.
-   
-   Now, move into the folder and follow your OS instructions down below.
-   You might want to use [`ccmake`](https://cmake.org/cmake/help/latest/manual/ccmake.1.html)
-   or [`cmake-gui`](https://cmake.org/cmake/help/latest/manual/cmake-gui.1.html)
-   to modify some options
-   
-       cd build
+### MacOS dependencies
 
-## Windows details
+On MacOS you will need Mac OS X 10.11 SDK and Xcode 7.3 (older versions
+might work).
+
+## Compiling
+
+First, create the `build` directory with the following commands:
+
+    cd LibreSprite
+    mkdir build
+    cd build
+
+Then following the platform-specific instructions for compiling below.
+
+The `build` directory will contain the results of the compilation process.
+If you want to build a fresh copy of LibreSprite, remove the `build` directory
+and recompile.
+
+### Linux details
+
+To compile LibreSprite, run the following commands:
+
+    cmake -G Ninja ..
+    ninja libresprite
+
+The repository contains a patched version of the Allegro 4 library.
+If you want to use your installed version of Allegro, run `cmake` with
+the flag `-DUSE_SHARED_ALLEGRO4=ON`. However, this is not recommended due to
+issues with Allegro 4.4
+[(1)](https://github.com/aseprite/aseprite/issues/192)
+[(2)](https://github.com/LibreSprite/LibreSprite/commit/27b55030e26e93c5e8d9e7e21206c8709d46ff22).
+
+### Windows details
 
 If you're using a command prompt and aiming for a x64 build, be sure to
 use the [x64 prompt](https://i.stack.imgur.com/qeR0b.png) or it won't
 find `vcpkg` libraries.
 
-Now run
+To compile the Allegro backend, run the following commands:
 
     cmake ^
       -DCMAKE_TOOLCHAIN_FILE=put_your_vcpkg_path_here\vcpkg\scripts\buildsystems\vcpkg.cmake ^
       -G Ninja ^
       ..
 
-To choose the Skia back-end
-([after you've compiled Skia](#skia-on-windows)) add the following
-arguments to cmake:
+The repository contains a patched version of the Allegro 4 library.
+If you want to use your installed version of Allegro, run `cmake` with
+the flag `-DUSE_SHARED_ALLEGRO4=ON`.
 
-    -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND=ON -DSKIA_DIR=C:\deps\skia
+To compile the Skia backend, first [compile Skia](#skia-on-windows) and
+then run the following commands:
 
-In this case, `C:\deps\skia` is the directory where Skia was compiled
-as described in [Skia on Windows](#skia-on-windows) section.
+    cmake ^
+      -DCMAKE_TOOLCHAIN_FILE=put_your_vcpkg_path_here\vcpkg\scripts\buildsystems\vcpkg.cmake ^
+      -DUSE_ALLEG4_BACKEND=OFF -DUSE_SKIA_BACKEND=ON -DSKIA_DIR=C:\deps\skia ^
+      -G Ninja ^
+      ..
 
-Now build with Ninja, and you'll find the executable
-in `\build\bin`
+In this case, `C:\deps\skia` is the directory where Skia was compiled.
 
-    ninja libresprite
-
-## Mac OS X details
+### MacOS details
 
 > [ ! ] MacOS is currently not available due to some issues with Skia
 
-After [compiling Skia](#skia-on-mac-os-x), you should run `cmake` with
-the following parameters and then `ninja`:
+To compile LibreSprite, first [compile Skia](#skia-on-macos).
+Then run the following commands:
 
     cmake \
       -DCMAKE_OSX_ARCHITECTURES=x86_64 \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 \
       -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
-      -DUSE_ALLEG4_BACKEND=OFF \
-      -DUSE_SKIA_BACKEND=ON \
       -DSKIA_DIR=$HOME/deps/skia \
-      -DWITH_HarfBuzz=OFF \
       -G Ninja \
       ..
     ninja libresprite
 
-In this case, `$HOME/deps/skia` is the directory where Skia was
-compiled as described in [Skia on Mac OS X](#skia-on-mac-os-x) section.
+In this case, `$HOME/deps/skia` is the directory where Skia was compiled.
 
-### Issues with Retina displays
-
-If you have a Retina display, check the following issue:
-
-  https://github.com/aseprite/aseprite/issues/589
-
-## Linux details
-
-Run
-
-    cmake -G Ninja ..
-    
-And build with
-
-    ninja libresprite
-
-If you want to build LibreSprite in a different directory
-(by default `\build\bin`) add the following cmake flag, and run
-`ninja install` after having built LibreSprite
-
-    -DCMAKE_INSTALL_PREFIX=~/the_path/you_want
-
-# Using shared third party libraries
-
-If you don't want to use the embedded code of third party libraries
-(i.e. to use your installed versions), you can disable static linking
-configuring each `USE_SHARED_` option.
-
-After running `cmake -G`, you can edit `build/CMakeCache.txt` file,
-and enable the `USE_SHARED_` flag (set its value to `ON`) of the
-library that you want to be linked dynamically.
-
-## Linux issues
-
-If you use the official version of Allegro 4.4 library (i.e. you
-compile with `USE_SHARED_ALLEGRO4=ON`) you will experience a couple of
-known issues solved in
-[our patched version of Allegro 4.4 library](https://github.com/LibreSprite/LibreSprite/tree/master/src/allegro):
-
-* You will
-  [not be able to resize the window](https://github.com/aseprite/aseprite/issues/192)
-  ([patch](https://github.com/LibreSprite/LibreSprite/commit/920f6275d55113507121afcbcda80adb44cc0563)).
-* You will have problems
-  [adding HSV colors in non-English systems](https://github.com/LibreSprite/LibreSprite/commit/27b55030e26e93c5e8d9e7e21206c8709d46ff22)
-  using the warning icon.
-
-# Building Skia dependency
-
-When you compile LibreSprite with [Skia](https://skia.org) as back-end on
-Windows or OS X, you need to compile a specific version of Skia. In
-the following sections you will find straightforward steps to compile
-Skia.
-
-You can always check the
-[official Skia instructions](https://skia.org/user/quick) and select
-the OS you are building for. LibreSprite uses the `aseprite-m53` Skia
-branch from `https://github.com/aseprite/skia`.
-
-## Skia on Windows
+### Skia on Windows
 
 Download
 [Google depot tools](https://storage.googleapis.com/chrome-infra/depot_tools.zip)
 and uncompress it in some place like `C:\deps\depot_tools`.
 
-Then open a command line follow these steps (for VS2015):
+Then open a command line and follow these steps (for VS2015):
 
     call "%VS140COMNTOOLS%\vsvars32.bat"
     set PATH=C:\deps\depot_tools;%PATH%
@@ -262,10 +186,10 @@ lot of packages, please wait and re-run the same command in case it fails.)
 
     ninja -C out/Release dm
 
-More information about these steps in the
+For more information, see the
 [official Skia documentation](https://skia.org/user/quick/windows).
 
-## Skia on Mac OS X
+### Skia on MacOS
 
 These steps will create a `deps` folder in your home directory with a
 couple of subdirectories needed to build Skia (you can change the
@@ -282,10 +206,12 @@ several minutes to finish:
     python bin/sync-and-gyp
     ninja -C out/Release dm
 
-After this you should have all Skia libraries compiled.  When you
-[compile LibreSprite](#compiling), remember to add
-`-DSKIA_DIR=$HOME/deps/skia` parameter to your `cmake` call as
-described in the [Mac OS X details](#mac-os-x-details) section.
-
-More information about these steps in the
+For more information, see the
 [official Skia documentation](https://skia.org/user/quick/macos).
+
+## Installing
+
+Once you've finished compiling, you can install LibreSprite by running the
+following command from the `build` directory:
+
+    ninja install
