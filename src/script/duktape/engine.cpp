@@ -22,16 +22,9 @@
 #include "script/engine.h"
 #include "script/engine_delegate.h"
 
-class ScriptEngineException : public base::Exception {
-public:
-  ScriptEngineException(duk_errcode_t code, const char* msg)
-    : Exception(std::string(msg) + " (code " + base::convert_to<std::string>(code) + ")") {
-  }
-};
-
 namespace {
-  void on_fatal_handler(duk_context* ctx, duk_errcode_t code, const char* msg) {
-    throw ScriptEngineException(code, msg);
+  void on_fatal_handler(void* ctx, const char* msg) {
+    throw base::Exception(msg);
   }
 
   void* on_alloc_function(void* udata, duk_size_t size) {
