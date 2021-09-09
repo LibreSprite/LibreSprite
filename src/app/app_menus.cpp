@@ -73,7 +73,7 @@ void AppMenus::reload()
 #if _DEBUG
   // Add a warning element because the user is not using the last well-known gui.xml file.
   if (GuiXml::instance()->version() != VERSION)
-    m_rootMenu->insertChild(0, createInvalidVersionMenuitem());
+    getRootMenu()->insertChild(0, createInvalidVersionMenuitem());
 #endif
 
   LOG("Main menu loaded.\n");
