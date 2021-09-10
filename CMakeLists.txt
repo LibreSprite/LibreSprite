@@ -223,22 +223,11 @@ endif()
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
 
-  execute_process(COMMAND sdl2-config --libs
-    OUTPUT_VARIABLE LIBSDL2_LINK_FLAGS
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  execute_process(COMMAND sdl2-config --cflags
-    OUTPUT_VARIABLE LIBSDL2_INCLUDE_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  if(NOT LIBSDL2_LINK_FLAGS)
-    message(FATAL_ERROR "SDL2 not found")
-  endif()
-
-  # Get flags to link programs using allegro-config program
-
-  set(LIBSDL2_LINK_FLAGS ${LIBSDL2_LINK_FLAGS} -lSDL2_image ${PLATFORM_LIBS})
-  include_directories(${LIBSDL2_INCLUDE_DIR})
+  find_package(PkgConfig)
+  pkg_search_module(SDL2 REQUIRED sdl2)
+  include_directories(${SDL2_INCLUDE_DIRS})
+  pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+  include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 endif()
 
 # Skia backend
