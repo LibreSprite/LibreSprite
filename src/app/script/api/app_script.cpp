@@ -44,21 +44,29 @@ public:
 
   AppScriptObject() {
     addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;})
-        .documentation("Read-only. Returns the number of the currently active animation frame.");
+      .doc("read-only. Returns the number of the currently active animation frame.");
+
     addProperty("activeLayerNumber", [this]{return updateSite() ? m_site.layerIndex() : 0;})
-        .documentation("Read-only. Returns the number of the current layer.");
+      .doc("read-only. Returns the number of the current layer.");
+
     addProperty("activeImage", []{return inject<ScriptObject>{"activeImage"}.get();})
-        .documentation("Read-only, can be null. Returns the current layer/frame's image.");
+      .doc("read-only, can be null. Returns the current layer/frame's image.");
+
     addProperty("activeSprite", []{return inject<ScriptObject>{"activeSprite"}.get();})
-        .documentation("Read-only. Returns the currently active Sprite.");
+      .doc("read-only. Returns the currently active Sprite.");
+
     addProperty("activeDocument", []{return inject<ScriptObject>{"activeDocument"}.get();})
-        .documentation("Read-only. Returns the currently active Document.");
+      .doc("read-only. Returns the currently active Document.");
+
     addProperty("pixelColor", [this]{return m_pixelColor.get();})
-        .documentation("Read-only. Returns an object with functions for color conversion");
+      .doc("read-only. Returns an object with functions for color conversion.");
+
     addProperty("version", []{return script::Value{VERSION};})
-        .documentation("Read-only. Returns LibreSprite's current version as a string.");
+      .doc("read-only. Returns LibreSprite's current version as a string.");
+
     addMethod("documentation", &AppScriptObject::documentation)
-        .documentation("Prints this text.");
+      .doc("prints this text.");
+
     makeGlobal("app");
     init();
   }
@@ -98,7 +106,7 @@ public:
         out << "## Properties: " << std::endl;
         for (auto& propEntry : internal->properties) {
           auto& prop = propEntry.second;
-          out << "   - " << propEntry.first << ": " << prop.doc << std::endl;
+          out << "   - `" << propEntry.first << "`: " << prop.docStr << std::endl;
         }
       }
 
@@ -110,23 +118,23 @@ public:
         out << "## Methods: " << std::endl;
         for (auto& funcEntry : internal->functions) {
           auto& func = funcEntry.second;
-          out << "   - " << funcEntry.first << "(";
+          out << "   - `" << funcEntry.first << "(";
           bool first = true;
-          for (auto& arg : func.argDoc) {
+          for (auto& arg : func.docArgs) {
             if (!first) out << ", ";
             first = false;
             out << arg.name;
           }
-          out << "): " << std::endl;
+          out << ")`: " << std::endl;
 
-          for (auto& arg : func.argDoc) {
-            out << "     - " << arg.name << ": " << arg.doc << std::endl;
+          for (auto& arg : func.docArgs) {
+            out << "     - " << arg.name << ": " << arg.docStr << std::endl;
           }
 
-          out << "      returns: " << func.resultDoc << std::endl;
+          out << "      returns: " << func.docReturnsStr << std::endl;
 
-          if (!func.doc.empty())
-            out << "      " << func.doc << std::endl;
+          if (!func.docStr.empty())
+            out << "      " << func.docStr << std::endl;
 
           out << std::endl;
         }

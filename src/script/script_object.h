@@ -15,42 +15,39 @@ namespace script {
   struct ObjectProperty {
     Function getter;
     Function setter;
-    std::string doc;
+    std::string docStr;
 
-    ObjectProperty& documentation(const std::string& str) {
-      doc = str;
+    ObjectProperty& doc(const std::string& str) {
+      docStr = str;
       return *this;
     }
   };
 
   struct DocumentedFunction : public Function {
-    std::string doc;
-
-    struct ArgDoc {
+    struct DocArg {
       std::string name;
-      std::string doc;
+      std::string docStr;
     };
-
-    std::vector<ArgDoc> argDoc;
-
-    std::string resultDoc = "Nothing";
+    std::string docStr;
+    std::vector<DocArg> docArgs;
+    std::string docReturnsStr = "Nothing";
 
     DocumentedFunction(const Function& other) : Function(other) {}
 
     DocumentedFunction(Function&& other) : Function(std::move(other)) {}
 
-    DocumentedFunction& documentation(const std::string& str) {
-      doc = str;
+    DocumentedFunction& doc(const std::string& str) {
+      docStr = str;
       return *this;
     }
 
-    DocumentedFunction& arg(const std::string& arg, const std::string& doc) {
-      argDoc.emplace_back(ArgDoc{arg, doc});
+    DocumentedFunction& docArg(const std::string& arg, const std::string& doc) {
+      docArgs.emplace_back(DocArg{arg, doc});
       return *this;
     }
 
-    DocumentedFunction& returns(const std::string& doc) {
-      resultDoc = doc;
+    DocumentedFunction& docReturns(const std::string& doc) {
+      docReturnsStr = doc;
       return *this;
     }
   };

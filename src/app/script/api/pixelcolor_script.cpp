@@ -12,41 +12,49 @@ class PixelColorScriptObject : public script::ScriptObject {
 public:
   PixelColorScriptObject() {
     addFunction("rgba", doc::rgba)
-      .arg("r", "Red, 0-255")
-      .arg("g", "Green, 0-255")
-      .arg("b", "Blue, 0-255")
-      .arg("a", "Alpha (opacity), 0-255")
-      .returns("A 32-bit color in 8888 RGBA format")
+      .doc("Converts R, G, B, A values into a single 32-bit RGBA color.")
+      .docArg("r", "red, 0-255.")
+      .docArg("g", "green, 0-255.")
+      .docArg("b", "blue, 0-255.")
+      .docArg("a", "alpha (opacity), 0-255.")
+      .docReturns("A 32-bit color in 8888 RGBA format.")
       .setDefault(0, 0, 0, 255);
+
     addFunction("rgbaR", doc::rgba_getr)
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .returns("The red component of the color")
-      .documentation("Extracts the red channel from a 32-bit color");
+      .doc("Extracts the red channel from a 32-bit color")
+      .docArg("color", "A 32-bit color in 8888 RGBA format")
+      .docReturns("The red component of the color");
+
     addFunction("rgbaG", doc::rgba_getg)
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .returns("The green component of the color")
-      .documentation("Extracts the green channel from a 32-bit color");
+      .doc("Extracts the green channel from a 32-bit color")
+      .docArg("color", "A 32-bit color in 8888 RGBA format")
+      .docReturns("The green component of the color");
+
     addFunction("rgbaB", doc::rgba_getb)
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .returns("The blue component of the color")
-      .documentation("Extracts the blue channel from a 32-bit color");
+      .doc("Extracts the blue channel from a 32-bit color")
+      .docArg("color", "A 32-bit color in 8888 RGBA format")
+      .docReturns("The blue component of the color");
+
     addFunction("rgbaA", doc::rgba_geta)
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .returns("The alpha component of the color")
-      .documentation("Extracts the alpha channel from a 32-bit color");
+      .doc("Extracts the alpha channel from a 32-bit color")
+      .docArg("color", "A 32-bit color in 8888 RGBA format")
+      .docReturns("The alpha component of the color");
+
     addFunction("graya", doc::graya)
-      .arg("gray", "The luminance of color")
-      .arg("alpha", "The alpha (opacity) of the color)")
-      .returns("The color with the given luminance/opacity")
+      .docArg("gray", "The luminance of color")
+      .docArg("alpha", "The alpha (opacity) of the color)")
+      .docReturns("The color with the given luminance/opacity")
       .setDefault(0, 255);
+
     addFunction("grayaV", doc::graya_getv)
-      .arg("color", "A 32-bit color in 888 RGBA format")
-      .returns("The luminance Value of the color")
-      .documentation("Extracts the luminance from a 32-bit color");
+      .doc("Extracts the luminance from a 32-bit color")
+      .docArg("color", "A 32-bit color in 888 RGBA format")
+      .docReturns("The luminance Value of the color");
+
     addFunction("grayaA", doc::graya_geta)
-      .arg("color", "A 32-bit color in 888 RGBA format")
-      .returns("The alpha component of the color")
-      .documentation("Extracts the alpha (opacity) from a 32-bit color");
+      .doc("Extracts the alpha (opacity) from a 32-bit color")
+      .docArg("color", "A 32-bit color in 888 RGBA format")
+      .docReturns("The alpha component of the color");
   }
 };
 

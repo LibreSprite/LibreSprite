@@ -12,24 +12,29 @@ class ImageScriptObject : public script::ScriptObject {
 public:
   ImageScriptObject() {
     addProperty("width", [this]{return m_image->width();})
-      .documentation("Read-only. The width of the image");
+      .doc("read-only. The width of the image.");
+
     addProperty("height", [this]{return m_image->height();})
-      .documentation("Read-only. The height of the image");
+      .doc("read-only. The height of the image.");
+
     addProperty("format", [this]{return (int) m_image->pixelFormat();})
-      .documentation("Read-only. The PixelFormat of the image");
+      .doc("read-only. The PixelFormat of the image.");
+
     addFunction("getPixel", [this](int x, int y){return m_image->getPixel(x, y);})
-      .arg("x", "Integer")
-      .arg("y", "Integer")
-      .returns("A color value")
-      .documentation("Reads a color from the given coordinate of the image.");
+      .doc("reads a color from the given coordinate of the image.")
+      .docArg("x", "integer")
+      .docArg("y", "integer")
+      .docReturns("a color value");
+
     addMethod("putPixel", &ImageScriptObject::putPixel)
-      .arg("x", "Integer")
-      .arg("y", "Integer")
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .documentation("Writes the color onto the image at the the given coordinate.");
+      .doc("writes the color onto the image at the the given coordinate.")
+      .docArg("x", "integer")
+      .docArg("y", "integer")
+      .docArg("color", "a 32-bit color in 8888 RGBA format");
+
     addMethod("clear", &ImageScriptObject::clear)
-      .arg("color", "A 32-bit color in 8888 RGBA format")
-      .documentation("Clears the image with the specified color");
+      .doc("clears the image with the specified color.")
+      .docArg("color", "a 32-bit color in 8888 RGBA format");
   }
 
   void putPixel(int x, int y, int color) {
