@@ -6,8 +6,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "script/engine.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -20,6 +18,23 @@
 #include "app/ui/document_view.h"
 #include "doc/site.h"
 
+#include "script/engine.h"
+#include "script/engine_delegate.h"
+#include "script/script_object.h"
+
+#include <sstream>
+
+class DudScriptObject : public script::InternalScriptObject {
+public:
+  void makeLocal() override {}
+
+  void makeGlobal(const std::string& name) override {
+    globalName = name;
+  }
+  std::string globalName;
+};
+static script::InternalScriptObject::Regular<DudScriptObject> dud("DudScriptObject");
+
 namespace app {
 
 class AppScriptObject : public script::ScriptObject {
@@ -28,15 +43,110 @@ public:
   std::vector<inject<ScriptObject>>  m_documents;
 
   AppScriptObject() {
-    addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;});
-    addProperty("activeLayerNumber", [this]{return updateSite() ? m_site.layerIndex() : 0;});
-    addProperty("activeImage", []{return inject<ScriptObject>{"activeImage"}.get();});
-    addProperty("activeSprite", []{return inject<ScriptObject>{"activeSprite"}.get();});
-    addProperty("activeDocument", []{return inject<ScriptObject>{"activeDocument"}.get();});
-    addProperty("pixelColor", [this]{return m_pixelColor.get();});
-    addProperty("version", []{return script::Value{VERSION};});
+    addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;})
+      .doc("read-only. Returns the number of the currently active animation frame.");
+
+    addProperty("activeLayerNumber", [this]{return updateSite() ? m_site.layerIndex() : 0;})
+      .doc("read-only. Returns the number of the current layer.");
+
+    addProperty("activeImage", []{return inject<ScriptObject>{"activeImage"}.get();})
+      .doc("read-only, can be null. Returns the current layer/frame's image.");
+
+    addProperty("activeSprite", []{return inject<ScriptObject>{"activeSprite"}.get();})
+      .doc("read-only. Returns the currently active Sprite.");
+
+    addProperty("activeDocument", []{return inject<ScriptObject>{"activeDocument"}.get();})
+      .doc("read-only. Returns the currently active Document.");
+
+    addProperty("pixelColor", [this]{return m_pixelColor.get();})
+      .doc("read-only. Returns an object with functions for color conversion.");
+
+    addProperty("version", []{return script::Value{VERSION};})
+      .doc("read-only. Returns LibreSprite's current version as a string.");
+
+    addMethod("documentation", &AppScriptObject::documentation)
+      .doc("prints this text.");
+
     makeGlobal("app");
     init();
+  }
+
+  void documentation() {
+    std::stringstream out;
+    if (!this->get("activeDocument")) {
+      return;
+    }
+
+    auto& internalRegistry = script::InternalScriptObject::getRegistry();
+    auto originalDefault = internalRegistry[""];
+    script::InternalScriptObject::setDefault("DudScriptObject");
+
+    for (auto& entry : script::ScriptObject::getRegistry()) {
+      if (entry.first.empty())
+        continue;
+      inject<ScriptObject> so{entry.first};
+      auto internal = dynamic_cast<DudScriptObject*>(so->getInternalScriptObject());
+      if (!internal)
+        continue;
+
+      out << "# ";
+      if (!internal->globalName.empty())
+        out << "global " << internal->globalName << " ";
+
+      std::string className = entry.first;
+      auto dot = className.rfind("ScriptObject");
+      if (dot != std::string::npos)
+        className.resize(dot);
+
+      out << "[class " << className << "]" << std::endl;
+
+      if (internal->properties.empty()) {
+        out << "## No Properties." << std::endl;
+      } else {
+        out << "## Properties: " << std::endl;
+        for (auto& propEntry : internal->properties) {
+          auto& prop = propEntry.second;
+          out << "   - `" << propEntry.first << "`: " << prop.docStr << std::endl;
+        }
+      }
+
+      out << std::endl;
+
+      if (internal->functions.empty()) {
+        out << "## No Methods." << std::endl;
+      } else {
+        out << "## Methods: " << std::endl;
+        for (auto& funcEntry : internal->functions) {
+          auto& func = funcEntry.second;
+          out << "   - `" << funcEntry.first << "(";
+          bool first = true;
+          for (auto& arg : func.docArgs) {
+            if (!first) out << ", ";
+            first = false;
+            out << arg.name;
+          }
+          out << ")`: " << std::endl;
+
+          for (auto& arg : func.docArgs) {
+            out << "     - " << arg.name << ": " << arg.docStr << std::endl;
+          }
+
+          out << "      returns: " << func.docReturnsStr << std::endl;
+
+          if (!func.docStr.empty())
+            out << "      " << func.docStr << std::endl;
+
+          out << std::endl;
+        }
+      }
+      out << std::endl << std::endl;
+    }
+
+    std::cout << out.str() << std::endl;
+
+    // inject<script::EngineDelegate>{}->onConsolePrint(out.str().c_str());
+
+    internalRegistry[""] = originalDefault;
   }
 
   bool updateSite() {

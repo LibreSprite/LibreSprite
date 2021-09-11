@@ -26,29 +26,65 @@ class SpriteScriptObject : public script::ScriptObject {
 
 public:
   SpriteScriptObject() : m_sprite{doc()->sprite()} {
-    addProperty("layerCount", [this]{return (int) m_sprite->countLayers();});
-    addProperty("filename", [this]{return doc()->filename();});
+    addProperty("layerCount", [this]{return (int) m_sprite->countLayers();})
+      .doc("read-only. Returns the amount of layers in the sprite.");
+
+    addProperty("filename", [this]{return doc()->filename();})
+      .doc("read-only. Returns the file name of the sprite.");
+
     addProperty("width",
                 [this]{return m_sprite->width();},
                 [this](int width){
                   transaction().execute(new app::cmd::SetSpriteSize(m_sprite, width, m_sprite->height()));
                   return 0;
-                });
+                })
+      .doc("read+write. Returns and sets the width of the sprite.");
+
     addProperty("height",
                 [this]{return m_sprite->height();},
                 [this](int height){
                   transaction().execute(new app::cmd::SetSpriteSize(m_sprite, m_sprite->width(), height));
                   return 0;
-                });
-    addProperty("colorMode", [this]{ return m_sprite->pixelFormat();});
-    addProperty("selection", [this]{ return this; });
-    addMethod("layer", &SpriteScriptObject::layer);
-    addMethod("commit", &SpriteScriptObject::commit);
-    addMethod("resize", &SpriteScriptObject::resize);
-    addMethod("crop", &SpriteScriptObject::crop);
-    addMethod("save", &SpriteScriptObject::save);
-    addMethod("saveAs", &SpriteScriptObject::saveAs);
-    addMethod("loadPalette", &SpriteScriptObject::loadPalette);
+                })
+      .doc("read+write. Returns and sets the height of the sprite.");
+
+    addProperty("colorMode", [this]{ return m_sprite->pixelFormat();})
+      .doc("read-only. Returns the sprite's ColorMode.");
+
+    addProperty("selection", [this]{ return this; })
+      .doc("placeholder. Do not use.");
+
+    addMethod("layer", &SpriteScriptObject::layer)
+      .doc("allows you to access a given layer.")
+      .docArg("layerNumber", "The number of they layer, starting with zero from the bottom.")
+      .docReturns("a Layer object or null if invalid.");
+
+    addMethod("commit", &SpriteScriptObject::commit)
+      .doc("commits the current transaction.");
+
+    addMethod("resize", &SpriteScriptObject::resize)
+      .doc("resizes the sprite.")
+      .docArg("width", "The new width.")
+      .docArg("height", "The new height.");
+
+    addMethod("crop", &SpriteScriptObject::crop)
+      .doc("crops the sprite to the specified dimensions.")
+      .docArg("x", "The left-most edge of the crop.")
+      .docArg("y", "The top-most edge of the crop.")
+      .docArg("width", "The width of the cropped area.")
+      .docArg("height", "The height of the cropped area.");
+
+    addMethod("save", &SpriteScriptObject::save)
+      .doc("saves the sprite.");
+
+    addMethod("saveAs", &SpriteScriptObject::saveAs)
+      .doc("saves the sprite.")
+      .docArg("fileName", "String. The new name of the file")
+      .docArg("asCopy", "If true, the file is saved as a copy. Requires fileName to be specified.");
+
+    addMethod("loadPalette", &SpriteScriptObject::loadPalette)
+      .doc("loads a palette file.")
+      .docArg("fileName", "The name of the palette file to load");
   }
 
   ~SpriteScriptObject() {
