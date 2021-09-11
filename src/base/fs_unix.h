@@ -160,7 +160,9 @@ std::string get_user_docs_folder()
 std::string get_canonical_path(const std::string& path)
 {
   char buffer[PATH_MAX];
-  realpath(path.c_str(), buffer);
+  if (realpath(path.c_str(), buffer) == NULL) {
+    return path;
+  }
   return buffer;
 }
 
