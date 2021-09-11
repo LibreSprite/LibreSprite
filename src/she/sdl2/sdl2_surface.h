@@ -4,6 +4,8 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#ifndef SHE_SDL2_SURFACE_H
+#define SHE_SDL2_SURFACE_H
 #pragma once
 
 #include "she/surface.h"
@@ -62,3 +64,5 @@ namespace she {
   };
 
 } // namespace she
+
+#endif
