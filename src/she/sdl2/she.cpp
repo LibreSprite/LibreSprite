@@ -411,10 +411,6 @@ namespace sdl {
             delete this;
         }
 
-        EventQueue* eventQueue() override { // TODO remove this function
-            return EventQueue::instance();
-        }
-
         gfx::Size defaultNewDisplaySize() override {
             return gfx::Size(0, 0);
         }

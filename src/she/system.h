@@ -31,7 +31,6 @@ namespace she {
     virtual void dispose() = 0;
     virtual Logger* logger() = 0;
     virtual NativeDialogs* nativeDialogs() = 0;
-    virtual EventQueue* eventQueue() = 0;
     virtual gfx::Size defaultNewDisplaySize() = 0;
     virtual Display* defaultDisplay() = 0;
     virtual Display* createDisplay(int width, int height, int scale) = 0;

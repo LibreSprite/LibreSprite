@@ -148,7 +148,7 @@ Manager::~Manager()
 void Manager::setDisplay(she::Display* display)
 {
   m_display = display;
-  m_eventQueue = she::instance()->eventQueue();
+  m_eventQueue = she::EventQueue::instance();
 
   onNewDisplayConfiguration();
 }
