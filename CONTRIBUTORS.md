@@ -11,7 +11,7 @@ It tries to replicate some pixel-art algorithms:
 * [Pixel perfect drawing algorithm](http://deepnight.net/pixel-perfect-drawing/) by [Sébastien Bénard](https://twitter.com/deepnightfr) and [Carduus](https://twitter.com/CarduusHimself/status/420554200737935361).
 
 And it uses the following third-party libraries:
-* [allegro 4.4](https://liballeg.org) (Giftware)
+
 * [curl](http://curl.haxx.se/) - (curl license)
 * [duktape](https://duktape.org) (MIT)
 * [freetype](https://www.freetype.org) (FTL)
@@ -20,11 +20,10 @@ And it uses the following third-party libraries:
 * [libjpeg](http://libjpeg.sourceforge.net) (IJG)
 * [libpng](http://www.libpng.org) (Libpng)
 * [libwebp](https://developers.google.com/speed/webp) (BSD-3-Clause)
-* [libx11](https://xorg.freedesktop.org) (XFree86)
-* [libxcursor](https://xorg.freedesktop.org) (MIT)
 * loadpng (Zlib)
 * modp\_b64 (BSD)
 * [pixman](http://www.pixman.org) (MIT)
+* [sdl2](https://www.libsdl.org) (Zlib)
 * [simpleini](https://github.com/aseprite/simpleini) (MIT)
 * [tinyxml](http://www.grinninglizard.com/tinyxml) (Zlib)
 * [zlib](https://www.zlib.net) (Zlib)
