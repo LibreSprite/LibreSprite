@@ -36,16 +36,6 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "she/sdl2/display_events.h"
-
-#ifdef USE_KEY_POLLER
-#include "she/sdl2/key_poller.h"
-#endif
-
-#ifdef USE_MOUSE_POLLER
-#include "she/sdl2/mouse_poller.h"
-#endif
-
 // void* get_osx_window();
 
 namespace she {
