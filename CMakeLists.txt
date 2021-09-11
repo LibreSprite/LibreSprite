@@ -37,7 +37,6 @@ option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" o
 option(ENABLE_TESTS       "Enable the unit tests" off)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-option(USE_SKIA_BACKEND "Use Skia backend" off)
 
 ######################################################################
 # Profile build type
@@ -180,11 +179,6 @@ if(USE_SDL2_BACKEND)
   include_directories(${SDL2_INCLUDE_DIRS})
   find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
-endif()
-
-# Skia backend
-if(USE_SKIA_BACKEND)
-  add_definitions(-DUSE_SKIA_BACKEND)
 endif()
 
 # -- Unix --
