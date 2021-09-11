@@ -42,11 +42,9 @@ if(APPLE)
   # On OS X Allegro isn't supported anymore
   set(USE_ALLEG4_BACKEND off)
   option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 else()
   option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" off)
   option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 endif()
 
 ######################################################################
@@ -231,11 +229,6 @@ if(USE_SDL2_BACKEND)
   include_directories(${SDL2_INCLUDE_DIRS})
   find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
-endif()
-
-# Skia backend
-if(USE_SKIA_BACKEND)
-  add_definitions(-DUSE_SKIA_BACKEND)
 endif()
 
 # -- Unix --
