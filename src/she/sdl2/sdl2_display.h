@@ -6,6 +6,7 @@
 
 #ifndef SHE_ALLEG4_ALLEG_DISPLAY_H_INCLUDED
 #define SHE_ALLEG4_ALLEG_DISPLAY_H_INCLUDED
+#include <SDL2/SDL_mouse.h>
 #pragma once
 
 #include "she/display.h"
@@ -54,7 +55,7 @@ namespace she {
         SDL_Surface* m_nativeSurface;
         SDL_Window* m_window;
         SDL_Renderer* m_renderer;
-        SDL_Texture* m_texture;
+        SDL_Cursor* m_cursor;
         Surface* m_surface;
         int m_scale;
         int m_width;

@@ -39,28 +39,28 @@
 #include "she/sdl2/display_events.h"
 
 #ifdef USE_KEY_POLLER
-  #include "she/sdl2/key_poller.h"
+#include "she/sdl2/key_poller.h"
 #endif
 
 #ifdef USE_MOUSE_POLLER
-  #include "she/sdl2/mouse_poller.h"
+#include "she/sdl2/mouse_poller.h"
 #endif
 
 // void* get_osx_window();
 
 namespace she {
 
-SDL2Display* unique_display = NULL;
-int display_scale;
+  SDL2Display* unique_display = NULL;
+  int display_scale;
 
-namespace sdl {
+  namespace sdl {
     she::SDL2Surface* screen;
     extern bool isMaximized;
     extern bool isMinimized;
     std::unordered_map<int, SDL2Display*> windowIdToDisplay;
-}
+  }
 
-namespace {
+  namespace {
 
 // #if _WIN32
 
@@ -355,265 +355,243 @@ namespace {
 
 // #endif // _WIN32
 
-} // anonymous namespace
+  } // anonymous namespace
 
-SDL2Display::SDL2Display(int width, int height, int scale) :
+  SDL2Display::SDL2Display(int width, int height, int scale) :
     m_nativeSurface(nullptr),
     m_window(nullptr),
     m_renderer(nullptr),
-    m_texture(nullptr),
+    m_cursor(nullptr),
     m_surface(nullptr),
     m_scale(0),
     m_nativeCursor(kNoCursor),
     m_restoredWidth(0),
     m_restoredHeight(0) {
 
-  unique_display = this;
+    unique_display = this;
 
-  width = 800;
-  height = 600;
+    width = 800;
+    height = 600;
 
-  m_window = SDL_CreateWindow("",
-                              SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED,
-                              width, height,
-                              SDL_WINDOW_RESIZABLE);
-  if (!m_window)
+    m_window = SDL_CreateWindow("",
+                                SDL_WINDOWPOS_UNDEFINED,
+                                SDL_WINDOWPOS_UNDEFINED,
+                                width, height,
+                                SDL_WINDOW_RESIZABLE);
+    if (!m_window)
       throw DisplayCreationException(SDL_GetError());
 
-  sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
-  m_width = width;
-  m_height = height;
+    sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
+    m_width = width;
+    m_height = height;
 
-  SDL_ShowCursor(SDL_DISABLE);
+    SDL_ShowCursor(SDL_DISABLE);
 
-  setScale(scale);
+    setScale(scale);
 
 // #if _WIN32
 //   subclass_hwnd((HWND)nativeHandle());
 // #endif
-}
+  }
 
-SDL2Display::~SDL2Display()
-{
-  unique_display = NULL;
-  sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
+  SDL2Display::~SDL2Display()
+  {
+    unique_display = NULL;
+    sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
 
 // #if _WIN32
 //   unsubclass_hwnd((HWND)nativeHandle());
 // #endif
 
-  m_surface->dispose();
-}
+    m_surface->dispose();
+  }
 
-void SDL2Display::dispose()
-{
-  delete this;
-}
+  void SDL2Display::dispose()
+  {
+    delete this;
+  }
 
-int SDL2Display::width() const
-{
+  int SDL2Display::width() const
+  {
     return m_width;
-}
+  }
 
-int SDL2Display::height() const
-{
+  int SDL2Display::height() const
+  {
     return m_height;
-}
+  }
 
-void SDL2Display::setWidth(int newWidth)
-{
+  void SDL2Display::setWidth(int newWidth)
+  {
     std::cout << "New width: " << std::to_string(newWidth) << std::endl;
     m_width = newWidth;
-}
+  }
 
-void SDL2Display::setHeight(int newHeight)
-{
+  void SDL2Display::setHeight(int newHeight)
+  {
     std::cout << "New height: " << std::to_string(newHeight) << std::endl;
     m_height = newHeight;
-}
+  }
 
-int SDL2Display::originalWidth() const
-{
-  return m_restoredWidth > 0 ? m_restoredWidth: width();
-}
+  int SDL2Display::originalWidth() const
+  {
+    return m_restoredWidth > 0 ? m_restoredWidth: width();
+  }
 
-int SDL2Display::originalHeight() const
-{
-  return m_restoredHeight > 0 ? m_restoredHeight: height();
-}
+  int SDL2Display::originalHeight() const
+  {
+    return m_restoredHeight > 0 ? m_restoredHeight: height();
+  }
 
-void SDL2Display::setOriginalWidth(int width)
-{
-  std::cout << "New Original width: " << std::to_string(width) << std::endl;
-  m_restoredWidth = width;
-}
+  void SDL2Display::setOriginalWidth(int width)
+  {
+    std::cout << "New Original width: " << std::to_string(width) << std::endl;
+    m_restoredWidth = width;
+  }
 
-void SDL2Display::setOriginalHeight(int height)
-{
-  std::cout << "New Original height: " << std::to_string(height) << std::endl;
-  m_restoredHeight = height;
-}
+  void SDL2Display::setOriginalHeight(int height)
+  {
+    std::cout << "New Original height: " << std::to_string(height) << std::endl;
+    m_restoredHeight = height;
+  }
 
-int SDL2Display::scale() const
-{
-  return m_scale;
-}
+  int SDL2Display::scale() const
+  {
+    return m_scale;
+  }
 
-void SDL2Display::setScale(int scale)
-{
-  ASSERT(scale >= 1);
-  if (m_scale == scale)
-    return;
+  void SDL2Display::setScale(int scale)
+  {
+    ASSERT(scale >= 1);
+    if (m_scale == scale)
+      return;
 
-  m_scale = scale;
-  recreateSurface();
-}
+    m_scale = scale;
+    recreateSurface();
+  }
 
-void SDL2Display::recreateSurface()
-{
+  void SDL2Display::recreateSurface()
+  {
     auto  newSurface = new SDL2Surface(width() / m_scale, height() / m_scale, SDL2Surface::DeleteAndDestroy);
     if (m_surface) {
-        m_surface->blitTo(newSurface, 0, 0, 0, 0, width(), height());
-        m_surface->dispose();
+      m_surface->blitTo(newSurface, 0, 0, 0, 0, width(), height());
+      m_surface->dispose();
     }
     m_dirty = true;
     m_surface = newSurface;
     she::sdl::screen = newSurface;
-}
+  }
 
-Surface* SDL2Display::getSurface()
-{
-  return m_surface;
-}
+  Surface* SDL2Display::getSurface()
+  {
+    return m_surface;
+  }
 
-void SDL2Display::present() {
+  void SDL2Display::present() {
     if (!m_dirty)
-        return;
+      return;
     m_dirty = false;
     SDL_UpdateWindowSurface(m_window);
-}
+  }
 
-void SDL2Display::flip(const gfx::Rect& bounds)
-{
+  void SDL2Display::flip(const gfx::Rect& bounds)
+  {
     m_dirty = true;
 
     auto nativeSurface = SDL_GetWindowSurface(m_window);
     if (m_nativeSurface != nativeSurface) {
-        m_nativeSurface = nativeSurface;
-        recreateSurface();
+      m_nativeSurface = nativeSurface;
+      recreateSurface();
     }
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     SDL_Rect dst  {bounds.x * m_scale, bounds.y * m_scale, bounds.w * m_scale, bounds.h * m_scale};
     SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, m_nativeSurface, &dst);
+  }
 
-  // if (is_display_resize_awaiting())
-  //   return;
-
-  // BITMAP* bmp = reinterpret_cast<BITMAP*>(m_surface->nativeHandle());
-  // if (m_scale == 1) {
-  //   blit(bmp, screen,
-  //        bounds.x, bounds.y,
-  //        bounds.x, bounds.y,
-  //        bounds.w, bounds.h);
-  // }
-  // else {
-  //   stretch_blit(bmp, screen,
-  //                bounds.x, bounds.y, bounds.w, bounds.h,
-  //                bounds.x*m_scale, bounds.y*m_scale,
-  //                bounds.w*m_scale, bounds.h*m_scale);
-  // }
-}
-
-void SDL2Display::maximize()
-{
+  void SDL2Display::maximize()
+  {
     SDL_MinimizeWindow(m_window);
-}
+  }
 
-bool SDL2Display::isMaximized() const
-{
+  bool SDL2Display::isMaximized() const
+  {
     return sdl::isMaximized;
-}
+  }
 
-bool SDL2Display::isMinimized() const
-{
+  bool SDL2Display::isMinimized() const
+  {
     return sdl::isMinimized;
-}
+  }
 
-void SDL2Display::setTitleBar(const std::string& title)
-{
+  void SDL2Display::setTitleBar(const std::string& title)
+  {
     SDL_SetWindowTitle(m_window, title.c_str());
-}
+  }
 
-NativeCursor SDL2Display::nativeMouseCursor()
-{
-  return m_nativeCursor;
-}
+  NativeCursor SDL2Display::nativeMouseCursor()
+  {
+    return m_nativeCursor;
+  }
 
-bool SDL2Display::setNativeMouseCursor(NativeCursor cursor)
-{
+  bool SDL2Display::setNativeMouseCursor(NativeCursor cursor)
+  {
     return false;
-//   int newCursor = MOUSE_CURSOR_NONE;
 
-//   switch (cursor) {
-//     case kNoCursor:
-//       newCursor = MOUSE_CURSOR_NONE;
-//       break;
-//     case kArrowCursor:
-//       newCursor = MOUSE_CURSOR_ARROW;
-//       break;
-//     case kIBeamCursor:
-//       newCursor = MOUSE_CURSOR_EDIT;
-//       break;
-//     case kWaitCursor:
-//       newCursor = MOUSE_CURSOR_BUSY;
-//       break;
-//     case kHelpCursor:
-//       newCursor = MOUSE_CURSOR_QUESTION;
-//       break;
-// #ifdef ALLEGRO4_WITH_EXTRA_CURSORS
-//     case kForbiddenCursor: newCursor = MOUSE_CURSOR_FORBIDDEN; break;
-//     case kMoveCursor: newCursor = MOUSE_CURSOR_MOVE; break;
-//     case kLinkCursor: newCursor = MOUSE_CURSOR_LINK; break;
-//     case kSizeNSCursor: newCursor = MOUSE_CURSOR_SIZE_NS; break;
-//     case kSizeWECursor: newCursor = MOUSE_CURSOR_SIZE_WE; break;
-//     case kSizeNCursor: newCursor = MOUSE_CURSOR_SIZE_N; break;
-//     case kSizeNECursor: newCursor = MOUSE_CURSOR_SIZE_NE; break;
-//     case kSizeECursor: newCursor = MOUSE_CURSOR_SIZE_E; break;
-//     case kSizeSECursor: newCursor = MOUSE_CURSOR_SIZE_SE; break;
-//     case kSizeSCursor: newCursor = MOUSE_CURSOR_SIZE_S; break;
-//     case kSizeSWCursor: newCursor = MOUSE_CURSOR_SIZE_SW; break;
-//     case kSizeWCursor: newCursor = MOUSE_CURSOR_SIZE_W; break;
-//     case kSizeNWCursor: newCursor = MOUSE_CURSOR_SIZE_NW; break;
-// #endif
-//     default:
-//       return false;
-//   }
+    if (cursor == m_nativeCursor) {
+      return true;
+    }
 
-//   m_nativeCursor = cursor;
-//   return (show_os_cursor(newCursor) == 0);
-}
+    if (m_cursor)
+      SDL_FreeCursor(m_cursor);
+    m_cursor = SDL_DISABLE;
 
-void SDL2Display::setMousePosition(const gfx::Point& position)
-{
+    switch (cursor) {
+    case kNoCursor: break;
+    case kArrowCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW); break;
+    case kIBeamCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM); break;
+    case kWaitCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT); break;
+    // case kHelpCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HELP); break;
+    case kForbiddenCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NO); break;
+    case kMoveCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND); break;
+    // case kLinkCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_LINK); break;
+    case kSizeNSCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS); break;
+    case kSizeWECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE); break;
+    // case kSizeNCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEN); break;
+    // case kSizeNECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENE); break;
+    // case kSizeECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEE); break;
+    // case kSizeSECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZESE); break;
+    // case kSizeSCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZES); break;
+    // case kSizeSWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZESW); break;
+    // case kSizeWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEW); break;
+    // case kSizeNWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENW); break;
+    default: break;
+    }
+
+    SDL_SetCursor(m_cursor);
+    m_nativeCursor = cursor;
+    return m_cursor ? true : false;
+  }
+
+  void SDL2Display::setMousePosition(const gfx::Point& position)
+  {
     SDL_WarpMouseInWindow(
-        m_window,
-        m_scale * position.x,
-        m_scale * position.y);
-}
+      m_window,
+      m_scale * position.x,
+      m_scale * position.y);
+  }
 
-void SDL2Display::captureMouse()
-{
+  void SDL2Display::captureMouse()
+  {
     SDL_CaptureMouse(SDL_TRUE);
-}
+  }
 
-void SDL2Display::releaseMouse()
-{
+  void SDL2Display::releaseMouse()
+  {
     SDL_CaptureMouse(SDL_FALSE);
-}
+  }
 
-std::string SDL2Display::getLayout()
-{
+  std::string SDL2Display::getLayout()
+  {
 // #ifdef _WIN32
 //   WINDOWPLACEMENT wp;
 //   wp.length = sizeof(WINDOWPLACEMENT);
@@ -633,11 +611,11 @@ std::string SDL2Display::getLayout()
 //     return s.str();
 //   }
 // #endif
-  return "";
-}
+    return "";
+  }
 
-void SDL2Display::setLayout(const std::string& layout)
-{
+  void SDL2Display::setLayout(const std::string& layout)
+  {
 // #ifdef _WIN32
 
 //   WINDOWPLACEMENT wp;
@@ -667,40 +645,40 @@ void SDL2Display::setLayout(const std::string& layout)
 // #else
 //   // Do nothing
 // #endif
-}
+  }
 
-void* SDL2Display::nativeHandle()
-{
-  SDL_SysWMinfo info;
-  SDL_VERSION(&info.version); /* initialize info structure with SDL version info */
-  if (!SDL_GetWindowWMInfo(m_window, &info))
+  void* SDL2Display::nativeHandle()
+  {
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version); /* initialize info structure with SDL version info */
+    if (!SDL_GetWindowWMInfo(m_window, &info))
       return nullptr;
 
 #if defined(SDL_VIDEO_DRIVER_WINDOWS)
-  return info.win.window;
+    return reinterpret_cast<void*>(info.info.win.window);
 #endif
 
-// #if defined(SDL_VIDEO_DRIVER_X11)
-//   return info.x11.window;
-// #endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+    return reinterpret_cast<void*>(info.info.x11.window);
+#endif
 
 #if defined(SDL_VIDEO_DRIVER_DIRECTFB)
-  return info.dfb.window;
+    return reinterpret_cast<void*>(info.info.dfb.window);
 #endif
 
 #if defined(SDL_VIDEO_DRIVER_COCOA)
-  return info.cocoa.window;
+    return reinterpret_cast<void*>(info.info.cocoa.window);
 #endif
 
 #if defined(SDL_VIDEO_DRIVER_UIKIT)
-  return info.uikit.window;
+    return reinterpret_cast<void*>(info.info.uikit.window);
 #endif
 
 #if defined(SDL_VIDEO_DRIVER_ANDROID)
-  return info.android.window;
+    return reinterpret_cast<void*>(info.info.android.window);
 #endif
 
-  return nullptr;
-}
+    return nullptr;
+  }
 
 } // namespace she
