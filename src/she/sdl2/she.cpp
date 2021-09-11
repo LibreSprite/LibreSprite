@@ -411,14 +411,6 @@ namespace sdl {
             delete this;
         }
 
-        void activateApp() override {
-            // Do nothing
-        }
-
-        void finishLaunching() override {
-            // Do nothing
-        }
-
         EventQueue* eventQueue() override { // TODO remove this function
             return EventQueue::instance();
         }

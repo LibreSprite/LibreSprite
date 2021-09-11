@@ -636,20 +636,12 @@ void App::initialize(const AppOptions& options)
 
     LOG("Export sprite sheet: Done\n");
   }
-
-  she::instance()->finishLaunching();
 }
 
 void App::run()
 {
   // Run the GUI
   if (isGui()) {
-#if _DEBUG
-    // On OS X, when we compile LibreSprite on Debug mode, we're using it
-    // outside an app bundle, so we must active the app explicitly.
-    she::instance()->activateApp();
-#endif
-
     app::SendCrash sendCrash;
     sendCrash.search();
 
