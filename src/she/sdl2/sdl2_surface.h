@@ -4,9 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_ALLEG4_ALLEG_SURFACE_H_INCLUDED
-#define SHE_ALLEG4_ALLEG_SURFACE_H_INCLUDED
-#include <SDL2/SDL_surface.h>
 #pragma once
 
 #include "she/surface.h"
@@ -59,11 +56,9 @@ namespace she {
     void drawRgbaSurface(const Surface* src, int dstx, int dsty) override;
 
   private:
-    SDL_Surface* m_bmp;
+    SDL_Surface* m_bmp = nullptr;
     DestroyFlag m_destroy;
     int m_lock;
   };
 
 } // namespace she
-
-#endif

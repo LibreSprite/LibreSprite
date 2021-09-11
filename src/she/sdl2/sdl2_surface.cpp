@@ -62,9 +62,7 @@ namespace sdl {
 
 inline int to_sdl(SDL_PixelFormat* format, gfx::Color color)
 {
-    // if (format->BitsPerPixel == 32)
     return SDL_MapRGBA(format, gfx::getr(color), gfx::getg(color), gfx::getb(color), gfx::geta(color));
-    // return SDL_MapRGB(format, gfx::getr(color), gfx::getg(color), gfx::getb(color));
 }
 
 inline gfx::Color from_sdl(SDL_PixelFormat *format, int color)
@@ -98,7 +96,7 @@ SDL2Surface::SDL2Surface(int width, int height, DestroyFlag destroy)
 }
 
 SDL2Surface::SDL2Surface(int width, int height, int bpp, DestroyFlag destroy)
-  : m_bmp(SDL_CreateRGBSurface(0, width, height, bpp, 0, 0, 0, bpp == 32 ? 0xFF000000 : 0))
+  : m_bmp(SDL_CreateRGBSurface(0, width, height, bpp, 0xFF, 0xFF00, 0xFF0000, bpp == 32 ? 0xFF000000 : 0))
   , m_destroy(destroy)
   , m_lock(0)
 {
@@ -222,15 +220,6 @@ void SDL2Surface::applyScale(int scale)
       m_bmp->h * scale,
       m_bmp->format->BitsPerPixel,
       m_bmp->format->format);
-
-  // BITMAP* scaled =
-  //   create_bitmap_ex(bitmap_color_depth(m_bmp),
-  //                    m_bmp->w*scale,
-  //                    m_bmp->h*scale);
-
-  // for (int y=0; y<scaled->h; ++y)
-  //   for (int x=0; x<scaled->w; ++x)
-  //     putpixel(scaled, x, y, getpixel(m_bmp, x/scale, y/scale));
 
   SDL_Rect drect{0, 0, scaled->w, scaled->h};
   SDL_BlitScaled(m_bmp, nullptr, scaled, &drect);
@@ -400,6 +389,8 @@ void SDL2Surface::drawLine(gfx::Color color, const gfx::Point& a, const gfx::Poi
         return;
     }
 
+    printf("Unsupported line: %d,%d -> %d,%d\n", a.x, a.y, b.x, b.y);
+
   // if (gfx::geta(color) < 255) {
   //   set_trans_blender(0, 0, 0, gfx::geta(color));
   //   drawing_mode(DRAW_MODE_TRANS, NULL, 0, 0);
@@ -450,12 +441,6 @@ void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, 
   SDL_Rect srect{srcx, srcy, width, height},
            drect{dstx, dsty, width, height};
 
-  // blit(m_bmp,
-  //      static_cast<SDL2Surface*>(dest)->m_bmp,
-  //      srcx, srcy,
-  //      dstx, dsty,
-  //      width, height);
-
   auto srcbmp = static_cast<const SDL2Surface*>(dest)->m_bmp;
   auto slocked = srcbmp->locked;
   auto dlocked = m_bmp->locked;
@@ -468,10 +453,6 @@ void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, 
 
 void SDL2Surface::scrollTo(const gfx::Rect& rc, int dx, int dy)
 {
-  // SDL_Rect srect{rc.x, rc.y, width(), height()},
-  //          drect{rc.x + dx, rc.y + dy};
-  // SDL_BlitSurface(m_bmp, &srect, m_bmp, &drect);
-
     int w = width();
     int h = height();
     gfx::Clip clip(rc.x+dx, rc.y+dy, rc);
@@ -512,9 +493,6 @@ void SDL2Surface::drawSurface(const Surface* src, int dstx, int dsty)
     auto dlocked = m_bmp->locked;
     if (slocked) SDL_UnlockSurface(srcbmp);
     if (dlocked) SDL_UnlockSurface(m_bmp);
-    // SDL_FillRect(m_bmp, &rect, random());
-    // SDL_SetSurfaceBlendMode(srcbmp, SDL_BLENDMODE_NONE);
-    // SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_NONE);
     SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
     if (slocked) SDL_LockSurface(srcbmp);
     if (dlocked) SDL_LockSurface(m_bmp);
@@ -528,61 +506,11 @@ void SDL2Surface::drawRgbaSurface(const Surface* src, int dstx, int dsty)
     auto dlocked = m_bmp->locked;
 
     SDL_SetSurfaceBlendMode(m_bmp, SDL_BLENDMODE_BLEND);
-
-    if (srcbmp->format->BitsPerPixel == 32 && m_bmp->format->BitsPerPixel == 32) {
-        ((Surface*)src)->lock();
-        lock();
-
-        int skipX = 0;
-        int skipY = 0;
-        if (rect.x < m_bmp->clip_rect.x){
-            skipX = m_bmp->clip_rect.x - rect.x;
-            rect.w -= skipX;
-            rect.x = m_bmp->clip_rect.x;
-        }
-
-        if (rect.y < m_bmp->clip_rect.y){
-            skipY = m_bmp->clip_rect.y - rect.y;
-            rect.h -= skipY;
-            rect.y = m_bmp->clip_rect.y;
-        }
-
-        if (rect.x + rect.w >= m_bmp->clip_rect.x + m_bmp->clip_rect.w)
-            rect.w = (m_bmp->clip_rect.x + m_bmp->clip_rect.w) - rect.x;
-
-        if (rect.y + rect.h >= m_bmp->clip_rect.y + m_bmp->clip_rect.h)
-            rect.h = (m_bmp->clip_rect.y + m_bmp->clip_rect.h) - rect.y;
-
-        // SDL_FillRect(m_bmp, &rect, random());
-
-        auto srcPixels = static_cast<unsigned char*>(srcbmp->pixels);
-        auto dstPixels = static_cast<unsigned char*>(m_bmp->pixels);
-        for (int y=0; y<rect.h; y++)  {
-            unsigned char* destP = dstPixels + (y + rect.y)*m_bmp->pitch + rect.x * 4;
-            unsigned char* srcP = srcPixels + (y + skipY)*srcbmp->pitch + skipX * 4;
-            // memcpy(destP, srcP, bytesToMove);
-            for (int x=0; x<rect.w; ++x){
-                // dstRGB = srcRGB + (dstRGB * (1-srcA))
-                // dstA = srcA + (dstA * (1-srcA))
-                auto srcA = srcP[x*4+3];
-                auto isrcA = 255 - srcA;
-                destP[x*4+0] = srcP[x*4+0];// + (destP[x*4+0] * isrcA / 255);
-                destP[x*4+1] = srcP[x*4+1];// + (destP[x*4+1] * isrcA / 255);
-                destP[x*4+2] = srcP[x*4+2];// + (destP[x*4+2] * isrcA / 255);
-                destP[x*4+3] = 0xFF; // srcA        + (destP[x*4+3] * isrcA / 255);
-            }
-        }
-
-        ((Surface*)src)->unlock();
-        unlock();
-    } else
-    {
-        if (slocked) SDL_UnlockSurface(srcbmp);
-        if (dlocked) SDL_UnlockSurface(m_bmp);
-        SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
-        if (slocked) SDL_LockSurface(srcbmp);
-        if (dlocked) SDL_LockSurface(m_bmp);
-    }
+    if (slocked) SDL_UnlockSurface(srcbmp);
+    if (dlocked) SDL_UnlockSurface(m_bmp);
+    SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
+    if (slocked) SDL_LockSurface(srcbmp);
+    if (dlocked) SDL_LockSurface(m_bmp);
 }
 
 } // namespace she
