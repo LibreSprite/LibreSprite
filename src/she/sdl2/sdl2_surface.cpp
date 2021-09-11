@@ -420,20 +420,12 @@ namespace she {
 
   void SDL2Surface::drawSurface(const Surface* src, int dstx, int dsty)
   {
-    SDL_Rect rect{dstx, dsty, src->width(), src->height()};
-    auto srcbmp = static_cast<const SDL2Surface*>(src)->m_bmp;
-    auto slocked = srcbmp->locked;
-    auto dlocked = m_bmp->locked;
-    if (slocked) SDL_UnlockSurface(srcbmp);
-    if (dlocked) SDL_UnlockSurface(m_bmp);
-    SDL_BlitSurface(srcbmp, nullptr, m_bmp, &rect);
-    if (slocked) SDL_LockSurface(srcbmp);
-    if (dlocked) SDL_LockSurface(m_bmp);
+    src->blitTo(this, 0, 0, dstx, dsty, src->width(), src->height());
   }
 
   void SDL2Surface::drawRgbaSurface(const Surface* src, int dstx, int dsty)
   {
-    drawSurface(src, dstx, dsty);
+    src->blitTo(this, 0, 0, dstx, dsty, src->width(), src->height());
   }
 
 } // namespace she
