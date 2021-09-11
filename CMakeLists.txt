@@ -33,21 +33,11 @@ option(WITH_DEPRECATED_GLIB_SUPPORT "Enable support for older glib versions" off
 option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 
-option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
-option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
-if(APPLE)
-  # On OS X Allegro isn't supported anymore
-  set(USE_ALLEG4_BACKEND off)
-  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
-else()
-  option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" off)
-  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
-endif()
+option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+option(USE_SKIA_BACKEND "Use Skia backend" off)
 
 ######################################################################
 # Profile build type
@@ -171,12 +161,6 @@ include_directories(${GTEST_INCLUDE_DIRS})
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
-if(USE_ALLEG4_BACKEND)
-  set(LOADPNG_LIBRARY loadpng)
-  set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
-  include_directories(${LOADPNG_INCLUDE_DIR})
-endif()
-
 find_package(CURL REQUIRED)
 include_directories(${CURL_INCLUDE_DIRS})
 
@@ -187,41 +171,6 @@ include_directories(${SIMPLEINI_DIR})
 # Platform specific stuff
 
 set(PLATFORM_LIBS)
-
-# Allegro 4 backend
-if(USE_ALLEG4_BACKEND)
-  add_definitions(-DUSE_ALLEG4_BACKEND)
-  add_definitions(-DALLEGRO_NO_FIX_ALIASES)
-
-  if(USE_SHARED_ALLEGRO4)
-    # Find the shared Allegro 4 library
-    find_library(LIBALLEGRO4_LIBRARY alleg)
-    find_path(LIBALLEGRO4_INCLUDE_DIR allegro.h)
-
-    if(NOT LIBALLEGRO4_LIBRARY)
-      message(FATAL_ERROR "Allegro 4 not found")
-    endif()
-
-    # Get flags to link programs using allegro-config program
-    execute_process(COMMAND allegro-config --libs --shared
-      OUTPUT_VARIABLE LIBALLEGRO4_LINK_FLAGS
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    set(LIBALLEGRO4_LINK_FLAGS ${LIBALLEGRO4_LINK_FLAGS} ${PLATFORM_LIBS})
-    include_directories(${LIBALLEGRO4_INCLUDE_DIR})
-  else()
-    include_directories(${CMAKE_SOURCE_DIR}/src/allegro/include)
-    include_directories(${CMAKE_BINARY_DIR}/include)
-
-    add_definitions(-DALLEGRO4_WITH_RESIZE_PATCH)
-    add_definitions(-DALLEGRO4_WITH_EXTRA_CURSORS)
-
-    # Static Allegro (the code of Allegro library is embedded).
-    add_definitions(-DALLEGRO_STATICLINK)
-
-    set(LIBALLEGRO4_LINK_FLAGS allegro)
-  endif()
-endif()
 
 # SDL2 backend
 if(USE_SDL2_BACKEND)

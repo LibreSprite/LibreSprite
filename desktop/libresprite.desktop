@@ -10,5 +10,4 @@ Exec=libresprite %U
 TryExec=libresprite
 Terminal=false
 StartupNotify=false
-StartupWMClass=allegro
 MimeType=image/bmp;image/gif;image/jpeg;image/png;image/x-pcx;image/x-tga;image/vnd.microsoft.icon;video/x-flic;image/webp;image/x-aseprite;
