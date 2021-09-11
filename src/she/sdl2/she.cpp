@@ -277,10 +277,12 @@ namespace sdl {
                 case SDL_MOUSEWHEEL:
                     event.setType(Event::MouseWheel);
                     event.setModifiers(getSheModifiers());
-                    event.setWheelDelta({0, -sdlEvent.wheel.y});
+                    event.setWheelDelta({-sdlEvent.wheel.x, -sdlEvent.wheel.y});
+                    int x, y;
+                    SDL_GetMouseState(&x, &y);
                     event.setPosition({
-                            sdlEvent.wheel.x / unique_display->scale(),
-                            sdlEvent.wheel.y / unique_display->scale()
+                            x / unique_display->scale(),
+                            y / unique_display->scale()
                         });
                     return;
 
