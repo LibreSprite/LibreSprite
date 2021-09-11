@@ -250,10 +250,10 @@ namespace sdl {
                         continue;
 
                     case SDL_WINDOWEVENT_RESIZED: {
-                        std::cout << "Resized" << std::endl;
                         auto display = sdl::windowIdToDisplay[sdlEvent.window.windowID];
                         display->setWidth(sdlEvent.window.data1);
                         display->setHeight(sdlEvent.window.data2);
+                        display->recreateSurface();
                         event.setType(Event::ResizeDisplay);
                         event.setDisplay(display);
                         return;

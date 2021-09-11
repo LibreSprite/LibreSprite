@@ -51,7 +51,6 @@ namespace she {
   }
 
   SDL2Display::SDL2Display(int width, int height, int scale) :
-    m_nativeSurface(nullptr),
     m_window(nullptr),
     m_renderer(nullptr),
     m_cursor(nullptr),
@@ -183,13 +182,9 @@ namespace she {
     m_dirty = true;
 
     auto nativeSurface = SDL_GetWindowSurface(m_window);
-    if (m_nativeSurface != nativeSurface) {
-      m_nativeSurface = nativeSurface;
-      recreateSurface();
-    }
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     SDL_Rect dst  {bounds.x * m_scale, bounds.y * m_scale, bounds.w * m_scale, bounds.h * m_scale};
-    SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, m_nativeSurface, &dst);
+    SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
   }
 
   void SDL2Display::maximize()

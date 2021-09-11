@@ -52,7 +52,6 @@ namespace she {
 
         void present();
     private:
-        SDL_Surface* m_nativeSurface;
         SDL_Window* m_window;
         SDL_Renderer* m_renderer;
         SDL_Cursor* m_cursor;
