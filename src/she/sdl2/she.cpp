@@ -419,10 +419,6 @@ namespace sdl {
             // Do nothing
         }
 
-        Capabilities capabilities() const override {
-            return (Capabilities)(Capabilities::CanResizeDisplay);
-        }
-
         EventQueue* eventQueue() override { // TODO remove this function
             return EventQueue::instance();
         }

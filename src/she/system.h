@@ -7,7 +7,6 @@
 #pragma once
 
 #include "gfx/fwd.h"
-#include "she/capabilities.h"
 
 #include <stdexcept>
 
@@ -32,7 +31,6 @@ namespace she {
     virtual void dispose() = 0;
     virtual void activateApp() = 0;
     virtual void finishLaunching() = 0;
-    virtual Capabilities capabilities() const = 0;
     virtual Logger* logger() = 0;
     virtual NativeDialogs* nativeDialogs() = 0;
     virtual EventQueue* eventQueue() = 0;
