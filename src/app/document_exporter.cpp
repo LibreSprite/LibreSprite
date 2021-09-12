@@ -325,6 +325,7 @@ public:
 
     gfx::Point framePt(borderPadding, borderPadding);
     gfx::Size rowSize(0, 0);
+    std::vector<FrameTag*>::const_iterator tag;
 
     for (auto& sample : samples) {
       const Sprite* sprite = sample.sprite();
@@ -344,6 +345,11 @@ public:
           eframe = lastframe;
           sample.setDuplicated(false);
           sample.setInTextureBounds(gfx::Rect(framePt, size));
+          for(tag = sprite->frameTags().begin(); tag != sprite->frameTags().end(); tag++){
+            if(bframe <= (*tag)->toFrame() &&
+              eframe >= (*tag)->fromFrame())
+              break;
+          }
         }
       }
 
@@ -359,9 +365,10 @@ public:
       if (oldSprite) {
         //Checks if a new tag starts
         //if the difference from lastframe and sample is not 1 than it can't be the same tag
-        //but if it is we check the inner tag
+        //but if it is we check the tag's last frame
         if (sample.frame() - lastframe != 1 ||
-            sample.sprite()->frameTags().innerTag(sample.frame())->id() != sample.sprite()->frameTags().innerTag(lastframe)->id()){
+            (sample.frame() > (*tag)->toFrame())){
+            tag++;
           if (m_type == SpriteSheetType::Columns) {
             framePt.x = borderPadding;
             framePt.y += rowSize.h + shapePadding;
