@@ -62,6 +62,7 @@ endif()
 
 ######################################################################
 # app-lib target
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 set(data_recovery_files
   crash/backup_observer.cpp
@@ -459,6 +460,7 @@ target_link_libraries(app-lib
   fixmath-lib
   flic-lib
   gfx-lib
+  net-lib
   render-lib
   script-lib
   she

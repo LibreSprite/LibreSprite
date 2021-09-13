@@ -126,8 +126,10 @@ if(NOT WIN32 AND NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu89")
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
 if(APPLE AND USE_SKIA_BACKEND)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
 # zlib
@@ -173,6 +175,9 @@ if(USE_ALLEG4_BACKEND)
   set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
   include_directories(${LOADPNG_INCLUDE_DIR})
 endif()
+
+find_package(CURL REQUIRED)
+include_directories(${CURL_INCLUDE_DIRS})
 
 # simpleini
 include_directories(${SIMPLEINI_DIR})
