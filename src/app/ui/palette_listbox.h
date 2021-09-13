@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_PALETTE_LISTBOX_H_INCLUDED
-#define APP_UI_PALETTE_LISTBOX_H_INCLUDED
 #pragma once
 
 #include "app/res/resources_loader.h"
@@ -16,27 +14,37 @@
 #include "ui/timer.h"
 
 namespace app {
+  class PaletteResource;
 
   class PaletteListBox : public ui::ListBox {
   public:
-    PaletteListBox();
-
+    PaletteListBox() = default;
+    PaletteResource* selectedPaletteResource();
     doc::Palette* selectedPalette();
+    std::string selectedPaletteName();
     base::Signal1<void, doc::Palette*> PalChange;
+    void addPalette(PaletteResource* resource);
+    void addPalette(doc::Palette *palette, const std::string& name);
+
+  protected:
+    void setLoading(bool isLoading);
+    virtual void onChange();
+
+  private:
+    class LoadingItem;
+    LoadingItem* m_loadingItem = nullptr;
+  };
+
+  class PaletteFileListBox : public PaletteListBox {
+  public:
+    PaletteFileListBox();
 
   private:
     bool onProcessMessage(ui::Message* msg);
-    void onChange();
     void onTick();
     void stop();
-
-    ResourcesLoader* m_resourcesLoader;
+    base::UniquePtr<ResourcesLoader> m_resourcesLoader;
     ui::Timer m_resourcesTimer;
-
-    class LoadingItem;
-    LoadingItem* m_loadingItem;
   };
 
 } // namespace app
-
-#endif

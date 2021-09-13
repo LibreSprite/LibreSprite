@@ -36,7 +36,7 @@ namespace app {
 
   private:
     gen::PalettePopup* m_popup;
-    PaletteListBox m_paletteListBox;
+    PaletteFileListBox m_paletteListBox;
   };
 
 } // namespace app
