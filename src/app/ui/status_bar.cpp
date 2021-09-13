@@ -336,7 +336,7 @@ public:
       app::Color::LongHumanReadableString);
     if (color.getAlpha() < 255) {
       char buf[256];
-      sprintf(buf, " \xCE\xB1%d", color.getAlpha());
+      snprintf(buf, sizeof(buf), " \xCE\xB1%d", color.getAlpha());
       str += buf;
     }
     m_indicators->addTextIndicator(str.c_str());
@@ -579,7 +579,7 @@ bool StatusBar::setStatusText(int msecs, const char *format, ...)
     va_list ap;
 
     va_start(ap, format);
-    vsprintf(buf, format, ap);
+    vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 
     IndicatorsGeneration(m_indicators).add(buf);
@@ -597,7 +597,7 @@ void StatusBar::showTip(int msecs, const char *format, ...)
   int x, y;
 
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, sizeof(buf), format, ap);
   va_end(ap);
 
   if (m_tipwindow == NULL) {

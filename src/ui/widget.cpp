@@ -81,6 +81,12 @@ Widget::~Widget()
   // Break relationship with the manager.
   if (this->type() != kManagerWidget) {
     Manager* manager = this->manager();
+
+    // manager has already been shutdown. Avoid touching anything else.
+    if (!manager) {
+        return;
+    }
+
     manager->freeWidget(this);
     manager->removeMessagesFor(this);
     manager->removeMessageFilterFor(this);

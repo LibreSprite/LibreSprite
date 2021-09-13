@@ -127,7 +127,7 @@ void NewLayerCommand::onExecute(Context* context)
 static std::string get_unique_layer_name(Sprite* sprite)
 {
   char buf[1024];
-  std::sprintf(buf, "Layer %d", get_max_layer_num(sprite->folder())+1);
+  std::snprintf(buf, sizeof(buf), "Layer %d", get_max_layer_num(sprite->folder())+1);
   return buf;
 }
 

@@ -125,7 +125,7 @@ void FilterTargetButtons::updateComponentTooltip(Item* item, const char* channel
 {
   if (item) {
     char buf[256];
-    std::sprintf(buf, "%s %s Component",
+    std::snprintf(buf, sizeof(buf), "%s %s Component",
                  (item->isSelected() ? "Modify": "Ignore"),
                  channelName);
     m_tooltips.addTooltipFor(item, buf, align);

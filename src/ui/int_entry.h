@@ -21,6 +21,10 @@ namespace ui {
 
     int getValue() const;
     void setValue(int value);
+    int min() {return m_min;}
+    int max() {return m_max;}
+    void setMin(int value) {m_min = value; m_slider.setRange(m_min, m_max);}
+    void setMax(int value) {m_max = value; m_slider.setRange(m_min, m_max);}
 
   protected:
     bool onProcessMessage(Message* msg) override;

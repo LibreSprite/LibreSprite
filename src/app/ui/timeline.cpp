@@ -1356,7 +1356,7 @@ void Timeline::drawHeaderFrame(ui::Graphics* g, frame_t frame)
 
   // Draw the header for the layers.
   char buf[256];
-  std::sprintf(buf, "%d", (frame+1)%100); // Draw only the first two digits.
+  std::snprintf(buf, sizeof(buf), "%d", (frame+1)%100); // Draw only the first two digits.
 
   she::Font* oldFont = g->font();
   g->setFont(skinTheme()->getMiniFont());

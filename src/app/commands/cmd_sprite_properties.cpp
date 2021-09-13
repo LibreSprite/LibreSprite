@@ -78,7 +78,7 @@ void SpritePropertiesCommand::onExecute(Context* context)
         imgtype_text = "Grayscale";
         break;
       case IMAGE_INDEXED:
-        std::sprintf(buf, "Indexed (%d colors)", sprite->palette(0)->size());
+        std::snprintf(buf, sizeof(buf), "Indexed (%d colors)", sprite->palette(0)->size());
         imgtype_text = buf;
         break;
       default:

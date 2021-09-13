@@ -57,7 +57,7 @@ std::string ZoomEntry::onGetTextFromValue(int value)
   render::Zoom zoom = render::Zoom::fromLinearScale(value);
 
   char buf[256];
-  std::sprintf(buf, "%.1f", zoom.scale() * 100.0);
+  std::snprintf(buf, sizeof(buf), "%.1f", zoom.scale() * 100.0);
   return buf;
 }
 

@@ -21,7 +21,7 @@ namespace doc {
   class LayerImage;
   class Sprite;
 
-  class Cel : public Object, public std::enable_shared_from_this<Cel> {
+  class Cel : public Object {
   public:
     Cel(frame_t frame, const ImageRef& image);
     Cel(frame_t frame, const CelDataRef& celData);

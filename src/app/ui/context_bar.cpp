@@ -790,7 +790,7 @@ private:
     int n = get_config_int("shades", "count", 0);
     n = MID(0, n, 256);
     for (int i=0; i<n; ++i) {
-      sprintf(buf, "shade%d", i);
+      snprintf(buf, sizeof(buf), "shade%d", i);
       Shade shade = shade_from_string(get_config_string("shades", buf, ""));
       if (shade.size() >= 2)
         m_shades.push_back(shade);
@@ -805,7 +805,7 @@ private:
     int n = int(m_shades.size());
     set_config_int("shades", "count", n);
     for (int i=0; i<n; ++i) {
-      sprintf(buf, "shade%d", i);
+      snprintf(buf, sizeof(buf), "shade%d", i);
       set_config_string("shades", buf, shade_to_string(m_shades[i]).c_str());
     }
   }

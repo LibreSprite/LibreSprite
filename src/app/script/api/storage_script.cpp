@@ -13,7 +13,9 @@
 #include <string>
 
 namespace {
+
   std::unordered_map<std::string, std::unordered_map<std::string, script::Value>> storage;
+
 };
 
 namespace script {

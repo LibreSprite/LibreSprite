@@ -61,9 +61,10 @@ public:
       .doc("read-only. Returns the sprite's ColorMode.");
 
     addProperty("selection", [this]{ return this; })
-      .doc("placeholder. Do not use.");
+      .doc("Placeholder. Do not use.");
 
-    addProperty("palette", [this]{ return m_pal.get(); });
+    addProperty("palette", [this]{ return m_pal.get(); })
+      .doc("read-only. Returns the sprite's palette.");
 
     addMethod("layer", &SpriteScriptObject::layer)
       .doc("allows you to access a given layer.")

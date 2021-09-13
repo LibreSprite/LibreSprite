@@ -8,12 +8,13 @@
 
 #include "doc/object_id.h"
 #include "doc/object_type.h"
+#include <memory>
 
 namespace doc {
 
   typedef uint32_t ObjectVersion;
 
-  class Object {
+  class Object : public std::enable_shared_from_this<Object> {
   public:
     Object(ObjectType type);
     Object(const Object& other);

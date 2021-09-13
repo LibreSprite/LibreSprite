@@ -5,13 +5,19 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "ui/base.h"
-#include "ui/label.h"
-#include "ui/widget.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "base/string.h"
+#include "script/script_object.h"
+#include "ui/base.h"
+#include "ui/close_event.h"
+#include "ui/widget.h"
+#include "ui/window.h"
+#include <iostream>
+
+#include "base/alive.h"
 #include "base/bind.h"
 #include "base/memory.h"
 #include "ui/ui.h"
@@ -20,6 +26,7 @@
 #include "app/context.h"
 #include "app/modules/gui.h"
 #include "app/script/app_scripting.h"
+#include "app/task_manager.h"
 #include "app/ui/status_bar.h"
 
 #include "widget_script.h"
@@ -28,98 +35,74 @@
 #include <memory>
 #include <list>
 
+namespace ui {
 class Dialog;
-
-using DialogSet = std::unordered_set<std::shared_ptr<Dialog>>;
-
-DialogSet& getDialogSet() {
-  static DialogSet dialogs;
+}
+namespace dialog {
+  using DialogIndex = std::unordered_map<std::string, ui::Dialog*>;
+DialogIndex& getDialogIndex() {
+  static DialogIndex dialogs;
   return dialogs;
 }
+}
 
-class DialogWindow : public ui::Window {
+namespace ui {
+class Dialog : public base::IsAlive, public ui::Window {
 public:
-  DialogWindow(const std::string& text) : ui::Window(ui::Window::WithTitleBar, text) {}
+  Dialog() : ui::Window(ui::Window::WithTitleBar, "Script") {}
 
-  virtual ~DialogWindow() {onShutdown();}
-
-  std::function<void()> onShutdown;
-};
-
-class Dialog : public std::enable_shared_from_this<Dialog> {
-public:
-  virtual ~Dialog() {
-    // can't delete window if there is no manager!
-    if (m_window && m_window->manager())
-        delete m_window;
+  ~Dialog() {
+      unlist();
   }
 
-  void show() {init();}
-
-  void addLabel(const std::string& text, const std::string& id) {
-    init();
-    auto label = new ui::Label(text);
-    if (!id.empty()) m_namedWidgets[id] = label;
-    m_children.push_back({label});
-    m_isInline = false;
+  void unlist() {
+    auto& index = dialog::getDialogIndex();
+    auto it = index.find(id());
+    if (it != index.end() && it->second == this)
+        index.erase(it);
   }
 
-  void addButton(const std::string& text, const std::string& id) {
-    init();
-    auto button = new ui::Button(text);
-
-    if(m_isInline) m_children.back().push_back(button);
-    else m_children.push_back({button});
-    m_isInline = true;
-
-    if (!id.empty()) {
-      m_namedWidgets[id] = button;
-      button->Click.connect(base::Bind<void>(&Dialog::click, this, id));
+  void add(WidgetScriptObject* child) {
+    auto nextIsInline = m_isInline;
+    switch (child->getDisplayType()) {
+    case WidgetScriptObject::DisplayType::Inherit: break;
+    case WidgetScriptObject::DisplayType::Block: nextIsInline = m_isInline = false; break;
+    case WidgetScriptObject::DisplayType::Inline: nextIsInline = true; break;
     }
+
+    auto ui = static_cast<ui::Widget*>(child->getWrapped());
+    if (!ui)
+        return;
+
+    if(m_isInline && !m_children.empty()) m_children.back().push_back(ui);
+    else m_children.push_back({ui});
+
+    m_isInline = nextIsInline;
   }
 
-  std::string title;
-
-private:
-  void click(const std::string& str){
-    std::cout << "Clicked " << str << std::endl;
-    app::AppScripting::raiseEvent(m_scriptFileName, str + "_click");
-  }
-
-  void init() {
-    if (m_wasInit) return;
-    m_wasInit = true;
-
-    m_window = new DialogWindow(title);
-    m_window->Close.connect(base::Bind<void>(&Dialog::closeWindow, this));
-
-    std::weak_ptr<Dialog> weak = shared_from_this();
-
-    // LibreSprite/User has closed the window, remove self
-    m_window->onShutdown = [weak]{
-      if (auto self = weak.lock()) {
-        self->m_window = nullptr;
-        self->closeWindow();
-      }
-    };
-
-    // Scripting engine has finished working, build and show the Window
-    m_engine->afterEval([weak]{
-      if (auto locked = weak.lock())
-        locked->build();
-    });
+  void addBreak() {
+      m_isInline = false;
   }
 
   void build(){
+    if (!isAlive() || m_grid)
+      return;
+
+    // LibreSprite has closed the window, remove corresponding ScriptObject (this)
+    Close.connect([this](ui::CloseEvent&){closeWindow(true, false);});
+
+    if (!id().empty())
+        dialog::getDialogIndex()[id()] = this;
+
     if (m_grid)
-      m_window->removeChild(m_grid);
+        removeChild(m_grid);
 
     std::size_t maxColumns = 1;
     for (auto& row : m_children)
       maxColumns = std::max(row.size(), maxColumns);
 
     m_grid = new ui::Grid(maxColumns, false);
-    m_window->addChild(m_grid);
+    addChild(m_grid);
 
     for (auto& row : m_children) {
       auto size = row.size();
@@ -130,43 +113,154 @@ private:
       }
     }
 
-    m_window->setVisible(true);
-    m_window->centerWindow();
-    m_window->openWindow();
+    setVisible(true);
+    centerWindow();
+    openWindow();
   }
 
-  void closeWindow(){
-    getDialogSet().erase(shared_from_this());
+  void closeWindow(bool raiseEvent, bool notifyManager){
+    if (raiseEvent)
+      app::AppScripting::raiseEvent(m_scriptFileName, id() + "_close");
+
+    if (notifyManager)
+        manager()->_closeWindow(this, true);
+
+    unlist();
+
+    app::TaskManager::instance().delayed([this]{
+        if (isAlive()) delete this;
+    });
   }
 
+private:
   bool m_isInline = false;
   std::list<std::vector<ui::Widget*>> m_children;
   std::string m_scriptFileName = app::AppScripting::getFileName();
-  DialogWindow* m_window = nullptr;
   ui::Grid* m_grid = nullptr;
-  bool m_wasInit = false;
   inject<script::Engine> m_engine;
   std::unordered_map<std::string, ui::Widget*> m_namedWidgets;
 };
+}
 
 class DialogScriptObject : public WidgetScriptObject {
-  std::shared_ptr<Dialog> m_dialog = std::make_shared<Dialog>();
+  std::unordered_map<std::string, inject<script::ScriptObject>> m_widgets;
+  ui::Widget* build() {
+    auto dialog = new ui::Dialog();
+    dialog->onShutdown = [this]{m_widget = nullptr;};
+
+    // Scripting engine has finished working, build and show the Window
+    inject<script::Engine>{}->afterEval([this](bool success){
+        if (!m_widget)
+            return;
+        auto dialog = getWrapped<ui::Dialog>();
+        if (success)
+            dialog->build();
+        if (!dialog->isVisible()){
+            dialog->closeWindow(false, true);
+        }
+    });
+
+    return dialog;
+  }
 
 public:
   DialogScriptObject() {
-    getDialogSet().emplace(m_dialog);
-    setWrapped(m_dialog.get());
     addProperty("title",
-                [this]{return m_dialog->title;},
+                [this]{return getWrapped<ui::Dialog>()->text();},
                 [this](const std::string& title){
-                  m_dialog->title = title;
-                  return 0;
+                  getWrapped<ui::Dialog>()->setText(title);
+                  return title;
                 })
-      .documentation("Read+Write. Sets the title the dialog will be created with");
-    addMethod("show", m_dialog.get(), &Dialog::show);
-    addMethod("addLabel", m_dialog.get(), &Dialog::addLabel);
-    addMethod("addButton", m_dialog.get(), &Dialog::addButton);
+      .doc("read+write. Sets the title of the dialog window.");
+
+    addMethod("add", &DialogScriptObject::add);
+
+    addMethod("get", &DialogScriptObject::get);
+
+    addFunction("close", [this]{
+        getWrapped<ui::Dialog>()->closeWindow(false, true);
+        return true;
+    });
+
+    addFunction("addLabel", [this](const std::string& text, const std::string& id) {
+        auto label = add("label", id);
+        if (label)
+            label->set("text", text);
+        return label;
+    });
+
+    addFunction("addButton", [this](const std::string& text, const std::string& id) {
+        auto button = add("button", id);
+        if (button)
+            button->set("text", text);
+        return button;
+    });
+
+    addFunction("addPaletteListBox", [this](const std::string& id) {
+        return add("palettelistbox", id);
+    });
+
+    addFunction("addIntEntry", [this](const std::string& text, const std::string& id, int min, int max) {
+        auto label = add("label", id + "-label");
+        if (label)
+            label->set("text", text);
+        auto intentry = add("intentry", id);
+        if (intentry) {
+            intentry->set("min", min);
+            intentry->set("max", max);
+        }
+        return intentry;
+    });
+
+    addFunction("addBreak", [this]{getWrapped<ui::Dialog>()->addBreak(); return true;});
   }
+
+  ~DialogScriptObject() {
+    if (!m_widget)
+      return;
+    auto dialog = getWrapped<ui::Dialog>();
+    if (!dialog->isAlive())
+        return;
+    if (!dialog->isVisible())
+        dialog->closeWindow(false, false);
+  }
+
+  ScriptObject* get(const std::string& id) {
+    auto it = m_widgets.find(id);
+    return it != m_widgets.end() ? it->second.get() : nullptr;
+  }
+
+  ScriptObject* add(const std::string& type, const std::string& id) {
+    if (type.empty() || get(id))
+      return nullptr;
+
+    auto cleanType = base::string_to_lower(type); // "lAbEl" -> "label"
+    auto unprefixedType = cleanType;
+    cleanType[0] = toupper(cleanType[0]);         // "label" -> "Label"
+    cleanType += "WidgetScriptObject";            // "Label" -> "LabelWidgetScriptObject"
+
+    inject<script::ScriptObject> widget{cleanType};
+    if (!widget)
+        return nullptr;
+
+    auto rawPtr = widget.get<WidgetScriptObject>();
+    getWrapped<ui::Dialog>()->add(rawPtr);
+
+    auto cleanId = !id.empty() ? id : unprefixedType + std::to_string(m_nextWidgetId++);
+    widget->set("id", cleanId);
+    m_widgets.emplace(cleanId, std::move(widget));
+    return rawPtr;
+  }
+
+  uint32_t m_nextWidgetId = 0;
 };
 
 static script::ScriptObject::Regular<DialogScriptObject> dialogSO("DialogScriptObject");
+
+namespace dialog {
+ui::Widget* getDialogById(const std::string& id) {
+    auto& index = getDialogIndex();
+    auto it = index.find(id);
+    return it == index.end() ? nullptr : it->second;
+}
+}

@@ -176,7 +176,7 @@ void NewFileCommand::onExecute(Context* context)
       // Show the sprite to the user
       std::unique_ptr<Document> doc(new Document(sprite.get()));
       sprite.release();
-      sprintf(buf, "Sprite-%04d", ++_sprite_counter);
+      snprintf(buf, sizeof(buf), "Sprite-%04d", ++_sprite_counter);
       doc->setFilename(buf);
       doc->setContext(context);
       doc.release();

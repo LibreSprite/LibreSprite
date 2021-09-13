@@ -33,6 +33,10 @@ public:
 };
 static script::InternalScriptObject::Regular<DudScriptObject> dud("DudScriptObject");
 
+namespace dialog {
+ui::Widget* getDialogById(const std::string&);
+}
+
 namespace app {
 
 class AppScriptObject : public script::ScriptObject {
@@ -68,13 +72,44 @@ public:
     addMethod("createDialog", &AppScriptObject::createDialog)
       .doc("Creates a dialog window");
 
+    addMethod("getDialog", &AppScriptObject::getDialog)
+      .doc("Returns an existing dialog window");
+
     makeGlobal("app");
     init();
   }
 
-  ScriptObject* createDialog() {
+  ScriptObject* createDialog(const std::string& id) {
+    if (!id.empty() && dialog::getDialogById(id))
+      return nullptr;
+
     m_objects.emplace_back("DialogScriptObject");
-    return m_objects.back();
+    auto ptr = m_objects.back().get();
+    if (!ptr)
+      return nullptr;
+
+    if (!id.empty())
+      ptr->set("id", id);
+    m_dialogScriptObjects[ ptr->getWrapped<ui::Widget>() ] = ptr;
+    return ptr;
+  }
+
+  ScriptObject* getDialog(const std::string& id) {
+    auto dialog = dialog::getDialogById(id);
+    if (!dialog)
+      return nullptr;
+    auto it = m_dialogScriptObjects.find(dialog);
+    if (it != m_dialogScriptObjects.end())
+      return it->second;
+
+    m_objects.emplace_back("DialogScriptObject");
+    auto ptr = m_objects.back().get();
+    if (ptr) {
+      ptr->setWrapped(dialog);
+      m_dialogScriptObjects[ dialog ] = ptr;
+    }
+
+    return ptr;
   }
 
   void documentation() {
@@ -210,6 +245,7 @@ public:
     UIContext::instance()->executeCommand(exitCommand);
   }
 
+  std::unordered_map<ui::Widget*, ScriptObject*> m_dialogScriptObjects;
   doc::Site m_site;
 };
 

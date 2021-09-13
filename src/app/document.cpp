@@ -307,7 +307,7 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
 
       auto it = linked.find(sourceCel->data()->id());
       if (it != linked.end()) {
-        newCel = Cel::createLink(it->second->shared_from_this());
+        newCel = Cel::createLink(std::static_pointer_cast<Cel>(it->second->shared_from_this()));
         newCel->setFrame(sourceCel->frame());
       } else {
         newCel = create_cel_copy(sourceCel,

@@ -25,7 +25,7 @@ WithCel::WithCel(std::shared_ptr<Cel> cel)
 
 std::shared_ptr<Cel> WithCel::cel()
 {
-  return get<Cel>(m_celId)->shared_from_this();
+  return std::static_pointer_cast<Cel>(get<Cel>(m_celId)->shared_from_this());
 }
 
 } // namespace cmd

@@ -81,7 +81,7 @@ void NewSpriteFromSelectionCommand::onExecute(Context* context)
 
   std::unique_ptr<Document> dstDoc(new Document(dstSprite.release()));
   char buf[1024];
-  std::sprintf(buf, "%s-%dx%d-%dx%d",
+  std::snprintf(buf, sizeof(buf), "%s-%dx%d-%dx%d",
                base::get_file_title(doc->filename()).c_str(),
                mask->bounds().x, mask->bounds().y,
                mask->bounds().w, mask->bounds().h);
