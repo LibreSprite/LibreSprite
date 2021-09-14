@@ -5,6 +5,16 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+/*
+PaletteListBoxes are variants of ListBoxes that are only meant to show two kinds of ListItem:
+- its own PaletteListItem, which draws a name and a row of colors
+- a LoadingItem, an indicator that the list is still being loaded
+
+Since it is just a ui widget, it doesn't do much on its own and must be populated.
+PaletteFileListBox is a variation that populates itself by looking for palettes
+in the Filesystem.
+*/
+
 #pragma once
 
 #include "app/res/resources_loader.h"
@@ -44,6 +54,7 @@ namespace app {
     void onTick();
     void stop();
     std::unique_ptr<ResourcesLoader> m_resourcesLoader;
+    // To-do: Remove this
     ui::Timer m_resourcesTimer;
   };
 
