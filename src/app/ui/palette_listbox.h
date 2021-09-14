@@ -43,7 +43,7 @@ namespace app {
     bool onProcessMessage(ui::Message* msg);
     void onTick();
     void stop();
-    base::UniquePtr<ResourcesLoader> m_resourcesLoader;
+    std::unique_ptr<ResourcesLoader> m_resourcesLoader;
     ui::Timer m_resourcesTimer;
   };
 
