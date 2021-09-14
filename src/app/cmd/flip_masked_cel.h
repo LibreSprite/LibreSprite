@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_CMD_FLIP_MASKED_CEL_H_INCLUDED
-#define APP_CMD_FLIP_MASKED_CEL_H_INCLUDED
 #pragma once
 
 #include "app/cmd_sequence.h"
@@ -28,5 +26,3 @@ namespace cmd {
 
 } // namespace cmd
 } // namespace app
-
-#endif

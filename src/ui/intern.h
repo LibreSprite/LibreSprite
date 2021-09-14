@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_INTERN_H_INCLUDED
-#define UI_INTERN_H_INCLUDED
 #pragma once
 
 #include "gfx/color.h"
@@ -42,5 +40,3 @@ namespace ui {
                    int* w, int* h, gfx::Color bg, gfx::Color fg);
 
 } // namespace ui
-
-#endif

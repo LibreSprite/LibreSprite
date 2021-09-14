@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef CSS_RULE_H_INCLUDED
-#define CSS_RULE_H_INCLUDED
 #pragma once
 
 #include "css/map.h"
@@ -29,5 +27,3 @@ namespace css {
   typedef Map<Rule*> Rules;
 
 } // namespace css
-
-#endif

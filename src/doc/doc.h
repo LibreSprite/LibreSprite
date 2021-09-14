@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_DOC_H_INCLUDED
-#define DOC_DOC_H_INCLUDED
 #pragma once
 
 #include "doc/blend_funcs.h"
@@ -34,5 +32,3 @@
 #include "doc/rgbmap.h"
 #include "doc/site.h"
 #include "doc/sprite.h"
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_APP_H_INCLUDED
-#define APP_APP_H_INCLUDED
 #pragma once
 
 #include "app/app_brushes.h"
@@ -118,5 +116,3 @@ namespace app {
   int app_get_color_to_clear_layer(doc::Layer* layer);
 
 } // namespace app
-
-#endif

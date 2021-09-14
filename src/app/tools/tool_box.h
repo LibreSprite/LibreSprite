@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_TOOLS_TOOL_BOX_H_INCLUDED
-#define APP_TOOLS_TOOL_BOX_H_INCLUDED
 #pragma once
 
 #include <list>
@@ -108,5 +106,3 @@ namespace app {
 
   } // namespace tools
 } // namespace app
-
-#endif  // TOOLS_TOOL_BOX_H_INCLUDED

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_TIME_H_INCLUDED
-#define BASE_TIME_H_INCLUDED
 #pragma once
 
 #include "base/ints.h"
@@ -55,5 +53,3 @@ namespace base {
   tick_t current_tick();
 
 }
-
-#endif

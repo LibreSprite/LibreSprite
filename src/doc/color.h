@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_COLOR_H_INCLUDED
-#define DOC_COLOR_H_INCLUDED
 #pragma once
 
 #include "base/ints.h"
@@ -88,5 +86,3 @@ namespace doc {
   }
 
 } // namespace doc
-
-#endif

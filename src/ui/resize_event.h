@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_RESIZE_EVENT_H_INCLUDED
-#define UI_RESIZE_EVENT_H_INCLUDED
 #pragma once
 
 #include "gfx/rect.h"
@@ -26,5 +24,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

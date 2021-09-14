@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GFX_RECT_H_INCLUDED
-#define GFX_RECT_H_INCLUDED
 #pragma once
 
 namespace gfx {
@@ -307,5 +305,3 @@ typedef RectT<int> Rect;
 typedef RectT<double> RectF;
 
 } // namespace gfx
-
-#endif

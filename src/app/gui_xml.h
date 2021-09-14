@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_GUI_XML_INCLUDED
-#define APP_GUI_XML_INCLUDED
 #pragma once
 
 #include "app/xml_document.h"
@@ -42,5 +40,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

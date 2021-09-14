@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_X11_X11_INCLUDED
-#define SHE_X11_X11_INCLUDED
 #pragma once
 
 #include <X11/Xlib.h>
@@ -36,5 +34,3 @@ private:
 };
 
 } // namespace she
-
-#endif

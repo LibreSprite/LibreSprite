@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_WORKSPACE_PANEL_H_INCLUDED
-#define APP_UI_WORKSPACE_PANEL_H_INCLUDED
 #pragma once
 
 #include "app/ui/animated_widget.h"
@@ -93,5 +91,3 @@ namespace app {
   typedef std::vector<WorkspacePanel*> WorkspacePanels;
 
 } // namespace app
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_BLEND_MODE_H_INCLUDED
-#define DOC_BLEND_MODE_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -43,5 +41,3 @@ namespace doc {
   std::string blend_mode_to_string(BlendMode blendMode);
 
 } // namespace doc
-
-#endif

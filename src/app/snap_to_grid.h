@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_SNAP_TO_GRID_H_INCLUDED
-#define APP_SNAP_TO_GRID_H_INCLUDED
 #pragma once
 
 #include "gfx/fwd.h"
@@ -23,5 +21,3 @@ namespace app {
                           const PreferSnapTo prefer);
 
 } // namespace app
-
-#endif

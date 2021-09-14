@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_THUMBNAIL_GENERATOR_H_INCLUDED
-#define APP_THUMBNAIL_GENERATOR_H_INCLUDED
 #pragma once
 
 #include "base/mutex.h"
@@ -57,5 +55,3 @@ namespace app {
     base::UniquePtr<base::thread> m_stopThread;
   };
 } // namespace app
-
-#endif

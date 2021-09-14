@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UTIL_PIC_FILE_H_INCLUDED
-#define APP_UTIL_PIC_FILE_H_INCLUDED
 #pragma once
 
 namespace doc {
@@ -20,5 +18,3 @@ namespace app {
   int save_pic_file(const char* filename, int x, int y, const doc::Palette* palette, const doc::Image* image);
 
 } // namespace app
-
-#endif

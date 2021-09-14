@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_MEMORY_DUMP_NONE_H_INCLUDED
-#define BASE_MEMORY_DUMP_NONE_H_INCLUDED
 #pragma once
 
 class base::MemoryDump::MemoryDumpImpl
@@ -23,5 +21,3 @@ public:
     // Do nothing
   }
 };
-
-#endif // BASE_MEMORY_DUMP_NONE_H_INCLUDED

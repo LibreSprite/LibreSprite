@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_MEMORY_H_INCLUDED
-#define BASE_MEMORY_H_INCLUDED
 #pragma once
 
 #include <cstddef>
@@ -19,6 +17,4 @@ char* base_strdup (const char* string);
 #ifdef MEMLEAK
 void base_memleak_init();
 void base_memleak_exit();
-#endif
-
 #endif

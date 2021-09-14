@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_VECTOR2D_H_INCLUDED
-#define BASE_VECTOR2D_H_INCLUDED
 #pragma once
 
 #include <cmath>
@@ -75,5 +73,3 @@ template<typename T>
 base::Vector2d<T> operator*(const T& f, const base::Vector2d<T>& v) {
   return base::Vector2d<T>(v.x*f, v.y*f);
 }
-
-#endif // BASE_VECTOR2D_H_INCLUDED

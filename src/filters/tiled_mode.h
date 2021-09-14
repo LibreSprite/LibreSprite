@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_TILED_MODE_H_INCLUDED
-#define FILTERS_TILED_MODE_H_INCLUDED
 #pragma once
 
 namespace filters {
@@ -19,5 +17,3 @@ namespace filters {
   };
 
 } // namespace filters
-
-#endif

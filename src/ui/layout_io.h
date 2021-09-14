@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_LAYOUT_IO_H_INCLUDED
-#define UI_LAYOUT_IO_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -23,5 +21,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

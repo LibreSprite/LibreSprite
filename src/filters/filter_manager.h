@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_FILTER_MANAGER_H_INCLUDED
-#define FILTERS_FILTER_MANAGER_H_INCLUDED
 #pragma once
 
 #include "filters/target.h"
@@ -73,5 +71,3 @@ namespace filters {
   };
 
 } // namespace filters
-
-#endif

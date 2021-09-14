@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_OSX_EVENT_QUEUE_INCLUDED
-#define SHE_OSX_EVENT_QUEUE_INCLUDED
 #pragma once
 
 #include "base/concurrent_queue.h"
@@ -26,5 +24,3 @@ private:
 typedef OSXEventQueue EventQueueImpl;
 
 } // namespace she
-
-#endif

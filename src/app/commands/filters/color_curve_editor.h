@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_COMMANDS_FILTERS_COLOR_CURVE_EDITOR_H_INCLUDED
-#define APP_COMMANDS_FILTERS_COLOR_CURVE_EDITOR_H_INCLUDED
 #pragma once
 
 #include "base/signal.h"
@@ -50,5 +48,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

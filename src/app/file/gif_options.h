@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_FILE_GIF_OPTIONS_H_INCLUDED
-#define APP_FILE_GIF_OPTIONS_H_INCLUDED
 #pragma once
 
 #include "app/file/format_options.h"
@@ -36,5 +34,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_NATIVE_DIALOGS_H_INCLUDED
-#define SHE_NATIVE_DIALOGS_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -34,5 +32,3 @@ namespace she {
   };
 
 } // namespace she
-
-#endif

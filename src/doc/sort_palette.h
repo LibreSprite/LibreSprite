@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_SORT_PALETTE_H_INCLUDED
-#define DOC_SORT_PALETTE_H_INCLUDED
 #pragma once
 
 namespace doc {
@@ -29,5 +27,3 @@ namespace doc {
   Remap sort_palette(Palette* palette, SortPaletteBy channel, bool ascending);
 
 } // namespace doc
-
-#endif

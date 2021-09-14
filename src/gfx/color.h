@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GFX_COLOR_H_INCLUDED
-#define GFX_COLOR_H_INCLUDED
 #pragma once
 
 #include "base/ints.h"
@@ -37,5 +35,3 @@ namespace gfx {
   inline bool is_transparent(Color c) { return geta(c) == 0; }
 
 } // namespace gfx
-
-#endif  // GFX_COLOR_H_INCLUDED

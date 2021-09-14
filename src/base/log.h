@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_LOG_H_INCLUDED
-#define BASE_LOG_H_INCLUDED
 #pragma once
 
 #ifdef ERROR
@@ -40,7 +38,5 @@ namespace base {
 inline std::ostream& LOG(LogLevel level) {
   return base::get_log_stream(level);
 }
-
-#endif
 
 #endif

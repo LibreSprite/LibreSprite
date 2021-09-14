@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_IMAGE_REF_H_INCLUDED
-#define DOC_IMAGE_REF_H_INCLUDED
 #pragma once
 
 #include "base/shared_ptr.h"
@@ -16,5 +14,3 @@ namespace doc {
   typedef base::SharedPtr<Image> ImageRef;
 
 } // namespace doc
-
-#endif

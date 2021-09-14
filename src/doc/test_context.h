@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_TEST_CONTEXT_H_INCLUDED
-#define DOC_TEST_CONTEXT_H_INCLUDED
 #pragma once
 
 #include "doc/context.h"
@@ -54,5 +52,3 @@ namespace doc {
   typedef TestContextT<Context> TestContext;
 
 } // namespace doc
-
-#endif

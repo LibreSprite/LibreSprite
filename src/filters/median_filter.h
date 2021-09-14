@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_MEDIAN_FILTER_PROCESS_H_INCLUDED
-#define FILTERS_MEDIAN_FILTER_PROCESS_H_INCLUDED
 #pragma once
 
 #include "base/ints.h"
@@ -43,5 +41,3 @@ namespace filters {
   };
 
 } // namespace filters
-
-#endif

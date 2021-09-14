@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_TARGET_H_INCLUDED
-#define FILTERS_TARGET_H_INCLUDED
 #pragma once
 
 #define TARGET_RED_CHANNEL              1
@@ -30,5 +28,3 @@ namespace filters {
   typedef int Target;
 
 } // namespace filters
-
-#endif

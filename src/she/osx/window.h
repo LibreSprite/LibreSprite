@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_OSX_WINDOW_H_INCLUDED
-#define SHE_OSX_WINDOW_H_INCLUDED
 #pragma once
 
 #include <Cocoa/Cocoa.h>
@@ -49,5 +47,3 @@ public:
 - (void)setMousePosition:(const gfx::Point&)position;
 - (BOOL)setNativeMouseCursor:(she::NativeCursor)cursor;
 @end
-
-#endif

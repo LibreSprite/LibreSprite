@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_CONVERSION_SHE_H_INCLUDED
-#define DOC_CONVERSION_SHE_H_INCLUDED
 #pragma once
 
 namespace she {
@@ -21,5 +19,3 @@ namespace doc {
     int src_x, int src_y, int dst_x, int dst_y, int w, int h);
 
 } // namespace doc
-
-#endif

@@ -3,8 +3,6 @@
 //
 // Licensed under the the MIT License (https://opensource.org/licenses/MIT).
 
-#ifndef _ASEPRITE_THUMBCREATOR_H_
-#define _ASEPRITE_THUMBCREATOR_H_
 #pragma once
 
 #include <QLoggingCategory>
@@ -17,5 +15,3 @@ public:
   bool create(const QString& path, int width, int height, QImage& img) override;
   Flags flags() const override;
 };
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_FILE_FILE_FORMAT_H_INCLUDED
-#define APP_FILE_FILE_FORMAT_H_INCLUDED
 #pragma once
 
 #include "base/shared_ptr.h"
@@ -83,5 +81,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

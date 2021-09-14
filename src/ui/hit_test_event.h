@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_HIT_TEST_EVENT_H_INCLUDED
-#define UI_HIT_TEST_EVENT_H_INCLUDED
 #pragma once
 
 #include "ui/event.h"
@@ -44,5 +42,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif  // UI_HIT_TEST_EVENT_H_INCLUDED

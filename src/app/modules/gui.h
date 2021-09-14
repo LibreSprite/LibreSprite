@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_MODULES_GUI_H_INCLUDED
-#define APP_MODULES_GUI_H_INCLUDED
 #pragma once
 
 #include "app/ui/skin/skin_property.h"
@@ -53,5 +51,3 @@ namespace app {
   void defer_invalid_rect(const gfx::Rect& rc);
 
 } // namespace app
-
-#endif

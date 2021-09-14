@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_EDITOR_GLUE_H_INCLUDED
-#define APP_UI_EDITOR_GLUE_H_INCLUDED
 #pragma once
 
 #include "app/tools/pointer.h"
@@ -31,5 +29,3 @@ inline tools::Pointer pointer_from_msg(Editor* editor, ui::MouseMessage* msg) {
 }
 
 } // namespace app
-
-#endif

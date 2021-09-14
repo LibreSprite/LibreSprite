@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_HANDLE_ANIDIR_H_INCLUDED
-#define DOC_HANDLE_ANIDIR_H_INCLUDED
 #pragma once
 
 #include "doc/frame.h"
@@ -23,5 +21,3 @@ namespace doc {
     bool& pingPongForward);
 
 } // namespace doc
-
-#endif

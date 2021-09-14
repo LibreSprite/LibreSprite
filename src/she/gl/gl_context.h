@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_GL_CONTEXT_INCLUDED
-#define SHE_GL_CONTEXT_INCLUDED
 #pragma once
 
 namespace she {
@@ -21,5 +19,3 @@ public:
 };
 
 } // namespace she
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_WIDGET_TYPE_H_INCLUDED
-#define UI_WIDGET_TYPE_H_INCLUDED
 #pragma once
 
 namespace ui {
@@ -48,5 +46,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif  // UI_WIDGET_TYPE_H_INCLUDED

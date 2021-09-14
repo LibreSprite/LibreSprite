@@ -102,8 +102,6 @@ void gen_ui_class(TiXmlDocument* doc, const std::string& inputFn, const std::str
   std::string widgetType = convert_type(elem->Value());
 
   std::cout
-    << "#ifndef GENERATED_" << fnUpper << "_H_INCLUDED\n"
-    << "#define GENERATED_" << fnUpper << "_H_INCLUDED\n"
     << "#pragma once\n"
     << "\n"
     << "#include \"app/find_widget.h\"\n"
@@ -172,7 +170,5 @@ void gen_ui_class(TiXmlDocument* doc, const std::string& inputFn, const std::str
     << "  };\n"
     << "\n"
     << "} // namespace gen\n"
-    << "} // namespace app\n"
-    << "\n"
-    << "#endif\n";
+    << "} // namespace app\n";
 }

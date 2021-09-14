@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_PROPERTY_H_INCLUDED
-#define UI_PROPERTY_H_INCLUDED
 #pragma once
 
 #include "base/disable_copying.h"
@@ -31,5 +29,3 @@ namespace ui {
   typedef base::SharedPtr<Property> PropertyPtr;
 
 } // namespace ui
-
-#endif

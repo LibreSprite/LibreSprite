@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_CONNETION_H_INCLUDED
-#define BASE_CONNETION_H_INCLUDED
 #pragma once
 
 #include "obs/connection.h"
@@ -16,5 +14,3 @@ using Connection = obs::connection;
 using ScopedConnection = obs::scoped_connection;
 
 } // namespace base
-
-#endif

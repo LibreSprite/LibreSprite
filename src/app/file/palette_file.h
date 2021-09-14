@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_FILE_PALETTE_FILE_H_INCLUDED
-#define APP_FILE_PALETTE_FILE_H_INCLUDED
 #pragma once
 
 namespace doc {
@@ -23,5 +21,3 @@ namespace app {
                     int columns);
 
 } // namespace app
-
-#endif

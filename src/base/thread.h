@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_THREAD_H_INCLUDED
-#define BASE_THREAD_H_INCLUDED
 #pragma once
 
 namespace base {                // Based on C++0x threads lib
@@ -108,5 +106,3 @@ namespace base {                // Based on C++0x threads lib
   };
 
 }
-
-#endif

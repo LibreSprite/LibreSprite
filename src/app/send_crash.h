@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_SEND_CRASH_H_INCLUDED
-#define APP_SEND_CRASH_H_INCLUDED
 #pragma once
 
 #include "app/notification_delegate.h"
@@ -32,5 +30,3 @@ namespace app {
   std::string memory_dump_filename();
 
 } // namespace app
-
-#endif // APP_SEND_CRASH_H_INCLUDED

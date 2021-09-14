@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_DEBUG_H_INCLUDED
-#define BASE_DEBUG_H_INCLUDED
 #pragma once
 
 int base_assert(const char* condition, const char* file, int lineNum);
@@ -35,6 +33,4 @@ void base_trace(const char* msg, ...);
 #else
   #define ASSERT(condition)
   #define TRACE(...)
-#endif
-
 #endif

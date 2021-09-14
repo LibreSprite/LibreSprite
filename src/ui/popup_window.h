@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_POPUP_WINDOW_H_INCLUDED
-#define UI_POPUP_WINDOW_H_INCLUDED
 #pragma once
 
 #include "ui/window.h"
@@ -57,5 +55,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

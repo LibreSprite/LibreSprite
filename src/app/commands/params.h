@@ -5,8 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_COMMANDS_PARAMS_H
-#define APP_COMMANDS_PARAMS_H
+#pragma once
 
 #include <map>
 #include <string>
@@ -71,5 +70,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

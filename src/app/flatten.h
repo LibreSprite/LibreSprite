@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_FLATTEN_H_INCLUDED
-#define APP_FLATTEN_H_INCLUDED
 #pragma once
 
 #include "gfx/rect.h"
@@ -32,5 +30,3 @@ namespace app {
                                         frame_t frmin, frame_t frmax);
 
 } // namespace app
-
-#endif

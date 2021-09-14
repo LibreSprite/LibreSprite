@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_LAUNCHER_H_INCLUDED
-#define BASE_LAUNCHER_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -19,5 +17,3 @@ bool open_folder(const std::string& file);
 
 } // namespace launcher
 } // namespace base
-
-#endif

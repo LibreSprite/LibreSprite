@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_ALERT_H_INCLUDED
-#define UI_ALERT_H_INCLUDED
 #pragma once
 
 #include "base/shared_ptr.h"
@@ -37,5 +35,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_OBJECT_H_INCLUDED
-#define DOC_OBJECT_H_INCLUDED
 #pragma once
 
 #include "doc/object_id.h"
@@ -57,5 +55,3 @@ namespace doc {
   }
 
 } // namespace doc
-
-#endif

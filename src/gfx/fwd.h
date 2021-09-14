@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GFX_FWD_H_INCLUDED
-#define GFX_FWD_H_INCLUDED
 #pragma once
 
 namespace gfx {
@@ -23,5 +21,3 @@ typedef SizeT<int> Size;
 class Region;
 
 } // namespace gfx
-
-#endif

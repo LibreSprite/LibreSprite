@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_APP_BRUSHES_H_INCLUDED
-#define APP_APP_BRUSHES_H_INCLUDED
 #pragma once
 
 #include "app/brush_slot.h"
@@ -53,5 +51,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

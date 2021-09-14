@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_FRAME_TAG_WINDOW_H_INCLUDED
-#define APP_UI_FRAME_TAG_WINDOW_H_INCLUDED
 #pragma once
 
 #include "app/ui/color_button.h"
@@ -42,5 +40,3 @@ namespace app {
   };
 
 }
-
-#endif

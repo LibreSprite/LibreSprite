@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef RENDER_GET_SPRITE_PIXEL_H_INCLUDED
-#define RENDER_GET_SPRITE_PIXEL_H_INCLUDED
 #pragma once
 
 #include "doc/frame.h"
@@ -23,5 +21,3 @@ namespace render {
   color_t get_sprite_pixel(const Sprite* sprite, int x, int y, frame_t frame);
 
 } // namespace render
-
-#endif

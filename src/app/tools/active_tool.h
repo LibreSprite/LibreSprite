@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_TOOLS_ACTIVE_TOOL_H_INCLUDED
-#define APP_TOOLS_ACTIVE_TOOL_H_INCLUDED
 #pragma once
 
 #include "base/observable.h"
@@ -68,5 +66,3 @@ private:
 
 } // namespace tools
 } // namespace app
-
-#endif

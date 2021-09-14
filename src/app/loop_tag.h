@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_LOOP_TAG_H_INCLUDED
-#define APP_LOOP_TAG_H_INCLUDED
 #pragma once
 
 #include "doc/frame.h"
@@ -23,5 +21,3 @@ namespace app {
   doc::FrameTag* create_loop_tag(doc::frame_t from, doc::frame_t to);
 
 } // namespace app
-
-#endif

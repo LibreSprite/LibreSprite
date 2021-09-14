@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GFX_RGB_H_INCLUDED
-#define GFX_RGB_H_INCLUDED
 #pragma once
 
 #include <cassert>
@@ -89,5 +87,3 @@ private:
 };
 
 } // namespace gfx
-
-#endif

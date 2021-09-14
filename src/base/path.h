@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_PATH_H_INCLUDED
-#define BASE_PATH_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -55,5 +53,3 @@ namespace base {
   int compare_filenames(const std::string& a, const std::string& b);
 
 }
-
-#endif

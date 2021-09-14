@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_MODULES_PALETTES_H_INCLUDED
-#define APP_MODULES_PALETTES_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -38,5 +36,3 @@ namespace app {
   std::string get_default_palette_preset_name();
 
 } // namespace app
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_24BITS_H_INCLUDED
-#define BASE_24BITS_H_INCLUDED
 #pragma once
 
 #include "base/config.h"
@@ -34,5 +32,3 @@ namespace base {
 #endif
 
 } // namespace base
-
-#endif

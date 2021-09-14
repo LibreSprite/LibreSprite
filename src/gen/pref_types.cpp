@@ -179,8 +179,6 @@ void gen_pref_header(TiXmlDocument* doc, const std::string& inputFn)
     << "\n";
 
   std::cout
-    << "#ifndef GENERATED_PREF_TYPES_H_INCLUDED\n"
-    << "#define GENERATED_PREF_TYPES_H_INCLUDED\n"
     << "#pragma once\n"
     << "\n"
     << "#include <string>\n"
@@ -236,9 +234,7 @@ void gen_pref_header(TiXmlDocument* doc, const std::string& inputFn)
   std::cout
     << "\n"
     << "} // namespace gen\n"
-    << "} // namespace app\n"
-    << "\n"
-    << "#endif\n";
+    << "} // namespace app\n";
 }
 
 void gen_pref_impl(TiXmlDocument* doc, const std::string& inputFn)
