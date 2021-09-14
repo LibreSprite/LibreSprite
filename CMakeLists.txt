@@ -1,28 +1,10 @@
 # LibreSprite
 # Copyright (C) 2001-2016  David Capello
 # Copyright (C) 2016-2018  LibreSprite contributors
-#
-# Parts of this file come from the Allegro 4.4 CMakeLists.txt
 
-# CMake setup
-if(WIN32)
-  # We need 3.4 to use manifests in the source files list for the main
-  # application target.
-  cmake_minimum_required(VERSION 3.4)
-else()
-  cmake_minimum_required(VERSION 2.6)
-endif()
+cmake_minimum_required(VERSION 3.4)
 
 enable_testing()
-
-if(COMMAND cmake_policy)
-  # CMP0003: Libraries linked via full path no longer produce linker search paths.
-  #cmake_policy(SET CMP0003 NEW)
-  if(CMAKE_MAJOR_VERSION GREATER 2)
-    # CMP0046: Old behavior to silently ignore non-existent dependencies.
-    cmake_policy(SET CMP0046 OLD)
-  endif()
-endif(COMMAND cmake_policy)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
@@ -42,7 +24,6 @@ project(libresprite C CXX)
 # TRUE by default
 set(BUILD_SHARED_LIBS off)
 
-
 ######################################################################
 # Options (these can be specified in cmake command line or modifying
 # CMakeCache.txt)
@@ -53,8 +34,6 @@ option(WITH_DEPRECATED_GLIB_SUPPORT "Enable support for older glib versions" off
 option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 
-option(USE_STATIC_LIBC    "Use static version of C and C++ runtimes" off)
-option(USE_SHARED_LIBLOADPNG "Use your installed copy of libloadpng" off)
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
@@ -157,17 +136,12 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 
 # libpng
 find_package(PNG REQUIRED)
-add_definitions(${PNG_DEFINITIONS})
 include_directories(${PNG_INCLUDE_DIRS})
-add_definitions(-DPNG_NO_MMX_CODE) # Do not use MMX optimizations in PNG code
 
 # libwebp
 if(WITH_WEBP_SUPPORT)
   find_package(PkgConfig)
-  pkg_check_modules(WEBP libwebp)
-  if(NOT WEBP_FOUND)
-    message(FATAL_ERROR "libwebp not found")
-  endif()
+  pkg_check_modules(WEBP libwebp REQUIRED)
   include_directories(${WEBP_INCLUDE_DIR})
 endif()
 
@@ -195,13 +169,8 @@ find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
 if(USE_ALLEG4_BACKEND)
-  if(USE_SHARED_LIBLOADPNG)
-    find_library(LOADPNG_LIBRARY NAMES loadpng)
-    find_path(LOADPNG_INCLUDE_DIR NAMES loadpng.h)
-  else()
-    set(LOADPNG_LIBRARY loadpng)
-    set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
-  endif()
+  set(LOADPNG_LIBRARY loadpng)
+  set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
   include_directories(${LOADPNG_INCLUDE_DIR})
 endif()
 
