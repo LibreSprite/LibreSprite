@@ -1,0 +1,27 @@
+image: archlinux
+packages:
+- gcc
+- cmake
+- ninja
+- freetype2
+- giflib
+- gmock
+- gtest
+- libjpeg-turbo
+- libpng
+- libwebp
+- libx11
+- libxcursor
+- pixman
+- tinyxml
+- zlib
+sources:
+- https://github.com/LibreSprite/LibreSprite
+tasks:
+- build: |
+    cd LibreSprite
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX=$HOME/install -DENABLE_TESTS=ON -DWITH_WEBP_SUPPORT=ON -G Ninja ..
+    ninja libresprite
+    ninja install
