@@ -30,14 +30,13 @@ using namespace skin;
 
 class PaletteListItem : public ListItem {
 public:
-  PaletteListItem(PaletteResource* palResource)
-    : ListItem(palResource->name()), m_palResource(palResource) {
-  }
+  PaletteListItem(PaletteResource* palResource) :
+    ListItem(palResource->name()), m_palResource(palResource) {}
 
-    PaletteListItem(std::unique_ptr<doc::Palette>&& palette, const std::string& name) :
-        PaletteListItem(new PaletteResource(palette.get(), name)) {
-        m_palette = std::move(palette);
-    }
+  PaletteListItem(std::unique_ptr<doc::Palette>&& palette, const std::string& name) :
+    PaletteListItem(new PaletteResource(palette.get(), name)) {
+    m_palette = std::move(palette);
+  }
 
   PaletteResource* paletteResource() const {
     return m_palResource.get();
