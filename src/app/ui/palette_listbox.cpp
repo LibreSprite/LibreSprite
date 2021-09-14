@@ -30,12 +30,16 @@ using namespace skin;
 
 class PaletteListItem : public ListItem {
 public:
-  PaletteListItem(PaletteResource* palResource)
-    : ListItem(palResource->name()), m_palResource(palResource) {
+  PaletteListItem(PaletteResource* palResource) :
+    ListItem(palResource->name()), m_palResource(palResource) {}
+
+  PaletteListItem(std::unique_ptr<doc::Palette>&& palette, const std::string& name) :
+    PaletteListItem(new PaletteResource(palette.get(), name)) {
+    m_palette = std::move(palette);
   }
 
   PaletteResource* paletteResource() const {
-    return m_palResource;
+    return m_palResource.get();
   }
 
 protected:
@@ -108,7 +112,8 @@ protected:
   }
 
 private:
-  base::UniquePtr<PaletteResource> m_palResource;
+  std::unique_ptr<PaletteResource> m_palResource;
+  std::unique_ptr<doc::Palette> m_palette;
 };
 
 class PaletteListBox::LoadingItem : public ListItem {
@@ -135,90 +140,100 @@ private:
   int m_state;
 };
 
-PaletteListBox::PaletteListBox()
-  : m_resourcesLoader(new ResourcesLoader(new PalettesLoaderDelegate))
-  , m_resourcesTimer(100)
-  , m_loadingItem(NULL)
-{
-  m_resourcesTimer.Tick.connect(base::Bind<void>(&PaletteListBox::onTick, this));
-}
-
-doc::Palette* PaletteListBox::selectedPalette()
-{
+PaletteResource* PaletteListBox::selectedPaletteResource() {
   if (PaletteListItem* listItem = dynamic_cast<PaletteListItem*>(getSelectedChild()))
-    return listItem->paletteResource()->palette();
+    return listItem->paletteResource();
   else
-    return NULL;
+    return nullptr;
 }
 
-bool PaletteListBox::onProcessMessage(ui::Message* msg)
-{
-  switch (msg->type()) {
-
-    case kOpenMessage: {
-      m_resourcesTimer.start();
-      break;
-    }
-
-  }
-  return ListBox::onProcessMessage(msg);
+doc::Palette* PaletteListBox::selectedPalette() {
+  auto resource = selectedPaletteResource();
+  return resource ? resource->palette() : nullptr;
 }
 
-void PaletteListBox::onChange()
-{
-  doc::Palette* palette = selectedPalette();
+std::string PaletteListBox::selectedPaletteName() {
+  auto resource = selectedPaletteResource();
+  return resource ? resource->name() : "";
+}
+
+void PaletteListBox::onChange() {
+  auto palette = selectedPalette();
   if (palette)
     PalChange(palette);
 }
 
-void PaletteListBox::onTick()
-{
+void PaletteListBox::setLoading(bool isLoading) {
+  if (isLoading) {
+    if (!m_loadingItem) {
+      m_loadingItem = new LoadingItem;
+      addChild(m_loadingItem);
+    }
+    m_loadingItem->makeProgress();
+  } else {
+    if (m_loadingItem) {
+      removeChild(m_loadingItem);
+      delete m_loadingItem;
+      m_loadingItem = nullptr;
+      invalidate();
+    }
+  }
+}
+
+void PaletteListBox::addPalette(doc::Palette *palette, const std::string& name) {
+  int hasLoading = !!m_loadingItem;
+  insertChild(getItemsCount()-hasLoading, new PaletteListItem(std::unique_ptr<doc::Palette>(palette), name));
+  layout();
+  View* view = View::getView(this);
+  if (view)
+    view->updateView();
+}
+
+void PaletteListBox::addPalette(PaletteResource *resource) {
+  int hasLoading = !!m_loadingItem;
+  insertChild(getItemsCount()-hasLoading, new PaletteListItem(resource));
+  layout();
+  View* view = View::getView(this);
+  if (view)
+    view->updateView();
+}
+
+PaletteFileListBox::PaletteFileListBox() : m_resourcesLoader(new ResourcesLoader(new PalettesLoaderDelegate)),
+                                           m_resourcesTimer(100) {
+  m_resourcesTimer.Tick.connect(base::Bind<void>(&PaletteFileListBox::onTick, this));
+}
+
+bool PaletteFileListBox::onProcessMessage(ui::Message* msg) {
+  switch (msg->type()) {
+    case kOpenMessage: {
+      m_resourcesTimer.start();
+      break;
+    }
+  }
+  return ListBox::onProcessMessage(msg);
+}
+
+void PaletteFileListBox::onTick() {
   if (m_resourcesLoader == NULL) {
     stop();
     return;
   }
-
-  if (!m_loadingItem) {
-    m_loadingItem = new LoadingItem;
-    addChild(m_loadingItem);
-  }
-  m_loadingItem->makeProgress();
-
-  base::UniquePtr<Resource> resource;
-  std::string name;
-
-  if (!m_resourcesLoader->next(resource)) {
-    if (m_resourcesLoader->isDone()) {
-      stop();
-
-      LOG("Done\n");
+  setLoading(true);
+  while (true) {
+    base::UniquePtr<Resource> resource;
+    if (!m_resourcesLoader->next(resource)) {
+        if (m_resourcesLoader->isDone()) {
+            stop();
+            LOG("Done\n");
+        }
+        return;
     }
-    return;
+    addPalette(static_cast<PaletteResource*>(resource.release()));
   }
-
-  PaletteResource* palResource = static_cast<PaletteResource*>(resource.get());
-  base::UniquePtr<PaletteListItem> listItem(new PaletteListItem(palResource));
-  insertChild(getItemsCount()-1, listItem);
-  layout();
-
-  View* view = View::getView(this);
-  if (view)
-    view->updateView();
-
-  resource.release();
-  listItem.release();
 }
 
-void PaletteListBox::stop()
-{
-  if (m_loadingItem) {
-    removeChild(m_loadingItem);
-    delete m_loadingItem;
-    m_loadingItem = NULL;
-
-    invalidate();
-  }
-
+void PaletteFileListBox::stop() {
+  setLoading(false);
   m_resourcesTimer.stop();
 }
 
