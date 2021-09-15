@@ -116,11 +116,17 @@ public:
     m_printLastResult = true;
   }
 
+  bool raiseEvent(const std::string& event) override {
+    return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
+  }
+
   bool eval(const std::string& code) override {
-    bool errFlag = true;
+    bool success = true;
     try {
       if (duk_peval_string(m_handle, code.c_str()) != 0) {
         printLastResult();
+        std::cout << "Error: [" << duk_safe_to_string(m_handle, -1) << "]" << std::endl;
+        success = false;
       }
 
       if (m_printLastResult &&
@@ -129,14 +135,15 @@ public:
       }
 
       duk_pop(m_handle);
-      errFlag = false;
     } catch (const std::exception& ex) {
       std::string err = "Error: ";
       err += ex.what();
       m_delegate->onConsolePrint(err.c_str());
-      errFlag = true;
+      success = false;
+      std::cout << "Error: [" << err << "]" << std::endl;
     }
-    return errFlag;
+    execAfterEval(success);
+    return success;
   }
 };
 
@@ -191,7 +198,7 @@ public:
 
     case Value::Type::OBJECT:
       if (auto object = static_cast<ScriptObject*>(value)) {
-        object->getInternalScriptObject()->makeLocal();
+        static_cast<DukScriptObject*>(object->getInternalScriptObject())->makeLocal();
       } else {
         duk_push_null(ctx);
       }
@@ -254,7 +261,7 @@ public:
     }
   }
 
-  void makeLocal() override {
+  void makeLocal() {
     auto handle = m_engine.get<DukEngine>()->m_handle;
     duk_push_object(handle);
     pushFunctions();

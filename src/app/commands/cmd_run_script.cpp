@@ -5,7 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "base/string.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -47,21 +46,12 @@ RunScriptCommand::RunScriptCommand()
 void RunScriptCommand::onLoadParams(const Params& params)
 {
   m_filename = params.get("filename");
-  if (base::get_file_path(m_filename).empty()) {
-    ResourceFinder rf;
-    rf.includeDataDir(base::join_path("scripts", m_filename).c_str());
-    if (rf.findFirst())
-      m_filename = rf.filename();
-  }
 }
 
 void RunScriptCommand::onExecute(Context* context)
 {
   script::EngineDelegate::setDefault("gui");
-  script::Engine::setDefault(base::string_to_lower(base::get_file_extension(m_filename)), false);
-  AppScripting engine;
-  engine.evalFile(m_filename);
-
+  AppScripting::evalFile(m_filename);
   ui::Manager::getDefault()->invalidate();
 }
 
