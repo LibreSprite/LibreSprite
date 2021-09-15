@@ -459,6 +459,7 @@ target_link_libraries(app-lib
   fixmath-lib
   flic-lib
   gfx-lib
+  net-lib
   render-lib
   script-lib
   she
