@@ -228,7 +228,7 @@ namespace sdl {
 
             SDL_Event sdlEvent;
             while (SDL_PollEvent(&sdlEvent)) {
-                switch (sdlEvent.type){
+                switch (sdlEvent.type) {
                 case SDL_WINDOWEVENT:
                     switch (sdlEvent.window.event) {
                     case SDL_WINDOWEVENT_MAXIMIZED:
@@ -332,11 +332,19 @@ namespace sdl {
                     return;
                 }
 
+                case SDL_DROPFILE: {
+                    event.setType(Event::DropFiles);
+                    std::string file(sdlEvent.drop.file);
+                    std::vector<std::string> files;
+                    files.push_back(file);
+                    SDL_free(sdlEvent.drop.file);
+                    return;
+                }
+
                 // MouseDoubleClick,
 
                 // CloseDisplay,
                 // ResizeDisplay,
-                // DropFiles,
                 // MouseEnter,
                 // MouseLeave,
                 // MouseWheel,
