@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SKIA_SKIA_SURFACE_INCLUDED
-#define SHE_SKIA_SKIA_SURFACE_INCLUDED
 #pragma once
 
 #include "base/exception.h"
@@ -465,5 +463,3 @@ private:
 };
 
 } // namespace she
-
-#endif

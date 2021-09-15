@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_COMMANDS_FILTERS_CONVOLUTION_MATRIX_STOCK_H_INCLUDED
-#define APP_COMMANDS_FILTERS_CONVOLUTION_MATRIX_STOCK_H_INCLUDED
 #pragma once
 
 #include <vector>
@@ -44,5 +42,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

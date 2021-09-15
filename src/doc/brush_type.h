@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_BRUSH_TYPE_H_INCLUDED
-#define DOC_BRUSH_TYPE_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -26,5 +24,3 @@ namespace doc {
   BrushType string_id_to_brush_type(const std::string& s);
 
 } // namespace doc
-
-#endif

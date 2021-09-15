@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_KEYBOARD_SHORTCUTS_H_INCLUDED
-#define APP_UI_KEYBOARD_SHORTCUTS_H_INCLUDED
 #pragma once
 
 #include "app/commands/params.h"
@@ -183,5 +181,3 @@ namespace base {
   template<> std::string convert_to(const app::KeyAction& from);
 
 } // namespace base
-
-#endif

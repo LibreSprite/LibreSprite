@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_COMMON_FREETYPE_FONT_H_INCLUDED
-#define SHE_COMMON_FREETYPE_FONT_H_INCLUDED
 #pragma once
 
 #include "ft/face.h"
@@ -40,5 +38,3 @@ namespace she {
   FreeTypeFont* loadFreeTypeFont(const char* filename, int height);
 
 } // namespace she
-
-#endif

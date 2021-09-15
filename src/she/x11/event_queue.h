@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_X11_EVENT_QUEUE_INCLUDED
-#define SHE_X11_EVENT_QUEUE_INCLUDED
 #pragma once
 
 #include "she/event.h"
@@ -47,5 +45,3 @@ typedef X11EventQueue EventQueueImpl;
 } // namespace she
 
 #pragma pop_macro("None")
-
-#endif

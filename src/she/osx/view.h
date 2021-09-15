@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_OSX_VIEW_H_INCLUDED
-#define SHE_OSX_VIEW_H_INCLUDED
 #pragma once
 
 #include "she/pointer_type.h"
@@ -54,5 +52,3 @@
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender;
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender;
 @end
-
-#endif

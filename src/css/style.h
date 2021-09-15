@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef CSS_STYLE_H_INCLUDED
-#define CSS_STYLE_H_INCLUDED
 #pragma once
 
 #include <map>
@@ -50,5 +48,3 @@ namespace css {
   typedef Map<const Style*> Styles;
 
 } // namespace css
-
-#endif

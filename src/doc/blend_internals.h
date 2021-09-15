@@ -5,8 +5,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_BLEND_INTERNALS_H_INCLUDED
-#define DOC_BLEND_INTERNALS_H_INCLUDED
 #pragma once
 
 #define MASK 0xff
@@ -18,5 +16,3 @@
 
 #define DIV_UN8(a, b)							\
     (((uint16_t) (a) * MASK + ((b) / 2)) / (b))
-
-#endif

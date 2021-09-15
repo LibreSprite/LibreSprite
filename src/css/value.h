@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef CSS_VALUE_H_INCLUDED
-#define CSS_VALUE_H_INCLUDED
 #pragma once
 
 #include "css/map.h"
@@ -27,7 +25,7 @@ namespace css {
     explicit Value(const std::string& value);
 
     Type type() const { return m_type; }
-    
+
     double number() const;
     std::string string() const;
     std::string unit() const;
@@ -50,5 +48,3 @@ namespace css {
   typedef Map<Value> Values;
 
 } // namespace css
-
-#endif

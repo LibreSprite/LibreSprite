@@ -7,8 +7,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_DOCUMENT_EXPORTER_H_INCLUDED
-#define APP_DOCUMENT_EXPORTER_H_INCLUDED
 #pragma once
 
 #include "app/sprite_sheet_type.h"
@@ -136,5 +134,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

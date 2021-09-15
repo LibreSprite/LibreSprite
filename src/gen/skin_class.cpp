@@ -65,8 +65,6 @@ void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
   std::cout
     << "// Don't modify, generated file from " << inputFn << "\n"
     << "\n"
-    << "#ifndef GENERATED_SKIN_H_INCLUDED\n"
-    << "#define GENERATED_SKIN_H_INCLUDED\n"
     << "#pragma once\n"
     << "\n"
     << "namespace app {\n"
@@ -208,7 +206,5 @@ void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
     << "  };\n"
     << "\n"
     << "} // namespace gen\n"
-    << "} // namespace app\n"
-    << "\n"
-    << "#endif\n";
+    << "} // namespace app\n";
 }

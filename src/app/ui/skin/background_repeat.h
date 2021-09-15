@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_SKIN_BACKGROUND_REPEAT_H_INCLUDED
-#define APP_UI_SKIN_BACKGROUND_REPEAT_H_INCLUDED
 #pragma once
 
 namespace app {
@@ -21,5 +19,3 @@ namespace skin {
 
 } // namespace skin
 } // namespace app
-
-#endif // APP_UI_SKIN_BACKGROUND_REPEAT_H_INCLUDED

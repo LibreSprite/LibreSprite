@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_UI_H_INCLUDED
-#define UI_UI_H_INCLUDED
 #pragma once
 
 #include "ui/accelerator.h"
@@ -63,5 +61,3 @@
 #include "ui/widget_type.h"
 #include "ui/widgets_list.h"
 #include "ui/window.h"
-
-#endif

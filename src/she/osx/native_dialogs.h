@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_OSX_NATIVE_DIALOGS_H_INCLUDED
-#define SHE_OSX_NATIVE_DIALOGS_H_INCLUDED
 #pragma once
 
 #include "she/native_dialogs.h"
@@ -19,5 +17,3 @@ namespace she {
   };
 
 } // namespace she
-
-#endif

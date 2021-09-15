@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SCOPED_HANDLE_H_INCLUDED
-#define SHE_SCOPED_HANDLE_H_INCLUDED
 #pragma once
 
 namespace she {
@@ -30,5 +28,3 @@ namespace she {
   };
 
 } // namespace she
-
-#endif

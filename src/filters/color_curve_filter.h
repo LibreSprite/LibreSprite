@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_COLOR_CURVE_FILTER_H_INCLUDED
-#define FILTERS_COLOR_CURVE_FILTER_H_INCLUDED
 #pragma once
 
 #include <vector>
@@ -37,5 +35,3 @@ namespace filters {
   };
 
 } // namespace filters
-
-#endif

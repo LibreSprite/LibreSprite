@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_CONVERT_TO_H_INCLUDED
-#define BASE_CONVERT_TO_H_INCLUDED
 #pragma once
 
 #include "base/base.h"
@@ -34,5 +32,3 @@ namespace base {
   template<> std::string convert_to(const Sha1& from);
 
 }
-
-#endif

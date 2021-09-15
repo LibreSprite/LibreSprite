@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SURFACE_H_INCLUDED
-#define SHE_SURFACE_H_INCLUDED
 #pragma once
 
 #include "gfx/color.h"
@@ -83,5 +81,3 @@ namespace she {
   };
 
 } // namespace she
-
-#endif

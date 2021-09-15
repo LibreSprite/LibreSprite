@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_RES_PALETTES_LOADER_DELEGATE_H_INCLUDED
-#define APP_RES_PALETTES_LOADER_DELEGATE_H_INCLUDED
 #pragma once
 
 #include "app/res/resources_loader_delegate.h"
@@ -21,5 +19,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

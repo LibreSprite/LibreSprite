@@ -4,8 +4,6 @@
 // This source file is ditributed under a BSD-like license, please
 // read LICENSE.txt for more information.
 
-#ifndef SHE_EVENT_QUEUE_H_INCLUDED
-#define SHE_EVENT_QUEUE_H_INCLUDED
 #pragma once
 
 namespace she {
@@ -30,5 +28,3 @@ namespace she {
   }
 
 } // namespace she
-
-#endif

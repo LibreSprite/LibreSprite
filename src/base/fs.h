@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_FS_H_INCLUDED
-#define BASE_FS_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -47,5 +45,3 @@ namespace base {
   std::vector<std::string> list_files(const std::string& path);
 
 } // namespace base
-
-#endif

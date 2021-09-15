@@ -3,8 +3,7 @@
  * Based on Allegro library by Shawn Hargreaves.
  */
 
-#ifndef FIXMATH_FIXMATH_H
-#define FIXMATH_FIXMATH_H
+#pragma once
 
 #include "base/ints.h"
 #include <cerrno>
@@ -155,5 +154,3 @@ namespace fixmath {
   }
 
 } // namespace fixmath
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_SKIN_STYLE_SHEET_H_INCLUDED
-#define APP_UI_SKIN_STYLE_SHEET_H_INCLUDED
 #pragma once
 
 #include "app/ui/skin/background_repeat.h"
@@ -83,5 +81,3 @@ namespace app {
 
   } // namespace skin
 } // namespace app
-
-#endif

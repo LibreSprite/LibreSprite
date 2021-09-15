@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_BLEND_FUNCS_H_INCLUDED
-#define DOC_BLEND_FUNCS_H_INCLUDED
 #pragma once
 
 #include "doc/blend_mode.h"
@@ -30,5 +28,3 @@ namespace doc {
   BlendFunc get_indexed_blender(BlendMode blendmode);
 
 } // namespace doc
-
-#endif

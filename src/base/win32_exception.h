@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_WIN32_EXCEPTION_H_INCLUDED
-#define BASE_WIN32_EXCEPTION_H_INCLUDED
 #pragma once
 
 #include "exception.h"
@@ -19,5 +17,3 @@ namespace base {
   };
 
 }
-
-#endif

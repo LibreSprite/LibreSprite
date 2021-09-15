@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UTIL_EXPAND_CEL_CANVAS_H_INCLUDED
-#define APP_UTIL_EXPAND_CEL_CANVAS_H_INCLUDED
 #pragma once
 
 #include "doc/frame.h"
@@ -99,5 +97,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

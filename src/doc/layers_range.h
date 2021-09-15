@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_LAYERS_RANGE_H_INCLUDED
-#define DOC_LAYERS_RANGE_H_INCLUDED
 #pragma once
 
 #include "doc/layer_index.h"
@@ -54,5 +52,3 @@ namespace doc {
   };
 
 } // namespace doc
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_BUTTON_SET_H_INCLUDED
-#define APP_UI_BUTTON_SET_H_INCLUDED
 #pragma once
 
 #include "app/ui/skin/skin_part.h"
@@ -68,5 +66,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_ALLEG4_DISPLAY_EVENTS_H_INCLUDED
-#define SHE_ALLEG4_DISPLAY_EVENTS_H_INCLUDED
 #pragma once
 
 namespace she {
@@ -19,5 +17,3 @@ namespace she {
   bool is_display_resize_awaiting();
 
 } // namespace she
-
-#endif

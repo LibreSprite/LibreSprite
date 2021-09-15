@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_COMMON_SYSTEM_H
-#define SHE_COMMON_SYSTEM_H
 #pragma once
 
 #ifdef _WIN32
@@ -83,5 +81,3 @@ private:
 };
 
 } // namespace she
-
-#endif

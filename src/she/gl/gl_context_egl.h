@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_GL_CONTEXT_EGL_INCLUDED
-#define SHE_GL_CONTEXT_EGL_INCLUDED
 #pragma once
 
 #include "she/gl/gl_context.h"
@@ -161,5 +159,3 @@ private:
 };
 
 } // namespace she
-
-#endif

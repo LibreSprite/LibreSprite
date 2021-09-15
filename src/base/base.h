@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_BASE_H_INCLUDED
-#define BASE_BASE_H_INCLUDED
 #pragma once
 
 #include "base/config.h"
@@ -75,7 +73,5 @@ inline void operator delete[](void* ptr)
     return;
   base_free(ptr);
 }
-
-#endif
 
 #endif

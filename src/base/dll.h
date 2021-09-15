@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_DLL_H_INCLUDED
-#define BASE_DLL_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -25,5 +23,3 @@ inline T get_dll_proc(dll lib, const char* procName) {
 }
 
 } // namespace base
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_PROGRAM_OPTIONS_H_INCLUDED
-#define BASE_PROGRAM_OPTIONS_H_INCLUDED
 #pragma once
 
 #include <string>
@@ -118,5 +116,3 @@ namespace base {
 // Prints the program options correctly formatted to be read by
 // the user. E.g. This can be used in a --help option.
 std::ostream& operator<<(std::ostream& os, const base::ProgramOptions& po);
-
-#endif

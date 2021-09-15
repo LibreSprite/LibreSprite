@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_DOCUMENT_RANGE_OPS_H_INCLUDED
-#define APP_DOCUMENT_RANGE_OPS_H_INCLUDED
 #pragma once
 
 #include <vector>
@@ -29,5 +27,3 @@ namespace app {
   void reverse_frames(Document* doc, const DocumentRange& range);
 
 } // namespace app
-
-#endif

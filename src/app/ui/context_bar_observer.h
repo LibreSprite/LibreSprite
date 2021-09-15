@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_CONTEXT_BAR_OBSERVER_H_INCLUDED
-#define APP_CONTEXT_BAR_OBSERVER_H_INCLUDED
 #pragma once
 
 namespace app {
@@ -20,5 +18,3 @@ public:
 };
 
 } // namespace app
-
-#endif

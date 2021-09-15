@@ -4,8 +4,6 @@
 // This source file is ditributed under a BSD-like license, please
 // read LICENSE.txt for more information.
 
-#ifndef SHE_EVENT_H_INCLUDED
-#define SHE_EVENT_H_INCLUDED
 #pragma once
 
 #include "gfx/point.h"
@@ -125,5 +123,3 @@ namespace she {
 } // namespace she
 
 #pragma pop_macro("None")
-
-#endif

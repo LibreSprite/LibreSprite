@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_MOUSE_BUTTONS_H_INCLUDED
-#define UI_MOUSE_BUTTONS_H_INCLUDED
 #pragma once
 
 namespace ui {
@@ -18,5 +16,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

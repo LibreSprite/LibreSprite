@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_MANAGER_H_INCLUDED
-#define UI_MANAGER_H_INCLUDED
 #pragma once
 
 #include "gfx/region.h"
@@ -175,5 +173,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

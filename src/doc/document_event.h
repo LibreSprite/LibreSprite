@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_DOCUMENT_EVENT_H_INCLUDED
-#define DOC_DOCUMENT_EVENT_H_INCLUDED
 #pragma once
 
 #include "gfx/region.h"
@@ -80,5 +78,3 @@ namespace doc {
   };
 
 } // namespace app
-
-#endif

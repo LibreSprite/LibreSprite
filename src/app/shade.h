@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_SHADE_H_INCLUDED
-#define APP_SHADE_H_INCLUDED
 #pragma once
 
 #include "app/color.h"
@@ -21,5 +19,3 @@ namespace app {
   std::string shade_to_string(const Shade& shade);
 
 } // namespace app
-
-#endif

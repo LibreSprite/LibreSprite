@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_GRAPHICS_H_INCLUDED
-#define UI_GRAPHICS_H_INCLUDED
 #pragma once
 
 #include "base/disable_copying.h"
@@ -179,5 +177,3 @@ namespace ui {
   typedef base::SharedPtr<Graphics> GraphicsPtr;
 
 } // namespace ui
-
-#endif

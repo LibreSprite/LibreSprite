@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_MEMORY_DUMP_WIN32_H_INCLUDED
-#define BASE_MEMORY_DUMP_WIN32_H_INCLUDED
 #pragma once
 
 #ifdef _WIN32
@@ -72,5 +70,3 @@ private:
 
   }
 };
-
-#endif // BASE_MEMORY_DUMP_WIN32_H_INCLUDED

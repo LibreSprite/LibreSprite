@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_WIDGETS_LIST_H_INCLUDED
-#define UI_WIDGETS_LIST_H_INCLUDED
 #pragma once
 
 #include <vector>
@@ -33,5 +31,3 @@ namespace ui {
   typedef std::vector<Widget*> WidgetsList;
 
 } // namespace ui
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_SKIN_SKIN_PART_H_INCLUDED
-#define APP_UI_SKIN_SKIN_PART_H_INCLUDED
 #pragma once
 
 #include "base/shared_ptr.h"
@@ -57,5 +55,3 @@ namespace app {
 
   } // namespace skin
 } // namespace app
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef UI_TOOLTIPS_H_INCLUDED
-#define UI_TOOLTIPS_H_INCLUDED
 #pragma once
 
 #include "base/unique_ptr.h"
@@ -80,5 +78,3 @@ namespace ui {
   };
 
 } // namespace ui
-
-#endif

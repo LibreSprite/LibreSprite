@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_COMMON_GENERIC_SURFACE_H
-#define SHE_COMMON_GENERIC_SURFACE_H
 #pragma once
 
 #include "gfx/clip.h"
@@ -232,5 +230,3 @@ public:
 };
 
 } // namespace she
-
-#endif

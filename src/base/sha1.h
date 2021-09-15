@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_SHA1_H_INCLUDED
-#define BASE_SHA1_H_INCLUDED
 #pragma once
 
 #include <vector>
@@ -37,5 +35,3 @@ namespace base {
   };
 
 } // namespace base
-
-#endif  // BASE_SHA1_H_INCLUDED

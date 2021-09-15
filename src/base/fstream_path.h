@@ -3,9 +3,6 @@
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
-
-#ifndef BASE_FSTREAM_PATH_H_INCLUDED
-#define BASE_FSTREAM_PATH_H_INCLUDED
 #pragma once
 
 #include "base/string.h"
@@ -18,6 +15,4 @@
   #endif
 #else
   #define FSTREAM_PATH(path) (std::string(path).c_str())
-#endif
-
 #endif

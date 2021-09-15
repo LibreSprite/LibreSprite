@@ -14,8 +14,6 @@
  *
  */
 
-#ifndef BASE_SHA1_RFC3174_H_INCLUDED
-#define BASE_SHA1_RFC3174_H_INCLUDED
 #pragma once
 
 #ifdef __cplusplus
@@ -77,5 +75,3 @@ int SHA1Result( SHA1Context *,
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // BASE_SHA1_RFC3174_H_INCLUDED

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GFX_POINT_H_INCLUDED
-#define GFX_POINT_H_INCLUDED
 #pragma once
 
 namespace gfx {
@@ -121,5 +119,3 @@ typedef PointT<int> Point;
 typedef PointT<double> PointF;
 
 } // namespace gfx
-
-#endif

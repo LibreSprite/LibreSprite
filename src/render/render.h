@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef RENDER_RENDER_H_INCLUDED
-#define RENDER_RENDER_H_INCLUDED
 #pragma once
 
 #include "doc/anidir.h"
@@ -239,5 +237,3 @@ namespace render {
                        const BlendMode blendMode);
 
 } // namespace render
-
-#endif

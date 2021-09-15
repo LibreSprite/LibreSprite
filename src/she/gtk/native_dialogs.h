@@ -7,8 +7,6 @@
 //disable EMPTY_STRING macro already set in allegro, enabling it at the end of file
 #pragma push_macro("EMPTY_STRING")
 #undef EMPTY_STRING
-#ifndef SHE_GTK_NATIVE_DIALOGS_H_INCLUDED
-#define SHE_GTK_NATIVE_DIALOGS_H_INCLUDED
 #pragma once
 
 #include "she/native_dialogs.h"
@@ -28,5 +26,4 @@ namespace she {
 
 } // namespace she
 
-#endif
 #pragma pop_macro("EMPTY_STRING")

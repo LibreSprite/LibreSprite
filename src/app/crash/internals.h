@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_CRASH_INTERNALS_H_INCLUDED
-#define APP_CRASH_INTERNALS_H_INCLUDED
 #pragma once
 
 #include "doc/object.h"
@@ -59,5 +57,3 @@ namespace crash {
 
 } // namespace crash
 } // namespace app
-
-#endif

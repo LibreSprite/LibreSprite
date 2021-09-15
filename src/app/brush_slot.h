@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_BRUSH_SLOT_H_INCLUDED
-#define APP_BRUSH_SLOT_H_INCLUDED
 #pragma once
 
 #include "app/color.h"
@@ -103,5 +101,3 @@ private:
 };
 
 } // namespace app
-
-#endif

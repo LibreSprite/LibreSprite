@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_SPRITE_SHEET_TYPE_H_INCLUDED
-#define APP_SPRITE_SHEET_TYPE_H_INCLUDED
 #pragma once
 
 namespace app {
@@ -21,5 +19,3 @@ namespace app {
   };
 
 } // namespace app
-
-#endif

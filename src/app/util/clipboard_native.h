@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UTIL_CLIPBOARD_NATIVE_H_INCLUDED
-#define APP_UTIL_CLIPBOARD_NATIVE_H_INCLUDED
 #pragma once
 
 #include "gfx/fwd.h"
@@ -32,5 +30,3 @@ bool get_native_clipboard_bitmap_size(gfx::Size* size);
 
 } // namespace clipboard
 } // namespace app
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef TESTS_TEST_H_INCLUDED
-#define TESTS_TEST_H_INCLUDED
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -52,5 +50,3 @@ int main(int argc, char* argv[])
 
   return exitcode;
 }
-
-#endif

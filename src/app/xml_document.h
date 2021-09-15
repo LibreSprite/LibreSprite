@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_XML_DOCUMENT_H_INCLUDED
-#define APP_XML_DOCUMENT_H_INCLUDED
 #pragma once
 
 #include "base/exception.h"
@@ -26,5 +24,3 @@ namespace app {
   bool bool_attr_is_true(const TiXmlElement* elem, const char* attrName);
 
 } // namespace app
-
-#endif

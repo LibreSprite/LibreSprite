@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SPRITE_SHEET_FONT_H
-#define SHE_SPRITE_SHEET_FONT_H
 #pragma once
 
 #include "base/debug.h"
@@ -131,5 +129,3 @@ private:
 };
 
 } // namespace she
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_PALETTE_IO_H_INCLUDED
-#define DOC_PALETTE_IO_H_INCLUDED
 #pragma once
 
 #include <iosfwd>
@@ -18,5 +16,3 @@ namespace doc {
   Palette* read_palette(std::istream& is);
 
 } // namespace doc
-
-#endif

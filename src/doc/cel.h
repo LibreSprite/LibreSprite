@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_CEL_H_INCLUDED
-#define DOC_CEL_H_INCLUDED
 #pragma once
 
 #include "base/disable_copying.h"
@@ -74,5 +72,3 @@ namespace doc {
   };
 
 } // namespace doc
-
-#endif

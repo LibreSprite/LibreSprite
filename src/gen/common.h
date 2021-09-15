@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef GEN_COMMON_H_INCLUDED
-#define GEN_COMMON_H_INCLUDED
 #pragma once
 
 #include <cctype>
@@ -28,5 +26,3 @@ inline std::string convert_xmlid_to_cppid(const std::string& xmlid, bool firstLe
   }
   return cppid;
 }
-
-#endif

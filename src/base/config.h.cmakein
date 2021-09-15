@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_CONFIG_H_INCLUDED
-#define BASE_CONFIG_H_INCLUDED
 #pragma once
 
 #cmakedefine HAVE_STDINT_H
@@ -14,5 +12,3 @@
 
 #cmakedefine ASEPRITE_LITTLE_ENDIAN
 #cmakedefine ASEPRITE_BIG_ENDIAN
-
-#endif

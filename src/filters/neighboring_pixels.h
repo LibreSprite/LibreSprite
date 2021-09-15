@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef FILTERS_NEIGHBORING_PIXELS_H_INCLUDED
-#define FILTERS_NEIGHBORING_PIXELS_H_INCLUDED
 #pragma once
 
 #include "filters/tiled_mode.h"
@@ -100,5 +98,3 @@ namespace filters {
   }
 
 } // namespace filters
-
-#endif

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef RENDER_ZOOM_H_INCLUDED
-#define RENDER_ZOOM_H_INCLUDED
 #pragma once
 
 #include "gfx/rect.h"
@@ -81,5 +79,3 @@ namespace render {
   };
 
 } // namespace render
-
-#endif // RENDER_ZOOM_H_INCLUDED

@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef BASE_REMOVE_FROM_CONTAINER_H_INCLUDED
-#define BASE_REMOVE_FROM_CONTAINER_H_INCLUDED
 #pragma once
 
 namespace base {
@@ -28,5 +26,3 @@ void remove_from_container(ContainerType& container,
 }
 
 }
-
-#endif

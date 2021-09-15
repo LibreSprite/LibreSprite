@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_UI_EDITOR_PIVOT_HELPERS_H_INCLUDED
-#define APP_UI_EDITOR_PIVOT_HELPERS_H_INCLUDED
 #pragma once
 
 namespace app {
@@ -15,5 +13,3 @@ namespace app {
   void set_pivot_from_preferences(Transformation& t);
 
 } // namespace app
-
-#endif

@@ -5,8 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifndef APP_PREF_OPTION_IO_H_INCLUDED
-#define APP_PREF_OPTION_IO_H_INCLUDED
 #pragma once
 
 #include "app/ini_file.h"
@@ -45,5 +43,3 @@ namespace app {
   }
 
 } // namespace app
-
-#endif

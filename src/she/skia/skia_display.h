@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SKIA_SKIA_DISPLAY_INCLUDED
-#define SHE_SKIA_SKIA_DISPLAY_INCLUDED
 #pragma once
 
 #include "she/display.h"
@@ -72,5 +70,3 @@ private:
 };
 
 } // namespace she
-
-#endif
