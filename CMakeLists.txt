@@ -174,6 +174,9 @@ if(USE_ALLEG4_BACKEND)
   include_directories(${LOADPNG_INCLUDE_DIR})
 endif()
 
+find_package(CURL REQUIRED)
+include_directories(${CURL_INCLUDE_DIRS})
+
 # simpleini
 include_directories(${SIMPLEINI_DIR})
 
