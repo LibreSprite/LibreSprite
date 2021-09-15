@@ -98,8 +98,8 @@ Console::~Console()
       // Open in foreground
       wid_console->openWindowInForeground();
     }
-
-    delete wid_console;         // window
+    if (wid_console->manager())
+      delete wid_console;         // window
     wid_console = NULL;
     want_close_flag = false;
   }
