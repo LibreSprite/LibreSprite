@@ -39,6 +39,16 @@ if(USE_ALLEG4_BACKEND)
 endif()
 
 ######################################################################
+# SDL2 backend
+
+if(USE_SDL2_BACKEND)
+  list(APPEND SHE_SOURCES
+    sdl2/sdl2_display.cpp
+    sdl2/sdl2_surface.cpp
+    sdl2/she.cpp)
+endif()
+
+######################################################################
 # Skia backend
 
 if(USE_SKIA_BACKEND)
@@ -243,6 +253,11 @@ if(USE_ALLEG4_BACKEND)
     ${LIBALLEGRO4_LINK_FLAGS}
     ${DXGUID_LIBRARIES}
     ${X11_LIBRARIES})
+endif()
+
+if(USE_SDL2_BACKEND)
+  target_link_libraries(she ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+  target_compile_options(she PUBLIC ${SDL2_CFLAGS_OTHER})
 endif()
 
 if(USE_SKIA_BACKEND)

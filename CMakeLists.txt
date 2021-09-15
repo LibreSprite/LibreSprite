@@ -42,9 +42,11 @@ option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 if(APPLE)
   # On OS X Allegro isn't supported anymore
   set(USE_ALLEG4_BACKEND off)
-  set(USE_SKIA_BACKEND on)
+  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 else()
-  option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" on)
+  option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" off)
+  option(USE_SDL2_BACKEND "Use SDL2 backend" on)
   option(USE_SKIA_BACKEND   "Use Skia backend" off)
 endif()
 
@@ -218,6 +220,17 @@ if(USE_ALLEG4_BACKEND)
 
     set(LIBALLEGRO4_LINK_FLAGS allegro)
   endif()
+endif()
+
+# SDL2 backend
+if(USE_SDL2_BACKEND)
+  add_definitions(-DUSE_SDL2_BACKEND)
+
+  find_package(PkgConfig)
+  pkg_search_module(SDL2 REQUIRED sdl2)
+  include_directories(${SDL2_INCLUDE_DIRS})
+  pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+  include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 endif()
 
 # Skia backend
