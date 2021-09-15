@@ -140,7 +140,7 @@ public:
   }
 };
 
-static Engine::Regular<DukEngine> registration("js");
+static Engine::Regular<DukEngine> registration("duk", {"js"});
 
 class DukScriptObject : public InternalScriptObject {
 public:
