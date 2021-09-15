@@ -1,5 +1,5 @@
 // SHE library
-// Copyright (C) 2012-2016  David Capello
+// Copyright (C) 2021 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -60,11 +60,6 @@ namespace she {
     extern SDL_Surface* screen;
   }
 
-  inline int to_sdl(SDL_PixelFormat* format, gfx::Color color)
-  {
-    return SDL_MapRGBA(format, gfx::getr(color), gfx::getg(color), gfx::getb(color), gfx::geta(color));
-  }
-
   inline gfx::Color from_sdl(SDL_PixelFormat *format, int color)
   {
     return gfx::rgba(
@@ -73,6 +68,11 @@ namespace she {
       (color & format->Bmask) >> format->Bshift << format->Bloss,
       (color & format->Amask) >> format->Ashift << format->Aloss
       );
+  }
+
+  inline int to_sdl(SDL_PixelFormat* format, gfx::Color color)
+  {
+    return SDL_MapRGBA(format, gfx::getr(color), gfx::getg(color), gfx::getb(color), gfx::geta(color));
   }
 
   SDL2Surface::SDL2Surface(SDL_Surface* bmp, DestroyFlag destroy)
@@ -88,7 +88,7 @@ namespace she {
     , m_lock(0)
   {
     if (!m_bmp) {
-      std::cout << "Failed to create surface" << std::endl;
+      throw std::runtime_error("Failed to create surface");
     }
   }
 
@@ -98,7 +98,7 @@ namespace she {
     , m_lock(0)
   {
     if (!m_bmp) {
-      std::cout << "Failed to create surface" << std::endl;
+      throw std::runtime_error("Failed to create surface");
     }
   }
 

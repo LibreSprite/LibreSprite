@@ -1,5 +1,5 @@
 // SHE library
-// Copyright (C) 2012-2016  David Capello
+// Copyright (C) 2021 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -35,8 +35,6 @@
 #include <vector>
 #include <iostream>
 #include <unordered_map>
-
-// void* get_osx_window();
 
 namespace she {
 
@@ -87,6 +85,7 @@ namespace she {
     unique_display = NULL;
     sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
     m_surface->dispose();
+    SDL_DestroyWindow(m_window);
   }
 
   void SDL2Display::dispose()
@@ -106,13 +105,11 @@ namespace she {
 
   void SDL2Display::setWidth(int newWidth)
   {
-    std::cout << "New width: " << std::to_string(newWidth) << std::endl;
     m_width = newWidth;
   }
 
   void SDL2Display::setHeight(int newHeight)
   {
-    std::cout << "New height: " << std::to_string(newHeight) << std::endl;
     m_height = newHeight;
   }
 
@@ -128,13 +125,11 @@ namespace she {
 
   void SDL2Display::setOriginalWidth(int width)
   {
-    std::cout << "New Original width: " << std::to_string(width) << std::endl;
     m_restoredWidth = width;
   }
 
   void SDL2Display::setOriginalHeight(int height)
   {
-    std::cout << "New Original height: " << std::to_string(height) << std::endl;
     m_restoredHeight = height;
   }
 
@@ -215,40 +210,6 @@ namespace she {
   bool SDL2Display::setNativeMouseCursor(NativeCursor cursor)
   {
     return false;
-
-    if (cursor == m_nativeCursor) {
-      return true;
-    }
-
-    if (m_cursor)
-      SDL_FreeCursor(m_cursor);
-    m_cursor = SDL_DISABLE;
-
-    switch (cursor) {
-    case kNoCursor: break;
-    case kArrowCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW); break;
-    case kIBeamCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM); break;
-    case kWaitCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT); break;
-    // case kHelpCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HELP); break;
-    case kForbiddenCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NO); break;
-    case kMoveCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND); break;
-    // case kLinkCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_LINK); break;
-    case kSizeNSCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS); break;
-    case kSizeWECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE); break;
-    // case kSizeNCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEN); break;
-    // case kSizeNECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENE); break;
-    // case kSizeECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEE); break;
-    // case kSizeSECursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZESE); break;
-    // case kSizeSCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZES); break;
-    // case kSizeSWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZESW); break;
-    // case kSizeWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEW); break;
-    // case kSizeNWCursor: m_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENW); break;
-    default: break;
-    }
-
-    SDL_SetCursor(m_cursor);
-    m_nativeCursor = cursor;
-    return m_cursor ? true : false;
   }
 
   void SDL2Display::setMousePosition(const gfx::Point& position)
@@ -271,59 +232,20 @@ namespace she {
 
   std::string SDL2Display::getLayout()
   {
-// #ifdef _WIN32
-//   WINDOWPLACEMENT wp;
-//   wp.length = sizeof(WINDOWPLACEMENT);
-//   if (GetWindowPlacement((HWND)nativeHandle(), &wp)) {
-//     std::ostringstream s;
-//     s << 1 << ' '
-//       << wp.flags << ' '
-//       << wp.showCmd << ' '
-//       << wp.ptMinPosition.x << ' '
-//       << wp.ptMinPosition.y << ' '
-//       << wp.ptMaxPosition.x << ' '
-//       << wp.ptMaxPosition.y << ' '
-//       << wp.rcNormalPosition.left << ' '
-//       << wp.rcNormalPosition.top << ' '
-//       << wp.rcNormalPosition.right << ' '
-//       << wp.rcNormalPosition.bottom;
-//     return s.str();
-//   }
-// #endif
-    return "";
+    int x, y;
+    SDL_GetWindowPosition(m_window, &x, &y);
+    return "2 " + std::to_string(x) + " " + std::to_string(y);
   }
 
   void SDL2Display::setLayout(const std::string& layout)
   {
-// #ifdef _WIN32
-
-//   WINDOWPLACEMENT wp;
-//   wp.length = sizeof(WINDOWPLACEMENT);
-
-//   std::istringstream s(layout);
-//   int ver;
-//   s >> ver;
-//   if (ver == 1) {
-//     s >> wp.flags
-//       >> wp.showCmd
-//       >> wp.ptMinPosition.x
-//       >> wp.ptMinPosition.y
-//       >> wp.ptMaxPosition.x
-//       >> wp.ptMaxPosition.y
-//       >> wp.rcNormalPosition.left
-//       >> wp.rcNormalPosition.top
-//       >> wp.rcNormalPosition.right
-//       >> wp.rcNormalPosition.bottom;
-//   }
-//   else
-//     return;
-
-//   if (SetWindowPlacement((HWND)nativeHandle(), &wp)) {
-//     // TODO use the return value
-//   }
-// #else
-//   // Do nothing
-// #endif
+    std::istringstream s(layout);
+    int ver, x, y;
+    s >> ver;
+    if (ver == 2) {
+      s >> x >> y;
+      SDL_SetWindowPosition(m_window, x, y);
+    }
   }
 
   void* SDL2Display::nativeHandle()

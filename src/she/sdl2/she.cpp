@@ -1,11 +1,12 @@
 // SHE library
-// Copyright (C) 2012-2016  David Capello
+// Copyright (C) 2021 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_messagebox.h>
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
@@ -87,16 +88,16 @@ static std::unordered_map<SDL_Keycode, Modifier> keyCodeMapping = {
     {SDLK_7, she::kKey7},
     {SDLK_8, she::kKey8},
     {SDLK_9, she::kKey9},
-    // {SDLK_0PAD, she::kKey0Pad},
-    // {SDLK_1PAD, she::kKey1Pad},
-    // {SDLK_2PAD, she::kKey2Pad},
-    // {SDLK_3PAD, she::kKey3Pad},
-    // {SDLK_4PAD, she::kKey4Pad},
-    // {SDLK_5PAD, she::kKey5Pad},
-    // {SDLK_6PAD, she::kKey6Pad},
-    // {SDLK_7PAD, she::kKey7Pad},
-    // {SDLK_8PAD, she::kKey8Pad},
-    // {SDLK_9PAD, she::kKey9Pad},
+    {SDLK_KP_0, she::kKey0Pad},
+    {SDLK_KP_1, she::kKey1Pad},
+    {SDLK_KP_2, she::kKey2Pad},
+    {SDLK_KP_3, she::kKey3Pad},
+    {SDLK_KP_4, she::kKey4Pad},
+    {SDLK_KP_5, she::kKey5Pad},
+    {SDLK_KP_6, she::kKey6Pad},
+    {SDLK_KP_7, she::kKey7Pad},
+    {SDLK_KP_8, she::kKey8Pad},
+    {SDLK_KP_9, she::kKey9Pad},
     {SDLK_F1, she::kKeyF1},
     {SDLK_F2, she::kKeyF2},
     {SDLK_F3, she::kKeyF3},
@@ -321,9 +322,6 @@ namespace sdl {
                         event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
                         if (sdlEvent.key.repeat) {
                             event.setRepeat(sdlEvent.key.repeat);
-                        } else {
-                            std::cout << "scancode: " << sdlEvent.key.keysym.sym;
-                            std::cout << "   mod: " << getSheModifiers() << std::endl;
                         }
                     } else {
                         std::cout << "Unknown scancode: " << sdlEvent.key.keysym.sym << std::endl;
@@ -342,7 +340,6 @@ namespace sdl {
                 }
 
                 // MouseDoubleClick,
-
                 // CloseDisplay,
                 // ResizeDisplay,
                 // MouseEnter,
@@ -478,14 +475,7 @@ namespace sdl {
     {
         if (g_instance && g_instance->logger())
             g_instance->logger()->logError(msg);
-
-#ifdef _WIN32
-        std::wstring wmsg = base::from_utf8(msg);
-        std::wstring title = base::from_utf8(PACKAGE);
-        ::MessageBoxW(NULL, wmsg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
-#else
-        printf("%s", msg);
-#endif
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, PACKAGE, msg, nullptr);
     }
 
     bool is_key_pressed(KeyScancode scancode)
