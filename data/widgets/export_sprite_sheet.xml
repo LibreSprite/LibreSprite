@@ -1,4 +1,4 @@
-<!-- LibreSprite -->
+<!-- LibreSprite | Copyright (C) 2021-2021  LibreSprite contributors -->
 <!-- Copyright (C) 2001-2015 by David Capello -->
 <gui>
   <window id="export_sprite_sheet" text="Export Sprite Sheet">
@@ -34,6 +34,8 @@
 
     <hbox id="best_fit_filler" />
     <check cell_hspan="3" id="best_fit" text="Best fit for texture" />
+    <hbox id="pertag_enabled_filler" />
+    <check id="pertag_enabled" text="Per Tag" cell_hspan="3" />
 
     <label text="Layers:" />
     <combobox id="layers" text="" cell_hspan="3" />

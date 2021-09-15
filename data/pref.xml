@@ -271,6 +271,7 @@
       <option id="shape_padding" type="int" default="0" />
       <option id="inner_padding" type="int" default="0" />
       <option id="open_generated" type="bool" default="false" />
+      <option id="pertag_enabled" type="bool" default="false"/>
       <option id="layer" type="std::string" />
       <option id="frame_tag" type="std::string" />
       <option id="list_layers" type="bool" default="true" />

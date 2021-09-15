@@ -1,5 +1,7 @@
 // Aseprite
 // Copyright (C) 2001-2015  David Capello
+// LibreSprite
+// Copyright (C) 2021-2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -56,6 +58,7 @@ namespace app {
     void setScale(double scale) { m_scale = scale; }
     void setScaleMode(ScaleMode mode) { m_scaleMode = mode; }
     void setIgnoreEmptyCels(bool ignore) { m_ignoreEmptyCels = ignore; }
+    void setPerTag(bool pertag) { m_perTag = pertag; }
     void setBorderPadding(int padding) { m_borderPadding = padding; }
     void setShapePadding(int padding) { m_shapePadding = padding; }
     void setInnerPadding(int padding) { m_innerPadding = padding; }
@@ -78,6 +81,7 @@ namespace app {
     class Samples;
     class LayoutSamples;
     class SimpleLayoutSamples;
+    class PerTagLayoutSamples;
     class BestFitLayoutSamples;
 
     void captureSamples(Samples& samples);
@@ -117,6 +121,7 @@ namespace app {
     double m_scale;
     ScaleMode m_scaleMode;
     bool m_ignoreEmptyCels;
+    bool m_perTag;
     int m_borderPadding;
     int m_shapePadding;
     int m_innerPadding;

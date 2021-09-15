@@ -1,5 +1,7 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// LibreSprite
+// Copyright (C) 2021-2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -126,6 +128,57 @@ namespace {
     else {
       columns = MID(1, columns, nframes);
       rows = ((nframes/columns) + ((nframes%columns) > 0 ? 1: 0));
+    }
+
+    return Fit(
+      2*borderPadding + (sprite->width()+2*innerPadding)*columns + (columns-1)*shapePadding,
+      2*borderPadding + (sprite->height()+2*innerPadding)*rows + (rows-1)*shapePadding,
+      columns, rows, 0);
+  }
+
+  Fit pertag_fit(Sprite* sprite, int nframes,
+                 int columns, int rows,
+                 SpriteSheetType type,
+                 frame_t bframe, frame_t eframe,
+                 bool selframe,
+                 int borderPadding, int shapePadding, int innerPadding) {
+    //rows and columns
+    int r = 0;
+    int c = 1;
+
+    //Gets the row and columns number
+    for (const FrameTag* tag : sprite->frameTags()) {
+      //It ignores the temporary tag for selected frame
+      if(selframe){
+        if(tag->fromFrame() == bframe && tag->toFrame() == eframe){
+          if(tag->name() == "Tag"){
+            selframe = false;
+            continue;
+          }
+        }
+      }
+
+      if(bframe <= tag->toFrame() &&
+         eframe >= tag->fromFrame())
+        r++;
+      c = MAX(c,(MIN(eframe, tag->toFrame()) - MAX(bframe, tag->fromFrame()) + 1));
+    }
+
+    //if all selected frames have no tag
+    if(!r){
+      r = 1;
+      c = nframes;
+    }
+
+    switch(type){
+      case app::SpriteSheetType::Rows:
+        rows = c;
+        columns = r;
+        break;
+      case app::SpriteSheetType::Columns:
+        rows = r;
+        columns = c;
+        break;
     }
 
     return Fit(
@@ -337,6 +390,10 @@ public:
       bestFit()->setSelected(true);
       onBestFit();
     }
+    else if (m_docPref.spriteSheet.pertagEnabled()) {
+      pertagEnabled()->setSelected(true);
+      onPerTagEnabled();
+    }
     else {
       columns()->setTextf("%d", m_docPref.spriteSheet.columns());
       rows()->setTextf("%d", m_docPref.spriteSheet.rows());
@@ -386,6 +443,7 @@ public:
     fitWidth()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onSizeChange, this));
     fitHeight()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onSizeChange, this));
     bestFit()->Click.connect(base::Bind<void>(&ExportSpriteSheetWindow::onBestFit, this));
+    pertagEnabled()->Click.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPerTagEnabled, this));
     borderPadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
     shapePadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
     innerPadding()->Change.connect(base::Bind<void>(&ExportSpriteSheetWindow::onPaddingChange, this));
@@ -399,6 +457,7 @@ public:
 
     onSheetTypeChange();
     onFileNamesChange();
+    updateSizeFields();
     updateExportButton();
   }
 
@@ -484,6 +543,16 @@ public:
       return 0;
   }
 
+  bool pertagEnabledValue() const {
+    switch(spriteSheetTypeValue()){
+      case app::SpriteSheetType::Horizontal:
+      case app::SpriteSheetType::Vertical:
+        return false;
+        break;
+    }
+    return pertagEnabled()->isSelected();
+  }
+
   bool openGeneratedValue() const {
     return openGenerated()->isSelected();
   }
@@ -551,8 +620,11 @@ private:
     fitHeight()->setVisible(matrixState);
     bestFitFiller()->setVisible(matrixState);
     bestFit()->setVisible(matrixState);
+    pertagEnabledFiller()->setVisible(matrixState);
+    pertagEnabled()->setVisible(matrixState);
 
     resize();
+    updateSizeFields();
   }
 
   void onFileNamesChange() {
@@ -563,11 +635,13 @@ private:
 
   void onColumnsChange() {
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
     updateSizeFields();
   }
 
   void onRowsChange() {
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
     updateSizeFields();
   }
 
@@ -575,9 +649,16 @@ private:
     columns()->setTextf("%d", fitWidthValue() / m_sprite->width());
     rows()->setTextf("%d", fitHeightValue() / m_sprite->height());
     bestFit()->setSelected(false);
+    pertagEnabled()->setSelected(false);
   }
 
   void onBestFit() {
+    pertagEnabled()->setSelected(false);
+    updateSizeFields();
+  }
+
+  void onPerTagEnabled() {
+    bestFit()->setSelected(false);
     updateSizeFields();
   }
 
@@ -656,20 +737,32 @@ private:
 
   void updateSizeFields() {
     int nframes = m_sprite->totalFrames();
+    frame_t bframe = 0;
     std::string tagName = frameTagValue();
     if (tagName == kSelectedFrames) {
+      bframe = SelectedFrameTag::From();
       nframes = SelectedFrameTag::To() - SelectedFrameTag::From() + 1;
     }
     else {
       FrameTag* frameTag = m_sprite->frameTags().getByName(tagName);
-      if (frameTag)
+      if (frameTag){
+        bframe = frameTag->fromFrame();
         nframes = frameTag->toFrame() - frameTag->fromFrame() + 1;
+      }
     }
 
     Fit fit;
     if (bestFit()->isSelected()) {
       fit = best_fit(m_sprite, nframes,
                      borderPaddingValue(), shapePaddingValue(), innerPaddingValue());
+    }else if(pertagEnabledValue()){
+      fit = pertag_fit(
+            m_sprite, nframes,
+            columnsValue(), rowsValue(),
+            spriteSheetTypeValue(),
+            bframe, bframe + nframes - 1,
+            false,
+            borderPaddingValue(), shapePaddingValue(), innerPaddingValue());
     }
     else {
       fit = calculate_sheet_size(
@@ -764,6 +857,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     docPref.spriteSheet.width(window.fitWidthValue());
     docPref.spriteSheet.height(window.fitHeightValue());
     docPref.spriteSheet.bestFit(window.bestFitValue());
+    docPref.spriteSheet.pertagEnabled(window.pertagEnabledValue());
     docPref.spriteSheet.textureFilename(window.filenameValue());
     docPref.spriteSheet.dataFilename(window.dataFilenameValue());
     docPref.spriteSheet.dataFormat(window.dataFormatValue());
@@ -794,6 +888,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   int width = docPref.spriteSheet.width();
   int height = docPref.spriteSheet.height();
   bool bestFit = docPref.spriteSheet.bestFit();
+  bool pertagEnabled = docPref.spriteSheet.pertagEnabled();
   std::string filename = docPref.spriteSheet.textureFilename();
   std::string dataFilename = docPref.spriteSheet.dataFilename();
   DocumentExporter::DataFormat dataFormat = docPref.spriteSheet.dataFormat();
@@ -858,6 +953,18 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     height = fit.height;
   }
 
+  if (pertagEnabled){
+    Fit fit = pertag_fit(sprite, nframes, 0, 0, type,
+                         (frameTag ? frameTag->fromFrame() : 0),
+                         (frameTag ? frameTag->toFrame() : sprite->lastFrame()),
+                         isTemporalTag,
+                         borderPadding, shapePadding, innerPadding);
+    columns = fit.columns;
+    rows = fit.rows;
+    width = fit.width;
+    height = fit.height;
+  }
+
   int sheet_w = 0;
   int sheet_h = 0;
 
@@ -894,6 +1001,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   exporter.setTextureWidth(sheet_w);
   exporter.setTextureHeight(sheet_h);
   exporter.setSpriteSheetType(type);
+  exporter.setPerTag(pertagEnabled);
   exporter.setBorderPadding(borderPadding);
   exporter.setShapePadding(shapePadding);
   exporter.setInnerPadding(innerPadding);
@@ -901,7 +1009,37 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     exporter.setListLayers(true);
   if (listFrameTags)
     exporter.setListFrameTags(true);
-  exporter.addDocument(document, layer, frameTag, isTemporalTag);
+  if(pertagEnabled){
+    //first one is a dummy for the function so it knows the selected frames
+    exporter.addDocument(document, layer, frameTag, isTemporalTag);
+    bool tempTag = isTemporalTag;
+    bool empty = true;
+    int bframe = (frameTag ? frameTag->fromFrame() : 0);
+    int eframe = (frameTag ? frameTag->toFrame() : sprite->lastFrame());
+    for (const FrameTag* tag : sprite->frameTags()) {
+      //It ignores the temporary tag for selected frame
+      if(tempTag){
+        if(tag->fromFrame() == bframe && tag->toFrame() == eframe){
+          if(tag->name() == "Tag"){
+            tempTag = false;
+            continue;
+          }
+        }
+      }
+
+      //Adds all included layers
+      if(bframe <= tag->toFrame() &&
+         eframe >= tag->fromFrame()){
+        exporter.addDocument(document, layer, const_cast<FrameTag*>(tag), false);
+        empty = false;
+      }
+    }
+    if(empty){
+      exporter.addDocument(document, layer, frameTag, isTemporalTag);
+    }
+  }else{
+    exporter.addDocument(document, layer, frameTag, isTemporalTag);
+  }
 
   base::UniquePtr<Document> newDocument(exporter.exportSheet());
   if (!newDocument)
