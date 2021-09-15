@@ -46,10 +46,6 @@ if(USE_SDL2_BACKEND)
     sdl2/sdl2_display.cpp
     sdl2/sdl2_surface.cpp
     sdl2/she.cpp)
-
-  if(APPLE)
-    list(APPEND SHE_SOURCES sdl2/app.mm)
-  endif()
 endif()
 
 ######################################################################
