@@ -465,7 +465,7 @@ target_link_libraries(app-lib
   she
   ui-lib
   undo
-  -Wl,--no-whole-archive
+  ${KEEP_INJECTIONS_END}
   ${TINYXML_LIBRARY}
   ${JPEG_LIBRARIES}
   ${GIF_LIBRARIES}
