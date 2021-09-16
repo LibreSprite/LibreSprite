@@ -26,10 +26,8 @@ jobs:
     # build project
     - name: mkdir
       run: mkdir build
-    - name: cd
-      run: cd build
     - name: cmake
-      run: cmake -G Ninja ..
+      run: cd build && cmake -G Ninja ..
     - name: ninja
       run: ninja librespite
     
