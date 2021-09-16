@@ -9,6 +9,7 @@
 #include "app/console.h"
 #include "script/engine.h"
 #include <iostream>
+#include <sstream>
 
 class ConsoleScriptObject : public script::ScriptObject {
 public:
@@ -20,10 +21,20 @@ public:
 
   void _assert(bool condition, const std::string& msg){
     if (!condition)
-      log(msg);
+      log();
   }
 
-  void log(const std::string& str) {
+  void log() {
+    std::stringstream stream;
+    bool first = true;
+    for (auto& arg : script::Function::varArgs()) {
+      if (!first) {
+        stream << " ";
+      }
+      first = false;
+      stream << arg.str();
+    }
+    auto str = stream.str();
     std::cout << str << std::endl;
     if (app::App::instance()->isGui()) {
       app::Console().printf("%s\n", str.c_str());

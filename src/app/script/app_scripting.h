@@ -17,13 +17,16 @@ namespace script {
 namespace app {
 
   class AppScripting {
-  public:
-    void eval(const std::string& code);
-    void evalFile(const std::string& fileName);
-    void printLastResult();
+    void initEngine();
+    static std::string m_fileName;
 
-  private:
-    inject<script::Engine> m_engine;
+  public:
+    static const std::string& getFileName() {return m_fileName;}
+    static bool evalFile(const std::string& fileName);
+    static void raiseEvent(const std::string& fileName, const std::string& event);
+
+    bool eval(const std::string& code);
+    void printLastResult();
   };
 
 } // namespace app

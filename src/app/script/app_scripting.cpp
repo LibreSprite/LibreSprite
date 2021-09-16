@@ -13,48 +13,71 @@
 #include "app/document.h"
 #include "app/script/app_scripting.h"
 #include "base/file_handle.h"
+#include "base/path.h"
+#include "base/string.h"
 #include "script/engine.h"
 #include "script/engine_delegate.h"
+#include <fstream>
+
+namespace {
+
+inject<script::Engine> engine{nullptr};
+std::string previousFileName;
+
+}
 
 namespace app {
+  std::string AppScripting::m_fileName;
 
-  void AppScripting::eval(const std::string& code) {
-    if (m_engine) {
-      m_engine->eval(code);
-    } else {
-      inject<script::EngineDelegate>{}->onConsolePrint("No compatible scripting engine.");
-    }
+  void AppScripting::initEngine() {
+    // if there is no engine OR
+    // the engine we have doesn't match the default in the registry,
+    // inject a new one
+    if (!engine || !script::Engine::getRegistry()[""].match(engine.get()))
+        engine = inject<script::Engine>();
   }
 
-  void AppScripting::evalFile(const std::string& fileName) {
-    base::FileHandle fhandle(base::open_file(fileName, "rb"));
-    if (!fhandle)
-      return;
+  void AppScripting::raiseEvent(const std::string& fileName, const std::string &event) {
+    if (fileName == previousFileName || evalFile(fileName))
+      engine->raiseEvent(event);
+  }
 
-    FILE* f = fhandle.get();
-    if (!f)
-      return;
+  bool AppScripting::eval(const std::string& code) {
+    initEngine();
+    if (engine) {
+      return engine->eval(code);
+    }
+    inject<script::EngineDelegate>{}->onConsolePrint("No compatible scripting engine.");
+    return false;
+  }
 
-    if (fseek(f, 0, SEEK_END) < 0)
-      return;
+  bool AppScripting::evalFile(const std::string& fileName) {
+    m_fileName = fileName;
+    std::cout << "Reading file " << fileName << std::endl;
+    std::ifstream ifs(fileName);
+    if (!ifs) {
+      std::cout << "Could not open " << fileName << std::endl;
+      return false;
+    }
 
-    int sz = ftell(f);
-    if (sz < 0)
-      return;
+    auto extension = base::string_to_lower(base::get_file_extension(fileName));
+    script::Engine::setDefault(extension, {extension});
 
-    if (fseek(f, 0, SEEK_SET) < 0)
-      return;
+    engine = nullptr;
 
-    std::string code;
-    code.resize(sz + 1, 0);
-    if (fread(&code[0], 1, sz, f) != static_cast<size_t>(sz))
-      return;
-    eval(code);
+    AppScripting instance;
+    if (!instance.eval({std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()}))
+      return false;
+
+    engine->raiseEvent("init");
+
+    previousFileName = fileName;
+    return true;
   }
 
   void AppScripting::printLastResult() {
-    if(m_engine)
-      m_engine->printLastResult();
+    if(engine)
+      engine->printLastResult();
   }
 
 }

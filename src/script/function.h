@@ -93,10 +93,19 @@ namespace script {
     std::function<void(Value&, std::vector<Value>&)> call;
     std::size_t argCount;
 
+    static inline std::vector<Value>** getVarArgsPtr() {
+      static std::vector<Value>* ptr = nullptr;
+      return &ptr;
+    }
+
   public:
     std::vector<Value> defaults;
     std::vector<Value> arguments;
     Value result;
+
+    static std::vector<Value>& varArgs() {
+      return **getVarArgsPtr();
+    }
 
     Function() : call([](Value& ret, std::vector<Value>&){}), argCount(0) {}
 
@@ -116,6 +125,7 @@ namespace script {
     template<typename NativeFunction>
     Function(NativeFunction&& func) : argCount(function_traits<NativeFunction>::arity) {
       call = [func](Value& result, std::vector<Value>& arguments) {
+        *getVarArgsPtr() = &arguments;
         result = function_traits<NativeFunction>::call(func, arguments.data());
       };
     }

@@ -151,6 +151,7 @@ to delete AccountManager. Perfectly balanced...
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <typeinfo>
 #include <unordered_map>
 #include <unordered_set>
@@ -159,7 +160,7 @@ to delete AccountManager. Perfectly balanced...
 #include <iostream>
 #include <vector>
 
-#ifdef __GNUG__
+#if defined(__GNUG__) && defined(_DEBUG)
 #include <cxxabi.h>
 #define HAS_DEMANGLE
 #endif
@@ -168,6 +169,8 @@ template<typename BaseClass_>
 class inject {
 public:
   using BaseClass = BaseClass_;
+
+  inject(std::nullptr_t){}
 
   inject(const std::string& name = "");
 
@@ -180,13 +183,18 @@ public:
 
   ~inject() {onDetach(m_ptr);}
 
+  void operator = (inject&& other) {
+    std::swap(m_ptr, other.m_ptr);
+    std::swap(onDetach, other.onDetach);
+  }
+
   BaseClass* operator -> () {return m_ptr;}
   BaseClass& operator * () {return *m_ptr;}
   operator bool () {return m_ptr;}
   operator BaseClass* () {return m_ptr;}
 
   template<typename Derived = BaseClass>
-  Derived* get() {return dynamic_cast<Derived*>(m_ptr);}
+  Derived* get() const {return dynamic_cast<Derived*>(m_ptr);}
 
 private:
   BaseClass *m_ptr = nullptr;
@@ -199,10 +207,11 @@ public:
   using BaseClass = BaseClass_;
   using AttachFunction = std::function<BaseClass*()>;
   using DetachFunction = std::function<void(BaseClass*)>;
-
+  using TypeMatch = std::function<bool(BaseClass*)>;
   struct RegistryEntry {
     AttachFunction attach;
     DetachFunction detach;
+    TypeMatch match;
     void* data;
     std::unordered_set<std::string> flags;
     bool hasFlag(const std::string& flag) {
@@ -213,21 +222,23 @@ public:
   using Registry = std::unordered_map<std::string, RegistryEntry>;
 
   virtual std::string getName() const {
+#ifdef HAS_DEMANGLE
     int status;
     std::string result = typeid(*this).name();
-#ifdef HAS_DEMANGLE
     auto name = abi::__cxa_demangle(result.c_str(), 0, 0, &status);
     if (status == 0) result = name;
     free(name);
-#endif
     return result;
+#else
+    return std::to_string(reinterpret_cast<uintptr_t>(this));
+#endif
   }
 
   virtual ~Injectable() = default;
 
   static Registry& getRegistry() {
-    static Registry registry;
-    return registry;
+    static Registry* registry = new Registry();
+    return *registry;
   }
 
   static std::vector<inject<BaseClass>> getAllWithFlag(const std::string& flag) {
@@ -248,39 +259,48 @@ public:
     return all;
   }
 
-  static bool setDefault(const std::string& name, bool canFallback = true) {
+  static bool setDefault(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
     auto& registry = getRegistry();
     auto it = registry.find(name);
     if (it == registry.end()) {
-      std::cout << "Invalid default: " << name << std::endl;
-      if (registry.size() && canFallback) {
-        it = registry.begin();
-        std::cout << "Falling back to: " << it->first << std::endl;
-      } else {
-        std::cout << "Nothing to fall back to." << std::endl;
-        return false;
+      for (auto& entry : registry) {
+        bool match = true;
+        for (auto& flag : flags) {
+          if (!entry.second.hasFlag(flag)) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          registry[""] = entry.second;
+          return true;
+        }
       }
+
+      std::cout << "Invalid default: " << name << std::endl;
+      return false;
     }
+
     registry[""] = it->second;
     return true;
+  }
+
+  template<typename DerivedClass>
+  static bool matchType(BaseClass* base) {
+    return !!dynamic_cast<DerivedClass*>(base);
   }
 
   template<typename DerivedClass>
   class Regular {
   public:
     Regular(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
-      // std::cout << "Registered regular class " << name << std::endl;
+      #if _DEBUG
+      std::cout << "Registered [" << name << "]" << std::endl;
+      #endif
       Injectable<BaseClass>::getRegistry()[name] = {
-        []{
-          auto ret = new DerivedClass();
-          std::cout << "Constructed " << ret->getName() << std::endl;
-          return ret;
-        },
-        [](BaseClass* instance){
-          auto name = instance->getName();
-          delete instance;
-          std::cout << "Destroyed " << name << std::endl;
-        },
+        []()->BaseClass*{return new DerivedClass();},
+        [](BaseClass* instance){delete instance;},
+        matchType<DerivedClass>,
         nullptr,
         flags
       };
@@ -297,6 +317,7 @@ public:
           return &instance;
         },
         [](BaseClass* ptr){},
+        matchType<DerivedClass>,
         nullptr,
         flags
       };
@@ -315,11 +336,13 @@ public:
       }
     }
 
-    Provides(BaseClass* instance, const std::string& name = "", const std::unordered_set<std::string>& flags = {}) {
+    template<typename DerivedClass>
+    Provides(DerivedClass* instance, const std::string& name = "", const std::unordered_set<std::string>& flags = {}) {
       m_name = name;
       Injectable<BaseClass>::getRegistry()[name] = {
         [=] {return instance;},
         [](BaseClass* ptr) {},
+        matchType<DerivedClass>,
         this,
         flags
       };
