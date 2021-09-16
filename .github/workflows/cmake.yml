@@ -29,8 +29,6 @@ jobs:
     - name: mkdir
       run: mkdir build
     - name: cmake
-      run: cd build && cmake -G Ninja ..
-    - name: ninja
-      run: ninja librespite
+      run: cd build && cmake -G Ninja .. && ninja librespite
     
       
