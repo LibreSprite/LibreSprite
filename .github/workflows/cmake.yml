@@ -31,6 +31,6 @@ jobs:
     - name: cmake
       run: cmake -G Ninja ..
     - name: ninja
-    - run: ninja librespite
+      run: ninja librespite
     
       
