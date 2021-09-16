@@ -1,6 +1,5 @@
-# LibreSprite
-# Copyright (C) 2001-2016  David Capello
-# Copyright (C) 2016-2018  LibreSprite contributors
+# Aseprite     | Copyright (C) 2001-2016  David Capello
+# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 cmake_minimum_required(VERSION 3.4)
 
@@ -128,7 +127,7 @@ if(NOT WIN32 AND NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu89")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 if(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
