@@ -297,6 +297,15 @@ namespace sdl {
                         });
                     event.setButton(mouseButtonMapping[sdlEvent.button.button]);
                     event.setModifiers(getSheModifiers());
+
+                    if (sdlEvent.button.clicks > 1) {
+                        Event ev;
+                        ev.setType(Event::MouseDoubleClick);
+                        ev.setPosition(event.position());
+                        ev.setButton(event.button());
+                        queue_event(ev);
+                    }
+
                     return;
                 }
 
@@ -363,7 +372,9 @@ namespace sdl {
                     continue;
                 }
             }
-            event.setType(Event::None);
+
+            if (!m_events.try_pop(event))
+                event.setType(Event::None);
         }
 
         void queueEvent(const Event& event) override {

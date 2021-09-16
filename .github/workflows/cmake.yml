@@ -1,0 +1,34 @@
+name: CMake
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    # install dependencies
+    - name: boost
+      run: sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libcurl4-gnutls-dev libsdl2-dev libsdl2-image-dev
+    # build project
+    - name: git
+      run: git submodule update --init --recursive
+    - name: mkdir
+      run: mkdir build
+    - name: cmake
+      run: cd build && cmake -G Ninja .. && ninja libresprite
+    
+      

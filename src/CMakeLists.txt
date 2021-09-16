@@ -36,6 +36,22 @@ if(USE_ALLEG4_BACKEND AND NOT USE_SHARED_ALLEGRO4)
   add_subdirectory(allegro)
 endif()
 
+if(UNIX AND NOT APPLE)
+  set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
+  set(KEEP_INJECTIONS_END "-Wl,--no-whole-archive")
+endif()
+
+if(APPLE)
+  set(KEEP_INJECTIONS_BEGIN "-all_load")
+  set(KEEP_INJECTIONS_END "")
+endif()
+
+if(MSVC)
+  # To-Do: Find out the appropriate flags for MSVC
+  set(KEEP_INJECTIONS_BEGIN "")
+  set(KEEP_INJECTIONS_END "")
+endif()
+
 ######################################################################
 # Add C++11 support only for our code (avoid Allegro)
 
@@ -119,7 +135,7 @@ add_executable(libresprite WIN32
   main/main.cpp
   ${win32_resources}
   ${x11_resources})
-target_link_libraries(libresprite -Wl,--whole-archive app-lib ${PLATFORM_LIBS})
+target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN} app-lib ${PLATFORM_LIBS})
 add_dependencies(libresprite copy_data)
 
 if(MSVC AND USE_SKIA_BACKEND)

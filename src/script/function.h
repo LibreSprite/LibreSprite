@@ -45,20 +45,20 @@ namespace script {
 
       template <typename Func, bool, typename Tuple, unsigned int ...I>
       struct helper {
-        static Value call(const Func& func, Value* args){
+        static Value call(Func&& func, Value* args){
           return helper<Func, sizeof...(I) + 1 == std::tuple_size<Tuple>::value, Tuple, I..., sizeof...(I)>::call(func, args);
         }
       };
 
       template <typename Func, unsigned int ...I>
       struct helper<Func, true, std::tuple<Args...>, I...> {
-        static Value call(const Func& func, Value* args) {
+        static Value call(Func&& func, Value* args) {
           return func(static_cast<Args>(args[I])...);
         }
       };
 
       template <typename Func>
-      static Value call(const Func& func, Value * args) {
+      static Value call(Func&& func, Value * args) {
         return helper<Func, sizeof...(Args) == 0, std::tuple<Args...>>::call(func, args);
       }
     };
@@ -72,20 +72,20 @@ namespace script {
 
       template <typename Func, bool, typename Tuple, unsigned int ...I>
       struct helper {
-        static Value call(const Func& func, Value* args){
+        static Value call(Func&& func, Value* args){
           return helper<Func, sizeof...(I) + 1 == std::tuple_size<Tuple>::value, Tuple, I..., sizeof...(I)>::call(func, args);
         }
       };
 
       template <typename Func, unsigned int ...I>
       struct helper<Func, true, std::tuple<Args...>, I...> {
-        static Value call(const Func& func, Value* args) {
+        static Value call(Func&& func, Value* args) {
           return func(static_cast<Args>(args[I])...);
         }
       };
 
       template <typename Func>
-      static Value call(const Func& func, Value * args) {
+      static Value call(Func&& func, Value * args) {
         return helper<Func, sizeof...(Args) == 0, std::tuple<Args...>>::call(func, args);
       }
     };
@@ -93,10 +93,19 @@ namespace script {
     std::function<void(Value&, std::vector<Value>&)> call;
     std::size_t argCount;
 
+    static inline std::vector<Value>** getVarArgsPtr() {
+      static std::vector<Value>* ptr = nullptr;
+      return &ptr;
+    }
+
   public:
     std::vector<Value> defaults;
     std::vector<Value> arguments;
     Value result;
+
+    static std::vector<Value>& varArgs() {
+      return **getVarArgsPtr();
+    }
 
     Function() : call([](Value& ret, std::vector<Value>&){}), argCount(0) {}
 
@@ -116,6 +125,7 @@ namespace script {
     template<typename NativeFunction>
     Function(NativeFunction&& func) : argCount(function_traits<NativeFunction>::arity) {
       call = [func](Value& result, std::vector<Value>& arguments) {
+        *getVarArgsPtr() = &arguments;
         result = function_traits<NativeFunction>::call(func, arguments.data());
       };
     }
