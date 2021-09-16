@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v2
     # install dependencies
     - name: boost
-      run: sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libcurl
+      run: sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev curl
     # build project
     - name: mkdir
       run: mkdir build
