@@ -24,6 +24,8 @@ jobs:
     - name: boost
       run: sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libcurl4-gnutls-dev libsdl2-dev libsdl2-image-dev
     # build project
+    - name: git
+      run: git submodule update --init --recursive
     - name: mkdir
       run: mkdir build
     - name: cmake
