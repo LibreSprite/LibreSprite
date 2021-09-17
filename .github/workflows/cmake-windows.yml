@@ -1,0 +1,32 @@
+name: CMake
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+   
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: get-dpendencies
+      run: vcpkg install curl freetype giflib gtest libjpeg-turbo libpng libwebp pixman sdl2 sdl2-image tinyxml zlib --triplet x64-windows
+
+    - name: git
+      run: git submodule update --init --recursive
+      
+    - name: create-diretory
+      run: mkdir build
+      
+    - name: cmake
+      run: cmake ^-DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^-DUSE_SDL2_BACKEND=ON ^-G Ninja ^ .. && ninja libresprite
+      
