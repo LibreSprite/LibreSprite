@@ -28,5 +28,5 @@ jobs:
       run: mkdir build
       
     - name: cmake
-      run: cmake ^-DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^-DUSE_SDL2_BACKEND=ON ^-G Ninja ^ .. && ninja libresprite
+      run: cd build && cmake ^-DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^-DUSE_SDL2_BACKEND=ON ^-G Ninja ^ .. && ninja libresprite
       
