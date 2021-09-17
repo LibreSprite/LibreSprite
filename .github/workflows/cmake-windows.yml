@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: get-dpendencies
-      run: vcpkg install curl freetype giflib gtest libjpeg-turbo libpng libwebp pixman sdl2 sdl2-image tinyxml zlib --triplet x64-windows
+      run: vcpkg install curl duktape freetype giflib gtest libjpeg-turbo libpng libwebp pixman sdl2 sdl2-image simpleini tinyxml zlib --triplet x64-windows
 
     - name: git
       run: git submodule update --init --recursive
