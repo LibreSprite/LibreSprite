@@ -298,11 +298,14 @@ namespace sdl {
                     event.setButton(mouseButtonMapping[sdlEvent.button.button]);
                     event.setModifiers(getSheModifiers());
 
-                    if (sdlEvent.button.clicks > 1) {
+                    if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
                         Event ev;
                         ev.setType(Event::MouseDoubleClick);
                         ev.setPosition(event.position());
                         ev.setButton(event.button());
+                        queue_event(ev);
+
+                        ev.setType(Event::MouseUp);
                         queue_event(ev);
                     }
 
