@@ -55,7 +55,6 @@ namespace script {
   class InternalScriptObject : public Injectable<InternalScriptObject> {
   public:
     virtual void makeGlobal(const std::string& name) = 0;
-    virtual void makeLocal() = 0;
 
     virtual ObjectProperty& addProperty(const std::string& name, const Function& get, const Function& set) {
       auto& prop = properties[name];

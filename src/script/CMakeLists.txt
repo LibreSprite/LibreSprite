@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 add_library(duktape ${DUKTAPE_DIR}/duktape.c)
 add_library(script-lib
   duktape/engine.cpp
+  lua/engine.cpp
   cout_delegate.cpp)
 
 if(UNIX)

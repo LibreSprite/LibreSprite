@@ -474,4 +474,5 @@ target_link_libraries(app-lib
   ${PNG_LIBRARIES}
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
+  ${LUA_LIBRARIES}
   ${FREETYPE_LIBRARIES})
