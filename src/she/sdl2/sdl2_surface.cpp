@@ -22,6 +22,9 @@
 
 namespace {
 
+  she::DrawMode drawMode = she::DrawMode::Solid;
+  int checkedModeOffset = 0;
+
   void checked_mode(int offset)
   {
     // static BITMAP* pattern = NULL;
@@ -178,11 +181,9 @@ namespace she {
 
   void SDL2Surface::setDrawMode(DrawMode mode, int param)
   {
-    switch (mode) {
-    case DrawMode::Solid: std::cout << "Solid" << std::endl; break;// checked_mode(-1); break;
-    case DrawMode::Xor: std::cout << "Xor" << std::endl; break;// xor_mode(TRUE); break;
-    case DrawMode::Checked: std::cout << "Checked" << std::endl; break;// checked_mode(param); break;
-    }
+    drawMode = mode;
+    if (mode == she::DrawMode::Checked)
+      checkedModeOffset = param;
   }
 
   void SDL2Surface::applyScale(int scale)
@@ -282,15 +283,47 @@ namespace she {
 
     int sdlColor = to_sdl(m_bmp->format, color);
     auto data = getData(x, y);
-    if (m_bmp->format->BytesPerPixel == 4) {
-      for(; w--; data += 4)
-        *reinterpret_cast<uint32_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 2) {
-      for(; w--; data += 2)
-        *reinterpret_cast<uint16_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 1) {
-      for(; w--; data += 1)
-        *reinterpret_cast<uint8_t*>(data) = sdlColor;
+    switch (drawMode) {
+    case she::DrawMode::Solid:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; w--; data += 4)
+          *reinterpret_cast<uint32_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; w--; data += 2)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; w--; data += 1)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
+
+    case she::DrawMode::Checked: {
+      int offset = checkedModeOffset + x + y * 4;
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; w--; data += 4)
+          *reinterpret_cast<uint32_t*>(data) = ((++offset) & 7) < 4 ? 0xFFFFFFFF : 0xFF000000;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; w--; data += 2)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; w--; data += 1)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
+    }
+
+    case she::DrawMode::Xor:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; w--; data += 4)
+          *reinterpret_cast<uint32_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; w--; data += 2)
+          *reinterpret_cast<uint16_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; w--; data += 1)
+          *reinterpret_cast<uint8_t*>(data) ^= sdlColor;
+      }
+      break;
     }
   }
 
@@ -312,15 +345,47 @@ namespace she {
     int sdlColor = to_sdl(m_bmp->format, color);
     auto data = getData(x, y);
     auto stride = m_bmp->pitch;
-    if (m_bmp->format->BytesPerPixel == 4) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint32_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 2) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint16_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 1) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint8_t*>(data) = sdlColor;
+    switch (drawMode) {
+    case she::DrawMode::Solid:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint32_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
+
+    case she::DrawMode::Checked: {
+      int offset = checkedModeOffset + x + y;
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint32_t*>(data) = ((++offset) & 7) < 4 ? 0xFFFFFFFF : 0xFF000000;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
+    }
+
+    case she::DrawMode::Xor:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint32_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint16_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint8_t*>(data) ^= sdlColor;
+      }
+      break;
     }
   }
 
