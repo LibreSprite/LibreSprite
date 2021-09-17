@@ -161,10 +161,19 @@ public:
       return duk_get_boolean(ctx, id);
     } else if (type == DUK_TYPE_NULL) {
       return {};
-    } else {
-      printf("Type: %d\n", type);
-      return {};
+    } else if (type == DUK_TYPE_OBJECT) {
+      duk_size_t size = 0;
+      void* buffer = duk_get_buffer_data(ctx, id, &size);
+      if (buffer)
+        return {buffer, size, false};
+    } else if (type == DUK_TYPE_BUFFER) {
+      duk_size_t size = 0;
+      void* buffer = duk_get_buffer_data(ctx, id, &size);
+      if (buffer)
+        return {buffer, size, false};
     }
+    printf("Type: %d\n", type);
+    return {};
   }
 
   static duk_ret_t callFunc(duk_context* ctx) {
@@ -203,6 +212,14 @@ public:
         duk_push_null(ctx);
       }
       break;
+
+    case Value::Type::BUFFER: {
+      auto& buffer = value.buffer();
+      void* out = duk_push_buffer(ctx, buffer.size(), 0);
+      memcpy(out, &buffer[0], buffer.size());
+      break;
+    }
+
     }
 
     return 1;
