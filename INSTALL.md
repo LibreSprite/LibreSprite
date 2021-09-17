@@ -74,7 +74,7 @@ The `libxcursor-dev` package is needed to
 
 To install the required dependencies with vcpkg, run:
 
-    vcpkg install curl duktape freetype giflib gtest libjpeg-turbo libpng libwebp pixman sdl2 sdl2-image simpleini tinyxml zlib --triplet x64-windows
+    vcpkg install curl freetype giflib gtest libjpeg-turbo libpng libwebp pixman sdl2 sdl2-image tinyxml zlib --triplet x64-windows
     
 Beware: `--triplet x64-windows` is only necessary for a 64 architecture
 build.
