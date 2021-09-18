@@ -343,10 +343,9 @@ namespace sdl {
                 }
 
                 case SDL_DROPFILE: {
-                    event.setType(Event::DropFiles);
                     std::string file(sdlEvent.drop.file);
-                    std::vector<std::string> files;
-                    files.push_back(file);
+                    event.setType(Event::DropFiles);
+                    event.setFiles({file});
                     SDL_free(sdlEvent.drop.file);
                     return;
                 }
