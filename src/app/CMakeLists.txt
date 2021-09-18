@@ -1,5 +1,5 @@
-# Aseprite
-# Copyright (C) 2001-2016  David Capello
+# Aseprite     | Copyright (C) 2001-2016  David Capello
+# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 # Generate a ui::Widget for each widget in a XML file
 file(GLOB widget_files ${CMAKE_SOURCE_DIR}/data/widgets/*.xml)
@@ -62,6 +62,8 @@ endif()
 
 ######################################################################
 # app-lib target
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 set(data_recovery_files
   crash/backup_observer.cpp
