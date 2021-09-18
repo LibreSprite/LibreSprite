@@ -6,18 +6,18 @@
 // published by the Free Software Foundation.
 
 #include "script_menu.h"
-#include <app/app.h>
-#include <app/app_menus.h>
-#include <app/commands/command.h>
-#include <app/commands/commands.h>
-#include <app/commands/params.h>
-#include <app/file_system.h>
-#include <app/ui/app_menuitem.h>
-#include <app/resource_finder.h>
-#include <base/bind.h>
-#include <base/path.h>
-#include <base/fs.h>
-#include <base/string.h>
+#include "app/app.h"
+#include "app/app_menus.h"
+#include "app/commands/command.h"
+#include "app/commands/commands.h"
+#include "app/commands/params.h"
+#include "app/file_system.h"
+#include "app/ui/app_menuitem.h"
+#include "app/resource_finder.h"
+#include "base/bind.h"
+#include "base/path.h"
+#include "base/fs.h"
+#include "base/string.h"
 #include "script/script_object.h"
 #include "script/engine.h"
 
@@ -42,9 +42,8 @@ using namespace ui;
             break;
           }
         }
-        if (!supported) {
+        if (!supported)
           continue;
-        }
       }
       auto cmd = isFolder ? nullptr : cmd_run_script;
       params.set("filename", fullPath.c_str());
