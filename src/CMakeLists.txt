@@ -47,8 +47,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  # To-Do: Find out the appropriate flags for MSVC
-  set(KEEP_INJECTIONS_BEGIN "")
+  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:script-lib>")
   set(KEEP_INJECTIONS_END "")
 endif()
 
