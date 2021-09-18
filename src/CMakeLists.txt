@@ -14,12 +14,6 @@ endif()
 # Compiler-specific flags
 
 if(MSVC)
-  # As Skia is compiled with /GL flag (whole program optimization),
-  # the linker prefer a /LTCG parameter to improve link times.
-  if(USE_SKIA_BACKEND)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
-  endif()
-
   # Do not link with libcmt.lib (to avoid duplicated symbols with msvcrtd.lib)
   if(CMAKE_BUILD_TYPE STREQUAL Debug)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
@@ -137,12 +131,6 @@ add_executable(libresprite WIN32
   ${x11_resources})
 target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN} app-lib ${PLATFORM_LIBS})
 add_dependencies(libresprite copy_data)
-
-if(MSVC AND USE_SKIA_BACKEND)
-  # Add support to expand filename wildcards in argc/argv
-  set_target_properties(libresprite
-    PROPERTIES LINK_FLAGS "-LINK wsetargv.obj -ENTRY:\"wWinMainCRTStartup\"")
-endif()
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)

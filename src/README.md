@@ -33,7 +33,7 @@ because they don't depend on any other component.
 ## Level 2
 
   * [doc](doc/) (base, fixmath, gfx): Document model library.
-  * [she](she/) (allegro, base, gfx, wacom): A wrapper for the Allegro library.
+  * [she](she/) (allegro, base, gfx, wacom): Platform abstraction layer.
 
 ## Level 3
 
