@@ -227,10 +227,9 @@ endif()
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
 
-  find_package(PkgConfig)
-  pkg_search_module(SDL2 REQUIRED sdl2)
+  find_package(SDL2 REQUIRED)
   include_directories(${SDL2_INCLUDE_DIRS})
-  pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+  find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 endif()
 
