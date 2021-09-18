@@ -257,6 +257,7 @@ endif()
 
 if(USE_SDL2_BACKEND)
   target_link_libraries(she ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+  target_compile_options(she PUBLIC ${SDL2_CFLAGS_OTHER})
 endif()
 
 if(USE_SKIA_BACKEND)
