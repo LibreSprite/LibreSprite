@@ -227,9 +227,16 @@ endif()
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
 
-  find_package(SDL2 REQUIRED)
+  if (NOT WINDOWS)
+    find_package(PkgConfig)
+    pkg_search_module(SDL2 REQUIRED sdl2)
+    pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+  else()
+    find_package(SDL2 REQUIRED)
+    find_package(SDL2_IMAGE REQUIRED)
+  endif()
+
   include_directories(${SDL2_INCLUDE_DIRS})
-  find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 endif()
 
