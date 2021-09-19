@@ -61,13 +61,13 @@ You'll need the following dependencies to compile LibreSprite:
 
 Debian/Ubuntu:
 
-    sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.4-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml-dev ninja-build zlib1g-dev
+    sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.4-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml-dev libnode-dev ninja-build zlib1g-dev
 
 ### Windows dependencies
 
 To install the required dependencies with vcpkg, run:
 
-    vcpkg install curl freetype giflib gtest libjpeg-turbo lua libpng libwebp pixman sdl2 sdl2-image tinyxml zlib --triplet x64-windows
+    vcpkg install curl freetype giflib gtest libjpeg-turbo lua libpng libwebp pixman sdl2 sdl2-image tinyxml v8 zlib --triplet x64-windows
 
 Beware: `--triplet x64-windows` is only necessary for a 64 architecture
 build.

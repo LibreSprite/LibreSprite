@@ -175,6 +175,17 @@ if(LUA_FOUND)
   add_definitions(-DSCRIPT_ENGINE_LUA=1)
   include_directories(${LUA_INCLUDE_DIR})
 endif()
+
+# v8
+find_package(V8)
+if(V8_FOUND)
+  include_directories(${V8_INCLUDE_DIR})
+  add_definitions(-DSCRIPT_ENGINE_V8=1 -DV8_COMPRESS_POINTERS)
+  message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
+else()
+  message(STATUS "Optional V8 library NOT found. Disabling V8 scripting engine.")
+endif()
+
 if(USE_ALLEG4_BACKEND)
   set(LOADPNG_LIBRARY loadpng)
   set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
