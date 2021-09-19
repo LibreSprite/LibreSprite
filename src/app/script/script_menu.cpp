@@ -34,7 +34,7 @@ bool ScriptMenu::rebuildScriptsList(Menu* menu)
 
   Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
   ResourceFinder rf;
-  rf.includeUserDir(base::join_path("scripts", ".").c_str());
+  rf.includeUserDir("scripts");
   std::string scriptsDir = rf.getFirstOrCreateDefault();
 
   if (!base::is_directory(scriptsDir))
