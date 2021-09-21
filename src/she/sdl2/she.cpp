@@ -233,6 +233,19 @@ namespace sdl {
                 switch (sdlEvent.type) {
                 case SDL_WINDOWEVENT:
                     switch (sdlEvent.window.event) {
+                    case SDL_WINDOWEVENT_EXPOSED:
+                        for (auto& entry : sdl::windowIdToDisplay) {
+                            entry.second->flip({
+                                    0,
+                                    0,
+                                    entry.second->width(),
+                                    entry.second->height()
+                                });
+                            entry.second->present();
+                        }
+                        std::cout << "Force Flip" << std::endl;
+                        continue;
+
                     case SDL_WINDOWEVENT_MAXIMIZED:
                         sdl::isMaximized = true;
                         sdl::isMinimized = false;
