@@ -52,6 +52,7 @@ static std::unordered_map<int, Modifier*> reverseKeyCodeMapping;
 static std::unordered_map<SDL_Keycode, Modifier> keyCodeMapping = {
     {SDLK_UNKNOWN, she::kKeyNil},
     {SDL_Keycode(13), she::kKeyEnter},
+    {SDLK_PERIOD, she::kKeyStop},
     {SDLK_a, she::kKeyA},
     {SDLK_b, she::kKeyB},
     {SDLK_c, she::kKeyC},
@@ -232,6 +233,19 @@ namespace sdl {
                 switch (sdlEvent.type) {
                 case SDL_WINDOWEVENT:
                     switch (sdlEvent.window.event) {
+                    case SDL_WINDOWEVENT_EXPOSED:
+                        for (auto& entry : sdl::windowIdToDisplay) {
+                            entry.second->flip({
+                                    0,
+                                    0,
+                                    entry.second->width(),
+                                    entry.second->height()
+                                });
+                            entry.second->present();
+                        }
+                        std::cout << "Force Flip" << std::endl;
+                        continue;
+
                     case SDL_WINDOWEVENT_MAXIMIZED:
                         sdl::isMaximized = true;
                         sdl::isMinimized = false;
@@ -321,7 +335,6 @@ namespace sdl {
                     }
 
                     auto it = keyCodeMapping.find((SDL_Keycode) sdlEvent.key.keysym.sym);
-                    it->second.isPressed = isPressed;
                     event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
                     event.setModifiers(getSheModifiers());
 
@@ -331,6 +344,7 @@ namespace sdl {
                         event.setUnicodeChar(-1);
 
                     if (it != keyCodeMapping.end()) {
+                        it->second.isPressed = isPressed;
                         event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
                         if (sdlEvent.key.repeat) {
                             event.setRepeat(sdlEvent.key.repeat);
