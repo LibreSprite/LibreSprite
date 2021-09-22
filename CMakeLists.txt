@@ -169,6 +169,12 @@ include_directories(${GTEST_INCLUDE_DIRS})
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
+# Lua
+find_package(Lua)
+if(LUA_FOUND)
+  add_definitions(-DSCRIPT_ENGINE_LUA=1)
+  include_directories(${LUA_INCLUDE_DIR})
+endif()
 if(USE_ALLEG4_BACKEND)
   set(LOADPNG_LIBRARY loadpng)
   set(LOADPNG_INCLUDE_DIR ${LOADPNG_DIR})
