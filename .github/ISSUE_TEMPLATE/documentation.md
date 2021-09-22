@@ -1,6 +1,6 @@
 ---
 name: Documentation
-about: Some docs are wrong? Tell us here
+about: Something wrong with the docs? Tell us here
 title: ''
 labels: documentation
 assignees: ''
