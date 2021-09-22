@@ -172,7 +172,12 @@ public:
 
     if (local->IsUint8Array()){
       auto array = local.As<v8::Uint8Array>();
+#if V8_MAJOR_VERSION > 7
       auto store = array->Buffer()->GetBackingStore();
+#else
+      auto storeObj = array->Buffer()->GetContents();
+      auto store = &storeObj;
+#endif
       return {
         store->Data(),
         store->ByteLength(),
@@ -209,6 +214,7 @@ public:
     case Value::Type::BUFFER: {
       auto& buffer = value.buffer();
       if (buffer.canSteal()) {
+#if V8_MAJOR_VERSION > 7
         auto store = v8::ArrayBuffer::NewBackingStore(
           buffer.steal(),
           buffer.size(),
@@ -219,9 +225,18 @@ public:
         );
         auto arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(store));
         return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
+#else
+        auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.steal(), buffer.size());
+#endif
+        return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
+
       } else {
         auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.size());
+#if V8_MAJOR_VERSION > 7
         std::memcpy(arrayBuffer->GetBackingStore()->Data(), buffer.data(), buffer.size());
+#else
+        std::memcpy(arrayBuffer->GetContents().Data(), buffer.data(), buffer.size());
+#endif
         return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
       }
     }
