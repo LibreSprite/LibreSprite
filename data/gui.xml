@@ -779,6 +779,8 @@
         <item command="Refresh" text="&amp;Refresh &amp;&amp; Reload Skin" />
       </menu>
       <menu id="script_list" text="S&amp;cripts">
+        <item text="BEWARE: experimental feature!" />
+        <separator />
         <item command="OpenScriptsFolder" text="Open &amp;Folder" />
         <item command="RescanScripts" text="Rescan scripts"/>
         <separator />
