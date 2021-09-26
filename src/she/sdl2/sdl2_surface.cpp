@@ -25,42 +25,12 @@ namespace {
   she::DrawMode drawMode = she::DrawMode::Solid;
   int checkedModeOffset = 0;
 
-  void checked_mode(int offset)
-  {
-    // static BITMAP* pattern = NULL;
-    // int x, y, fg, bg;
-
-    // if (offset < 0) {
-    //   if (pattern) {
-    //     destroy_bitmap(pattern);
-    //     pattern = NULL;
-    //   }
-    //   drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
-    //   return;
-    // }
-
-    // if (!pattern)
-    //   pattern = create_bitmap(8, 8);
-
-    // bg = makecol(0, 0, 0);
-    // fg = makecol(255, 255, 255);
-    // offset = 7 - (offset & 7);
-
-    // clear_bitmap(pattern);
-
-    // for (y=0; y<8; y++)
-    //   for (x=0; x<8; x++)
-    //     putpixel(pattern, x, y, ((x+y+offset)&7) < 4 ? fg: bg);
-
-    // drawing_mode(DRAW_MODE_COPY_PATTERN, pattern, 0, 0);
-  }
-
 }
 
 namespace she {
 
   namespace sdl {
-    extern SDL_Surface* screen;
+    extern SDL2Surface* screen;
   }
 
   inline gfx::Color from_sdl(SDL_PixelFormat *format, int color)
@@ -135,7 +105,7 @@ namespace she {
   bool SDL2Surface::isDirectToScreen() const
   {
     return false;
-    return m_bmp == she::sdl::screen;
+    return m_bmp == she::sdl::screen->m_bmp;
   }
 
   gfx::Rect SDL2Surface::getClipBounds()
