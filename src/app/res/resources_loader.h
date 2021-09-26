@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2015  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -7,35 +7,27 @@
 
 #pragma once
 
-#include "base/concurrent_queue.h"
-#include "base/thread.h"
-#include "base/unique_ptr.h"
+#include "app/task_manager.h"
+#include "app/res/resource.h"
+#include "base/injection.h"
+
+#include <atomic>
+#include <memory>
 
 namespace app {
 
-  class Resource;
-  class ResourcesLoaderDelegate;
-
-  class ResourcesLoader {
+  class ResourcesLoader : public Injectable<ResourcesLoader> {
   public:
-    ResourcesLoader(ResourcesLoaderDelegate* delegate);
-    ~ResourcesLoader();
+    using Callback = std::function<void(Resource)>;
+    void load(Callback&& callback);
 
-    void cancel();
-    bool isDone() const { return m_done; }
+    virtual std::string resourcesLocation() const = 0;
 
-    bool next(base::UniquePtr<Resource>& resource);
+  protected:
+    virtual Resource loadResource(const std::string& fileName) = 0;
 
   private:
-    void threadLoadResources();
-
-    typedef base::concurrent_queue<Resource*> Queue;
-
-    ResourcesLoaderDelegate* m_delegate;
-    bool m_done;
-    bool m_cancel;
-    Queue m_queue;
-    base::thread m_thread;
+    TaskMonitor task;
   };
 
 } // namespace app

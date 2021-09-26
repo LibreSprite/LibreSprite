@@ -14,7 +14,6 @@
 #include "app/commands/cmd_set_palette.h"
 #include "app/commands/commands.h"
 #include "app/launcher.h"
-#include "app/res/palettes_loader_delegate.h"
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "ui/box.h"
@@ -79,7 +78,8 @@ void PalettePopup::onLoadPal()
 
 void PalettePopup::onOpenFolder()
 {
-  launcher::open_folder(PalettesLoaderDelegate().resourcesLocation());
+  inject<ResourcesLoader> loader{"palette"};
+  launcher::open_folder(loader->resourcesLocation());
 }
 
 } // namespace app

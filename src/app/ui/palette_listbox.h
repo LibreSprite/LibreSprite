@@ -18,23 +18,19 @@ in the Filesystem.
 #pragma once
 
 #include "app/res/resources_loader.h"
-#include "base/unique_ptr.h"
+#include "base/injection.h"
 #include "doc/palette.h"
 #include "ui/listbox.h"
 #include "ui/timer.h"
 
 namespace app {
-  class PaletteResource;
-
   class PaletteListBox : public ui::ListBox {
   public:
     PaletteListBox() = default;
-    PaletteResource* selectedPaletteResource();
     doc::Palette* selectedPalette();
     std::string selectedPaletteName();
     base::Signal1<void, doc::Palette*> PalChange;
-    void addPalette(PaletteResource* resource);
-    void addPalette(doc::Palette *palette, const std::string& name);
+    void addPalette(std::shared_ptr<doc::Palette> palette, const std::string& name);
 
   protected:
     void setLoading(bool isLoading);
@@ -47,15 +43,19 @@ namespace app {
 
   class PaletteFileListBox : public PaletteListBox {
   public:
-    PaletteFileListBox();
+    PaletteFileListBox() {
+      setLoading(true);
+      m_resourcesLoader->load([this](Resource palResource){
+        if (palResource) {
+          addPalette(palResource.get<doc::Palette>(), palResource.name());
+        } else {
+          setLoading(false);
+        }
+      });
+    }
 
   private:
-    bool onProcessMessage(ui::Message* msg);
-    void onTick();
-    void stop();
-    std::unique_ptr<ResourcesLoader> m_resourcesLoader;
-    // To-do: Remove this
-    ui::Timer m_resourcesTimer;
+    inject<ResourcesLoader> m_resourcesLoader{"palette"};
   };
 
 } // namespace app
