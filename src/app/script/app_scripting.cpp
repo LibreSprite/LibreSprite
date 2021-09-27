@@ -33,8 +33,12 @@ namespace app {
     // if there is no engine OR
     // the engine we have doesn't match the default in the registry,
     // inject a new one
-    if (!engine || !script::Engine::getRegistry()[""].match(engine.get()))
+    if (!engine || !script::Engine::getRegistry()[""].match(engine.get())) {
+        bool printLast = engine && engine->getPrintLastResult();
         engine = inject<script::Engine>();
+        if (engine && printLast)
+            engine->getPrintLastResult();
+    }
   }
 
   void AppScripting::raiseEvent(const std::string& fileName, const std::string &event) {

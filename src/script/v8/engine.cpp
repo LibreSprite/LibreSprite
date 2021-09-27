@@ -47,7 +47,6 @@ class V8Engine : public Engine {
 public:
   inject<EngineDelegate> m_delegate;
   v8::Global<v8::Context> m_context;
-  bool m_printLastResult = false;
   v8::Isolate* m_isolate = nullptr;
 
   V8Engine() {
@@ -77,10 +76,6 @@ public:
     v8::Isolate::Scope isolatescope(m_isolate);
     v8::HandleScope handle_scope(m_isolate);
     m_context = v8::Global<v8::Context>(m_isolate, v8::Context::New(m_isolate));
-  }
-
-  void printLastResult() override {
-    m_printLastResult = true;
   }
 
   bool raiseEvent(const std::string& event) override {
