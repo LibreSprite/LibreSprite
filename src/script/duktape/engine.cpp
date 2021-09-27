@@ -88,15 +88,13 @@ class DukEngine : public Engine {
 public:
   duk_hthread* m_handle;
   inject<EngineDelegate> m_delegate;
-  bool m_printLastResult;
 
   DukEngine() :
     m_handle(duk_create_heap(&on_alloc_function,
                              &on_realloc_function,
                              &on_free_function,
                              (void*)this,
-                             &on_fatal_handler)),
-    m_printLastResult(false)
+                             &on_fatal_handler))
     {
       InternalScriptObject::setDefault("DukScriptObject");
       initGlobals();
@@ -110,10 +108,6 @@ public:
 
   ~DukEngine() {
     duk_destroy_heap(m_handle);
-  }
-
-  void printLastResult() override {
-    m_printLastResult = true;
   }
 
   bool raiseEvent(const std::string& event) override {

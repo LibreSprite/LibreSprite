@@ -96,8 +96,6 @@ using namespace script;
 class LuaEngine : public Engine {
 public:
   inject<EngineDelegate> m_delegate;
-
-  bool m_printLastResult = false;
   lua_State* L = nullptr;
 
   LuaEngine() {
@@ -113,10 +111,6 @@ public:
   ~LuaEngine() {
     if (L)
       lua_close(L);
-  }
-
-  void printLastResult() override {
-    m_printLastResult = true;
   }
 
   bool raiseEvent(const std::string& event) override {
