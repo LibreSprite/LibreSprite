@@ -1,6 +1,20 @@
 # ASEPRITE
 # Copyright (C) 2001-2016  David Capello
 
+
+# Debug C/C++ flags
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+  if(LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og")
+  endif()
+else()
+  if (LINUX OR APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+  endif()
+endif()
+
 if(WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()

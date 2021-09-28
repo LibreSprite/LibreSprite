@@ -65,6 +65,19 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
+# Debug C/C++ flags
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+  if(LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og")
+  endif()
+else()
+  if (LINUX OR APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+  endif()
+endif()
+
 set(data_recovery_files
   crash/backup_observer.cpp
   crash/data_recovery.cpp
