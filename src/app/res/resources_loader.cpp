@@ -37,7 +37,7 @@ namespace app {
     if (!item)
       return;
 
-    std::vector<std::string> files;
+    std::deque<std::string> files;
     for (auto child : item->children()) {
       if (!child->isFolder())
         files.push_back(child->fileName());
@@ -46,8 +46,8 @@ namespace app {
     task = TaskManager::instance().addTask<Resource>(
       [this, files = std::move(files)](std::atomic_bool& isAlive) mutable -> Resource {
         if (!files.empty()) {
-          auto next = files.back();
-          files.pop_back();
+          auto next = files.front();
+          files.pop_front();
           return loadResource(next);
         }
         isAlive = false;
