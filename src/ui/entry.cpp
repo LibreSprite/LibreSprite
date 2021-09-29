@@ -14,12 +14,14 @@
 #include "base/string.h"
 #include "clip/clip.h"
 #include "she/font.h"
+#include "she/keys.h"
 #include "ui/manager.h"
 #include "ui/menu.h"
 #include "ui/message.h"
 #include "ui/size_hint_event.h"
 #include "ui/system.h"
 #include "ui/theme.h"
+#include "ui/view.h"
 #include "ui/widget.h"
 
 #include <cctype>
@@ -41,6 +43,7 @@ Entry::Entry(std::size_t maxsize, const char* format, ...)
   , m_password(false)
   , m_recent_focused(false)
   , m_lock_selection(false)
+  , m_got_focus_message(false)
 {
   enableFlags(CTRL_RIGHT_CLICK);
 
@@ -191,7 +194,6 @@ gfx::Rect Entry::getEntryTextBounds() const
 bool Entry::onProcessMessage(Message* msg)
 {
   switch (msg->type()) {
-
     case kTimerMessage:
       if (hasFocus() && static_cast<TimerMessage*>(msg)->timer() == &m_timer) {
         // Blinking caret
@@ -200,7 +202,20 @@ bool Entry::onProcessMessage(Message* msg)
       }
       break;
 
-    case kFocusEnterMessage:
+    case kFocusEnterMessage: {
+      m_got_focus_message = true;
+      gfx::Rect rect = bounds();
+      View* view = View::getView(this);
+      if (view) {
+        rect = view->viewportBounds();
+      }
+      int scale = 2*guiscale();
+      rect.x *= scale;
+      rect.y *= scale;
+      rect.h *= scale;
+      rect.w *= scale;
+      she::set_input_rect(rect);
+
       m_timer.start();
 
       m_state = true;
@@ -214,6 +229,7 @@ bool Entry::onProcessMessage(Message* msg)
         m_recent_focused = true;
       }
       break;
+    }
 
     case kFocusLeaveMessage:
       invalidate();
@@ -224,10 +240,14 @@ bool Entry::onProcessMessage(Message* msg)
         deselectText();
 
       m_recent_focused = false;
+      m_got_focus_message = false;
       break;
 
     case kKeyDownMessage:
       if (hasFocus() && !isReadOnly()) {
+        if (!m_got_focus_message)
+          return true;
+
         // Command to execute
         EntryCmd cmd = EntryCmd::NoOp;
         KeyMessage* keymsg = static_cast<KeyMessage*>(msg);

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "gfx/fwd.h"
+
 namespace she {
 
   enum KeyModifiers {
@@ -154,9 +156,7 @@ namespace she {
     kKeyScancodes    = 127
   };
 
-  // Deprecated API, use modifiers in she::Event
-  // TODO mark these functions as deprecated
   bool is_key_pressed(KeyScancode scancode);
   void clear_keyboard_buffer();
-
+  void set_input_rect(const gfx::Rect& rect);
 } // namespace she
