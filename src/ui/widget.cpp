@@ -186,9 +186,9 @@ she::Font* Widget::font() const
   return m_font;
 }
 
-void Widget::resetFont()
+void Widget::resetFont(she::Font* font)
 {
-  m_font = nullptr;
+  m_font = font;
 }
 
 void Widget::setBgColor(gfx::Color color)
