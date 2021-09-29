@@ -1,0 +1,5 @@
+// This file was created automatically by CMake.
+#pragma once
+
+// The SHA1 for the HEAD of the repo.
+#define GIT_HEAD_SHA1 "@GIT_HEAD_SHA1@"

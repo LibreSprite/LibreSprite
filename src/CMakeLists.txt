@@ -1,6 +1,16 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
+
+######################################################################
+# Git watcher
+
+set(PRE_CONFIGURE_FILE "git.h.in")
+set(POST_CONFIGURE_FILE "git.h")
+include(./git_watcher.cmake)
+
+######################################################################
+
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
 
@@ -129,7 +139,7 @@ add_executable(libresprite WIN32
   ${win32_resources}
   ${x11_resources})
 target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN} app-lib ${PLATFORM_LIBS})
-add_dependencies(libresprite copy_data)
+add_dependencies(libresprite copy_data check_git)
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)
