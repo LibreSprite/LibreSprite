@@ -204,11 +204,8 @@ bool Entry::onProcessMessage(Message* msg)
 
     case kFocusEnterMessage: {
       m_got_focus_message = true;
-      gfx::Rect rect = bounds();
       View* view = View::getView(this);
-      if (view) {
-        rect = view->viewportBounds();
-      }
+      gfx::Rect rect = view ? view->viewportBounds() : bounds();
       int scale = 2*guiscale();
       rect.x *= scale;
       rect.y *= scale;
