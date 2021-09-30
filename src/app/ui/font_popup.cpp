@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -166,6 +166,7 @@ FontPopup::FontPopup()
   {
     fontDirs.push("/usr/share/fonts");
     fontDirs.push("/usr/local/share/fonts");
+    fontDirs.push("~/.local/share/fonts");
     fontDirs.push("~/.fonts");
   }
 #endif
@@ -196,7 +197,8 @@ FontPopup::FontPopup()
 
   // Create one FontItem for each font
   for (auto& file : files) {
-    if (base::string_to_lower(base::get_file_extension(file)) == "ttf")
+    auto ext = base::string_to_lower(base::get_file_extension(file));
+    if (ext == "ttf" || ext == "otf")
       m_listBox.addChild(new FontItem(file));
   }
 

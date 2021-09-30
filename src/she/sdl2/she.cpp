@@ -4,13 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_messagebox.h>
-#include <SDL2/SDL_mouse.h>
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_video.h>
-#include <cstdint>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -206,6 +199,8 @@ she::KeyModifiers getSheModifiers() {
     return (she::KeyModifiers) mod;
 }
 
+static std::deque<she::Event> keybuffer;
+
 namespace she {
 namespace sdl {
     bool isMaximized;
@@ -328,65 +323,82 @@ namespace sdl {
 
                 case SDL_KEYDOWN:
                 case SDL_KEYUP: {
-                    bool isPressed = sdlEvent.type == SDL_KEYDOWN;
-                    auto modifierIt = modifiers.find((SDL_Keycode) sdlEvent.key.keysym.sym);
-                    if (modifierIt != modifiers.end()) {
-                        modifierIt->second.isPressed = sdlEvent.type == SDL_KEYDOWN;
-                    }
+                  Event event;
+                  bool isPressed = sdlEvent.type == SDL_KEYDOWN;
+                  auto modifierIt = modifiers.find((SDL_Keycode) sdlEvent.key.keysym.sym);
+                  if (modifierIt != modifiers.end()) {
+                    modifierIt->second.isPressed = sdlEvent.type == SDL_KEYDOWN;
+                  }
 
-                    auto it = keyCodeMapping.find((SDL_Keycode) sdlEvent.key.keysym.sym);
-                    event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
-                    event.setModifiers(getSheModifiers());
+                  auto it = keyCodeMapping.find((SDL_Keycode) sdlEvent.key.keysym.sym);
 
-                    if (sdlEvent.key.keysym.sym >= ' ' && sdlEvent.key.keysym.sym < 127)
-                        event.setUnicodeChar(sdlEvent.key.keysym.sym);
-                    else
-                        event.setUnicodeChar(-1);
+                  if (it == keyCodeMapping.end()) {
+                    std::cout << "Unknown scancode: " << sdlEvent.key.keysym.sym << std::endl;
+                    continue;
+                  }
 
-                    if (it != keyCodeMapping.end()) {
-                        it->second.isPressed = isPressed;
-                        event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
-                        if (sdlEvent.key.repeat) {
-                            event.setRepeat(sdlEvent.key.repeat);
-                        }
-                    } else {
-                        std::cout << "Unknown scancode: " << sdlEvent.key.keysym.sym << std::endl;
-                        event.setScancode(she::kKeyUnknown1);
-                    }
-                    return;
+                  event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
+                  event.setModifiers(getSheModifiers());
+                  it->second.isPressed = isPressed;
+                  event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
+                  if (sdlEvent.key.repeat) {
+                    event.setRepeat(sdlEvent.key.repeat);
+                  }
+                  keybuffer.push_back(event);
+                  continue;
                 }
 
                 case SDL_DROPFILE: {
-                    std::string file(sdlEvent.drop.file);
-                    event.setType(Event::DropFiles);
-                    event.setFiles({file});
-                    SDL_free(sdlEvent.drop.file);
-                    return;
+                  std::string file(sdlEvent.drop.file);
+                  event.setType(Event::DropFiles);
+                  event.setFiles({file});
+                  SDL_free(sdlEvent.drop.file);
+                  return;
                 }
 
-                // MouseDoubleClick,
                 // CloseDisplay,
                 // ResizeDisplay,
                 // MouseEnter,
                 // MouseLeave,
-                // MouseWheel,
-                // MouseDoubleClick,
-                // KeyDown,
-                // KeyUp,
                 // TouchMagnify,
                 case SDL_QUIT:
                     event.setType(Event::CloseDisplay);
                     return;
 
                 case SDL_TEXTEDITING:
-                case SDL_TEXTINPUT:
+                  continue;
+
+                case SDL_TEXTINPUT: {
+                  keybuffer.clear();
+                  std::string textString = sdlEvent.text.text;
+                  base::utf8_const_iterator begin{textString.begin()};
+                  base::utf8_const_iterator end{textString.end()};
+                  Event event;
+                  event.setModifiers(getSheModifiers());
+                  for (auto it = begin; it != end; ++it) {
+                    event.setType(Event::KeyDown);
+                    event.setUnicodeChar(*it);
+                    keybuffer.push_back(event);
+                    event.setType(Event::KeyUp);
+                    keybuffer.push_back(event);
+                  }
+
+                  break;
+                }
+
                 case SDL_KEYMAPCHANGED:
-                    continue;
+                  continue;
 
                 default:
                     std::cout << "Unknown event: " << sdlEvent.type << std::endl;
                     continue;
                 }
+            }
+
+            if (!keybuffer.empty()) {
+              event = keybuffer.front();
+              keybuffer.pop_front();
+              return;
             }
 
             if (!m_events.try_pop(event))
@@ -505,18 +517,27 @@ namespace sdl {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, PACKAGE, msg, nullptr);
     }
 
-    bool is_key_pressed(KeyScancode scancode)
-    {
-        auto it = reverseKeyCodeMapping.find(scancode);
-        if (it != reverseKeyCodeMapping.end()) {
-            return it->second->isPressed;
-        }
-        return false;
+  bool is_key_pressed(KeyScancode scancode) {
+    auto it = reverseKeyCodeMapping.find(scancode);
+    if (it != reverseKeyCodeMapping.end()) {
+      return it->second->isPressed;
     }
+    return false;
+  }
 
-    void clear_keyboard_buffer()
-    {
-    }
+  void set_input_rect(const gfx::Rect& rect) {
+    SDL_Rect sdlRect{
+      rect.x,
+      rect.y,
+      rect.w,
+      rect.h
+    };
+    SDL_SetTextInputRect(&sdlRect);
+  }
+
+  void clear_keyboard_buffer() {
+    keybuffer.clear();
+  }
 
 } // namespace she
 

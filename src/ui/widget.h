@@ -148,7 +148,7 @@ namespace ui {
     // ===============================================================
 
     she::Font* font() const;
-    void resetFont();
+    void resetFont(she::Font* font = nullptr);
 
     // Gets the background color of the widget.
     gfx::Color bgColor() const {

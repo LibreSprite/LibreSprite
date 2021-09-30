@@ -1,5 +1,6 @@
 // Aseprite FreeType Wrapper
 // Copyright (c) 2016 David Capello
+// Copyright (c) 2021 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -146,7 +147,7 @@ namespace ft {
         [&bounds, this](Glyph& glyph) {
           bounds |= gfx::Rect(int(glyph.x),
                               int(glyph.y),
-                              glyph.bitmap->width,
+                              glyph.ft_glyph->advance.x / double(1 << 16),
                               glyph.bitmap->rows);
         });
 
