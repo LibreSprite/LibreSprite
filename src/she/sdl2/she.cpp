@@ -323,6 +323,7 @@ namespace sdl {
 
                 case SDL_KEYDOWN:
                 case SDL_KEYUP: {
+                  Event event;
                   bool isPressed = sdlEvent.type == SDL_KEYDOWN;
                   auto modifierIt = modifiers.find((SDL_Keycode) sdlEvent.key.keysym.sym);
                   if (modifierIt != modifiers.end()) {
@@ -343,7 +344,8 @@ namespace sdl {
                   if (sdlEvent.key.repeat) {
                     event.setRepeat(sdlEvent.key.repeat);
                   }
-                  return;
+                  keybuffer.push_back(event);
+                  continue;
                 }
 
                 case SDL_DROPFILE: {
@@ -367,12 +369,13 @@ namespace sdl {
                   continue;
 
                 case SDL_TEXTINPUT: {
+                  keybuffer.clear();
                   std::string textString = sdlEvent.text.text;
                   base::utf8_const_iterator begin{textString.begin()};
                   base::utf8_const_iterator end{textString.end()};
-
+                  Event event;
+                  event.setModifiers(getSheModifiers());
                   for (auto it = begin; it != end; ++it) {
-                    Event event;
                     event.setType(Event::KeyDown);
                     event.setUnicodeChar(*it);
                     keybuffer.push_back(event);
