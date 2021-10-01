@@ -62,7 +62,6 @@ protected:
 DevConsoleView::DevConsoleView()
   : Box(VERTICAL)
   , m_textBox("Welcome to LibreSprite Scripting Console\n(Experimental)", LEFT)
-  , m_language("Language")
   , m_label(">")
   , m_entry(new CommmandEntry)
 {
@@ -75,7 +74,12 @@ DevConsoleView::DevConsoleView()
   m_bottomBox.addChild(&m_label);
   m_bottomBox.addChild(m_entry);
 
-  m_language.DropDownClick.connect([=]{onOpenLanguageMenu();});
+  auto& engines = script::Engine::getRegistry();
+  for (auto& entry : engines) {
+      std::string name = entry.first;
+      if (!name.empty())
+        m_language.addItem(name);
+  }
 
   m_view.setProperty(SkinStylePropertyPtr(
       new SkinStyleProperty(theme->styles.workspaceView())));
@@ -84,27 +88,6 @@ DevConsoleView::DevConsoleView()
   m_view.setExpansive(true);
   m_entry->setExpansive(true);
   m_entry->ExecuteCommand.connect(&DevConsoleView::onExecuteCommand, this);
-}
-
-void DevConsoleView::onOpenLanguageMenu() {
-    gfx::Rect bounds = m_language.bounds();
-    Menu menu;
-    std::vector<std::unique_ptr<MenuItem>> items;
-    auto& engines = script::Engine::getRegistry();
-    items.reserve(engines.size());
-
-    for (auto& entry : engines) {
-      std::string name = entry.first;
-      if (name.empty())
-        continue;
-      items.emplace_back(new MenuItem(name));
-      auto& item = items.back();
-      menu.addChild(item.get());
-      item->Click.connect([=]{
-        m_language.mainButton()->setText(name);
-      });
-    }
-    menu.showPopup(gfx::Point(bounds.x, bounds.y+bounds.h));
 }
 
 DevConsoleView::~DevConsoleView()
@@ -155,7 +138,7 @@ bool DevConsoleView::onProcessMessage(Message* msg)
 
 void DevConsoleView::onExecuteCommand(const std::string& cmd)
 {
-  script::Engine::setDefault(m_language.mainButton()->text());
+  script::Engine::setDefault(m_language.getValue());
   m_engine.printLastResult();
   m_engine.eval(cmd);
 }

@@ -8,11 +8,14 @@
 #include "app/app.h"
 #include "app/console.h"
 #include "script/engine.h"
+#include "script/engine_delegate.h"
 #include <iostream>
 #include <sstream>
 
 class ConsoleScriptObject : public script::ScriptObject {
 public:
+  inject<script::EngineDelegate> delegate;
+
   ConsoleScriptObject() {
     addMethod("log", this, &ConsoleScriptObject::log);
     addMethod("assert", this, &ConsoleScriptObject::_assert);
@@ -35,10 +38,7 @@ public:
       stream << arg.str();
     }
     auto str = stream.str();
-    std::cout << str << std::endl;
-    if (app::App::instance()->isGui()) {
-      app::Console().printf("%s\n", str.c_str());
-    }
+    delegate->onConsolePrint(str.c_str());
   }
 };
 

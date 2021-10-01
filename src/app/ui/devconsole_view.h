@@ -13,6 +13,7 @@
 #include "app/ui/workspace_view.h"
 #include "script/engine_delegate.h"
 #include "ui/box.h"
+#include "ui/combobox.h"
 #include "ui/label.h"
 #include "ui/textbox.h"
 #include "ui/view.h"
@@ -52,7 +53,7 @@ namespace app {
     ui::View m_view;
     ui::TextBox m_textBox;
     ui::HBox m_bottomBox;
-    app::DropDownButton m_language;
+    ui::ComboBox m_language;
     ui::Label m_label;
     CommmandEntry* m_entry;
     Provides m_dev{this};
