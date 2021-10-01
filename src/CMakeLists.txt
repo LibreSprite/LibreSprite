@@ -1,16 +1,6 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
-
-######################################################################
-# Git watcher
-
-set(PRE_CONFIGURE_FILE "git.h.in")
-set(POST_CONFIGURE_FILE "git.h")
-include(./git_watcher.cmake)
-
-######################################################################
-
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
 
