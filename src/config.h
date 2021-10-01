@@ -24,7 +24,8 @@
 
 // General information
 #define PACKAGE "LibreSprite"
-#define VERSION GIT_HEAD_SHA1
+#define VERSION "1.0-dev"
+#define HASH GIT_HEAD_SHA1
 
 #define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
 #define WEBSITE_DOWNLOAD        WEBSITE "releases/"
