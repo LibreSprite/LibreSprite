@@ -1,4 +1,4 @@
-# LibreSprite ![Build Status](https://travis-ci.org/LibreSprite/LibreSprite.svg?branch=master)
+# LibreSprite [![CMake](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml)
 
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
