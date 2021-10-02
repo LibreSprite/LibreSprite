@@ -84,6 +84,11 @@ namespace she {
     delete this;
   }
 
+  bool SDL2Display::setIcon(Surface* surface) {
+    SDL_SetWindowIcon(m_window, static_cast<SDL_Surface*>(static_cast<SDL2Surface*>(surface)->nativeHandle()));
+    return true;
+  }
+
   int SDL2Display::width() const
   {
     return m_width;
