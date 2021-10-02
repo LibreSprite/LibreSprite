@@ -175,7 +175,7 @@ namespace she {
 
   void SDL2Display::maximize()
   {
-    SDL_MinimizeWindow(m_window);
+    SDL_MaximizeWindow(m_window);
   }
 
   bool SDL2Display::isMaximized() const
