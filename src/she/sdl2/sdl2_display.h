@@ -4,8 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef SHE_SDL2_DISPLAY_H
-#define SHE_SDL2_DISPLAY_H
 #pragma once
 
 #include <SDL2/SDL_mouse.h>
@@ -24,6 +22,7 @@ namespace she {
         ~SDL2Display();
 
         void dispose() override;
+        bool setIcon(Surface*) override;
         int width() const override;
         int height() const override;
         void setWidth(int);
@@ -69,4 +68,3 @@ namespace she {
 
 } // namespace she
 
-#endif
