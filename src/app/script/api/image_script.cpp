@@ -7,6 +7,7 @@
 
 #include "script/script_object.h"
 #include "doc/image.h"
+#include <cstring>
 
 class ImageScriptObject : public script::ScriptObject {
 public:
@@ -16,6 +17,9 @@ public:
 
     addProperty("height", [this]{return m_image->height();})
       .doc("read-only. The height of the image.");
+
+    addProperty("stride", [this]{return m_image->getRowStrideSize();})
+        .doc("read-only. The number of bytes per image row.");
 
     addProperty("format", [this]{return (int) m_image->pixelFormat();})
       .doc("read-only. The PixelFormat of the image.");
@@ -30,15 +34,39 @@ public:
       .doc("writes the color onto the image at the the given coordinate.")
       .docArg("x", "integer")
       .docArg("y", "integer")
-      .docArg("color", "a 32-bit color in 8888 RGBA format");
+      .docArg("color", "a 32-bit color in 8888 RGBA format.");
 
     addMethod("clear", &ImageScriptObject::clear)
       .doc("clears the image with the specified color.")
-      .docArg("color", "a 32-bit color in 8888 RGBA format");
+      .docArg("color", "a 32-bit color in 8888 RGBA format.");
+
+    addMethod("putImageData", &ImageScriptObject::putImageData)
+      .doc("writes the given pixels onto the image. Must be the same size as the image.")
+      .docArg("data", "All of the pixels in the image.");
+
+    addMethod("getImageData", &ImageScriptObject::getImageData)
+      .doc("creates an array containing all of the image's pixels.")
+      .docReturns("All pixels in an array (Lua) or a Uint8Array (JS)");
+  }
+
+  void putImageData(script::Value::Buffer& data) {
+    if (data.size() != std::size_t(m_image->getRowStrideSize()*m_image->height())) {
+      std::cout << "Data size mismatch: " << data.size() << std::endl;
+      return;
+    }
+    std::memcpy(m_image->getPixelAddress(0, 0), data.data(), data.size());
+  }
+
+  script::Value getImageData() {
+    return {
+      m_image->getPixelAddress(0, 0),
+      std::size_t(m_image->getRowStrideSize()*m_image->height()),
+      false
+    };
   }
 
   void putPixel(int x, int y, int color) {
-    if (unsigned(x) < m_image->width() && unsigned(y) < m_image->height())
+    if (unsigned(x) < unsigned(m_image->width()) && unsigned(y) < unsigned(m_image->height()))
       m_image->putPixel(x, y, color);
   }
 
