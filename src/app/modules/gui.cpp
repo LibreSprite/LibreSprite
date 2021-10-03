@@ -140,7 +140,7 @@ static bool create_main_display(bool gpuAccel,
       Preferences::instance().general.screenScale(main_display->scale());
 
     ResourceFinder rf;
-    rf.includeDataDir("icons/ase16.png");
+    rf.includeDataDir("icons/ase64.png");
     if (rf.findFirst())
         main_display->setIcon(she::instance()->loadRgbaSurface(rf.filename().c_str()));
 
