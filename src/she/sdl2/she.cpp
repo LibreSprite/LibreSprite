@@ -338,13 +338,18 @@ namespace sdl {
                   }
 
                   event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
-                  event.setModifiers(getSheModifiers());
+                  auto modifiers = getSheModifiers();
+                  event.setModifiers(modifiers);
                   it->second.isPressed = isPressed;
                   event.setScancode(static_cast<she::KeyScancode>(it->second.sheModifier));
                   if (sdlEvent.key.repeat) {
                     event.setRepeat(sdlEvent.key.repeat);
                   }
                   keybuffer.push_back(event);
+                  if (modifiers & (she::kKeyCtrlModifier | she::kKeyCmdModifier)) {
+                    SDL_StopTextInput();
+                    break;
+                  }
                   continue;
                 }
 
