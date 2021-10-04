@@ -349,6 +349,8 @@ namespace sdl {
                   if (modifiers & (she::kKeyCtrlModifier | she::kKeyCmdModifier)) {
                     SDL_StopTextInput();
                     break;
+                  } else if (!SDL_IsTextInputActive()) {
+                    SDL_StartTextInput();
                   }
                   continue;
                 }
