@@ -637,7 +637,7 @@ void Editor::drawSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& _rc)
           }
 
           if (alpha > 8)
-            drawGrid(g, enclosingRect, m_docPref.grid.bounds(),
+            drawGrid(g, spriteRect, m_docPref.grid.bounds(),
               m_docPref.grid.color(), alpha);
         }
       }
@@ -822,20 +822,20 @@ void Editor::drawGrid(Graphics* g, const gfx::Rect& spriteBounds, const Rect& gr
     gfx::getb(grid_color), alpha);
 
   // Draw horizontal lines
-  int x1 = spriteBounds.x;
+  int x1 = grid.x;
   int y1 = grid.y;
-  int x2 = spriteBounds.x + spriteBounds.w;
-  int y2 = spriteBounds.y + spriteBounds.h;
+  int x2 = grid.x + spriteBounds.w;
+  int y2 = grid.y + spriteBounds.h;
 
-  for (int c=y1; c<=y2; c+=grid.h)
+  for (int c=y1; c<y2; c+=grid.h)
     g->drawHLine(grid_color, x1, c, spriteBounds.w);
 
   // Draw vertical lines
-  x1 = grid.x;
-  y1 = spriteBounds.y;
-
   for (int c=x1; c<=x2; c+=grid.w)
     g->drawVLine(grid_color, c, y1, spriteBounds.h);
+
+  g->drawVLine(grid_color, x2 - 1, y1, spriteBounds.h);
+  g->drawHLine(grid_color, x1, y2 - 1, spriteBounds.w);
 }
 
 void Editor::flashCurrentLayer()

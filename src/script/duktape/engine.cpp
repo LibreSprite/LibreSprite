@@ -88,15 +88,13 @@ class DukEngine : public Engine {
 public:
   duk_hthread* m_handle;
   inject<EngineDelegate> m_delegate;
-  bool m_printLastResult;
 
   DukEngine() :
     m_handle(duk_create_heap(&on_alloc_function,
                              &on_realloc_function,
                              &on_free_function,
                              (void*)this,
-                             &on_fatal_handler)),
-    m_printLastResult(false)
+                             &on_fatal_handler))
     {
       InternalScriptObject::setDefault("DukScriptObject");
       initGlobals();
@@ -110,10 +108,6 @@ public:
 
   ~DukEngine() {
     duk_destroy_heap(m_handle);
-  }
-
-  void printLastResult() override {
-    m_printLastResult = true;
   }
 
   bool raiseEvent(const std::string& event) override {
@@ -161,10 +155,19 @@ public:
       return duk_get_boolean(ctx, id);
     } else if (type == DUK_TYPE_NULL) {
       return {};
-    } else {
-      printf("Type: %d\n", type);
-      return {};
+    } else if (type == DUK_TYPE_OBJECT) {
+      duk_size_t size = 0;
+      void* buffer = duk_get_buffer_data(ctx, id, &size);
+      if (buffer)
+        return {buffer, size, false};
+    } else if (type == DUK_TYPE_BUFFER) {
+      duk_size_t size = 0;
+      void* buffer = duk_get_buffer_data(ctx, id, &size);
+      if (buffer)
+        return {buffer, size, false};
     }
+    printf("Type: %d\n", type);
+    return {};
   }
 
   static duk_ret_t callFunc(duk_context* ctx) {
@@ -203,6 +206,14 @@ public:
         duk_push_null(ctx);
       }
       break;
+
+    case Value::Type::BUFFER: {
+      auto& buffer = value.buffer();
+      void* out = duk_push_buffer(ctx, buffer.size(), 0);
+      memcpy(out, &buffer[0], buffer.size());
+      break;
+    }
+
     }
 
     return 1;

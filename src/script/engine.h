@@ -13,6 +13,8 @@
 namespace script {
   class Engine : public Injectable<Engine> {
   protected:
+    bool m_printLastResult = false;
+
     void execAfterEval(bool success) {
       for (auto& listener : m_afterEvalListeners) {
         listener(success);
@@ -27,7 +29,9 @@ namespace script {
         m_scriptObjects = ScriptObject::getAllWithFlag("global");
     }
 
-    virtual void printLastResult() = 0;
+    virtual void printLastResult() { m_printLastResult = true; }
+    bool getPrintLastResult() {return m_printLastResult;}
+
     virtual bool eval(const std::string& code) = 0;
     virtual bool raiseEvent(const std::string& event) = 0;
 

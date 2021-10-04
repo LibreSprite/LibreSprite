@@ -1,5 +1,6 @@
 // SHE library
 // Copyright (C) 2016  David Capello
+// Copyright (C) 2021  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -48,12 +49,16 @@ int FreeTypeFont::height() const
   return int(m_face.height());
 }
 
-int FreeTypeFont::charWidth(int chr) const
+gfx::Rect FreeTypeFont::charBounds(int chr) const
 {
-  // TODO avoid creating a temporary string
   std::wstring tmp;
   tmp.push_back(chr);
-  return m_face.calcTextBounds(base::to_utf8(tmp)).w;
+  return m_face.calcTextBounds(base::to_utf8(tmp));
+}
+
+int FreeTypeFont::charWidth(int chr) const
+{
+  return charBounds(chr).w;
 }
 
 int FreeTypeFont::textLength(const std::string& str) const

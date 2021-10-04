@@ -4,13 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#include <SDL2/SDL_error.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_mouse.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_video.h>
-#include <cstddef>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,10 +23,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
-#include <cassert>
-#include <list>
 #include <sstream>
-#include <vector>
 #include <iostream>
 #include <unordered_map>
 
@@ -91,6 +82,11 @@ namespace she {
   void SDL2Display::dispose()
   {
     delete this;
+  }
+
+  bool SDL2Display::setIcon(Surface* surface) {
+    SDL_SetWindowIcon(m_window, static_cast<SDL_Surface*>(static_cast<SDL2Surface*>(surface)->nativeHandle()));
+    return true;
   }
 
   int SDL2Display::width() const
@@ -184,7 +180,7 @@ namespace she {
 
   void SDL2Display::maximize()
   {
-    SDL_MinimizeWindow(m_window);
+    SDL_MaximizeWindow(m_window);
   }
 
   bool SDL2Display::isMaximized() const

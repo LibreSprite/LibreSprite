@@ -1,6 +1,5 @@
-# LibreSprite
-# Copyright (C) 2001-2016  David Capello
-# Copyright (C) 2016-2018  LibreSprite contributors
+# Aseprite     | Copyright (C) 2001-2016  David Capello
+# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 cmake_minimum_required(VERSION 3.4)
 
@@ -43,11 +42,9 @@ if(APPLE)
   # On OS X Allegro isn't supported anymore
   set(USE_ALLEG4_BACKEND off)
   option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 else()
   option(USE_ALLEG4_BACKEND "Use Allegro 4 backend" off)
   option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-  option(USE_SKIA_BACKEND   "Use Skia backend" off)
 endif()
 
 ######################################################################
@@ -115,8 +112,18 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 # Debug C/C++ flags
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   add_definitions(-DDEBUGMODE -D_DEBUG)
+  if(LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Og")
+  endif()
 else()
   add_definitions(-DNDEBUG)
+  if (LINUX OR APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2")
+  endif()
 endif()
 
 # Fix to compile gtest with VC11 (2012)
@@ -128,8 +135,10 @@ if(NOT WIN32 AND NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu89")
 endif()
 
-if(APPLE AND USE_SKIA_BACKEND)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
+if(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
 # zlib
@@ -169,6 +178,23 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
+
+# Lua
+find_package(Lua)
+if(LUA_FOUND)
+  add_definitions(-DSCRIPT_ENGINE_LUA=1)
+  include_directories(${LUA_INCLUDE_DIR})
+endif()
+
+# v8
+find_package(V8)
+if(V8_FOUND)
+  include_directories(${V8_INCLUDE_DIR})
+  add_definitions(-DSCRIPT_ENGINE_V8=1 -DV8_COMPRESS_POINTERS)
+  message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
+else()
+  message(STATUS "Optional V8 library NOT found. Disabling V8 scripting engine.")
+endif()
 
 if(USE_ALLEG4_BACKEND)
   set(LOADPNG_LIBRARY loadpng)
@@ -226,16 +252,10 @@ endif()
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
 
-  find_package(PkgConfig)
-  pkg_search_module(SDL2 REQUIRED sdl2)
+  find_package(SDL2 REQUIRED)
   include_directories(${SDL2_INCLUDE_DIRS})
-  pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+  find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
-endif()
-
-# Skia backend
-if(USE_SKIA_BACKEND)
-  add_definitions(-DUSE_SKIA_BACKEND)
 endif()
 
 # -- Unix --

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 namespace script {
@@ -18,13 +19,81 @@ namespace script {
       INT,
       DOUBLE,
       STRING,
-      OBJECT
+      OBJECT,
+      BUFFER
     } type = Type::UNDEFINED;
+
+    class Buffer {
+    public:
+      uint8_t* _data = nullptr;
+      std::size_t _size = 0;
+      std::shared_ptr<uint32_t> refCount;
+
+      Buffer(uint8_t* _data, std::size_t size, bool own) : _data(_data), _size(size) {
+        if (own)
+          refCount = std::make_shared<uint32_t>(1);
+      }
+
+      Buffer(const Buffer& other) : _data(other._data),
+                                    _size(other._size),
+                                    refCount(other.refCount) {
+        hold();
+      }
+
+      ~Buffer() {release();}
+
+      bool canSteal() {
+        return refCount && *refCount == 1;
+      }
+
+      template <typename Type = uint8_t>
+      Type* steal() {
+        if (!canSteal()) return nullptr;
+        refCount.reset();
+        return reinterpret_cast<Type*>(_data);
+      }
+
+      template <typename Type = uint8_t>
+      Type* data() {
+        return reinterpret_cast<Type*>(_data);
+      }
+
+      template <typename Type = uint8_t>
+      Type* end() {
+        return reinterpret_cast<Type*>(_data + _size);
+      }
+
+      uint8_t& operator [] (std::size_t pos) {
+        return _data[pos];
+      }
+
+      bool empty() {
+        return !_data || !_size;
+      }
+
+      std::size_t size() {
+        return _size;
+      }
+
+      void hold() {
+        if (refCount)
+          ++*refCount;
+      }
+
+      void release() {
+        if (!refCount)
+          return;
+        --*refCount;
+        if (!*refCount)
+          delete _data;
+      }
+    };
 
     union {
       int int_v;
       double double_v;
       std::string* string_v;
+      Buffer* buffer_v;
       ScriptObject* object_v;
     } data;
 
@@ -38,6 +107,9 @@ namespace script {
       type = other.type;
       if (type == Type::STRING) {
         data.string_v = new std::string(*other.data.string_v);
+      } else if (type == Type::BUFFER) {
+        data.buffer_v = new Buffer {*other.data.buffer_v};
+        data.buffer_v->hold();
       } else {
         data = other.data;
       }
@@ -57,6 +129,8 @@ namespace script {
     void makeUndefined() {
       if (type == Type::STRING)
         delete data.string_v;
+      if (type == Type::BUFFER)
+        delete data.buffer_v;
       type = Type::UNDEFINED;
     }
 
@@ -74,6 +148,8 @@ namespace script {
         return !data.string_v->empty();
       case Type::OBJECT:
         return data.object_v != 0;
+      case Type::BUFFER:
+        return !data.buffer_v->empty();
       default:
         return false;
       }
@@ -133,7 +209,6 @@ namespace script {
       return *this;
     }
 
-
     Value& operator = (std::string&& i) {
       if (type == Type::STRING) {
         *data.string_v = std::move(i);
@@ -148,6 +223,7 @@ namespace script {
     std::string str() const {
       if (type == Type::INT) return std::to_string(data.int_v);
       if (type == Type::DOUBLE) return std::to_string(data.double_v);
+      if (type == Type::BUFFER) return std::string(data.buffer_v->data(), data.buffer_v->end());
       return type == Type::STRING ? *data.string_v : std::string{};
     }
 
@@ -158,7 +234,43 @@ namespace script {
     operator const char* () const {
       if (type == Type::STRING)
         return data.string_v->c_str();
+      if (type == Type::BUFFER)
+        return reinterpret_cast<char*>(data.buffer_v->data());
       return "";
+    }
+
+// BUFFER
+    Value(void* bytes, std::size_t size, bool own) {
+      type = Type::BUFFER;
+      data.buffer_v = new Buffer {
+        static_cast<uint8_t*>(bytes),
+        size,
+        own
+      };
+    }
+
+    operator Buffer& () const {
+      static Buffer empty{nullptr, 0, false};
+      if (type == Type::BUFFER)
+        return *data.buffer_v;
+      return empty;
+    }
+
+    operator uint8_t* () const {
+      if (type == Type::BUFFER)
+        return reinterpret_cast<uint8_t*>(data.buffer_v->data());
+      return nullptr;
+    }
+
+    std::size_t size() const {
+      if (type == Type::STRING) return data.string_v->size();
+      if (type == Type::BUFFER) return data.buffer_v->size();
+      return 0;
+    }
+
+    Buffer& buffer() const {
+      static Buffer empty{nullptr, 0, false};
+      return type == Type::BUFFER ? *data.buffer_v : empty;
     }
 
 // OBJECT

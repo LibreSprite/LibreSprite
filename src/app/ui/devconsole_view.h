@@ -8,10 +8,12 @@
 #pragma once
 
 #include "app/script/app_scripting.h"
+#include "app/ui/drop_down_button.h"
 #include "app/ui/tabs.h"
 #include "app/ui/workspace_view.h"
 #include "script/engine_delegate.h"
 #include "ui/box.h"
+#include "ui/combobox.h"
 #include "ui/label.h"
 #include "ui/textbox.h"
 #include "ui/view.h"
@@ -43,6 +45,7 @@ namespace app {
   protected:
     bool onProcessMessage(ui::Message* msg) override;
     void onExecuteCommand(const std::string& cmd);
+    void onOpenLanguageMenu();
 
   private:
     class CommmandEntry;
@@ -50,6 +53,7 @@ namespace app {
     ui::View m_view;
     ui::TextBox m_textBox;
     ui::HBox m_bottomBox;
+    ui::ComboBox m_language;
     ui::Label m_label;
     CommmandEntry* m_entry;
     Provides m_dev{this};

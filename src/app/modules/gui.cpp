@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -21,6 +21,7 @@
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
 #include "app/pref/preferences.h"
+#include "app/resource_finder.h"
 #include "app/tools/ink.h"
 #include "app/tools/tool_box.h"
 #include "app/ui/editor/editor.h"
@@ -137,6 +138,11 @@ static bool create_main_display(bool gpuAccel,
     // saved when the program is closed).
     if (scale == 0)
       Preferences::instance().general.screenScale(main_display->scale());
+
+    ResourceFinder rf;
+    rf.includeDataDir("icons/ase64.png");
+    if (rf.findFirst())
+        main_display->setIcon(she::instance()->loadRgbaSurface(rf.filename().c_str()));
 
     if (!windowLayout.empty()) {
       main_display->setLayout(windowLayout);

@@ -1,5 +1,5 @@
-# Aseprite
-# Copyright (C) 2001-2016  David Capello
+# Aseprite     | Copyright (C) 2001-2016  David Capello
+# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
@@ -14,12 +14,6 @@ endif()
 # Compiler-specific flags
 
 if(MSVC)
-  # As Skia is compiled with /GL flag (whole program optimization),
-  # the linker prefer a /LTCG parameter to improve link times.
-  if(USE_SKIA_BACKEND)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
-  endif()
-
   # Do not link with libcmt.lib (to avoid duplicated symbols with msvcrtd.lib)
   if(CMAKE_BUILD_TYPE STREQUAL Debug)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
@@ -34,6 +28,21 @@ include_directories(. .. ../third_party)
 # Use patched version of Allegro 4 (with window resize support).
 if(USE_ALLEG4_BACKEND AND NOT USE_SHARED_ALLEGRO4)
   add_subdirectory(allegro)
+endif()
+
+if(UNIX AND NOT APPLE)
+  set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
+  set(KEEP_INJECTIONS_END "-Wl,--no-whole-archive")
+endif()
+
+if(APPLE)
+  set(KEEP_INJECTIONS_BEGIN "-all_load")
+  set(KEEP_INJECTIONS_END "")
+endif()
+
+if(MSVC)
+  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:script-lib>")
+  set(KEEP_INJECTIONS_END "")
 endif()
 
 ######################################################################
@@ -119,14 +128,8 @@ add_executable(libresprite WIN32
   main/main.cpp
   ${win32_resources}
   ${x11_resources})
-target_link_libraries(libresprite -Wl,--whole-archive app-lib ${PLATFORM_LIBS})
+target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN} app-lib ${PLATFORM_LIBS})
 add_dependencies(libresprite copy_data)
-
-if(MSVC AND USE_SKIA_BACKEND)
-  # Add support to expand filename wildcards in argc/argv
-  set_target_properties(libresprite
-    PROPERTIES LINK_FLAGS "-LINK wsetargv.obj -ENTRY:\"wWinMainCRTStartup\"")
-endif()
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)

@@ -1,5 +1,6 @@
 // SHE library
 // Copyright (C) 2012-2016  David Capello
+// Copyright (C) 2021       LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -21,6 +22,10 @@ namespace she {
   public:
     virtual ~Display() { }
     virtual void dispose() = 0;
+
+    virtual bool setIcon(Surface* surface){
+      return false;
+    }
 
     // Returns the real and current display's size (without scale applied).
     virtual int width() const = 0;

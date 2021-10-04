@@ -22,42 +22,15 @@
 
 namespace {
 
-  void checked_mode(int offset)
-  {
-    // static BITMAP* pattern = NULL;
-    // int x, y, fg, bg;
-
-    // if (offset < 0) {
-    //   if (pattern) {
-    //     destroy_bitmap(pattern);
-    //     pattern = NULL;
-    //   }
-    //   drawing_mode(DRAW_MODE_SOLID, NULL, 0, 0);
-    //   return;
-    // }
-
-    // if (!pattern)
-    //   pattern = create_bitmap(8, 8);
-
-    // bg = makecol(0, 0, 0);
-    // fg = makecol(255, 255, 255);
-    // offset = 7 - (offset & 7);
-
-    // clear_bitmap(pattern);
-
-    // for (y=0; y<8; y++)
-    //   for (x=0; x<8; x++)
-    //     putpixel(pattern, x, y, ((x+y+offset)&7) < 4 ? fg: bg);
-
-    // drawing_mode(DRAW_MODE_COPY_PATTERN, pattern, 0, 0);
-  }
+  she::DrawMode drawMode = she::DrawMode::Solid;
+  int checkedModeOffset = 0;
 
 }
 
 namespace she {
 
   namespace sdl {
-    extern SDL_Surface* screen;
+    extern SDL2Surface* screen;
   }
 
   inline gfx::Color from_sdl(SDL_PixelFormat *format, int color)
@@ -132,7 +105,7 @@ namespace she {
   bool SDL2Surface::isDirectToScreen() const
   {
     return false;
-    return m_bmp == she::sdl::screen;
+    return m_bmp == she::sdl::screen->m_bmp;
   }
 
   gfx::Rect SDL2Surface::getClipBounds()
@@ -178,11 +151,9 @@ namespace she {
 
   void SDL2Surface::setDrawMode(DrawMode mode, int param)
   {
-    switch (mode) {
-    case DrawMode::Solid: std::cout << "Solid" << std::endl; break;// checked_mode(-1); break;
-    case DrawMode::Xor: std::cout << "Xor" << std::endl; break;// xor_mode(TRUE); break;
-    case DrawMode::Checked: std::cout << "Checked" << std::endl; break;// checked_mode(param); break;
-    }
+    drawMode = mode;
+    if (mode == she::DrawMode::Checked)
+      checkedModeOffset = param;
   }
 
   void SDL2Surface::applyScale(int scale)
@@ -264,6 +235,9 @@ namespace she {
 
   void SDL2Surface::drawHLine(gfx::Color color, int x, int y, int w)
   {
+    auto dlocked = m_bmp->locked;
+    if (dlocked) SDL_UnlockSurface(m_bmp);
+
     SDL_Rect clip;
     SDL_GetClipRect(m_bmp, &clip);
 
@@ -272,26 +246,69 @@ namespace she {
       x = clip.x;
     }
 
-    if (x + w >= clip.x + clip.w) {
-      w = (clip.x + clip.w) - x - 1;
+    if (x + w > clip.x + clip.w) {
+      w = (clip.x + clip.w) - x;
     }
 
     if (w <= 0 || y < clip.y || y >= (clip.y + clip.h)) {
       return;
     }
 
-    int sdlColor = to_sdl(m_bmp->format, color);
+    int sdlColor = to_sdl(m_bmp->format, gfx::rgba(gfx::getr(color), gfx::getg(color), gfx::getb(color)));
     auto data = getData(x, y);
-    if (m_bmp->format->BytesPerPixel == 4) {
-      for(; w--; data += 4)
-        *reinterpret_cast<uint32_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 2) {
-      for(; w--; data += 2)
-        *reinterpret_cast<uint16_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 1) {
-      for(; w--; data += 1)
-        *reinterpret_cast<uint8_t*>(data) = sdlColor;
+    switch (drawMode) {
+    case she::DrawMode::Solid:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        int a = gfx::geta(color);
+        int ia = 255 - a;
+        int sr = gfx::getr(color) * a >> 8;
+        int sg = gfx::getg(color) * a >> 8;
+        int sb = gfx::getb(color) * a >> 8;
+        for(; w--; data += 4) {
+          int r = (data[0] * ia >> 8) + sr;
+          int g = (data[1] * ia >> 8) + sg;
+          int b = (data[2] * ia >> 8) + sb;
+          *reinterpret_cast<uint32_t*>(data) = (r) | (g << 8) | (b << 16) | (data[3] << 24);
+        }
+      } else {
+        clip = {
+          x, y,
+          w, 1
+        };
+        SDL_FillRect(m_bmp, &clip, sdlColor);
+      }
+      break;
+
+    case she::DrawMode::Checked: {
+      int offset = checkedModeOffset + x + y * 4;
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; w--; data += 4)
+          *reinterpret_cast<uint32_t*>(data) = ((++offset) & 7) < 4 ? 0xFFFFFFFF : 0xFF000000;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; w--; data += 2)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; w--; data += 1)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
     }
+
+    case she::DrawMode::Xor:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; w--; data += 4)
+          *reinterpret_cast<uint32_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; w--; data += 2)
+          *reinterpret_cast<uint16_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; w--; data += 1)
+          *reinterpret_cast<uint8_t*>(data) ^= sdlColor;
+      }
+      break;
+    }
+
+    if (dlocked) SDL_LockSurface(m_bmp);
   }
 
   void SDL2Surface::drawVLine(gfx::Color color, int x, int y, int h)
@@ -303,8 +320,8 @@ namespace she {
       h += y - clip.y;
       y = clip.y;
     }
-    if (y + h >= clip.y + clip.h) {
-      h = (clip.y + clip.h) - y - 1;
+    if (y + h > clip.y + clip.h) {
+      h = (clip.y + clip.h) - y;
     }
     if (h <= 0 || x < clip.x || x >= clip.x + clip.w) {
       return;
@@ -312,15 +329,56 @@ namespace she {
     int sdlColor = to_sdl(m_bmp->format, color);
     auto data = getData(x, y);
     auto stride = m_bmp->pitch;
-    if (m_bmp->format->BytesPerPixel == 4) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint32_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 2) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint16_t*>(data) = sdlColor;
-    } else if (m_bmp->format->BytesPerPixel == 1) {
-      for(; h--; data += stride)
-        *reinterpret_cast<uint8_t*>(data) = sdlColor;
+    switch (drawMode) {
+    case she::DrawMode::Solid:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        int a = gfx::geta(color);
+        int ia = 255 - a;
+        int sr = gfx::getr(color) * a >> 8;
+        int sg = gfx::getg(color) * a >> 8;
+        int sb = gfx::getb(color) * a >> 8;
+        for(; h--; data += stride) {
+          int r = (data[0] * ia >> 8) + sr;
+          int g = (data[1] * ia >> 8) + sg;
+          int b = (data[2] * ia >> 8) + sb;
+          *reinterpret_cast<uint32_t*>(data) = (r) | (g << 8) | (b << 16) | (data[3] << 24);
+        }
+      } else {
+        clip = {
+          x, y,
+          1, h
+        };
+        SDL_FillRect(m_bmp, &clip, sdlColor);
+      }
+      break;
+
+    case she::DrawMode::Checked: {
+      int offset = checkedModeOffset + x + y;
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint32_t*>(data) = ((++offset) & 7) < 4 ? 0xFFFFFFFF : 0xFF000000;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint16_t*>(data) = sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint8_t*>(data) = sdlColor;
+      }
+      break;
+    }
+
+    case she::DrawMode::Xor:
+      if (m_bmp->format->BytesPerPixel == 4) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint32_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 2) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint16_t*>(data) ^= sdlColor;
+      } else if (m_bmp->format->BytesPerPixel == 1) {
+        for(; h--; data += stride)
+          *reinterpret_cast<uint8_t*>(data) ^= sdlColor;
+      }
+      break;
     }
   }
 

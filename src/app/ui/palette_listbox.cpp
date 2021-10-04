@@ -10,12 +10,10 @@
 #endif
 
 #include "app/ui/palette_listbox.h"
-
-#include "app/res/palettes_loader_delegate.h"
-#include "app/res/palette_resource.h"
 #include "app/res/resource.h"
 #include "app/ui/skin/skin_theme.h"
 #include "base/bind.h"
+#include "doc/palette.h"
 #include "ui/graphics.h"
 #include "ui/listitem.h"
 #include "ui/message.h"
@@ -30,17 +28,13 @@ using namespace skin;
 
 class PaletteListItem : public ListItem {
 public:
-  PaletteListItem(PaletteResource* palResource) :
-    ListItem(palResource->name()), m_palResource(palResource) {}
+  PaletteListItem(std::shared_ptr<doc::Palette> palette, const std::string& name) :
+    ListItem(name),
+    m_palette(palette) {}
 
-  PaletteListItem(std::unique_ptr<doc::Palette>&& palette, const std::string& name) :
-    PaletteListItem(new PaletteResource(palette.get(), name)) {
-    m_palette = std::move(palette);
-  }
+  std::shared_ptr<doc::Palette> palette() {return m_palette;}
 
-  PaletteResource* paletteResource() const {
-    return m_palResource.get();
-  }
+  const std::string& name() {return text();}
 
 protected:
   bool onProcessMessage(ui::Message* msg) override {
@@ -58,7 +52,7 @@ protected:
     Graphics* g = ev.graphics();
     gfx::Rect bounds = clientBounds();
     gfx::Color bgcolor, fgcolor;
-    doc::Palette* palette = m_palResource->palette();
+    auto palette = m_palette.get();
     const int leftPadding = 4*guiscale();
 
     if (isSelected()) {
@@ -112,8 +106,7 @@ protected:
   }
 
 private:
-  std::unique_ptr<PaletteResource> m_palResource;
-  std::unique_ptr<doc::Palette> m_palette;
+  std::shared_ptr<doc::Palette> m_palette;
 };
 
 class PaletteListBox::LoadingItem : public ListItem {
@@ -140,21 +133,16 @@ private:
   int m_state;
 };
 
-PaletteResource* PaletteListBox::selectedPaletteResource() {
-  if (PaletteListItem* listItem = dynamic_cast<PaletteListItem*>(getSelectedChild()))
-    return listItem->paletteResource();
-  else
-    return nullptr;
-}
-
 doc::Palette* PaletteListBox::selectedPalette() {
-  auto resource = selectedPaletteResource();
-  return resource ? resource->palette() : nullptr;
+  if (PaletteListItem* listItem = dynamic_cast<PaletteListItem*>(getSelectedChild()))
+    return listItem->palette().get();
+  return nullptr;
 }
 
 std::string PaletteListBox::selectedPaletteName() {
-  auto resource = selectedPaletteResource();
-  return resource ? resource->name() : "";
+  if (PaletteListItem* listItem = dynamic_cast<PaletteListItem*>(getSelectedChild()))
+    return listItem->name();
+  return "";
 }
 
 void PaletteListBox::onChange() {
@@ -180,61 +168,13 @@ void PaletteListBox::setLoading(bool isLoading) {
   }
 }
 
-void PaletteListBox::addPalette(doc::Palette *palette, const std::string& name) {
+void PaletteListBox::addPalette(std::shared_ptr<doc::Palette> palette, const std::string& name) {
   int hasLoading = !!m_loadingItem;
-  insertChild(getItemsCount()-hasLoading, new PaletteListItem(std::unique_ptr<doc::Palette>(palette), name));
+  insertChild(getItemsCount()-hasLoading, new PaletteListItem(palette, name));
   layout();
   View* view = View::getView(this);
   if (view)
     view->updateView();
-}
-
-void PaletteListBox::addPalette(PaletteResource *resource) {
-  int hasLoading = !!m_loadingItem;
-  insertChild(getItemsCount()-hasLoading, new PaletteListItem(resource));
-  layout();
-  View* view = View::getView(this);
-  if (view)
-    view->updateView();
-}
-
-PaletteFileListBox::PaletteFileListBox() : m_resourcesLoader(new ResourcesLoader(new PalettesLoaderDelegate)),
-                                           m_resourcesTimer(100) {
-  m_resourcesTimer.Tick.connect(base::Bind<void>(&PaletteFileListBox::onTick, this));
-}
-
-bool PaletteFileListBox::onProcessMessage(ui::Message* msg) {
-  switch (msg->type()) {
-    case kOpenMessage: {
-      m_resourcesTimer.start();
-      break;
-    }
-  }
-  return ListBox::onProcessMessage(msg);
-}
-
-void PaletteFileListBox::onTick() {
-  if (m_resourcesLoader == NULL) {
-    stop();
-    return;
-  }
-  setLoading(true);
-  while (true) {
-    base::UniquePtr<Resource> resource;
-    if (!m_resourcesLoader->next(resource)) {
-        if (m_resourcesLoader->isDone()) {
-            stop();
-            LOG("Done\n");
-        }
-        return;
-    }
-    addPalette(static_cast<PaletteResource*>(resource.release()));
-  }
-}
-
-void PaletteFileListBox::stop() {
-  setLoading(false);
-  m_resourcesTimer.stop();
 }
 
 } // namespace app

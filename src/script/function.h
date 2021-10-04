@@ -45,20 +45,20 @@ namespace script {
 
       template <typename Func, bool, typename Tuple, unsigned int ...I>
       struct helper {
-        static Value call(const Func& func, Value* args){
+        static Value call(Func&& func, Value* args){
           return helper<Func, sizeof...(I) + 1 == std::tuple_size<Tuple>::value, Tuple, I..., sizeof...(I)>::call(func, args);
         }
       };
 
       template <typename Func, unsigned int ...I>
       struct helper<Func, true, std::tuple<Args...>, I...> {
-        static Value call(const Func& func, Value* args) {
+        static Value call(Func&& func, Value* args) {
           return func(static_cast<Args>(args[I])...);
         }
       };
 
       template <typename Func>
-      static Value call(const Func& func, Value * args) {
+      static Value call(Func&& func, Value * args) {
         return helper<Func, sizeof...(Args) == 0, std::tuple<Args...>>::call(func, args);
       }
     };
@@ -72,20 +72,20 @@ namespace script {
 
       template <typename Func, bool, typename Tuple, unsigned int ...I>
       struct helper {
-        static Value call(const Func& func, Value* args){
+        static Value call(Func&& func, Value* args){
           return helper<Func, sizeof...(I) + 1 == std::tuple_size<Tuple>::value, Tuple, I..., sizeof...(I)>::call(func, args);
         }
       };
 
       template <typename Func, unsigned int ...I>
       struct helper<Func, true, std::tuple<Args...>, I...> {
-        static Value call(const Func& func, Value* args) {
+        static Value call(Func&& func, Value* args) {
           return func(static_cast<Args>(args[I])...);
         }
       };
 
       template <typename Func>
-      static Value call(const Func& func, Value * args) {
+      static Value call(Func&& func, Value * args) {
         return helper<Func, sizeof...(Args) == 0, std::tuple<Args...>>::call(func, args);
       }
     };

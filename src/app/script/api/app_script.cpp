@@ -26,8 +26,6 @@
 
 class DudScriptObject : public script::InternalScriptObject {
 public:
-  void makeLocal() override {}
-
   void makeGlobal(const std::string& name) override {
     globalName = name;
   }

@@ -1,5 +1,5 @@
-# Aseprite
-# Copyright (C) 2001-2016  David Capello
+# Aseprite     | Copyright (C) 2001-2016  David Capello
+# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 # Generate a ui::Widget for each widget in a XML file
 file(GLOB widget_files ${CMAKE_SOURCE_DIR}/data/widgets/*.xml)
@@ -62,6 +62,21 @@ endif()
 
 ######################################################################
 # app-lib target
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
+# Debug C/C++ flags
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+  if(LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og")
+  endif()
+else()
+  if (LINUX OR APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+  endif()
+endif()
 
 set(data_recovery_files
   crash/backup_observer.cpp
@@ -336,6 +351,7 @@ add_library(app-lib
   script/api/image_script.cpp
   script/api/layer_script.cpp
   script/api/pixelcolor_script.cpp
+  script/api/palette_script.cpp
   script/api/sprite_script.cpp
   script/api/selection_script.cpp
 
@@ -465,11 +481,13 @@ target_link_libraries(app-lib
   she
   ui-lib
   undo
-  -Wl,--no-whole-archive
+  ${KEEP_INJECTIONS_END}
   ${TINYXML_LIBRARY}
   ${JPEG_LIBRARIES}
   ${GIF_LIBRARIES}
   ${PNG_LIBRARIES}
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
+  ${LUA_LIBRARIES}
+  ${V8_LIBRARIES}
   ${FREETYPE_LIBRARIES})

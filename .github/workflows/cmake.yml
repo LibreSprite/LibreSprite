@@ -21,8 +21,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     # install dependencies
+    - name: update
+      run: sudo apt-get update
     - name: boost
-      run: sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libcurl4-gnutls-dev libsdl2-dev libsdl2-image-dev
+      run: sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.3-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml-dev libx11-dev libxcursor-dev ninja-build libnode-dev zlib1g-dev
     # build project
     - name: git
       run: git submodule update --init --recursive
