@@ -7,6 +7,7 @@
 #pragma once
 
 #include "base/disable_copying.h"
+#include "base/injection.h"
 #include "gfx/border.h"
 #include "gfx/color.h"
 #include "gfx/point.h"
@@ -20,6 +21,7 @@
 #include "ui/widgets_list.h"
 
 #include <map>
+#include <memory>
 #include <string>
 
 #define ASSERT_VALID_WIDGET(widget) ASSERT((widget) != NULL)
@@ -45,14 +47,12 @@ namespace ui {
   /* Widgets are the basic visual object in LibreSprite, such as menus and grids.
 
   Widgets are non-copyable */
-  class Widget {
-  public:
-
-    // ===============================================================
-    // CTOR & DTOR
-    // ===============================================================
-
+  class Widget : public Injectable<Widget>, public std::enable_shared_from_this<Widget> {
+  protected:
+    // Widget and derivatives should always have protected constructors!
     Widget(WidgetType type = kGenericWidget);
+
+  public:
     virtual ~Widget();
 
     // Safe way to delete a widget when it is not in the manager message
