@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -140,7 +140,8 @@ private:
         if (name()->hasFocus() ||
             opacity()->hasFocus() ||
             mode()->hasFocus()) {
-          if (static_cast<KeyMessage*>(msg)->scancode() == kKeyEnter) {
+          KeyScancode scancode = static_cast<KeyMessage*>(msg)->scancode();
+          if (scancode == kKeyEnter || scancode == kKeyEsc) {
             onCommitChange();
             closeWindow(this);
             return true;
