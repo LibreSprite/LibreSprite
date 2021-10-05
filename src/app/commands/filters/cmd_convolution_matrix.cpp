@@ -101,7 +101,7 @@ private:
 
   void selectMatrixByName(const char* oldSelected)
   {
-    Widget* select_this = UI_FIRST_WIDGET(m_stockListBox->children());
+    Widget* select_this = m_stockListBox->firstChild();
 
     if (oldSelected) {
       for (auto child : m_stockListBox->children()) {

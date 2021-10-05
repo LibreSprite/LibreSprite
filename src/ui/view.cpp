@@ -65,7 +65,7 @@ void View::attachToView(Widget* viewable_widget)
 
 Widget* View::attachedWidget()
 {
-  return UI_FIRST_WIDGET(m_viewport.children());
+  return m_viewport.firstChild();
 }
 
 void View::makeVisibleAllScrollableArea()
@@ -146,7 +146,7 @@ void View::setViewScroll(const Point& pt)
 
 void View::updateView()
 {
-  Widget* vw = UI_FIRST_WIDGET(m_viewport.children());
+  Widget* vw = m_viewport.firstChild();
   Point scroll = viewScroll();
 
   // Set minimum (remove scroll-bars)

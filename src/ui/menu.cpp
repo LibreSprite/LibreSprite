@@ -341,17 +341,17 @@ void Menu::onSizeHint(SizeHintEvent& ev)
   Size size(0, 0);
   Size reqSize;
 
-  UI_FOREACH_WIDGET_WITH_END(children(), it, end) {
-    reqSize = (*it)->sizeHint();
+  for(std::size_t i = 0, end = children().size(); i != end; ++i) {
+    reqSize = at(i)->sizeHint();
 
     if (parent() &&
         parent()->type() == kMenuBarWidget) {
-      size.w += reqSize.w + ((it+1 != end) ? childSpacing(): 0);
+      size.w += reqSize.w + ((i+1 != end) ? childSpacing(): 0);
       size.h = MAX(size.h, reqSize.h);
     }
     else {
       size.w = MAX(size.w, reqSize.w);
-      size.h += reqSize.h + ((it+1 != end) ? childSpacing(): 0);
+      size.h += reqSize.h + ((i+1 != end) ? childSpacing(): 0);
     }
   }
 

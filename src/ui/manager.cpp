@@ -14,6 +14,7 @@
 
 #include "ui/manager.h"
 
+#include "base/iterator.h"
 #include "base/scoped_value.h"
 #include "base/time.h"
 #include "she/display.h"
@@ -562,10 +563,9 @@ void Manager::handleWindowZOrder()
       win_manager->insertChild(0, window);
     else {
       int pos = (int)win_manager->children().size();
-      UI_FOREACH_WIDGET_BACKWARD(win_manager->children(), it) {
-        if (static_cast<Window*>(*it)->isOnTop())
+      for (auto child : base::reverse(win_manager->children())) {
+        if (static_cast<Window*>(child)->isOnTop())
           break;
-
         --pos;
       }
       win_manager->insertChild(pos, window);
@@ -635,7 +635,7 @@ void Manager::enqueueMessage(Message* msg)
 
 Window* Manager::getTopWindow()
 {
-  return static_cast<Window*>(UI_FIRST_WIDGET(children()));
+  return static_cast<Window*>(firstChild());
 }
 
 Window* Manager::getForegroundWindow()
@@ -1168,8 +1168,7 @@ void Manager::onBroadcastMouseMessage(WidgetsList& targets)
 {
   // Ask to the first window in the "children" list to know how to
   // propagate mouse messages.
-  Widget* widget = UI_FIRST_WIDGET(children());
-  if (widget)
+  if (Widget* widget = firstChild())
     widget->broadcastMouseMessage(targets);
 }
 
@@ -1635,7 +1634,7 @@ static bool childs_accept_focus(Widget* widget, bool first)
 static Widget* next_widget(Widget* widget)
 {
   if (!widget->children().empty())
-    return UI_FIRST_WIDGET(widget->children());
+    return widget->firstChild();
 
   while (widget->parent()->type() != kManagerWidget) {
     WidgetsList::const_iterator begin = widget->parent()->children().begin();

@@ -260,11 +260,7 @@ void Window::closeWindow(Widget* closer)
 
 bool Window::isTopLevel()
 {
-  Widget* manager = this->manager();
-  if (!manager->children().empty())
-    return (this == UI_FIRST_WIDGET(manager->children()));
-  else
-    return false;
+  return  manager()->firstChild() == this;
 }
 
 bool Window::onProcessMessage(Message* msg)
