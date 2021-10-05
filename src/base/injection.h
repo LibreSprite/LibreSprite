@@ -152,6 +152,7 @@ to delete AccountManager. Perfectly balanced...
 
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 #include <typeinfo>
 #include <unordered_map>
 #include <unordered_set>
@@ -159,6 +160,7 @@ to delete AccountManager. Perfectly balanced...
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #if defined(__GNUG__) && defined(_DEBUG)
 #include <cxxabi.h>
@@ -192,6 +194,11 @@ public:
   BaseClass& operator * () {return *m_ptr;}
   operator bool () {return m_ptr;}
   operator BaseClass* () {return m_ptr;}
+
+  template <typename Derived = BaseClass>
+  operator std::shared_ptr<Derived>() {
+    return std::dynamic_pointer_cast<Derived>(m_ptr->shared_from_this());
+  }
 
   template<typename Derived = BaseClass>
   Derived* get() const {return dynamic_cast<Derived*>(m_ptr);}
@@ -294,12 +301,42 @@ public:
   class Regular {
   public:
     Regular(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
-      #if _DEBUG
+      // #if _DEBUG
       std::cout << "Registered [" << name << "]" << std::endl;
-      #endif
+      // #endif
       Injectable<BaseClass>::getRegistry()[name] = {
         []()->BaseClass*{return new DerivedClass();},
         [](BaseClass* instance){delete instance;},
+        matchType<DerivedClass>,
+        nullptr,
+        flags
+      };
+    }
+  };
+
+  template<typename DerivedClass>
+  class Shared {
+  public:
+    Shared(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
+      // #if _DEBUG
+      std::cout << "Registered Shared [" << name << "]" << std::endl;
+      // #endif
+      class EnableDerivedLock : public DerivedClass {
+      public:
+        std::shared_ptr<EnableDerivedLock> _injection_lock_;
+      };
+      Injectable<BaseClass>::getRegistry()[name] = {
+        []()->BaseClass*{
+          auto shared = std::make_shared<EnableDerivedLock>();
+          shared->_injection_lock_ = shared;
+          return shared.get();
+        },
+        [](BaseClass* instance){
+          auto edl = static_cast<EnableDerivedLock*>(instance);
+          if (auto lock = edl->_injection_lock_) {
+            edl->_injection_lock_.reset();
+          }
+        },
         matchType<DerivedClass>,
         nullptr,
         flags
