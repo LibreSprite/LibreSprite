@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -81,8 +82,10 @@ protected:
   void saveLayout(Widget* widget, const std::string& str) override;
 };
 
+Widget::Shared<CustomizedGuiManager> _cgm{"GuiManager"};
+
 static she::Display* main_display = NULL;
-static CustomizedGuiManager* manager = NULL;
+static std::shared_ptr<CustomizedGuiManager> manager;
 static Theme* gui_theme = NULL;
 
 static ui::Timer* defered_invalid_timer = nullptr;
@@ -180,8 +183,7 @@ int init_module_gui()
     return -1;
   }
 
-  // Create the default-manager
-  manager = new CustomizedGuiManager();
+  manager = inject<Widget>{"GuiManager"};
   manager->setDisplay(main_display);
 
   // Setup the GUI theme for all widgets
@@ -203,7 +205,7 @@ void exit_module_gui()
   save_gui_config();
 
   delete defered_invalid_timer;
-  delete manager;
+  manager.reset();
 
   // Now we can destroy theme
   CurrentTheme::set(NULL);
@@ -326,7 +328,7 @@ CheckBox* check_button_new(const char *text, int b1, int b2, int b3, int b4)
 void defer_invalid_rect(const gfx::Rect& rc)
 {
   if (!defered_invalid_timer)
-    defered_invalid_timer = new ui::Timer(250, manager);
+    defered_invalid_timer = new ui::Timer(250, manager.get());
 
   defered_invalid_timer->stop();
   defered_invalid_timer->start();
