@@ -465,7 +465,7 @@ bool MenuBox::onProcessMessage(Message* msg)
         MenuItem* highlight = menu->getHighlightedItem();
         if (highlight &&
             !highlight->hasSubmenuOpened() &&
-            highlight->m_submenu_timer == NULL) {
+            !highlight->m_submenu_timer) {
           menu->closeAll();
           highlight->executeClick();
         }
@@ -851,7 +851,7 @@ bool MenuItem::onProcessMessage(Message* msg)
       break;
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == m_submenu_timer.get()) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_submenu_timer) {
         MenuBaseData* base = get_base(this);
 
         ASSERT(hasSubmenu());
@@ -1096,8 +1096,8 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
 
 void MenuItem::startTimer()
 {
-  if (m_submenu_timer == NULL)
-    m_submenu_timer.reset(new Timer(kTimeoutToOpenSubmenu, this));
+  if (!m_submenu_timer)
+    m_submenu_timer = ui::Timer::create(kTimeoutToOpenSubmenu, *this);
 
   m_submenu_timer->start();
 }
@@ -1105,8 +1105,7 @@ void MenuItem::startTimer()
 void MenuItem::stopTimer()
 {
   // Stop timer to open the popup
-  if (m_submenu_timer)
-    m_submenu_timer.reset();
+  m_submenu_timer.reset();
 }
 
 void Menu::closeAll()

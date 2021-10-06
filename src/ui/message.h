@@ -14,7 +14,6 @@
 #include "ui/message_type.h"
 #include "ui/mouse_buttons.h"
 #include "ui/pointer_type.h"
-
 #include <string>
 #include <vector>
 
@@ -27,12 +26,11 @@ namespace ui {
   public:
     using WidgetsList = std::vector<base::safe_ptr<ui::Widget>>;
 
-    Message(MessageType type,
-            KeyModifiers modifiers = kKeyUninitializedModifier);
-    virtual ~Message();
+    Message(MessageType type, KeyModifiers modifiers = kKeyUninitializedModifier);
+    virtual ~Message() = default;
 
     MessageType type() const { return m_type; }
-    const WidgetsList& recipients() const { return m_recipients; }
+    WidgetsList& recipients() { return m_recipients; }
     bool hasRecipients() const { return !m_recipients.empty(); }
     bool isUsed() const { return m_used; }
     void markAsUsed() { m_used = true; }
@@ -155,16 +153,14 @@ namespace ui {
 
   class TimerMessage : public Message {
   public:
-    TimerMessage(int count, Timer* timer)
-      : Message(kTimerMessage), m_count(count), m_timer(timer) {
-    }
+    TimerMessage(int count, std::weak_ptr<Timer> timer) : Message(kTimerMessage), m_count(count), m_timer(timer) {}
 
     int count() const { return m_count; }
-    Timer* timer() { return m_timer; }
+    std::shared_ptr<Timer> timer() { return m_timer.lock(); }
 
   private:
     int m_count;                    // Accumulated calls
-    Timer* m_timer;                 // Timer handle
+    std::weak_ptr<Timer> m_timer;   // Timer handle
   };
 
   class DropFilesMessage : public Message {

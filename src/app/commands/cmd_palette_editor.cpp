@@ -106,7 +106,7 @@ private:
   // what the user is writting in the text field.
   bool m_disableHexUpdate;
 
-  ui::Timer m_redrawTimer;
+  inject<ui::Timer> m_redrawTimer = Timer::create(250, *this);
   bool m_redrawAll;
 
   // True if the palette change must be implant in the UndoHistory
@@ -247,7 +247,6 @@ PaletteEntryEditor::PaletteEntryEditor()
   , m_changeMode(2)
   , m_entryLabel("")
   , m_disableHexUpdate(false)
-  , m_redrawTimer(250, this)
   , m_redrawAll(false)
   , m_implantChange(false)
   , m_selfPalChange(false)
@@ -352,12 +351,12 @@ void PaletteEntryEditor::setColor(const app::Color& color)
 bool PaletteEntryEditor::onProcessMessage(Message* msg)
 {
   if (msg->type() == kTimerMessage &&
-      static_cast<TimerMessage*>(msg)->timer() == &m_redrawTimer) {
+      static_cast<TimerMessage*>(msg)->timer().get() == m_redrawTimer) {
     // Redraw all editors
     if (m_redrawAll) {
       m_redrawAll = false;
       m_implantChange = false;
-      m_redrawTimer.stop();
+      m_redrawTimer->stop();
 
       // Call all observers of PaletteChange event.
       m_selfPalChange = true;
@@ -714,8 +713,8 @@ void PaletteEntryEditor::updateCurrentSpritePalette(const char* operationName)
   PaletteView* palette_editor = ColorBar::instance()->getPaletteView();
   palette_editor->invalidate();
 
-  if (!m_redrawTimer.isRunning())
-    m_redrawTimer.start();
+  if (!m_redrawTimer->isRunning())
+    m_redrawTimer->start();
 
   m_redrawAll = false;
   m_implantChange = true;

@@ -71,7 +71,6 @@ namespace ui {
     void removeMessage(Message* msg);
     void removeMessagesFor(Widget* widget);
     void removeMessagesFor(Widget* widget, MessageType type);
-    void removeMessagesForTimer(Timer* timer);
 
     void addMessageFilter(int message, Widget* widget);
     void removeMessageFilter(int message, Widget* widget);
@@ -110,9 +109,9 @@ namespace ui {
     virtual LayoutIO* onGetLayoutIO();
     virtual void onNewDisplayConfiguration();
 
-    void postConstruct() override {
+    void postInject() override {
       setManager(this);
-      Widget::postConstruct();
+      Widget::postInject();
     }
 
   private:

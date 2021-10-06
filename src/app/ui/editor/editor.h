@@ -293,8 +293,8 @@ namespace app {
     gfx::Point m_padding;
 
     // Marching ants stuff
-    ui::Timer m_antsTimer;
-    int m_antsOffset;
+    inject<ui::Timer> m_antsTimer = ui::Timer::create(100, *this);
+    int m_antsOffset = 0;
 
     base::ScopedConnection m_fgColorChangeConn;
     base::ScopedConnection m_contextBarBrushChangeConn;

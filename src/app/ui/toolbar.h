@@ -66,28 +66,28 @@ namespace app {
     std::map<const tools::ToolGroup*, tools::Tool*> m_selectedInGroup;
 
     // Index of the tool group or special button highlighted.
-    int m_hotIndex;
+    int m_hotIndex = NoneIndex;
 
     // What tool has the mouse above
-    tools::Tool* m_hotTool;
+    tools::Tool* m_hotTool = nullptr;
 
     // True if the popup-window must be opened when a tool-button is hot
-    bool m_openOnHot;
+    bool m_openOnHot = false;
 
     // True if the last MouseDown opened the popup. This is used to
     // close the popup with a second MouseUp event.
-    bool m_openedRecently;
+    bool m_openedRecently = false;
 
     // Window displayed to show a tool-group
-    ui::PopupWindow* m_popupWindow;
+    ui::PopupWindow* m_popupWindow = nullptr;
     class ToolStrip;
-    ToolStrip* m_currentStrip;
+    ToolStrip* m_currentStrip = nullptr;
 
     // Tool-tip window
-    ui::TipWindow* m_tipWindow;
+    ui::TipWindow* m_tipWindow = nullptr;
 
-    ui::Timer m_tipTimer;
-    bool m_tipOpened;
+    inject<ui::Timer> m_tipTimer = ui::Timer::create(300, *this);
+    bool m_tipOpened = false;
 
     base::Connection m_closeConn;
   };

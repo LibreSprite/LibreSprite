@@ -70,8 +70,8 @@ bool TooltipManager::onProcessMessage(Message* msg)
           m_target.widget = it->first;
           m_target.tipInfo = it->second;
 
-          if (m_timer == NULL) {
-            m_timer.reset(new Timer(kTooltipDelayMsecs, this));
+          if (!m_timer) {
+            m_timer = Timer::create(kTooltipDelayMsecs, *this);
             m_timer->Tick.connect(&TooltipManager::onTick, this);
           }
 
@@ -114,7 +114,6 @@ void TooltipManager::onTick()
     else {
       // No enough room for the tooltip
       m_tipWindow.reset();
-      m_timer->stop();
     }
   }
   m_timer->stop();

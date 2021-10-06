@@ -55,9 +55,8 @@ namespace ui {
     // Widget and derivatives should always have protected constructors!
     Widget(WidgetType type = kGenericWidget);
 
-    void postConstruct() override;
-
   public:
+    void postInject() override;
     virtual ~Widget();
 
     base::safe_ptr<Widget> safePtr{this};

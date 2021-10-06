@@ -125,9 +125,6 @@ Manager::~Manager()
     // No more cursor
     set_mouse_cursor(kNoCursor);
 
-    // Destroy timers
-    Timer::checkNoTimers();
-
     // Destroy filters
     for (int c=0; c<NFILTERS; ++c) {
       for (Filters::iterator it=msg_filters[c].begin(), end=msg_filters[c].end();
@@ -910,22 +907,6 @@ void Manager::removeMessagesFor(Widget* widget, MessageType type)
       removeWidgetFromRecipients(widget, msg);
 }
 
-void Manager::removeMessagesForTimer(Timer* timer)
-{
-  for (auto it=msg_queue.begin(); it != msg_queue.end(); ) {
-    Message* msg = *it;
-
-    if (!msg->isUsed() &&
-        msg->type() == kTimerMessage &&
-        static_cast<TimerMessage*>(msg)->timer() == timer) {
-      delete msg;
-      it = msg_queue.erase(it);
-    }
-    else
-      ++it;
-  }
-}
-
 void Manager::addMessageFilter(int message, Widget* widget)
 {
   int c = message;
@@ -1244,8 +1225,12 @@ void Manager::pumpQueue()
 
     // Call Timer::tick() if this is a tick message.
     if (msg->type() == kTimerMessage) {
-      ASSERT(static_cast<TimerMessage*>(msg)->timer() != NULL);
-      static_cast<TimerMessage*>(msg)->timer()->tick();
+      auto timer = static_cast<TimerMessage*>(msg)->timer();
+      ASSERT(timer);
+      if (timer)
+        timer->tick();
+      else
+        msg->recipients().clear();
     }
 
     bool done = false;

@@ -64,10 +64,10 @@ WidgetType register_widget_type()
 
 Widget::Widget(WidgetType type) : m_type(type),
                                   m_theme(CurrentTheme::get()) {
-  getAll().insert(safePtr); // to-do: use postConstruct below instead
+  getAll().insert(safePtr); // to-do: use postInject below instead
 }
 
-void Widget::postConstruct() {
+void Widget::postInject() {
 //   getAll().insert(shared_from_this());
 }
 

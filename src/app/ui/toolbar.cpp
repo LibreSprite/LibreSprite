@@ -78,22 +78,11 @@ static Size getToolIconSize(Widget* widget)
 
 ToolBar* ToolBar::m_instance = NULL;
 
-ToolBar::ToolBar()
-  : Widget(kGenericWidget)
-  , m_openedRecently(false)
-  , m_tipTimer(300, this)
+ToolBar::ToolBar() : Widget(kGenericWidget)
 {
   m_instance = this;
 
   setBorder(gfx::Border(1*guiscale(), 0, 1*guiscale(), 0));
-
-  m_hotTool = NULL;
-  m_hotIndex = NoneIndex;
-  m_openOnHot = false;
-  m_popupWindow = NULL;
-  m_currentStrip = NULL;
-  m_tipWindow = NULL;
-  m_tipOpened = false;
 
   ToolBox* toolbox = App::instance()->toolBox();
   for (ToolIterator it = toolbox->begin(); it != toolbox->end(); ++it) {
@@ -267,11 +256,11 @@ bool ToolBar::onProcessMessage(Message* msg)
       break;
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == &m_tipTimer) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_tipTimer) {
         if (m_tipWindow)
           m_tipWindow->openWindow();
 
-        m_tipTimer.stop();
+        m_tipTimer->stop();
         m_tipOpened = true;
       }
       break;
@@ -526,12 +515,12 @@ void ToolBar::openTipWindow(int group_index, Tool* tool)
   if (m_tipOpened)
     m_tipWindow->openWindow();
   else
-    m_tipTimer.start();
+    m_tipTimer->start();
 }
 
 void ToolBar::closeTipWindow()
 {
-  m_tipTimer.stop();
+  m_tipTimer->stop();
 
   if (m_tipWindow) {
     m_tipWindow->closeWindow(NULL);

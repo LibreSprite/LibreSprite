@@ -62,15 +62,12 @@ private:
   bool m_done;                  // Was the effect completelly applied?
   bool m_cancelled;             // Was the effect cancelled by the user?
   bool m_abort;                 // An exception was thrown
-  ui::Timer m_timer;            // Monitoring timer to update the progress-bar
+  inject<ui::Timer> m_timer = ui::Timer::create(kMonitoringPeriod);            // Monitoring timer to update the progress-bar
   AlertPtr m_alertWindow;       // Alert for the user to cancel the filter-progress if he wants.
   std::string m_error;
 };
 
-FilterWorker::FilterWorker(FilterManagerImpl* filterMgr)
-  : m_filterMgr(filterMgr)
-  , m_timer(kMonitoringPeriod)
-{
+FilterWorker::FilterWorker(FilterManagerImpl* filterMgr) : m_filterMgr(filterMgr) {
   m_filterMgr->setProgressDelegate(this);
 
   m_pos = 0.0;
@@ -82,8 +79,8 @@ FilterWorker::FilterWorker(FilterManagerImpl* filterMgr)
     "<<Applying effect...||&Cancel");
   m_alertWindow->addProgress();
 
-  m_timer.Tick.connect(&FilterWorker::onMonitoringTick, this);
-  m_timer.start();
+  m_timer->Tick.connect(&FilterWorker::onMonitoringTick, this);
+  m_timer->start();
 }
 
 FilterWorker::~FilterWorker()
@@ -101,7 +98,7 @@ void FilterWorker::run()
   m_alertWindow->openWindowInForeground();
 
   // Stop the monitoring timer.
-  m_timer.stop();
+  m_timer->stop();
 
   {
     scoped_lock lock(m_mutex);

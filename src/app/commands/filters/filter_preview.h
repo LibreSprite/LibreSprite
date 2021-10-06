@@ -29,7 +29,7 @@ namespace app {
 
   private:
     FilterManagerImpl* m_filterMgr;
-    ui::Timer m_timer;
+    inject<ui::Timer> m_timer = ui::Timer::create(1, *this);
   };
 
 } // namespace app

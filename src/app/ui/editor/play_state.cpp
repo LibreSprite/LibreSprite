@@ -32,11 +32,10 @@ PlayState::PlayState(bool playOnce)
   : m_editor(nullptr)
   , m_playOnce(playOnce)
   , m_toScroll(false)
-  , m_playTimer(10)
   , m_nextFrameTime(-1)
   , m_pingPongForward(true)
 {
-  m_playTimer.Tick.connect(&PlayState::onPlaybackTick, this);
+  m_playTimer->Tick.connect(&PlayState::onPlaybackTick, this);
 
   // Hook BeforeCommandExecution signal so we know if the user wants
   // to execute other command, so we can stop the animation.
@@ -75,8 +74,8 @@ void PlayState::onEnterState(Editor* editor)
 
   // Maybe we came from ScrollingState and the timer is already
   // running.
-  if (!m_playTimer.isRunning())
-    m_playTimer.start();
+  if (!m_playTimer->isRunning())
+    m_playTimer->start();
 }
 
 EditorState::LeaveAction PlayState::onLeaveState(Editor* editor, EditorState* newState)
@@ -87,7 +86,7 @@ EditorState::LeaveAction PlayState::onLeaveState(Editor* editor, EditorState* ne
 
     // We don't stop the timer if we are going to the ScrollingState
     // (we keep playing the animation).
-    m_playTimer.stop();
+    m_playTimer->stop();
   }
   return KeepState;
 }

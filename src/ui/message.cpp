@@ -38,10 +38,6 @@ Message::Message(MessageType type, KeyModifiers modifiers)
   }
 }
 
-Message::~Message()
-{
-}
-
 void Message::addRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);
