@@ -77,7 +77,6 @@ Widget::~Widget()
   if (this->type() != kManagerWidget) {
     Manager* manager = this->manager();
     manager->freeWidget(this);
-    manager->removeMessagesFor(this);
     manager->removeMessageFilterFor(this);
   }
 
@@ -92,13 +91,9 @@ Widget::~Widget()
 
   // Delete fixed size hint if it isn't nullptr
   delete m_sizeHint;
-
-  // // Low level free. To-do: remove this. It is not necessary.
-  // getAll().erase(this);
 }
 
-void Widget::deferDelete()
-{
+void Widget::deferDelete() {
   manager()->addToGarbage(this);
 }
 

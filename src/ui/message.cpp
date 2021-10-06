@@ -46,23 +46,21 @@ void Message::addRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);
 
-  m_recipients.push_back(widget);
+  m_recipients.push_back(widget->safePtr);
 }
 
 void Message::prependRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);
 
-  m_recipients.insert(m_recipients.begin(), widget);
+  m_recipients.insert(m_recipients.begin(), widget->safePtr);
 }
 
 void Message::removeRecipient(Widget* widget)
 {
-  for (WidgetsList::iterator
-         it = m_recipients.begin(),
-         end = m_recipients.end(); it != end; ++it) {
-    if (*it == widget)
-      *it = NULL;
+  for (auto& entry :  m_recipients) {
+    if (entry == widget)
+      entry = nullptr;
   }
 }
 

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "base/safe_ptr.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
 #include "ui/base.h"
@@ -13,7 +14,6 @@
 #include "ui/message_type.h"
 #include "ui/mouse_buttons.h"
 #include "ui/pointer_type.h"
-#include "ui/widgets_list.h"
 
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@ namespace ui {
 
   class Message {
   public:
-    typedef WidgetsList::iterator& recipients_iterator;
+    using WidgetsList = std::vector<base::safe_ptr<ui::Widget>>;
 
     Message(MessageType type,
             KeyModifiers modifiers = kKeyUninitializedModifier);
