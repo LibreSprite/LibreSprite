@@ -56,10 +56,10 @@ static int32_t& getelem(lua_State *L) {
   static std::string errMessage;
   NumArray *a = checkarray(L);
   int index = luaL_checkinteger(L, 2);
-  if (index < 1 || index > a->size) {
+  if (index < 1 || index > static_cast<int>(a->size)) {
     errMessage = "Index " + std::to_string(index) + " is out of range [1, " + std::to_string(a->size) + "]";
   }
-  luaL_argcheck(L, 1 <= index && index <= a->size, 2, errMessage.c_str());
+  luaL_argcheck(L, 1 <= index && index <= static_cast<int>(a->size), 2, errMessage.c_str());
   return a->values[index - 1];
 }
 

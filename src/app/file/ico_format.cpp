@@ -149,6 +149,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   bmpHeader.yPelsPerMeter        = fgetl(f); // unused for ico
   bmpHeader.clrUsed              = fgetl(f); // unused for ico
   bmpHeader.clrImportant         = fgetl(f); // unused for ico
+  (void) bmpHeader;
 
   // Read the palette
   if (entry.bpp <= 8) {

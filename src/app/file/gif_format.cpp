@@ -579,7 +579,7 @@ private:
     for (int y=0; y<frameBounds.h; ++y) {
       for (int x=0; x<frameBounds.w; ++x) {
         color_t i = get_pixel_fast<IndexedTraits>(frameImage, x, y);
-        if (i == m_localTransparentIndex)
+        if (static_cast<int>(i) == m_localTransparentIndex)
           continue;
 
         i = m_remap[i];
@@ -598,7 +598,7 @@ private:
     for (int y=0; y<frameBounds.h; ++y) {
       for (int x=0; x<frameBounds.w; ++x) {
         color_t i = get_pixel_fast<IndexedTraits>(frameImage, x, y);
-        if (i == m_localTransparentIndex)
+        if (static_cast<int>(i) == m_localTransparentIndex)
           continue;
 
         i = rgba(

@@ -669,7 +669,7 @@ void ColorBar::setTransparentIndex(int index)
     Sprite* sprite = writer.sprite();
     if (sprite &&
         sprite->pixelFormat() == IMAGE_INDEXED &&
-        sprite->transparentColor() != index) {
+        static_cast<int>(sprite->transparentColor()) != index) {
       // TODO merge this code with SpritePropertiesCommand
       Transaction transaction(writer.context(), "Set Transparent Color");
       DocumentApi api = writer.document()->getApi(transaction);
