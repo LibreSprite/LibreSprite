@@ -20,85 +20,61 @@
 
 namespace ui {
 
-typedef std::list<Timer*> Timers;
+  static base::weak_set<Timer> timers; // Registered timers
 
-static Timers timers; // Registered timers
+  static Timer::Shared<Timer> _timer("");
 
-Timer::Timer(int interval, Widget* owner)
-  : m_owner(owner ? owner: Manager::getDefault())
-  , m_interval(interval)
-  , m_running(false)
-  , m_lastTick(0)
-{
-  ASSERT(m_owner != nullptr);
+  void Timer::postInject() {
+    m_owner = Manager::getDefault()->safePtr;
+    timers.insert(safePtr);
+  }
 
-  timers.push_back(this);
-}
+  void Timer::postInject(int interval, Widget& owner) {
+    m_owner = owner.safePtr;
+    m_interval = interval;
+    timers.insert(safePtr);
+  }
 
-Timer::~Timer()
-{
-  Timers::iterator it = std::find(timers.begin(), timers.end(), this);
-  ASSERT(it != timers.end());
-  timers.erase(it);
+  void Timer::start() {
+    m_lastTick = base::current_tick();
+    m_running = true;
+  }
 
-  // Remove messages of this timer in the queue
-  Manager::getDefault()->removeMessagesForTimer(this);
-}
+  void Timer::stop() {
+    m_running = false;
+  }
 
-void Timer::start()
-{
-  m_lastTick = base::current_tick();
-  m_running = true;
-}
+  void Timer::tick() {
+    onTick();
+  }
 
-void Timer::stop()
-{
-  m_running = false;
-}
+  void Timer::setInterval(int interval) {
+    m_interval = interval;
+  }
 
-void Timer::tick()
-{
-  onTick();
-}
+  void Timer::onTick() {
+    // Fire Tick signal.
+    Tick();
+  }
 
-void Timer::setInterval(int interval)
-{
-  m_interval = interval;
-}
-
-void Timer::onTick()
-{
-  // Fire Tick signal.
-  Tick();
-}
-
-void Timer::pollTimers()
-{
-  // Generate messages for timers
-  if (!timers.empty()) {
+  void Timer::pollTimers() {
+    // Generate messages for timers
     base::tick_t t = base::current_tick();
 
-    for (Timers::iterator it=timers.begin(), end=timers.end(); it != end; ++it) {
-      Timer* timer = *it;
-      if (timer && timer->isRunning()) {
+    for (auto timer : timers) {
+      if (timer->isRunning()) {
         int64_t count = ((t - timer->m_lastTick) / timer->m_interval);
         if (count > 0) {
           timer->m_lastTick += count * timer->m_interval;
 
           ASSERT(timer->m_owner != nullptr);
 
-          Message* msg = new TimerMessage(count, timer);
+          Message* msg = new TimerMessage(count, timer->shared_from_this());
           msg->addRecipient(timer->m_owner);
           Manager::getDefault()->enqueueMessage(msg);
         }
       }
     }
   }
-}
-
-void Timer::checkNoTimers()
-{
-  ASSERT(timers.empty());
-}
 
 } // namespace ui
