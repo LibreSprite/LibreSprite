@@ -24,7 +24,6 @@ namespace ui {
     void onPaint(PaintEvent& ev) override;
     void onResize(ResizeEvent& ev) override;
     void onSizeHint(SizeHintEvent& ev) override;
-    bool onProcessMessage(Message* msg) override;
 
   private:
     std::string m_value;
