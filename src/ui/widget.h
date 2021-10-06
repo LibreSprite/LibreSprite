@@ -415,7 +415,7 @@ namespace ui {
     WidgetsList m_children;                        // Sub-widgets
     Widget* m_parent = nullptr;                    // Who is the parent?
     Manager* m_manager = nullptr;
-    gfx::Size* m_sizeHint = nullptr;
+    std::unique_ptr<gfx::Size> m_sizeHint;
     Properties m_properties;
 
     // Widget size limits

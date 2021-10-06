@@ -88,9 +88,6 @@ Widget::~Widget()
   // m_children.
   while (!m_children.empty())
     delete m_children.front();
-
-  // Delete fixed size hint if it isn't nullptr
-  delete m_sizeHint;
 }
 
 void Widget::deferDelete() {
@@ -1198,8 +1195,7 @@ Size Widget::sizeHint(const Size& fitIn)
 */
 void Widget::setSizeHint(const Size& fixedSize)
 {
-  delete m_sizeHint;
-  m_sizeHint = new Size(fixedSize);
+  m_sizeHint.reset(new Size(fixedSize));
 }
 
 void Widget::setSizeHint(int fixedWidth, int fixedHeight)
