@@ -45,25 +45,7 @@ using namespace app::skin;
 static int convert_align_value_to_flags(const char *value);
 static int int_attr(const TiXmlElement* elem, const char* attribute_name, int default_value);
 
-WidgetLoader::WidgetLoader()
-  : m_tooltipManager(NULL)
-{
-}
-
-WidgetLoader::~WidgetLoader()
-{
-  for (TypeCreatorsMap::iterator
-         it=m_typeCreators.begin(), end=m_typeCreators.end(); it != end; ++it)
-    it->second->dispose();
-}
-
-void WidgetLoader::addWidgetType(const char* tagName, IWidgetTypeCreator* creator)
-{
-  m_typeCreators[tagName] = creator;
-}
-
-Widget* WidgetLoader::loadWidget(const char* fileName, const char* widgetId, ui::Widget* widget)
-{
+Widget* WidgetLoader::loadWidget(const char* fileName, const char* widgetId, ui::Widget* widget) {
   std::string buf;
 
   ResourceFinder rf;
@@ -115,17 +97,7 @@ Widget* WidgetLoader::loadWidgetFromXmlFile(
 Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget* root, Widget* parent, Widget* widget)
 {
   const std::string elem_name = elem->Value();
-
-  // TODO error handling: add a message if the widget is bad specified
-
-  // Try to use one of the creators.
-  TypeCreatorsMap::iterator it = m_typeCreators.find(elem_name);
-
-  if (it != m_typeCreators.end()) {
-    if (!widget)
-      widget = it->second->createWidgetFromXml(elem);
-  }
-  else if (elem_name == "panel") {
+  if (elem_name == "panel") {
     if (!widget)
       widget = new Panel();
   }
