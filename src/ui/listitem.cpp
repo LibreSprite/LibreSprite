@@ -66,6 +66,17 @@ void ListItem::onSizeHint(SizeHintEvent& ev)
   ev.setSizeHint(Size(w, h));
 }
 
-
+bool ListItem::onProcessMessage(Message* msgClick){
+  switch(msgClick->type()){
+    case kDoubleClickMessage:
+      if (parent())
+      {
+        return parent()->sendMessage(msgClick);
+      }else 
+        break;
+    break;
+  }
+  return Widget::onProcessMessage(msgClick);
+}
 
 } // namespace ui
