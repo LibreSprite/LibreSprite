@@ -110,6 +110,11 @@ namespace ui {
     virtual LayoutIO* onGetLayoutIO();
     virtual void onNewDisplayConfiguration();
 
+    void postConstruct() override {
+      setManager(this);
+      Widget::postConstruct();
+    }
+
   private:
     void generateSetCursorMessage(const gfx::Point& mousePos,
                                   KeyModifiers modifiers,

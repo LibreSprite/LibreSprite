@@ -60,19 +60,10 @@ WidgetType register_widget_type()
   return (WidgetType)type++;
 }
 
-Widget::Widget(WidgetType type)
-  : m_type(type)
-  , m_flags(0)
-  , m_theme(CurrentTheme::get())
-  , m_font(nullptr)
-  , m_bgColor(gfx::ColorNone)
-  , m_bounds(0, 0, 0, 0)
-  , m_parent(nullptr)
-  , m_sizeHint(nullptr)
-  , m_minSize(0, 0)
-  , m_maxSize(INT_MAX, INT_MAX)
-  , m_childSpacing(0)
-{
+Widget::Widget(WidgetType type) : m_type(type),
+                                  m_theme(CurrentTheme::get()) {}
+
+void Widget::postConstruct() {
   details::addWidget(this);
 }
 
@@ -357,8 +348,7 @@ bool Widget::isFocusMagnet() const
 // PARENTS & CHILDREN
 // ===============================================================
 
-Window* Widget::window()
-{
+Window* Widget::window() {
   Widget* widget = this;
 
   while (widget) {
@@ -371,18 +361,17 @@ Window* Widget::window()
   return NULL;
 }
 
-Manager* Widget::manager()
-{
-  Widget* widget = this;
+Manager* Widget::manager() {
+  return m_manager ?: Manager::getDefault();
+}
 
-  while (widget) {
-    if (widget->type() == kManagerWidget)
-      return static_cast<Manager*>(widget);
-
-    widget = widget->m_parent;
+void Widget::setManager(Manager* manager) {
+  if (manager == m_manager)
+    return;
+  m_manager = manager;
+  for (auto child : children()) {
+    child->setManager(manager);
   }
-
-  return Manager::getDefault();
 }
 
 void Widget::getParents(bool ascendant, WidgetsList& parents)
@@ -496,6 +485,7 @@ void Widget::addChild(Widget* child)
 
   m_children.push_back(child);
   child->m_parent = this;
+  child->setManager(manager());
 }
 
 void Widget::removeChild(WidgetsList::iterator& it)

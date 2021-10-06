@@ -20,6 +20,7 @@
 #include "ui/widget_type.h"
 #include "ui/widgets_list.h"
 
+#include <climits>
 #include <map>
 #include <memory>
 #include <string>
@@ -51,6 +52,8 @@ namespace ui {
   protected:
     // Widget and derivatives should always have protected constructors!
     Widget(WidgetType type = kGenericWidget);
+
+    void postConstruct() override;
 
   public:
     virtual ~Widget();
@@ -387,30 +390,34 @@ namespace ui {
     virtual void onSetText();
     virtual void onSetBgColor();
 
+    void setManager(Manager* manager);
+
   private:
     void removeChild(WidgetsList::iterator& it);
     void paint(Graphics* graphics, const gfx::Region& drawRegion);
     bool paintEvent(Graphics* graphics);
 
-    WidgetType m_type;           // Widget's type
-    std::string m_id;            // Widget's id
-    int m_flags;                 // Special boolean properties (see flags in ui/base.h)
-    Theme* m_theme;              // Widget's theme
-    std::string m_text;          // Widget text
-    mutable she::Font* m_font;   // Cached font returned by the theme
-    gfx::Color m_bgColor;        // Background color
+    WidgetType m_type;                             // Widget's type
+    std::string m_id;                              // Widget's id
+    int m_flags = 0;                               // Special boolean properties (see flags in ui/base.h)
+    Theme* m_theme = nullptr;                      // Widget's theme
+    std::string m_text;                            // Widget text
+    mutable she::Font* m_font = nullptr;           // Cached font returned by the theme
+    gfx::Color m_bgColor = gfx::ColorNone;         // Background color
     gfx::Rect m_bounds;
-    gfx::Region m_updateRegion;   // Region to be redrawed.
-    WidgetsList m_children;       // Sub-widgets
-    Widget* m_parent;             // Who is the parent?
-    gfx::Size* m_sizeHint;
+    gfx::Region m_updateRegion;                    // Region to be redrawed.
+    WidgetsList m_children;                        // Sub-widgets
+    Widget* m_parent = nullptr;                    // Who is the parent?
+    Manager* m_manager = nullptr;
+    gfx::Size* m_sizeHint = nullptr;
     Properties m_properties;
 
     // Widget size limits
-    gfx::Size m_minSize, m_maxSize;
+    gfx::Size m_minSize{0, 0};
+    gfx::Size m_maxSize{INT_MAX, INT_MAX};
 
-    gfx::Border m_border;       // Border separation with the parent
-    int m_childSpacing;         // Separation between children
+    gfx::Border m_border;                          // Border separation with the parent
+    int m_childSpacing = 0;                        // Separation between children
 
     DISABLE_COPYING(Widget);
   };
