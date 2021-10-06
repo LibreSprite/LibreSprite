@@ -210,7 +210,6 @@ private:
 
 template<typename BaseClass_>
 class Injectable {
-public:
   using BaseClass = BaseClass_;
   using AttachFunction = std::function<BaseClass*()>;
   using DetachFunction = std::function<void(BaseClass*)>;
@@ -227,6 +226,11 @@ public:
   };
 
   using Registry = std::unordered_map<std::string, RegistryEntry>;
+
+protected:
+  virtual void postConstruct(){}
+
+public:
 
   virtual std::string getName() const {
 #ifdef HAS_DEMANGLE
@@ -301,11 +305,20 @@ public:
   class Regular {
   public:
     Regular(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
-      // #if _DEBUG
+      #if _DEBUG
       std::cout << "Registered [" << name << "]" << std::endl;
-      // #endif
+      #endif
+
+      class Wrapper : public DerivedClass {
+      public:
+        DerivedClass* _callPostConstruct_() {
+          this->postConstruct();
+          return this;
+        }
+      };
+
       Injectable<BaseClass>::getRegistry()[name] = {
-        []()->BaseClass*{return new DerivedClass();},
+        []()->BaseClass*{return (new Wrapper())->_callPostConstruct_();},
         [](BaseClass* instance){delete instance;},
         matchType<DerivedClass>,
         nullptr,
@@ -318,17 +331,24 @@ public:
   class Shared {
   public:
     Shared(const std::string& name, const std::unordered_set<std::string>& flags = {}) {
-      // #if _DEBUG
+      #if _DEBUG
       std::cout << "Registered Shared [" << name << "]" << std::endl;
-      // #endif
+      #endif
+
       class EnableDerivedLock : public DerivedClass {
       public:
+        void callPostConstruct(std::shared_ptr<EnableDerivedLock> self) {
+          _injection_lock_ = self;
+          this->postConstruct();
+        }
+
         std::shared_ptr<EnableDerivedLock> _injection_lock_;
       };
+
       Injectable<BaseClass>::getRegistry()[name] = {
         []()->BaseClass*{
           auto shared = std::make_shared<EnableDerivedLock>();
-          shared->_injection_lock_ = shared;
+          shared->callPostConstruct(shared);
           return shared.get();
         },
         [](BaseClass* instance){
@@ -351,6 +371,11 @@ public:
       Injectable<BaseClass>::getRegistry()[name] = {
         []{
           static DerivedClass instance;
+          static bool wasInit = false;
+          if (!wasInit) {
+            wasInit = true;
+            instance.postConstruct();
+          }
           return &instance;
         },
         [](BaseClass* ptr){},
