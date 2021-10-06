@@ -73,6 +73,16 @@ namespace base {
     safe_ptr(safe_ptr<Type>&& other) : storage{other.storage} {}
     safe_ptr<Type>& operator = (safe_ptr<Type>&& other) {storage = other.storage; return *this;}
 
+    bool operator == (Type* other) {
+      if (!storage) return !other;
+      return *storage == other;
+    }
+
+    bool operator != (Type* other) {
+      if (!storage) return other;
+      return *storage != other;
+    }
+
     operator bool () const {
       return storage && *storage;
     }
