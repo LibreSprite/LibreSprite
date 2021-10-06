@@ -89,7 +89,7 @@ namespace base {
 
     template<typename Derived = Type>
     Derived* get() const {
-      return *storage;
+      return storage ? *storage : nullptr;
     }
 
     Type* operator -> () const {
