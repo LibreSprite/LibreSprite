@@ -212,7 +212,7 @@ bool ToolBar::onProcessMessage(Message* msg)
         if (ToolStrip* strip = dynamic_cast<ToolStrip*>(pick)) {
           releaseMouse();
 
-          MouseMessage* mouseMsg2 = new MouseMessage(
+          auto mouseMsg2 = std::make_shared<MouseMessage>(
             kMouseDownMessage,
             mouseMsg->pointerType(),
             mouseMsg->buttons(),
@@ -628,7 +628,7 @@ bool ToolBar::ToolStrip::onProcessMessage(Message* msg)
         if (ToolBar* bar = dynamic_cast<ToolBar*>(pick)) {
           releaseMouse();
 
-          MouseMessage* mouseMsg2 = new MouseMessage(
+          auto mouseMsg2 = std::make_shared<MouseMessage>(
             kMouseDownMessage,
             mouseMsg->pointerType(),
             mouseMsg->buttons(),

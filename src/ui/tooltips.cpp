@@ -41,12 +41,6 @@ TooltipManager::TooltipManager()
   setVisible(false);
 }
 
-TooltipManager::~TooltipManager()
-{
-  Manager* manager = Manager::getDefault();
-  manager->removeMessageFilterFor(this);
-}
-
 void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign)
 {
   m_tips[widget] = TipInfo(text, arrowAlign);

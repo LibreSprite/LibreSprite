@@ -148,10 +148,7 @@ Menu::~Menu()
 //////////////////////////////////////////////////////////////////////
 // MenuBox
 
-MenuBox::MenuBox(WidgetType type)
- : Widget(type)
- , m_base(NULL)
-{
+MenuBox::MenuBox(WidgetType type) : Widget(type) {
   this->setFocusStop(true);
   initTheme();
 }
@@ -162,8 +159,6 @@ MenuBox::~MenuBox()
     m_base->is_filtering = false;
     Manager::getDefault()->removeMessageFilter(kMouseDownMessage, this);
   }
-
-  delete m_base;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -216,11 +211,9 @@ Menu* MenuBox::getMenu()
     return static_cast<Menu*>(children().front());
 }
 
-MenuBaseData* MenuBox::createBase()
-{
-  delete m_base;
-  m_base = new MenuBaseData();
-  return m_base;
+MenuBaseData* MenuBox::createBase() {
+  m_base.reset(new MenuBaseData());
+  return m_base.get();
 }
 
 Menu* MenuItem::getSubmenu()
@@ -1006,14 +999,9 @@ bool MenuItem::inBar()
      parent()->parent()->type() == kMenuBarWidget);
 }
 
-void MenuItem::openSubmenu(bool select_first)
-{
-  Widget* menu;
-  Message* msg;
-
+void MenuItem::openSubmenu(bool select_first) {
   ASSERT(hasSubmenu());
-
-  menu = this->parent();
+  Widget* menu = this->parent();
 
   // The menu item is already opened?
   ASSERT(m_submenu_menubox == NULL);
@@ -1033,7 +1021,7 @@ void MenuItem::openSubmenu(bool select_first)
     }
   }
 
-  msg = new OpenMenuItemMessage(select_first);
+  auto msg = std::make_shared<OpenMenuItemMessage>(select_first);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 
@@ -1056,16 +1044,11 @@ void MenuItem::openSubmenu(bool select_first)
   }
 }
 
-void MenuItem::closeSubmenu(bool last_of_close_chain)
-{
-  Widget* menu;
-  Message* msg;
-  MenuBaseData* base;
-
+void MenuItem::closeSubmenu(bool last_of_close_chain) {
   ASSERT(m_submenu_menubox != NULL);
 
   // First: recursively close the children
-  menu = m_submenu_menubox->getMenu();
+  auto menu = m_submenu_menubox->getMenu();
   ASSERT(menu != NULL);
 
   for (auto child : menu->children()) {
@@ -1077,7 +1060,7 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
   }
 
   // Second: now we can close the 'menuitem'
-  msg = new CloseMenuItemMessage(last_of_close_chain);
+  auto msg = std::make_shared<CloseMenuItemMessage>(last_of_close_chain);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 
@@ -1085,7 +1068,7 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
   // responsibility to set is_processing flag to true.
   if (last_of_close_chain) {
     // Get the 'base'
-    base = get_base(this);
+    auto base = get_base(this);
     ASSERT(base != NULL);
     ASSERT(base->is_processing == false);
 
@@ -1156,9 +1139,8 @@ void Menu::closeAll()
     base_menubox->closePopup();
 }
 
-void MenuBox::closePopup()
-{
-  Message* msg = new Message(kClosePopupMessage);
+void MenuBox::closePopup() {
+  auto msg = std::make_shared<Message>(kClosePopupMessage);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 }
@@ -1179,10 +1161,9 @@ void MenuBox::cancelMenuLoop()
   }
 }
 
-void MenuItem::executeClick()
-{
+void MenuItem::executeClick() {
   // Send the message
-  Message* msg = new Message(kExecuteMenuItemMessage);
+  auto msg = std::make_shared<Message>(kExecuteMenuItemMessage);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 }

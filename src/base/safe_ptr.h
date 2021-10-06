@@ -105,6 +105,10 @@ namespace base {
       return static_cast<T>(*storage);
     }
 
+    void reset() {
+      storage.reset();
+    }
+
     ~safe_ptr(){
       if (owning)
         *storage = 0;

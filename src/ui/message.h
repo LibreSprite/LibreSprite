@@ -28,12 +28,11 @@ namespace ui {
 
     Message(MessageType type, KeyModifiers modifiers = kKeyUninitializedModifier);
     virtual ~Message() = default;
+    virtual bool send();
 
     MessageType type() const { return m_type; }
     WidgetsList& recipients() { return m_recipients; }
     bool hasRecipients() const { return !m_recipients.empty(); }
-    bool isUsed() const { return m_used; }
-    void markAsUsed() { m_used = true; }
     KeyModifiers modifiers() const { return m_modifiers; }
     bool shiftPressed() const { return (m_modifiers & kKeyShiftModifier) == kKeyShiftModifier; }
     bool ctrlPressed() const { return (m_modifiers & kKeyCtrlModifier) == kKeyCtrlModifier; }
@@ -52,7 +51,12 @@ namespace ui {
 
     void broadcastToChildren(Widget* widget);
 
+  protected:
+    virtual bool sendToWidget(Widget* widget);
+
   private:
+    void report(Widget* widget);
+
     MessageType m_type;         // Type of message
     WidgetsList m_recipients; // List of recipients of the message
     bool m_used;              // Was used
@@ -91,6 +95,9 @@ namespace ui {
 
     int count() const { return m_count; }
     const gfx::Rect& rect() const { return m_rect; }
+
+  protected:
+    bool sendToWidget(Widget* widget) override;
 
   private:
     int m_count;             // Cound=0 if it's last msg of draw-chain
@@ -154,6 +161,7 @@ namespace ui {
   class TimerMessage : public Message {
   public:
     TimerMessage(int count, std::weak_ptr<Timer> timer) : Message(kTimerMessage), m_count(count), m_timer(timer) {}
+    bool send() override;
 
     int count() const { return m_count; }
     std::shared_ptr<Timer> timer() { return m_timer.lock(); }

@@ -69,7 +69,7 @@ namespace ui {
 
           ASSERT(timer->m_owner != nullptr);
 
-          Message* msg = new TimerMessage(count, timer->shared_from_this());
+          auto msg = std::make_shared<TimerMessage>(count, timer->shared_from_this());
           msg->addRecipient(timer->m_owner);
           Manager::getDefault()->enqueueMessage(msg);
         }

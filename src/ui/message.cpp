@@ -38,6 +38,63 @@ Message::Message(MessageType type, KeyModifiers modifiers)
   }
 }
 
+void Message::report(Widget* widget) {
+#ifdef REPORT_EVENTS
+  static char *msg_name[] = {
+    "kOpenMessage",
+    "kCloseMessage",
+    "kCloseDisplayMessage",
+    "kResizeDisplayMessage",
+    "kPaintMessage",
+    "kTimerMessage",
+    "kDropFilesMessage",
+    "kWinMoveMessage",
+
+    "kKeyDownMessage",
+    "kKeyUpMessage",
+    "kFocusEnterMessage",
+    "kFocusLeaveMessage",
+
+    "kMouseDownMessage",
+    "kMouseUpMessage",
+    "kDoubleClickMessage",
+    "kMouseEnterMessage",
+    "kMouseLeaveMessage",
+    "kMouseMoveMessage",
+    "kSetCursorMessage",
+    "kMouseWheelMessage",
+    "kTouchMagnifyMessage",
+  };
+  const char* string =
+    (msg->type() >= kOpenMessage &&
+     msg->type() <= kMouseWheelMessage) ? msg_name[msg->type()]:
+    "Unknown";
+
+  std::cout << "Event " << msg->type() << " (" << string << ") "
+            << "for " << typeid(*widget).name();
+  if (!widget->id().empty())
+    std::cout << " (" << widget->id() << ")";
+  std::cout << std::endl;
+#endif
+}
+
+bool Message::send(){
+  for (auto widget : m_recipients) {
+    if (!widget)
+      continue;
+
+    report(widget);
+
+    if (sendToWidget(widget))
+      break;
+  }
+  return true;
+}
+
+bool Message::sendToWidget(Widget* widget) {
+  return widget->sendMessage(this);
+}
+
 void Message::addRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);

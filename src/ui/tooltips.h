@@ -21,7 +21,6 @@ namespace ui {
   class TooltipManager : public Widget {
   public:
     TooltipManager();
-    ~TooltipManager();
 
     void addTooltipFor(Widget* widget, const std::string& text, int arrowAlign = 0);
     void removeTooltipFor(Widget* widget);

@@ -496,8 +496,6 @@ void Window::moveWindow(const gfx::Rect& rect, bool use_blit)
 #define FLAGS (DrawableRegionFlags)(kCutTopWindows | kUseChildArea)
 
   Manager* manager = this->manager();
-  Message* msg;
-
   manager->dispatchMessages();
 
   // Get the window's current position
@@ -509,7 +507,7 @@ void Window::moveWindow(const gfx::Rect& rect, bool use_blit)
   Rect man_pos = manager->bounds();
 
   // Send a kWinMoveMessage message to the window
-  msg = new Message(kWinMoveMessage);
+  auto msg = std::make_shared<Message>(kWinMoveMessage);
   msg->addRecipient(this);
   manager->enqueueMessage(msg);
 

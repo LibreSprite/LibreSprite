@@ -77,7 +77,6 @@ Widget::~Widget()
   if (this->type() != kManagerWidget) {
     Manager* manager = this->manager();
     manager->freeWidget(this);
-    manager->removeMessageFilterFor(this);
   }
 
   // Remove from parent
@@ -883,11 +882,8 @@ void Widget::setMaxSize(const gfx::Size& sz)
   m_maxSize = sz;
 }
 
-void Widget::flushRedraw()
-{
+void Widget::flushRedraw() {
   std::queue<Widget*> processing;
-  Message* msg;
-
   if (hasFlags(DIRTY)) {
     disableFlags(DIRTY);
     processing.push(this);
@@ -928,10 +924,8 @@ void Widget::flushRedraw()
       int count = nrects-1;
       for (c=0; c<nrects; ++c, ++it, --count) {
         // Create the draw message
-        msg = new PaintMessage(count, *it);
+        auto msg = std::make_shared<PaintMessage>(count, *it);
         msg->addRecipient(widget);
-
-        // Enqueue the draw message
         manager->enqueueMessage(msg);
       }
 
@@ -1245,8 +1239,7 @@ bool Widget::offerCapture(ui::MouseMessage* mouseMsg, int widget_type)
     Widget* pick = manager()->pick(mouseMsg->position());
     if (pick && pick != this && pick->type() == widget_type) {
       releaseMouse();
-
-      MouseMessage* mouseMsg2 = new MouseMessage(
+      auto mouseMsg2 = std::make_shared<MouseMessage>(
         kMouseDownMessage,
         mouseMsg->pointerType(),
         mouseMsg->buttons(),
@@ -1330,20 +1323,18 @@ bool Widget::onProcessMessage(Message* msg)
       else
         break;
 
-    case kDoubleClickMessage:
+    case kDoubleClickMessage: {
       // Convert double clicks into mouse down
-      if (kMouseDownMessage) {
-        MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
-        MouseMessage mouseMsg2(kMouseDownMessage,
-                               mouseMsg->pointerType(),
-                               mouseMsg->buttons(),
-                               mouseMsg->modifiers(),
-                               mouseMsg->position(),
-                               mouseMsg->wheelDelta());
-
-        sendMessage(&mouseMsg2);
-      }
+      MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
+      MouseMessage mouseMsg2(kMouseDownMessage,
+                             mouseMsg->pointerType(),
+                             mouseMsg->buttons(),
+                             mouseMsg->modifiers(),
+                             mouseMsg->position(),
+                             mouseMsg->wheelDelta());
+      sendMessage(&mouseMsg2);
       break;
+    }
 
     case kMouseDownMessage:
     case kMouseUpMessage:
