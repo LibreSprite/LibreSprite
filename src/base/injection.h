@@ -169,12 +169,20 @@ to delete AccountManager. Perfectly balanced...
 
 template<typename BaseClass_>
 class inject {
+  void doInjection(const std::string& name);
+
 public:
   using BaseClass = BaseClass_;
 
   inject(std::nullptr_t){}
 
-  inject(const std::string& name = "");
+  template<typename...Args>
+  inject(const std::string& name = "", Args&& ... args) {
+    doInjection(name);
+    if (m_ptr) {
+      m_ptr->postInject(std::forward<Args>(args)...);
+    }
+  }
 
   inject(inject&& other) {
     std::swap(m_ptr, other.m_ptr);
@@ -190,10 +198,14 @@ public:
     std::swap(onDetach, other.onDetach);
   }
 
-  BaseClass* operator -> () {return m_ptr;}
-  BaseClass& operator * () {return *m_ptr;}
-  operator bool () {return m_ptr;}
-  operator BaseClass* () {return m_ptr;}
+  bool operator == (BaseClass* other) {return m_ptr == other;}
+  bool operator != (BaseClass* other) {return m_ptr == other;}
+
+  BaseClass* operator -> () const {return m_ptr;}
+  BaseClass& operator * () const {return *m_ptr;}
+
+  operator bool () const {return m_ptr;}
+  operator BaseClass* () const {return m_ptr;}
 
   template <typename Derived = BaseClass>
   operator std::shared_ptr<Derived>() {
@@ -202,6 +214,10 @@ public:
 
   template<typename Derived = BaseClass>
   Derived* get() const {return dynamic_cast<Derived*>(m_ptr);}
+
+  void reset() {
+    *this = inject<BaseClass>{nullptr};
+  }
 
 private:
   BaseClass *m_ptr = nullptr;
@@ -226,11 +242,15 @@ class Injectable {
   };
 
   using Registry = std::unordered_map<std::string, RegistryEntry>;
-
-protected:
-  virtual void postConstruct(){}
+  friend class inject<BaseClass_>;
 
 public:
+  virtual void postInject(){}
+
+  template<typename ... Args>
+  static inject<BaseClass_> create(Args&& ... args) {
+    return {"", std::forward<Args>(args)...};
+  }
 
   virtual std::string getName() const {
 #ifdef HAS_DEMANGLE
@@ -309,16 +329,8 @@ public:
       std::cout << "Registered [" << name << "]" << std::endl;
       #endif
 
-      class Wrapper : public DerivedClass {
-      public:
-        DerivedClass* _callPostConstruct_() {
-          this->postConstruct();
-          return this;
-        }
-      };
-
       Injectable<BaseClass>::getRegistry()[name] = {
-        []()->BaseClass*{return (new Wrapper())->_callPostConstruct_();},
+        []()->BaseClass*{return new DerivedClass();},
         [](BaseClass* instance){delete instance;},
         matchType<DerivedClass>,
         nullptr,
@@ -337,18 +349,13 @@ public:
 
       class EnableDerivedLock : public DerivedClass {
       public:
-        void callPostConstruct(std::shared_ptr<EnableDerivedLock> self) {
-          _injection_lock_ = self;
-          this->postConstruct();
-        }
-
         std::shared_ptr<EnableDerivedLock> _injection_lock_;
       };
 
       Injectable<BaseClass>::getRegistry()[name] = {
         []()->BaseClass*{
           auto shared = std::make_shared<EnableDerivedLock>();
-          shared->callPostConstruct(shared);
+          shared->_injection_lock_ = shared;
           return shared.get();
         },
         [](BaseClass* instance){
@@ -371,11 +378,6 @@ public:
       Injectable<BaseClass>::getRegistry()[name] = {
         []{
           static DerivedClass instance;
-          static bool wasInit = false;
-          if (!wasInit) {
-            wasInit = true;
-            instance.postConstruct();
-          }
           return &instance;
         },
         [](BaseClass* ptr){},
@@ -413,7 +415,7 @@ public:
 };
 
 template<typename BaseClass_>
-inject<BaseClass_>::inject(const std::string& name) {
+void inject<BaseClass_>::doInjection(const std::string& name) {
   auto& registry = Injectable<BaseClass>::getRegistry();
   auto it = registry.find(name);
   if (it != registry.end()) {
