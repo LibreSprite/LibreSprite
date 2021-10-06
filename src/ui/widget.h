@@ -8,6 +8,8 @@
 
 #include "base/disable_copying.h"
 #include "base/injection.h"
+#include "base/weak_set.h"
+#include "base/safe_ptr.h"
 #include "gfx/border.h"
 #include "gfx/color.h"
 #include "gfx/point.h"
@@ -58,9 +60,13 @@ namespace ui {
   public:
     virtual ~Widget();
 
+    base::safe_ptr<Widget> safePtr{this};
+
     // Safe way to delete a widget when it is not in the manager message
     // queue anymore.
     void deferDelete();
+
+    static base::weak_set<Widget>& getAll();
 
     // Properties handler
 

@@ -42,6 +42,8 @@
 #include <queue>
 #include <sstream>
 
+static base::weak_set<ui::Widget> widgets;
+
 namespace ui {
 
 using namespace gfx;
@@ -61,10 +63,12 @@ WidgetType register_widget_type()
 }
 
 Widget::Widget(WidgetType type) : m_type(type),
-                                  m_theme(CurrentTheme::get()) {}
+                                  m_theme(CurrentTheme::get()) {
+  getAll().insert(safePtr); // to-do: use postConstruct below instead
+}
 
 void Widget::postConstruct() {
-  details::addWidget(this);
+//   getAll().insert(shared_from_this());
 }
 
 Widget::~Widget()
@@ -89,13 +93,17 @@ Widget::~Widget()
   // Delete fixed size hint if it isn't nullptr
   delete m_sizeHint;
 
-  // Low level free
-  details::removeWidget(this);
+  // // Low level free. To-do: remove this. It is not necessary.
+  // getAll().erase(this);
 }
 
 void Widget::deferDelete()
 {
   manager()->addToGarbage(this);
+}
+
+base::weak_set<Widget>& Widget::getAll() {
+  return widgets;
 }
 
 PropertyPtr Widget::getProperty(const std::string& name) const

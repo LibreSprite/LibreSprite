@@ -61,7 +61,7 @@ namespace base {
   public:
     safe_ptr(std::nullptr_t) {}
 
-    safe_ptr() = delete;
+    safe_ptr() = default;
 
     explicit safe_ptr(Type* ptr) :
       storage{std::make_shared<Type*>(ptr)},
