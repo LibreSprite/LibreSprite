@@ -25,7 +25,6 @@
 // General information
 #define PACKAGE "LibreSprite"
 #define VERSION "1.0-dev"
-#define GIT_HEAD_SHA1
 
 #define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
 #define WEBSITE_DOWNLOAD        WEBSITE "releases/"
@@ -35,4 +34,3 @@
 #include "base/base.h"
 #include "base/debug.h"
 #include "base/log.h"
-#include "git.h"
