@@ -13,6 +13,7 @@ It tries to replicate some pixel-art algorithms:
 And it uses the following third-party libraries:
 
 * [allegro 4.4](https://liballeg.org) (Giftware)
+* [cmake-git-version-tracking](https://github.com/andrew-hardin/cmake-git-version-tracking/commit/c3e9174ff864d8dc57535a46d1351b1f59ecd59e) (MIT)
 * [curl](http://curl.haxx.se/) (curl)
 * [duktape](https://duktape.org) (MIT)
 * [freetype](https://www.freetype.org) (FTL)
