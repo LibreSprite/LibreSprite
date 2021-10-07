@@ -63,6 +63,10 @@ Debian/Ubuntu:
 
     sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.4-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml-dev libnode-dev ninja-build zlib1g-dev
 
+Fedora:
+
+    sudo dnf install g++ cmake libcurl-devel freetype-devel giflib-devel gtest-devel libjpeg-devel lua-devel pixman-devel libpng-devel SDL2-devel SDL2_image-devel tinyxml-devel zlib-devel ninja-build nodejs-devel
+
 ### Windows dependencies
 
 To install the required dependencies with vcpkg, run:
