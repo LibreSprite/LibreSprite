@@ -42,13 +42,7 @@ enum {
   STATUS_SCALING,
 };
 
-ColorCurveEditor::ColorCurveEditor(ColorCurve* curve, const gfx::Rect& viewBounds)
-  : Widget(kGenericWidget)
-  , m_curve(curve)
-  , m_viewBounds(viewBounds)
-  , m_hotPoint(nullptr)
-  , m_editPoint(nullptr)
-{
+ColorCurveEditor::ColorCurveEditor() : Widget(ui::kGenericWidget) {
   setFocusStop(true);
   setDoubleBuffered(true);
 
@@ -324,5 +318,7 @@ void ColorCurveEditor::removePoint(gfx::Point* viewPoint)
   invalidate();
   CurveEditorChange();
 }
+
+static Widget::Shared<ColorCurveEditor> _reg("ColorCurveEditor");
 
 } // namespace app
