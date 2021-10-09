@@ -25,15 +25,11 @@ namespace app {
 using namespace ui;
 using namespace filters;
 
-FilterPreview::FilterPreview(FilterManagerImpl* filterMgr)
-  : Widget(kGenericWidget)
-  , m_filterMgr(filterMgr)
-{
+FilterPreview::FilterPreview() : Widget(kGenericWidget) {
   setVisible(false);
 }
 
-FilterPreview::~FilterPreview()
-{
+FilterPreview::~FilterPreview() {
   stop();
 }
 
@@ -92,5 +88,7 @@ bool FilterPreview::onProcessMessage(Message* msg)
 
   return Widget::onProcessMessage(msg);
 }
+
+static ui::Widget::Shared<FilterPreview> _reg("FilterPreview");
 
 } // namespace app

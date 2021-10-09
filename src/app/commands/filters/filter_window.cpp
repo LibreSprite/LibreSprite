@@ -35,11 +35,12 @@ FilterWindow::FilterWindow(const char* title, const char* cfgSection,
   , m_container(VERTICAL)
   , m_okButton("&OK")
   , m_cancelButton("&Cancel")
-  , m_preview(filterMgr)
   , m_targetButton(filterMgr->pixelFormat(), (withChannels == WithChannelsSelector))
   , m_showPreview("&Preview")
   , m_tiledCheck(withTiled == WithTiledCheckBox ? new CheckBox("&Tiled") : NULL)
 {
+  m_preview->setFilterManager(filterMgr);
+
   m_targetButton.setTarget(filterMgr->getTarget());
   m_targetButton.TargetChange.connect(&FilterWindow::onTargetButtonChange, this);
   m_okButton.Click.connect(&FilterWindow::onOk, this);
@@ -56,7 +57,7 @@ FilterWindow::FilterWindow(const char* title, const char* cfgSection,
   m_vbox.addChild(&m_targetButton);
   m_vbox.addChild(&m_showPreview);
 
-  addChild(&m_preview);
+  addChild(m_preview.get());
   addChild(&m_hbox);
 
   if (m_tiledCheck) {
@@ -101,7 +102,7 @@ bool FilterWindow::doModal()
 
   // Did the user press OK?
   if (closer() == &m_okButton) {
-    m_preview.stop();
+    m_preview->stop();
 
     // Apply the filter in background
     start_filter_worker(m_filterMgr);
@@ -117,7 +118,7 @@ bool FilterWindow::doModal()
 void FilterWindow::restartPreview()
 {
   if (m_showPreview.isSelected())
-    m_preview.restartPreview();
+    m_preview->restartPreview();
 }
 
 void FilterWindow::setNewTarget(Target target)
