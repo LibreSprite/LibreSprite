@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -80,7 +81,7 @@ class GifFormat : public FileFormat {
 
   bool onLoad(FileOp* fop) override;
   bool onSave(FileOp* fop) override;
-  base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
+  std::shared_ptr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
 FileFormat* CreateGifFormat()
@@ -866,7 +867,7 @@ public:
     else
       m_clearColor = rgba(0, 0, 0, 0);
 
-    const base::SharedPtr<GifOptions> gifOptions = fop->sequenceGetFormatOptions();
+    auto gifOptions = std::static_pointer_cast<GifOptions>(fop->sequenceGetFormatOptions());
     m_interlaced = gifOptions->interlaced();
     m_loop = (gifOptions->loop() ? 0: -1);
 
@@ -1293,11 +1294,11 @@ bool GifFormat::onSave(FileOp* fop)
   return encoder.encode();
 }
 
-base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
+std::shared_ptr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
 {
-  base::SharedPtr<GifOptions> gif_options;
+  std::shared_ptr<GifOptions> gif_options;
   if (fop->document()->getFormatOptions())
-    gif_options = base::SharedPtr<GifOptions>(fop->document()->getFormatOptions());
+    gif_options = std::static_pointer_cast<GifOptions>(fop->document()->getFormatOptions());
 
   if (!gif_options)
     gif_options.reset(new GifOptions);
@@ -1326,16 +1327,15 @@ base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
 
       set_config_bool("GIF", "Interlaced", gif_options->interlaced());
       set_config_bool("GIF", "Loop", gif_options->loop());
-    }
-    else {
-      gif_options.reset(NULL);
+    } else {
+      gif_options.reset();
     }
 
     return gif_options;
   }
   catch (std::exception& e) {
     Console::showException(e);
-    return base::SharedPtr<GifOptions>(0);
+    return nullptr;
   }
 }
 

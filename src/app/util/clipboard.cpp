@@ -31,10 +31,10 @@
 #include "app/util/clipboard.h"
 #include "app/util/clipboard_native.h"
 #include "app/util/new_image_from_mask.h"
-#include "base/shared_ptr.h"
 #include "doc/doc.h"
 #include "render/quantization.h"
 
+#include <memory>
 #include <stdexcept>
 
 namespace app {
@@ -91,10 +91,10 @@ namespace clipboard {
 
 using namespace doc;
 
-static base::SharedPtr<Palette> clipboard_palette;
+static std::shared_ptr<Palette> clipboard_palette;
 static PalettePicks clipboard_picks;
 static ImageRef clipboard_image;
-static base::SharedPtr<Mask> clipboard_mask;
+static std::shared_ptr<Mask> clipboard_mask;
 static ClipboardRange clipboard_range;
 
 static ClipboardManager* g_instance = nullptr;

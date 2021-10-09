@@ -6,10 +6,12 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
+#include "base/debug.h"
 #include "doc/image_ref.h"
 #include "doc/object.h"
 #include "doc/with_user_data.h"
+
+#include <memory>
 
 namespace doc {
 
@@ -42,6 +44,6 @@ namespace doc {
     int m_opacity;              // Opacity level
   };
 
-  typedef base::SharedPtr<CelData> CelDataRef;
+  typedef std::shared_ptr<CelData> CelDataRef;
 
 } // namespace doc

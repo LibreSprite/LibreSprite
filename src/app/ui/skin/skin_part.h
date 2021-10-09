@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
 #include "gfx/size.h"
 
+#include <memory>
 #include <vector>
 
 namespace she {
@@ -51,7 +51,7 @@ namespace app {
       Bitmaps m_bitmaps;
     };
 
-    typedef base::SharedPtr<SkinPart> SkinPartPtr;
+    typedef std::shared_ptr<SkinPart> SkinPartPtr;
 
   } // namespace skin
 } // namespace app

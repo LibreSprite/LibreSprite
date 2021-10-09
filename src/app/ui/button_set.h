@@ -23,6 +23,7 @@ namespace app {
       void setIcon(const skin::SkinPartPtr& icon, bool mono = false);
       skin::SkinPartPtr icon() const { return m_icon; }
       ButtonSet* buttonSet();
+
     protected:
       void onPaint(ui::PaintEvent& ev) override;
       bool onProcessMessage(ui::Message* msg) override;
@@ -30,7 +31,7 @@ namespace app {
       virtual void onClick();
       virtual void onRightClick();
     private:
-      skin::SkinPartPtr m_icon;
+      skin::SkinPartPtr m_icon{nullptr};
       bool m_mono;
     };
 

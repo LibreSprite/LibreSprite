@@ -36,7 +36,6 @@
 #include "app/ui/toolbar.h"
 #include "app/ui_context.h"
 #include "base/memory.h"
-#include "base/shared_ptr.h"
 #include "base/unique_ptr.h"
 #include "doc/sprite.h"
 #include "she/display.h"

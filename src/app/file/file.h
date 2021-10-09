@@ -8,11 +8,11 @@
 #pragma once
 
 #include "base/mutex.h"
-#include "base/shared_ptr.h"
 #include "doc/frame.h"
 #include "doc/image_ref.h"
 #include "doc/pixel_format.h"
 
+#include <memory>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -89,8 +89,8 @@ namespace app {
 
     // Helpers for file decoder/encoder (FileFormat) with
     // FILE_SUPPORT_SEQUENCES flag.
-    base::SharedPtr<FormatOptions> sequenceGetFormatOptions() const;
-    void sequenceSetFormatOptions(const base::SharedPtr<FormatOptions>& formatOptions);
+    std::shared_ptr<FormatOptions> sequenceGetFormatOptions() const;
+    void sequenceSetFormatOptions(const std::shared_ptr<FormatOptions>& formatOptions);
     void sequenceSetNColors(int ncolors);
     int sequenceGetNColors() const;
     void sequenceSetColor(int index, int r, int g, int b);
@@ -149,7 +149,7 @@ namespace app {
       bool has_alpha;
       LayerImage* layer;
       Cel* last_cel;
-      base::SharedPtr<FormatOptions> format_options;
+      std::shared_ptr<FormatOptions> format_options;
     } m_seq;
 
     void prepareForSequence();

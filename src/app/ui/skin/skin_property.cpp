@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -18,9 +19,7 @@ namespace skin {
 
 const char* SkinProperty::Name = "SkinProperty";
 
-SkinProperty::SkinProperty()
-  : Property(Name)
-{
+SkinProperty::SkinProperty() : Property(Name) {
   m_look = NormalLook;
   m_miniFont = false;
   m_upperLeft = 0;
@@ -29,15 +28,8 @@ SkinProperty::SkinProperty()
   m_lowerRight = 0;
 }
 
-SkinProperty::~SkinProperty()
-{
-}
-
-SkinPropertyPtr get_skin_property(ui::Widget* widget)
-{
-  SkinPropertyPtr skinProp;
-
-  skinProp = widget->getProperty(SkinProperty::Name);
+SkinPropertyPtr get_skin_property(ui::Widget* widget) {
+  auto skinProp = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (!skinProp) {
     skinProp.reset(new SkinProperty);
     widget->setProperty(skinProp);

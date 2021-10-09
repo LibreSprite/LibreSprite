@@ -7,10 +7,10 @@
 #pragma once
 
 #include "base/ints.h"
-#include "base/shared_ptr.h"
 
-#include <vector>
+#include <memory>
 #include <cstddef>
+#include <vector>
 
 namespace doc {
 
@@ -31,6 +31,6 @@ namespace doc {
     std::vector<uint8_t> m_buffer;
   };
 
-  typedef base::SharedPtr<ImageBuffer> ImageBufferPtr;
+  typedef std::shared_ptr<ImageBuffer> ImageBufferPtr;
 
 } // namespace doc

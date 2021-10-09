@@ -6,11 +6,12 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
 #include "doc/image.h"
+
+#include <memory>
 
 namespace doc {
 
-  typedef base::SharedPtr<Image> ImageRef;
+  typedef std::shared_ptr<Image> ImageRef;
 
 } // namespace doc

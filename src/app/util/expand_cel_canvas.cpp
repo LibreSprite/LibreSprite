@@ -40,8 +40,8 @@ static doc::ImageBufferPtr dst_buffer;
 
 static void destroy_buffers()
 {
-  src_buffer.reset(NULL);
-  dst_buffer.reset(NULL);
+  src_buffer.reset();
+  dst_buffer.reset();
 }
 
 static void create_buffers()
@@ -236,7 +236,7 @@ void ExpandCelCanvas::rollback()
       static_cast<LayerImage*>(m_layer)->removeCel(m_cel);
 
     delete m_cel;
-    m_celImage.reset(NULL);
+    m_celImage.reset();
   }
 
   m_closed = true;

@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
 #include "ui/property.h"
+
+#include <memory>
 
 namespace ui {
   class Widget;
@@ -31,7 +32,7 @@ namespace app {
       static const char* Name;
 
       SkinProperty();
-      ~SkinProperty();
+      ~SkinProperty() = default;
 
       LookType getLook() const { return m_look; }
       void setLook(LookType look) { m_look = look; }
@@ -58,7 +59,7 @@ namespace app {
       int m_lowerRight;
     };
 
-    typedef base::SharedPtr<SkinProperty> SkinPropertyPtr;
+    typedef std::shared_ptr<SkinProperty> SkinPropertyPtr;
 
     SkinPropertyPtr get_skin_property(ui::Widget* widget);
 

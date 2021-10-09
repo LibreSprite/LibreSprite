@@ -26,7 +26,6 @@
 #include "base/mutex.h"
 #include "base/path.h"
 #include "base/scoped_lock.h"
-#include "base/shared_ptr.h"
 #include "base/string.h"
 #include "doc/doc.h"
 #include "render/quantization.h"
@@ -35,6 +34,7 @@
 
 #include <cstring>
 #include <cstdarg>
+#include <memory>
 
 namespace app {
 
@@ -464,8 +464,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
   // Configure output format?
   if (fop->m_format->support(FILE_SUPPORT_GET_FORMAT_OPTIONS)) {
-    base::SharedPtr<FormatOptions> format_options =
-      fop->m_format->getFormatOptions(fop);
+    auto format_options = fop->m_format->getFormatOptions(fop);
 
     // Does the user cancelled the operation?
     if (!format_options)
@@ -517,7 +516,7 @@ void FileOp::operate(IFileOpProgress* progress)
         }
 
         old_image = m_seq.image.get();
-        m_seq.image.reset(NULL);
+        m_seq.image.reset();
         m_seq.last_cel = NULL;
       };
 
@@ -654,7 +653,7 @@ void FileOp::operate(IFileOpProgress* progress)
       m_document->setFilename(m_filename);
 
       // Destroy the image
-      m_seq.image.reset(NULL);
+      m_seq.image.reset();
     }
     // Direct save to a file.
     else {
@@ -727,10 +726,10 @@ void FileOp::postLoad()
     if (sprite->pixelFormat() == IMAGE_RGB &&
         sprite->getPalettes().size() <= 1 &&
         sprite->palette(frame_t(0))->isBlack()) {
-      base::SharedPtr<Palette> palette(
+      std::shared_ptr<Palette> palette{
         render::create_palette_from_sprite(
           sprite, frame_t(0), sprite->lastFrame(), true,
-          nullptr, nullptr));
+          nullptr, nullptr)};
 
       sprite->resetPalettes();
       sprite->setPalette(palette.get(), false);
@@ -740,12 +739,12 @@ void FileOp::postLoad()
   m_document->markAsSaved();
 }
 
-base::SharedPtr<FormatOptions> FileOp::sequenceGetFormatOptions() const
+std::shared_ptr<FormatOptions> FileOp::sequenceGetFormatOptions() const
 {
   return m_seq.format_options;
 }
 
-void FileOp::sequenceSetFormatOptions(const base::SharedPtr<FormatOptions>& format_options)
+void FileOp::sequenceSetFormatOptions(const std::shared_ptr<FormatOptions>& format_options)
 {
   ASSERT(!m_seq.format_options);
   m_seq.format_options = format_options;
@@ -917,7 +916,7 @@ FileOp::FileOp(FileOpType type, Context* context)
   , m_oneframe(false)
 {
   m_seq.palette = nullptr;
-  m_seq.image.reset(nullptr);
+  m_seq.image.reset();
   m_seq.progress_offset = 0.0f;
   m_seq.progress_fraction = 0.0f;
   m_seq.frame = frame_t(0);

@@ -8,11 +8,12 @@
 #pragma once
 
 #include "app/ui/button_set.h"
-#include "base/shared_ptr.h"
 #include "doc/brushes.h"
 #include "ui/box.h"
 #include "ui/popup_window.h"
 #include "ui/tooltips.h"
+
+#include <memory>
 
 namespace app {
 

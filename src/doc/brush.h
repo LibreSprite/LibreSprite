@@ -14,6 +14,7 @@
 #include "gfx/point.h"
 #include "gfx/rect.h"
 
+#include <memory>
 #include <vector>
 
 namespace doc {
@@ -72,6 +73,6 @@ namespace doc {
     base::UniquePtr<color_t> m_bgColor;   // Background color (nullptr if it wasn't specified)
   };
 
-  typedef base::SharedPtr<Brush> BrushRef;
+  typedef std::shared_ptr<Brush> BrushRef;
 
 } // namespace doc

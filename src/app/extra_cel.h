@@ -49,6 +49,6 @@ namespace app {
     DISABLE_COPYING(ExtraCel);
   };
 
-  typedef base::SharedPtr<ExtraCel> ExtraCelRef;
+typedef std::shared_ptr<ExtraCel> ExtraCelRef;
 
 } // namespace app

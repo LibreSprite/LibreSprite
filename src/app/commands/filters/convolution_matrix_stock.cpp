@@ -31,13 +31,13 @@ ConvolutionMatrixStock::~ConvolutionMatrixStock()
   cleanStock();
 }
 
-base::SharedPtr<ConvolutionMatrix> ConvolutionMatrixStock::getByName(const char* name)
+std::shared_ptr<ConvolutionMatrix> ConvolutionMatrixStock::getByName(const char* name)
 {
   for (const_iterator it = begin(), end = this->end(); it != end; ++it) {
     if (std::strcmp((*it)->getName(), name) == 0)
       return *it;
   }
-  return base::SharedPtr<ConvolutionMatrix>(0);
+  return nullptr;
 }
 
 void ConvolutionMatrixStock::reloadStock()
@@ -57,7 +57,7 @@ void ConvolutionMatrixStock::reloadStock()
                           "convmatr.def", NULL };
   char *s, buf[256], leavings[4096];
   int i, x, y, w, h, div, bias;
-  base::SharedPtr<ConvolutionMatrix> matrix;
+  std::shared_ptr<ConvolutionMatrix> matrix;
   std::string name;
 
   cleanStock();
@@ -91,7 +91,7 @@ void ConvolutionMatrixStock::reloadStock()
           break;
 
         // Create the matrix data
-        matrix.reset(new ConvolutionMatrix(w, h));
+        matrix = std::make_shared<ConvolutionMatrix>(w, h);
         matrix->setName(name.c_str());
 
         // Centre
