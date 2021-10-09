@@ -47,7 +47,7 @@ void CropCel::cropImage(const gfx::Point& origin,
   Cel* cel = this->cel();
 
   if (bounds != cel->image()->bounds()) {
-    ImageRef image(crop_image(cel->image(),
+    std::shared_ptr<Image> image(crop_image(cel->image(),
                               bounds.x, bounds.y,
                               bounds.w, bounds.h,
                               cel->image()->maskColor()));

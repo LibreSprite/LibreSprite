@@ -93,7 +93,7 @@ using namespace doc;
 
 static std::shared_ptr<Palette> clipboard_palette;
 static PalettePicks clipboard_picks;
-static ImageRef clipboard_image;
+static std::shared_ptr<Image> clipboard_image;
 static std::shared_ptr<Mask> clipboard_mask;
 static ClipboardRange clipboard_range;
 
@@ -319,7 +319,7 @@ void paste()
       Palette* dst_palette = dstSpr->palette(editor->frame());
 
       // Source image (clipboard or a converted copy to the destination 'imgtype')
-      ImageRef src_image;
+      std::shared_ptr<Image> src_image;
       if (clipboard_image->pixelFormat() == dstSpr->pixelFormat() &&
         // Indexed images can be copied directly only if both images
         // have the same palette.

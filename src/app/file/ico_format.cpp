@@ -128,7 +128,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   sprite->folder()->addLayer(layer);
 
   // Create the first image/cel
-  ImageRef image(Image::create(pixelFormat, width, height));
+  std::shared_ptr<Image> image(Image::create(pixelFormat, width, height));
   Cel* cel = new Cel(frame_t(0), image);
   layer->addCel(cel);
   clear_image(image.get(), 0);

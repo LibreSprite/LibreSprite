@@ -615,9 +615,9 @@ private:
   }
 
   void createCel() {
-    Cel* cel = new Cel(m_frameNum, ImageRef(0));
+    Cel* cel = new Cel(m_frameNum, std::shared_ptr<Image>(nullptr));
     try {
-      ImageRef celImage(Image::createCopy(m_currentImage.get()));
+      std::shared_ptr<Image> celImage(Image::createCopy(m_currentImage.get()));
       try {
         cel->data()->setImage(celImage);
       }
@@ -692,7 +692,7 @@ private:
   void convertIndexedSpriteToRgb() {
     for (Cel* cel : m_sprite->uniqueCels()) {
       Image* oldImage = cel->image();
-      ImageRef newImage(
+      std::shared_ptr<Image> newImage(
         render::convert_pixel_format
         (oldImage, NULL, IMAGE_RGB, DitheringMethod::NONE,
          nullptr,
@@ -769,8 +769,8 @@ private:
   int m_bgIndex;
   int m_localTransparentIndex;
   int m_frameDelay;
-  ImageRef m_currentImage;
-  ImageRef m_previousImage;
+  std::shared_ptr<Image> m_currentImage;
+  std::shared_ptr<Image> m_previousImage;
   Remap m_remap;
   bool m_hasLocalColormaps;     // Indicates that this fila contains local colormaps
 
@@ -1072,7 +1072,7 @@ private:
     if (!m_frameImageBuf)
       m_frameImageBuf.reset(new ImageBuffer);
 
-    ImageRef frameImage(Image::create(IMAGE_INDEXED,
+    std::shared_ptr<Image> frameImage(Image::create(IMAGE_INDEXED,
                                       frameBounds.w,
                                       frameBounds.h,
                                       m_frameImageBuf));
@@ -1270,7 +1270,7 @@ private:
   bool m_interlaced;
   int m_loop;
   ImageBufferPtr m_frameImageBuf;
-  ImageRef m_images[3];
+  std::shared_ptr<Image> m_images[3];
   Image* m_previousImage;
   Image* m_currentImage;
   Image* m_nextImage;

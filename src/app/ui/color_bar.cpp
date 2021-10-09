@@ -586,8 +586,8 @@ void ColorBar::onRemapButtonClick()
       // Special remap saving original images in undo history
       if (remapPixels) {
         for (Cel* cel : sprite->uniqueCels()) {
-          ImageRef celImage = cel->imageRef();
-          ImageRef newImage(Image::createCopy(celImage.get()));
+          std::shared_ptr<doc::Image> celImage = cel->imageRef();
+          std::shared_ptr<doc::Image> newImage(Image::createCopy(celImage.get()));
           doc::remap_image(newImage.get(), remap);
 
           transaction.execute(new cmd::ReplaceImage(

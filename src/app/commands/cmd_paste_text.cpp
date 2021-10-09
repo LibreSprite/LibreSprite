@@ -25,7 +25,6 @@
 #include "base/string.h"
 #include "base/unique_ptr.h"
 #include "doc/image.h"
-#include "doc/image_ref.h"
 #include "render/quantization.h"
 #include "she/system.h"
 #include "she/font.h"
@@ -200,7 +199,7 @@ void PasteTextCommand::onExecute(Context* ctx)
                                    appColor.getBlue(),
                                    appColor.getAlpha());
 
-    doc::ImageRef image(render_text(faceName, size, text, color, antialias));
+    std::shared_ptr<Image> image(render_text(faceName, size, text, color, antialias));
     if (image) {
       Sprite* sprite = editor->sprite();
       if (image->pixelFormat() != sprite->pixelFormat()) {

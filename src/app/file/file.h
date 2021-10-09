@@ -9,7 +9,7 @@
 
 #include "base/mutex.h"
 #include "doc/frame.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/pixel_format.h"
 
 #include <memory>
@@ -140,7 +140,7 @@ namespace app {
     struct {
       std::vector<std::string> filename_list; // All file names to load/save.
       Palette* palette;           // Palette of the sequence.
-      ImageRef image;             // Image to be saved/loaded.
+      std::shared_ptr<Image> image;             // Image to be saved/loaded.
       // For the progress bar.
       double progress_offset;      // Progress offset from the current frame.
       double progress_fraction;    // Progress fraction for one frame.

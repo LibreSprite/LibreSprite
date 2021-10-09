@@ -107,7 +107,7 @@ public:
 
       for (int j=0; j<4; j++) {
         Cel* cel = layer->cel(frame_t(j));
-        ImageRef image;
+        std::shared_ptr<Image> image;
         if (cel)
           image = cel->imageRef();
         else {

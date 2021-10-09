@@ -166,7 +166,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
       }
 
       // read cel images
-      ImageRef image(Image::create(IMAGE_RGB, frameWidth, frameHeight));
+      std::shared_ptr<Image> image(Image::create(IMAGE_RGB, frameWidth, frameHeight));
 
       for (int y = 0; y < frameHeight; y++) {
         // RGB_ALPHA
@@ -181,7 +181,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
       // make cel trimmed or empty
       gfx::Rect bounds;
       if (algorithm::shrink_bounds(image.get(), bounds, image->maskColor())) {
-        ImageRef trim_image(crop_image(image.get(),
+        std::shared_ptr<Image> trim_image(crop_image(image.get(),
                                   bounds.x, bounds.y,
                                   bounds.w, bounds.h,
                                   image->maskColor()));
@@ -262,7 +262,7 @@ bool PixlyFormat::onSave(FileOp* fop)
   LayerImage* sheet_layer = new LayerImage(sheet_sprite);
   sheet_sprite->folder()->addLayer(sheet_layer);
   UniquePtr<Document> sheet_doc(new Document(sheet_sprite));
-  ImageRef sheet_image(Image::create(IMAGE_RGB, sheetWidth, sheetHeight));
+  std::shared_ptr<Image> sheet_image(Image::create(IMAGE_RGB, sheetWidth, sheetHeight));
   Image* sheet = sheet_image.get();
   sheet_layer->addCel(new Cel(0, sheet_image));
 

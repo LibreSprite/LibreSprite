@@ -835,7 +835,7 @@ Image* FileOp::sequenceImage(PixelFormat pixelFormat, int w, int h)
 
   // Create a bitmap
   m_seq.image.reset(Image::create(pixelFormat, w, h));
-  m_seq.last_cel = new Cel(m_seq.frame++, ImageRef(nullptr));
+  m_seq.last_cel = new Cel(m_seq.frame++, std::shared_ptr<Image>(nullptr));
 
   return m_seq.image.get();
 }

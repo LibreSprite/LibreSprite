@@ -7,7 +7,7 @@
 #pragma once
 
 #include "base/debug.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/object.h"
 #include "doc/with_user_data.h"
 
@@ -17,15 +17,15 @@ namespace doc {
 
   class CelData : public WithUserData {
   public:
-    CelData(const ImageRef& image);
+    CelData(const std::shared_ptr<Image>& image);
     CelData(const CelData& celData);
 
     const gfx::Point& position() const { return m_position; }
     int opacity() const { return m_opacity; }
     Image* image() const { return const_cast<Image*>(m_image.get()); };
-    ImageRef imageRef() const { return m_image; }
+    std::shared_ptr<Image> imageRef() const { return m_image; }
 
-    void setImage(const ImageRef& image);
+    void setImage(const std::shared_ptr<Image>& image);
     void setPosition(int x, int y) {
       m_position.x = x;
       m_position.y = y;
@@ -39,7 +39,7 @@ namespace doc {
     }
 
   private:
-    ImageRef m_image;
+    std::shared_ptr<Image> m_image;
     gfx::Point m_position;      // X/Y screen position
     int m_opacity;              // Opacity level
   };

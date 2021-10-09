@@ -94,7 +94,7 @@ protected:
     for (Cel* cel : m_cels) {
       Image* image = cel->image();
       if (image) {
-        ImageRef new_image(Image::create(image->pixelFormat(),
+        std::shared_ptr<Image> new_image(Image::create(image->pixelFormat(),
             m_angle == 180 ? image->width(): image->height(),
             m_angle == 180 ? image->height(): image->width()));
         new_image->setMaskColor(image->maskColor());
