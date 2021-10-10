@@ -28,6 +28,7 @@ namespace ui {
     ~Grid();
 
     void addChildInCell(Widget* child, int hspan, int vspan, int align);
+    void addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align);
     Info getChildInfo(Widget* child);
 
   protected:
@@ -38,14 +39,12 @@ namespace ui {
 
   private:
     struct Cell {
-      Cell* parent;
-      Widget* child;
-      int hspan;
-      int vspan;
-      int align;
-      int w, h;
-
-      Cell();
+      Cell* parent = nullptr;
+      Widget* child = nullptr;
+      int hspan = 0;
+      int vspan = 0;
+      int align = 0;
+      int w = 0, h = 0;
     };
 
     struct Strip {

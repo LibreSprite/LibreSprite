@@ -25,17 +25,6 @@ namespace ui {
 
 using namespace gfx;
 
-Grid::Cell::Cell()
-{
-  parent = NULL;
-  child = NULL;
-  hspan = 0;
-  vspan = 0;
-  align = 0;
-  w = 0;
-  h = 0;
-}
-
 Grid::Grid(int columns, bool same_width_columns)
   : Widget(kGridWidget)
   , m_colstrip(columns)
@@ -93,6 +82,19 @@ void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
   if (!putWidgetInCell(child, hspan, vspan, align)) {
     expandRows(m_rowstrip.size()+1);
     putWidgetInCell(child, hspan, vspan, align);
+  }
+}
+
+void Grid::addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align)
+{
+  ASSERT(hspan > 0);
+  ASSERT(vspan > 0);
+
+  addChild(child);
+
+  if (!putWidgetInCell(child.get(), hspan, vspan, align)) {
+    expandRows(m_rowstrip.size()+1);
+    putWidgetInCell(child.get(), hspan, vspan, align);
   }
 }
 
