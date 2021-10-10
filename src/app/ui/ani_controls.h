@@ -23,7 +23,7 @@ namespace app {
     void updateUsingEditor(Editor* editor);
 
   protected:
-    void onRightClick(Item* item) override;
+    void onRightClick(std::shared_ptr<Item> item) override;
 
   private:
     void onClickButton();

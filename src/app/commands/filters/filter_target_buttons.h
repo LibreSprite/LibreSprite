@@ -32,24 +32,24 @@ namespace app {
     base::Signal0<void> TargetChange;
 
   protected:
-    void onItemChange(Item* item) override;
+    void onItemChange(std::shared_ptr<Item> item) override;
     void onChannelChange(ui::ButtonBase* button);
     void onImagesChange(ui::ButtonBase* button);
 
   private:
-    void selectTargetButton(Item* item, Target specificTarget);
+    void selectTargetButton(std::shared_ptr<Item> item, Target specificTarget);
     void updateFromTarget();
-    void updateComponentTooltip(Item* item, const char* channelName, int align);
+    void updateComponentTooltip(std::shared_ptr<Item> item, const char* channelName, int align);
     skin::SkinPartPtr getCelsIcon() const;
 
     Target m_target;
-    Item* m_red;
-    Item* m_green;
-    Item* m_blue;
-    Item* m_alpha;
-    Item* m_gray;
-    Item* m_index;
-    Item* m_cels;
+    std::shared_ptr<Item> m_red;
+    std::shared_ptr<Item> m_green;
+    std::shared_ptr<Item> m_blue;
+    std::shared_ptr<Item> m_alpha;
+    std::shared_ptr<Item> m_gray;
+    std::shared_ptr<Item> m_index;
+    std::shared_ptr<Item> m_cels;
     ui::TooltipManager m_tooltips;
   };
 

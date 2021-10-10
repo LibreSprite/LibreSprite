@@ -72,20 +72,23 @@ void show_popup_menu(PopupWindow* popupWindow, Menu* popupMenu,
 }
 
 class SelectBrushItem : public ButtonSet::Item {
+protected:
+  SelectBrushItem() = default;
+
 public:
-  SelectBrushItem(const BrushSlot& brush, int slot = -1)
-    : m_brushes(App::instance()->brushes())
-    , m_brush(brush)
-    , m_slot(slot) {
-    if (m_brush.hasBrush()) {
-      SkinPartPtr icon(new SkinPart);
-      icon->setBitmap(0, BrushPopup::createSurfaceForBrush(m_brush.brush()));
-      setIcon(icon);
-    }
+  const BrushSlot& brush() const {
+    return *m_brush;
   }
 
-  const BrushSlot& brush() const {
-    return m_brush;
+  static std::shared_ptr<SelectBrushItem> create(const BrushSlot& brush, int slot = -1) {
+    std::shared_ptr<SelectBrushItem> item = inject<Widget>{"SelectBrushItem"};
+    item->m_brush = &brush;
+    if (brush.hasBrush()) {
+      SkinPartPtr icon(new SkinPart);
+      icon->setBitmap(0, BrushPopup::createSurfaceForBrush(brush.brush()));
+      item->setIcon(icon);
+    }
+    return item;
   }
 
 private:
@@ -94,14 +97,14 @@ private:
 
     if (m_slot >= 0)
       contextBar->setActiveBrushBySlot(m_slot);
-    else if (m_brush.hasBrush()) {
+    else if (m_brush->hasBrush()) {
       tools::Tool* tool = App::instance()->activeTool();
       auto& brushPref = Preferences::instance().tool(tool).brush;
       BrushRef brush;
 
       brush.reset(
         new Brush(
-            static_cast<doc::BrushType>(m_brush.brush()->type()),
+            static_cast<doc::BrushType>(m_brush->brush()->type()),
             brushPref.size(),
             brushPref.angle()));
 
@@ -109,29 +112,32 @@ private:
     }
   }
 
-  AppBrushes& m_brushes;
-  BrushSlot m_brush;
+  const BrushSlot* m_brush = nullptr;
   int m_slot;
 };
 
+static ui::Widget::Shared<SelectBrushItem> _sbi("SelectBrushItem");
+
 class BrushShortcutItem : public ButtonSet::Item {
 public:
-  BrushShortcutItem(const std::string& text, int slot)
-    : m_slot(slot) {
-    setText(text);
+  static std::shared_ptr<BrushShortcutItem> create(const std::string& text, int slot) {
+    std::shared_ptr<BrushShortcutItem> item = inject<Widget>{"BrushShortcutItem"};
+    item->m_slot = slot;
+    item->setText(text);
+    return item;
   }
 
 private:
   void onClick() override {
     Params params;
     params.set("change", "custom");
-    params.set("slot", base::convert_to<std::string>(m_slot).c_str());
+    params.set("slot", std::to_string(m_slot));
     Command* cmd = CommandsModule::instance()->getCommandByName(CommandId::ChangeBrush);
     cmd->loadParams(params);
     std::string search = cmd->friendlyName();
     if (!search.empty()) {
       params.clear();
-      params.set("search", search.c_str());
+      params.set("search", search);
       cmd = CommandsModule::instance()->getCommandByName(CommandId::KeyboardShortcuts);
       ASSERT(cmd);
       if (cmd)
@@ -142,13 +148,16 @@ private:
   int m_slot;
 };
 
+static ui::Widget::Shared<BrushShortcutItem> _bsi("BrushShortcutItem");
+
 class BrushOptionsItem : public ButtonSet::Item {
 public:
-  BrushOptionsItem(BrushPopup* popup, int slot)
-    : m_popup(popup)
-    , m_brushes(App::instance()->brushes())
-    , m_slot(slot) {
-    setIcon(SkinTheme::instance()->parts.iconArrowDown(), true);
+  static std::shared_ptr<BrushOptionsItem> create(BrushPopup* popup, int slot) {
+    std::shared_ptr<BrushOptionsItem> item = inject<Widget>{"BrushOptionsItem"};
+    item->m_popup = popup;
+    item->m_slot = slot;
+    item->setIcon(SkinTheme::instance()->parts.iconArrowDown(), true);
+    return item;
   }
 
 private:
@@ -246,11 +255,14 @@ private:
   }
 
   BrushPopup* m_popup;
-  AppBrushes& m_brushes;
+  AppBrushes& m_brushes = App::instance()->brushes();
   BrushRef m_brush;
   int m_slot;
   bool m_changeFlags;
 };
+
+static ui::Widget::Shared<BrushOptionsItem> _boi("BrushOptionsItem");
+
 
 class NewCustomBrushItem : public ButtonSet::Item {
 public:
@@ -268,6 +280,8 @@ private:
     brushes.lockBrushSlot(slot);
   }
 };
+
+static ui::Widget::Shared<NewCustomBrushItem> _ncbi("NewCustomBrushItem");
 
 class NewBrushOptionsItem : public ButtonSet::Item {
 public:
@@ -321,6 +335,8 @@ private:
   }
 };
 
+static ui::Widget::Shared<NewBrushOptionsItem> _nboi("NewBrushOptionsItem");
+
 } // anonymous namespace
 
 BrushPopup::BrushPopup()
@@ -346,10 +362,9 @@ BrushPopup::BrushPopup()
   m_box.addChild(top);
   m_box.addChild(new Separator("", HORIZONTAL));
 
-  for (const auto& brush : brushes.getStandardBrushes())
-    m_standardBrushes.addItem(
-      new SelectBrushItem(
-        BrushSlot(BrushSlot::Flags::BrushType, brush)));
+  for (const auto& brush : brushes.getStandardBrushes()) {
+    m_standardBrushes.addItem(SelectBrushItem::create({BrushSlot::Flags::BrushType, brush}));
+  }
 
   m_standardBrushes.setTransparent(true);
   m_standardBrushes.setBgColor(gfx::ColorNone);
@@ -360,8 +375,7 @@ BrushPopup::BrushPopup()
 void BrushPopup::setBrush(Brush* brush)
 {
   for (auto child : m_standardBrushes.children()) {
-    SelectBrushItem* item = static_cast<SelectBrushItem*>(child);
-
+    auto item = std::static_pointer_cast<SelectBrushItem>(child->shared_from_this());
     // Same type and same image
     if (item->brush().hasBrush() &&
         item->brush().brush()->type() == brush->type() &&
@@ -403,13 +417,13 @@ void BrushPopup::regenerate(const gfx::Rect& box)
       if (key && !key->accels().empty())
         shortcut = key->accels().front().toString();
     }
-    m_customBrushes->addItem(new SelectBrushItem(brush, slot));
-    m_customBrushes->addItem(new BrushShortcutItem(shortcut, slot));
-    m_customBrushes->addItem(new BrushOptionsItem(this, slot));
+    m_customBrushes->addItem(SelectBrushItem::create(brush, slot));
+    m_customBrushes->addItem(BrushShortcutItem::create(shortcut, slot));
+    m_customBrushes->addItem(BrushOptionsItem::create(this, slot));
   }
 
-  m_customBrushes->addItem(new NewCustomBrushItem, 2, 1);
-  m_customBrushes->addItem(new NewBrushOptionsItem);
+  m_customBrushes->addItem(inject<Widget>{"NewCustomBrushItem"}.shared<ButtonSet::Item>(), 2, 1);
+  m_customBrushes->addItem(inject<Widget>{"NewBrushOptionsItem"}.shared<ButtonSet::Item>());
   m_customBrushes->setExpansive(true);
   m_box.addChild(m_customBrushes);
 

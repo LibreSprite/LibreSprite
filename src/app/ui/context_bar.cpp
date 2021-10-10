@@ -102,7 +102,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     if (!m_popupWindow.isVisible())
@@ -281,7 +281,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
     const gfx::Rect bounds = this->bounds();
 
@@ -365,7 +365,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     gfx::Rect bounds = this->bounds();
@@ -982,7 +982,7 @@ public:
 
 private:
 
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
@@ -1155,7 +1155,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     Preferences::instance().selection.mode(
@@ -1182,7 +1182,7 @@ public:
   base::Signal1<void, ContextBarObserver::DropAction> DropPixels;
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     switch (selectedItem()) {
@@ -1286,7 +1286,7 @@ public:
   }
 
 private:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     Document* doc = UIContext::instance()->activeDocument();

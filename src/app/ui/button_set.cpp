@@ -45,6 +45,8 @@ WidgetType buttonset_item_type()
   return type;
 }
 
+static Widget::Shared<ButtonSet::Item> _bsireg{"ButtonSetItem"};
+
 ButtonSet::Item::Item()
   : Widget(buttonset_item_type())
   , m_icon(NULL)
@@ -167,9 +169,8 @@ bool ButtonSet::Item::onProcessMessage(ui::Message* msg)
            mnemonicChar() &&
            mnemonicChar() == tolower(keymsg->unicodeChar()));
 
-        if (mnemonicPressed ||
-            (hasFocus() && keymsg->scancode() == kKeySpace)) {
-          buttonSet()->setSelectedItem(this);
+        if (mnemonicPressed || (hasFocus() && keymsg->scancode() == kKeySpace)) {
+          buttonSet()->setSelectedItem(std::static_pointer_cast<Item>(shared_from_this()));
           onClick();
         }
       }
@@ -186,7 +187,7 @@ bool ButtonSet::Item::onProcessMessage(ui::Message* msg)
       }
 
       captureMouse();
-      buttonSet()->setSelectedItem(this);
+      buttonSet()->setSelectedItem(std::static_pointer_cast<Item>(shared_from_this()));
       invalidate();
 
       if (static_cast<MouseMessage*>(msg)->left() &&
@@ -267,12 +268,11 @@ void ButtonSet::Item::onSizeHint(ui::SizeHintEvent& ev)
 
 void ButtonSet::Item::onClick()
 {
-  buttonSet()->onItemChange(this);
+  buttonSet()->onItemChange(std::static_pointer_cast<ButtonSet::Item>(shared_from_this()));
 }
 
 void ButtonSet::Item::onRightClick()
 {
-  buttonSet()->onRightClick(this);
 }
 
 ButtonSet::ButtonSet(int columns)
@@ -284,31 +284,29 @@ ButtonSet::ButtonSet(int columns)
   noBorderNoChildSpacing();
 }
 
-ButtonSet::Item* ButtonSet::addItem(const std::string& text, int hspan, int vspan)
+std::shared_ptr<ButtonSet::Item> ButtonSet::addItem(const std::string& text, int hspan, int vspan)
 {
-  Item* item = new Item();
+  std::shared_ptr<Item> item = inject<ui::Widget>{"ButtonSetItem"};
   item->setText(text);
-  addItem(item, hspan, vspan);
-  return item;
+  return addItem(item, hspan, vspan);
 }
 
-ButtonSet::Item* ButtonSet::addItem(const skin::SkinPartPtr& icon, int hspan, int vspan)
+std::shared_ptr<ButtonSet::Item> ButtonSet::addItem(const skin::SkinPartPtr& icon, int hspan, int vspan)
 {
-  Item* item = new Item();
+  std::shared_ptr<Item> item = inject<ui::Widget>{"ButtonSetItem"};
   item->setIcon(icon);
-  addItem(item, hspan, vspan);
-  return item;
+  return addItem(item, hspan, vspan);
 }
 
-ButtonSet::Item* ButtonSet::addItem(Item* item, int hspan, int vspan)
+std::shared_ptr<ButtonSet::Item> ButtonSet::addItem(std::shared_ptr<Item> item, int hspan, int vspan)
 {
   addChildInCell(item, hspan, vspan, HORIZONTAL | VERTICAL);
   return item;
 }
 
-ButtonSet::Item* ButtonSet::getItem(int index)
+std::shared_ptr<ButtonSet::Item> ButtonSet::getItem(int index)
 {
-  return dynamic_cast<Item*>(at(index));
+  return std::dynamic_pointer_cast<Item>(at(index)->shared_from_this());
 }
 
 int ButtonSet::selectedItem() const
@@ -325,18 +323,18 @@ int ButtonSet::selectedItem() const
 void ButtonSet::setSelectedItem(int index, bool focusItem)
 {
   if (index >= 0 && index < (int)children().size())
-    setSelectedItem(static_cast<Item*>(at(index)), focusItem);
+    setSelectedItem(std::static_pointer_cast<Item>(at(index)->shared_from_this()), focusItem);
   else
-    setSelectedItem(static_cast<Item*>(nullptr), focusItem);
+    setSelectedItem(nullptr, focusItem);
 }
 
-void ButtonSet::setSelectedItem(Item* item, bool focusItem)
+void ButtonSet::setSelectedItem(std::shared_ptr<Item> item, bool focusItem)
 {
   if (!m_multipleSelection) {
     if (item && item->isSelected())
       return;
 
-    Item* sel = findSelectedItem();
+    auto sel = findSelectedItem();
     if (sel)
       sel->setSelected(false);
   }
@@ -350,7 +348,7 @@ void ButtonSet::setSelectedItem(Item* item, bool focusItem)
 
 void ButtonSet::deselectItems()
 {
-  Item* sel = findSelectedItem();
+  auto sel = findSelectedItem();
   if (sel)
     sel->setSelected(false);
 }
@@ -370,21 +368,21 @@ void ButtonSet::setMultipleSelection(bool state)
   m_multipleSelection = state;
 }
 
-void ButtonSet::onItemChange(Item* item)
+void ButtonSet::onItemChange(std::shared_ptr<Item> item)
 {
-  ItemChange(item);
+  ItemChange(item.get());
 }
 
-void ButtonSet::onRightClick(Item* item)
+void ButtonSet::onRightClick(std::shared_ptr<Item> item)
 {
-  RightClick(item);
+  RightClick(item.get());
 }
 
-ButtonSet::Item* ButtonSet::findSelectedItem() const
+std::shared_ptr<ButtonSet::Item> ButtonSet::findSelectedItem() const
 {
   for (auto child : children()) {
     if (child->isSelected())
-      return static_cast<Item*>(child);
+      return std::static_pointer_cast<Item>(child->shared_from_this());
   }
   return nullptr;
 }

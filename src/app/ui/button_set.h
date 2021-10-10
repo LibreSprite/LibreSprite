@@ -19,12 +19,12 @@ namespace app {
   public:
     class Item : public ui::Widget {
     public:
-      Item();
       void setIcon(const skin::SkinPartPtr& icon, bool mono = false);
       skin::SkinPartPtr icon() const { return m_icon; }
       ButtonSet* buttonSet();
 
     protected:
+      Item();
       void onPaint(ui::PaintEvent& ev) override;
       bool onProcessMessage(ui::Message* msg) override;
       void onSizeHint(ui::SizeHintEvent& ev) override;
@@ -37,14 +37,14 @@ namespace app {
 
     ButtonSet(int columns);
 
-    Item* addItem(const std::string& text, int hspan = 1, int vspan = 1);
-    Item* addItem(const skin::SkinPartPtr& icon, int hspan = 1, int vspan = 1);
-    Item* addItem(Item* item, int hspan = 1, int vspan = 1);
-    Item* getItem(int index);
+    std::shared_ptr<Item> addItem(const std::string& text, int hspan = 1, int vspan = 1);
+    std::shared_ptr<Item> addItem(const skin::SkinPartPtr& icon, int hspan = 1, int vspan = 1);
+    std::shared_ptr<Item> addItem(std::shared_ptr<Item> item, int hspan = 1, int vspan = 1);
+    std::shared_ptr<Item> getItem(int index);
 
     int selectedItem() const;
     void setSelectedItem(int index, bool focusItem = true);
-    void setSelectedItem(Item* item, bool focusItem = true);
+    void setSelectedItem(std::shared_ptr<Item> item, bool focusItem = true);
     void deselectItems();
 
     void setOfferCapture(bool state);
@@ -55,11 +55,11 @@ namespace app {
     base::Signal1<void, Item*> RightClick;
 
   protected:
-    virtual void onItemChange(Item* item);
-    virtual void onRightClick(Item* item);
+    virtual void onItemChange(std::shared_ptr<Item> item);
+    virtual void onRightClick(std::shared_ptr<Item> item);
 
   private:
-    Item* findSelectedItem() const;
+    std::shared_ptr<Item> findSelectedItem() const;
 
     bool m_offerCapture;
     bool m_triggerOnMouseUp;

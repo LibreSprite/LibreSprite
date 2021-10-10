@@ -423,7 +423,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
       int hspan = int_attr(elem, "hspan", 1);
       int vspan = int_attr(elem, "vspan", 1);
 
-      ButtonSet::Item* item = new ButtonSet::Item();
+      std::shared_ptr<ButtonSet::Item> item = inject<ui::Widget>("ButtonSetItem");
 
       if (icon) {
         SkinPartPtr part = SkinTheme::instance()->getPartById(std::string(icon));
@@ -435,7 +435,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
         item->setText(text);
 
       buttonset->addItem(item, hspan, vspan);
-      fillWidgetWithXmlElementAttributes(elem, root, item);
+      fillWidgetWithXmlElementAttributes(elem, root, item.get());
     }
   }
   else if (elem_name == "image") {

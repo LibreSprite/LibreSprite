@@ -85,8 +85,7 @@ void FilterTargetButtons::setTarget(int target)
   updateFromTarget();
 }
 
-void FilterTargetButtons::selectTargetButton(Item* item, Target specificTarget)
-{
+void FilterTargetButtons::selectTargetButton(std::shared_ptr<Item> item, Target specificTarget) {
   if (item)
     item->setSelected((m_target & specificTarget) == specificTarget);
 }
@@ -121,7 +120,7 @@ void FilterTargetButtons::updateFromTarget()
   m_tooltips.addTooltipFor(m_cels, celsTooltip, LEFT);
 }
 
-void FilterTargetButtons::updateComponentTooltip(Item* item, const char* channelName, int align)
+void FilterTargetButtons::updateComponentTooltip(std::shared_ptr<Item> item, const char* channelName, int align)
 {
   if (item) {
     char buf[256];
@@ -132,7 +131,7 @@ void FilterTargetButtons::updateComponentTooltip(Item* item, const char* channel
   }
 }
 
-void FilterTargetButtons::onItemChange(Item* item)
+void FilterTargetButtons::onItemChange(std::shared_ptr<Item> item)
 {
   ButtonSet::onItemChange(item);
   Target flags = (m_target & (TARGET_ALL_FRAMES | TARGET_ALL_LAYERS));
