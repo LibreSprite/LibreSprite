@@ -74,14 +74,15 @@ void Widget::postInject() {
 Widget::~Widget()
 {
   // Break relationship with the manager.
-  if (this->type() != kManagerWidget) {
-    Manager* manager = this->manager();
-    manager->freeWidget(this);
-  }
+  if (this->type() != kManagerWidget)
+    manager()->freeWidget(this);
 
   // Remove from parent
   if (m_parent)
     m_parent->removeChild(this);
+
+  while (!m_ownedChildren.empty())
+    removeChild(m_ownedChildren.back().get());
 
   // Remove children. The ~Widget dtor modifies the parent's
   // m_children.
@@ -477,8 +478,8 @@ Widget* Widget::findSibling(const char* id)
   return window()->findChild(id);
 }
 
-void Widget::addChild(Widget* child)
-{
+// TODO: Remove this
+void Widget::addChild(Widget* child) {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
 
@@ -487,13 +488,27 @@ void Widget::addChild(Widget* child)
   child->setManager(manager());
 }
 
-void Widget::removeChild(WidgetsList::iterator& it)
+void Widget::addChild(std::shared_ptr<Widget> child) {
+  m_ownedChildren.push_back(child);
+  addChild(child.get());
+}
+
+void Widget::removeChild(const WidgetsList::iterator& it)
 {
   Widget* child = *it;
 
   ASSERT(it != m_children.end());
-  if (it != m_children.end())
-    m_children.erase(it);
+  if (it == m_children.end())
+    return;
+
+  m_children.erase(it);
+
+  for (auto it = m_ownedChildren.begin(); it != m_ownedChildren.end(); ++it) {
+    if (it->get() == child) {
+      m_ownedChildren.erase(it);
+      break;
+    }
+  }
 
   // Free from manager
   Manager* manager = this->manager();
@@ -507,9 +522,7 @@ void Widget::removeChild(Widget* child)
 {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
-
-  WidgetsList::iterator it = std::find(m_children.begin(), m_children.end(), child);
-  removeChild(it);
+  removeChild(std::find(m_children.begin(), m_children.end(), child));
 }
 
 void Widget::removeAllChildren()

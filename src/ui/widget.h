@@ -227,6 +227,7 @@ namespace ui {
       return NULL;
     }
 
+    void addChild(std::shared_ptr<Widget> child);
     void addChild(Widget* child);
     void removeChild(Widget* child);
     void removeAllChildren();
@@ -398,9 +399,12 @@ namespace ui {
     void setManager(Manager* manager);
 
   private:
-    void removeChild(WidgetsList::iterator& it);
+    void removeChild(const WidgetsList::iterator& it);
     void paint(Graphics* graphics, const gfx::Region& drawRegion);
     bool paintEvent(Graphics* graphics);
+
+    // TODO: Remove when widget can own all children
+    std::vector<std::shared_ptr<Widget>> m_ownedChildren;
 
     WidgetType m_type;                             // Widget's type
     std::string m_id;                              // Widget's id
