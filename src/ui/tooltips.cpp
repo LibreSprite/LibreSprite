@@ -41,16 +41,16 @@ TooltipManager::TooltipManager()
   setVisible(false);
 }
 
-void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign)
-{
-  m_tips[widget] = TipInfo(text, arrowAlign);
+void TooltipManager::addTooltipFor(std::shared_ptr<Widget> widget, const std::string& text, int arrowAlign) {
+  m_tips[widget.get()] = TipInfo{text, arrowAlign};
 }
 
-void TooltipManager::removeTooltipFor(Widget* widget)
-{
-  auto it = m_tips.find(widget);
-  if (it != m_tips.end())
-    m_tips.erase(it);
+void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign) {
+  m_tips[widget] = TipInfo{text, arrowAlign};
+}
+
+void TooltipManager::removeTooltipFor(Widget* widget) {
+  m_tips.erase(widget);
 }
 
 bool TooltipManager::onProcessMessage(Message* msg)

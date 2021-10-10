@@ -12,7 +12,7 @@
 #include "ui/timer.h"
 #include "ui/window.h"
 
-#include <map>
+#include <unordered_map>
 
 namespace ui {
 
@@ -22,6 +22,7 @@ namespace ui {
   public:
     TooltipManager();
 
+    void addTooltipFor(std::shared_ptr<Widget> widget, const std::string& text, int arrowAlign = 0);
     void addTooltipFor(Widget* widget, const std::string& text, int arrowAlign = 0);
     void removeTooltipFor(Widget* widget);
 
@@ -41,7 +42,7 @@ namespace ui {
       }
     };
 
-    typedef std::map<Widget*, TipInfo> Tips;
+    typedef std::unordered_map<Widget*, TipInfo> Tips;
     Tips m_tips;                      // All tips.
     std::unique_ptr<TipWindow> m_tipWindow; // Frame to show tooltips.
     inject<Timer> m_timer{nullptr};         // Timer to control the tooltip delay.
