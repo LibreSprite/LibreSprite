@@ -60,6 +60,10 @@ namespace ui {
     virtual ~Widget();
 
     base::safe_ptr<Widget> safePtr{this};
+    Widget* holdUntilAdded() {
+      m_hold = shared_from_this();
+      return this;
+    }
 
     // Safe way to delete a widget when it is not in the manager message
     // queue anymore.
@@ -229,7 +233,10 @@ namespace ui {
 
     void addChild(std::shared_ptr<Widget> child);
     void addChild(Widget* child);
+
+    void removeChild(std::shared_ptr<Widget> child);
     void removeChild(Widget* child);
+
     void removeAllChildren();
     void replaceChild(Widget* oldChild, Widget* newChild);
     void insertChild(int index, Widget* child);
@@ -405,6 +412,8 @@ namespace ui {
 
     // TODO: Remove when widget can own all children
     std::vector<std::shared_ptr<Widget>> m_ownedChildren;
+    bool m_wasInjected = false;
+    std::shared_ptr<Widget> m_hold;
 
     WidgetType m_type;                             // Widget's type
     std::string m_id;                              // Widget's id

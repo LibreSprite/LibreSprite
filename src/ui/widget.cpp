@@ -68,6 +68,7 @@ Widget::Widget(WidgetType type) : m_type(type),
 }
 
 void Widget::postInject() {
+  m_wasInjected = true;
 //   getAll().insert(shared_from_this());
 }
 
@@ -478,10 +479,14 @@ Widget* Widget::findSibling(const char* id)
   return window()->findChild(id);
 }
 
-// TODO: Remove this
+// TODO: Remove when widget can own all children
 void Widget::addChild(Widget* child) {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
+
+  if (child->m_wasInjected)
+    m_ownedChildren.push_back(child->shared_from_this());
+  child->m_hold.reset();
 
   m_children.push_back(child);
   child->m_parent = this;
@@ -490,7 +495,11 @@ void Widget::addChild(Widget* child) {
 
 void Widget::addChild(std::shared_ptr<Widget> child) {
   m_ownedChildren.push_back(child);
-  addChild(child.get());
+  child->m_hold.reset();
+
+  m_children.push_back(child.get());
+  child->m_parent = this;
+  child->setManager(manager());
 }
 
 void Widget::removeChild(const WidgetsList::iterator& it)
@@ -518,11 +527,15 @@ void Widget::removeChild(const WidgetsList::iterator& it)
   child->m_parent = NULL;
 }
 
-void Widget::removeChild(Widget* child)
-{
+// TODO: Remove when widget can own all children
+void Widget::removeChild(Widget* child) {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
   removeChild(std::find(m_children.begin(), m_children.end(), child));
+}
+
+void Widget::removeChild(std::shared_ptr<Widget> child) {
+  removeChild(child.get());
 }
 
 void Widget::removeAllChildren()
@@ -546,6 +559,10 @@ void Widget::replaceChild(Widget* oldChild, Widget* newChild)
 
   removeChild(oldChild);
 
+  if (newChild->m_wasInjected)
+    m_ownedChildren.push_back(newChild->shared_from_this());
+  newChild->m_hold.reset();
+
   m_children.insert(m_children.begin()+index, newChild);
   newChild->m_parent = this;
 }
@@ -554,6 +571,10 @@ void Widget::insertChild(int index, Widget* child)
 {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
+
+  if (child->m_wasInjected)
+    m_ownedChildren.push_back(child->shared_from_this());
+  child->m_hold.reset();
 
   m_children.insert(m_children.begin()+index, child);
   child->m_parent = this;
