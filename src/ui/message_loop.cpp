@@ -21,10 +21,8 @@ MessageLoop::MessageLoop(Manager* manager)
 {
 }
 
-void MessageLoop::pumpMessages()
-{
+void MessageLoop::pumpMessages() {
   base::Chrono chrono;
-
   if (m_manager->generateMessages()) {
     m_manager->dispatchMessages();
   }

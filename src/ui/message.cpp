@@ -67,10 +67,10 @@ void Message::report(Widget* widget) {
   };
   const char* string =
     (msg->type() >= kOpenMessage &&
-     msg->type() <= kMouseWheelMessage) ? msg_name[msg->type()]:
+     msg->type() <= kMouseWheelMessage) ? msg_name[type()]:
     "Unknown";
 
-  std::cout << "Event " << msg->type() << " (" << string << ") "
+  std::cout << "Event " << type() << " (" << string << ") "
             << "for " << typeid(*widget).name();
   if (!widget->id().empty())
     std::cout << " (" << widget->id() << ")";

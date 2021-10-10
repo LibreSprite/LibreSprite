@@ -102,7 +102,7 @@ namespace base {
 
     template<typename T>
     operator T () const {
-      return static_cast<T>(*storage);
+      return storage ? static_cast<T>(*storage) : nullptr;
     }
 
     void reset() {
