@@ -15,17 +15,12 @@ namespace ui {
   class Grid : public Widget {
   public:
     struct Info {
-      int col, row;
-      int hspan, vspan;
-      int grid_cols, grid_rows;
-      Info() : col(0), row(0),
-               hspan(0), vspan(0),
-               grid_cols(0), grid_rows(0) {
-      }
+      int col = 0, row = 0;
+      int hspan = 0, vspan = 0;
+      int grid_cols = 0, grid_rows = 0;
     };
 
     Grid(int columns, bool same_width_columns);
-    ~Grid();
 
     void addChildInCell(Widget* child, int hspan, int vspan, int align);
     void addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align);
@@ -71,7 +66,7 @@ namespace ui {
     bool m_same_width_columns;
     std::vector<Strip> m_colstrip;
     std::vector<Strip> m_rowstrip;
-    std::vector<std::vector<Cell*> > m_cells;
+    std::vector<std::vector<Cell> > m_cells;
   };
 
 } // namespace ui

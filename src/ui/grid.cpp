@@ -41,14 +41,6 @@ Grid::Grid(int columns, bool same_width_columns)
   initTheme();
 }
 
-Grid::~Grid()
-{
-  // Delete all cells.
-  for (std::size_t row=0; row<m_cells.size(); ++row)
-    for (std::size_t col=0; col<m_cells[row].size(); ++col)
-      delete m_cells[row][col];
-}
-
 /**
  * Adds a child widget in the specified grid.
  *
@@ -103,7 +95,7 @@ Grid::Info Grid::getChildInfo(Widget* child)
   Info info;
   for (int row=0; row<(int)m_rowstrip.size(); ++row) {
     for (int col=0; col<(int)m_colstrip.size(); ++col) {
-      Cell* cell = m_cells[row][col];
+      auto cell = &m_cells[row][col];
 
       if (cell->child == child) {
         info.col = col;
@@ -137,10 +129,10 @@ void Grid::onResize(ResizeEvent& ev)
     pos_x = rect.x + border().left();
 
     for (col=0; col<(int)m_colstrip.size(); ++col) {
-      Cell* cell = m_cells[row][col];
+      auto cell = &m_cells[row][col];
 
-      if (cell->child != NULL &&
-          cell->parent == NULL &&
+      if (cell->child != nullptr &&
+          cell->parent == nullptr &&
           !(cell->child->hasFlags(HIDDEN))) {
         x = pos_x;
         y = pos_y;
@@ -280,12 +272,12 @@ void Grid::calculateStripSize(std::vector<Strip>& colstrip,
     for (int row=0; row<(int)rowstrip.size(); ++row) {
       // For each cell
       if (&colstrip == &m_colstrip)
-        cell = m_cells[row][col];
+        cell = &m_cells[row][col];
       else
-        cell = m_cells[col][row]; // Transposed
+        cell = &m_cells[col][row]; // Transposed
 
-      if (cell->child != NULL) {
-        if (cell->parent == NULL) {
+      if (cell->child != nullptr) {
+        if (cell->parent == nullptr) {
           // If the widget isn't hidden then we can request its size
           if (!(cell->child->hasFlags(HIDDEN))) {
             Size reqSize = cell->child->sizeHint();
@@ -330,22 +322,22 @@ void Grid::expandStrip(std::vector<Strip>& colstrip,
       for (int row=0; row<(int)rowstrip.size(); ++row) {
         int cell_size;
         int cell_span;
-        Cell* cell;
+        Cell* cell = nullptr;
 
         // For each cell
         if (&colstrip == &m_colstrip) {
-          cell = m_cells[row][col];
+          cell = &m_cells[row][col];
           cell_size = cell->w;
           cell_span = cell->hspan;
         }
         else {
-          cell = m_cells[col][row]; // Transposed
+          cell = &m_cells[col][row]; // Transposed
           cell_size = cell->h;
           cell_span = cell->vspan;
         }
 
-        if (cell->child != NULL &&
-            cell->parent == NULL &&
+        if (cell->child != nullptr &&
+            cell->parent == nullptr &&
             cell_size > 0) {
           ASSERT(cell_span > 0);
 
@@ -467,9 +459,9 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
 
   for (row=0; row<(int)m_rowstrip.size(); ++row) {
     for (col=0; col<(int)m_colstrip.size(); ++col) {
-      cell = m_cells[row][col];
+      cell = &m_cells[row][col];
 
-      if (cell->child == NULL) {
+      if (cell->child == nullptr) {
         cell->child = child;
         cell->hspan = hspan;
         cell->vspan = vspan;
@@ -483,13 +475,13 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
         expandRows(row+vspan);
 
         for (++col; col<colend; ++col) {
-          cell = m_cells[row][col];
+          cell = &m_cells[row][col];
 
           // If these asserts fails, it's really possible that you
           // specified bad values for hspan or vspan (they are
           // overlapping with other cells).
-          ASSERT(cell->parent == NULL);
-          ASSERT(cell->child == NULL);
+          ASSERT(cell->parent == nullptr);
+          ASSERT(cell->child == nullptr);
 
           cell->parent = parentcell;
           cell->child = child;
@@ -499,10 +491,10 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
 
         for (++row; row<rowend; ++row) {
           for (col=colbeg; col<colend; ++col) {
-            cell = m_cells[row][col];
+            cell = &m_cells[row][col];
 
-            ASSERT(cell->parent == NULL);
-            ASSERT(cell->child == NULL);
+            ASSERT(cell->parent == nullptr);
+            ASSERT(cell->child == nullptr);
 
             cell->parent = parentcell;
             cell->child = child;
@@ -532,50 +524,30 @@ void Grid::expandRows(int rows)
       m_cells[row].resize(m_colstrip.size());
       m_rowstrip[row].size = 0;
       m_rowstrip[row].expand_count = 0;
-
-      for (int col=0; col<(int)m_cells[row].size(); ++col) {
-        m_cells[row][col] = new Cell;
-      }
     }
   }
 }
 
-void Grid::incColSize(int col, int size)
-{
+void Grid::incColSize(int col, int size) {
   m_colstrip[col].size += size;
-
   for (int row=0; row<(int)m_rowstrip.size(); ) {
-    Cell* cell = m_cells[row][col];
-
-    if (cell->child != NULL) {
-      if (cell->parent != NULL)
-        cell->parent->w -= size;
-      else
-        cell->w -= size;
-
+    auto cell = &m_cells[row][col];
+    if (cell->child) {
+      (cell->parent ?: cell)->w -= size;
       row += cell->vspan;
-    }
-    else
+    } else
       ++row;
   }
 }
 
-void Grid::incRowSize(int row, int size)
-{
+void Grid::incRowSize(int row, int size) {
   m_rowstrip[row].size += size;
-
   for (int col=0; col<(int)m_colstrip.size(); ) {
-    Cell* cell = m_cells[row][col];
-
-    if (cell->child != NULL) {
-      if (cell->parent != NULL)
-        cell->parent->h -= size;
-      else
-        cell->h -= size;
-
+    auto cell = &m_cells[row][col];
+    if (cell->child) {
+      (cell->parent ?: cell)->h -= size;
       col += cell->hspan;
-    }
-    else
+    } else
       ++col;
   }
 }
