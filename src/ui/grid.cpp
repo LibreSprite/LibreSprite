@@ -25,20 +25,14 @@ namespace ui {
 
 using namespace gfx;
 
-Grid::Grid(int columns, bool same_width_columns)
-  : Widget(kGridWidget)
-  , m_colstrip(columns)
-{
+Grid::Grid(int columns, bool same_width_columns) : Widget(kGridWidget), m_colStrip(columns) {
   ASSERT(columns > 0);
-
-  m_same_width_columns = same_width_columns;
-
-  for (std::size_t col=0; col<m_colstrip.size(); ++col) {
-    m_colstrip[col].size = 0;
-    m_colstrip[col].expand_count = 0;
-  }
-
+  m_sameWidthColumns = same_width_columns;
   initTheme();
+}
+
+void Grid::setColumns(int columns) {
+  m_colStrip.resize(columns);
 }
 
 /**
@@ -72,29 +66,19 @@ void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
   addChild(child);
 
   if (!putWidgetInCell(child, hspan, vspan, align)) {
-    expandRows(m_rowstrip.size()+1);
+    expandRows(m_rowStrip.size()+1);
     putWidgetInCell(child, hspan, vspan, align);
   }
 }
 
-void Grid::addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align)
-{
-  ASSERT(hspan > 0);
-  ASSERT(vspan > 0);
-
-  addChild(child);
-
-  if (!putWidgetInCell(child.get(), hspan, vspan, align)) {
-    expandRows(m_rowstrip.size()+1);
-    putWidgetInCell(child.get(), hspan, vspan, align);
-  }
+void Grid::addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align) {
+  addChildInCell(child.get(), hspan, vspan, align);
 }
 
-Grid::Info Grid::getChildInfo(Widget* child)
-{
+Grid::Info Grid::getChildInfo(Widget* child) {
   Info info;
-  for (int row=0; row<(int)m_rowstrip.size(); ++row) {
-    for (int col=0; col<(int)m_colstrip.size(); ++col) {
+  for (int row=0; row<(int)m_rowStrip.size(); ++row) {
+    for (int col=0; col<(int)m_colStrip.size(); ++col) {
       auto cell = &m_cells[row][col];
 
       if (cell->child == child) {
@@ -102,8 +86,8 @@ Grid::Info Grid::getChildInfo(Widget* child)
         info.row = row;
         info.hspan = cell->hspan;
         info.vspan = cell->vspan;
-        info.grid_cols = m_colstrip.size();
-        info.grid_rows = m_rowstrip.size();
+        info.grid_cols = m_colStrip.size();
+        info.grid_rows = m_rowStrip.size();
         return info;
       }
     }
@@ -111,8 +95,7 @@ Grid::Info Grid::getChildInfo(Widget* child)
   return info;
 }
 
-void Grid::onResize(ResizeEvent& ev)
-{
+void Grid::onResize(ResizeEvent& ev) {
   gfx::Rect rect = ev.bounds();
   int pos_x, pos_y;
   Size reqSize;
@@ -125,10 +108,10 @@ void Grid::onResize(ResizeEvent& ev)
   distributeSize(rect);
 
   pos_y = rect.y + border().top();
-  for (row=0; row<(int)m_rowstrip.size(); ++row) {
+  for (row=0; row<(int)m_rowStrip.size(); ++row) {
     pos_x = rect.x + border().left();
 
-    for (col=0; col<(int)m_colstrip.size(); ++col) {
+    for (col=0; col<(int)m_colStrip.size(); ++col) {
       auto cell = &m_cells[row][col];
 
       if (cell->child != nullptr &&
@@ -137,8 +120,8 @@ void Grid::onResize(ResizeEvent& ev)
         x = pos_x;
         y = pos_y;
 
-        calculateCellSize(col, cell->hspan, m_colstrip, w);
-        calculateCellSize(row, cell->vspan, m_rowstrip, h);
+        calculateCellSize(col, cell->hspan, m_colStrip, w);
+        calculateCellSize(row, cell->vspan, m_rowStrip, h);
 
         reqSize = cell->child->sizeHint();
 
@@ -174,17 +157,16 @@ void Grid::onResize(ResizeEvent& ev)
         cell->child->setBounds(Rect(x, y, w, h));
       }
 
-      if (m_colstrip[col].size > 0)
-        pos_x += m_colstrip[col].size + childSpacing();
+      if (m_colStrip[col].size > 0)
+        pos_x += m_colStrip[col].size + childSpacing();
     }
 
-    if (m_rowstrip[row].size > 0)
-      pos_y += m_rowstrip[row].size + childSpacing();
+    if (m_rowStrip[row].size > 0)
+      pos_y += m_rowStrip[row].size + childSpacing();
   }
 }
 
-void Grid::onSizeHint(SizeHintEvent& ev)
-{
+void Grid::onSizeHint(SizeHintEvent& ev) {
   int w, h;
 
   w = h = 0;
@@ -192,8 +174,8 @@ void Grid::onSizeHint(SizeHintEvent& ev)
   calculateSize();
 
   // Calculate the total
-  sumStripSize(m_colstrip, w);
-  sumStripSize(m_rowstrip, h);
+  sumStripSize(m_colStrip, w);
+  sumStripSize(m_rowStrip, h);
 
   w += border().width();
   h += border().height();
@@ -201,13 +183,11 @@ void Grid::onSizeHint(SizeHintEvent& ev)
   ev.setSizeHint(Size(w, h));
 }
 
-void Grid::onPaint(PaintEvent& ev)
-{
+void Grid::onPaint(PaintEvent& ev) {
   theme()->paintGrid(ev);
 }
 
-void Grid::sumStripSize(const std::vector<Strip>& strip, int& size)
-{
+void Grid::sumStripSize(const std::vector<Strip>& strip, int& size) {
   int i, j;
 
   size = 0;
@@ -220,8 +200,7 @@ void Grid::sumStripSize(const std::vector<Strip>& strip, int& size)
   }
 }
 
-void Grid::calculateCellSize(int start, int span, const std::vector<Strip>& strip, int& size)
-{
+void Grid::calculateCellSize(int start, int span, const std::vector<Strip>& strip, int& size) {
   int i, j;
 
   size = 0;
@@ -236,32 +215,29 @@ void Grid::calculateCellSize(int start, int span, const std::vector<Strip>& stri
 }
 
 // Calculates the size of each strip (rows and columns) in the grid.
-void Grid::calculateSize()
-{
-  if (m_rowstrip.size() == 0)
+void Grid::calculateSize() {
+  if (m_rowStrip.size() == 0)
     return;
 
-  calculateStripSize(m_colstrip, m_rowstrip, HORIZONTAL);
-  calculateStripSize(m_rowstrip, m_colstrip, VERTICAL);
+  calculateStripSize(m_colStrip, m_rowStrip, HORIZONTAL);
+  calculateStripSize(m_rowStrip, m_colStrip, VERTICAL);
 
-  expandStrip(m_colstrip, m_rowstrip, &Grid::incColSize);
-  expandStrip(m_rowstrip, m_colstrip, &Grid::incRowSize);
+  expandStrip(m_colStrip, m_rowStrip, &Grid::incColSize);
+  expandStrip(m_rowStrip, m_colStrip, &Grid::incRowSize);
 
   // Same width in all columns
-  if (m_same_width_columns) {
+  if (m_sameWidthColumns) {
     int max_w = 0;
-    for (int col=0; col<(int)m_colstrip.size(); ++col)
-      max_w = MAX(max_w, m_colstrip[col].size);
+    for (int col=0; col<(int)m_colStrip.size(); ++col)
+      max_w = MAX(max_w, m_colStrip[col].size);
 
-    for (int col=0; col<(int)m_colstrip.size(); ++col)
-      m_colstrip[col].size = max_w;
+    for (int col=0; col<(int)m_colStrip.size(); ++col)
+      m_colStrip[col].size = max_w;
   }
 }
 
-void Grid::calculateStripSize(std::vector<Strip>& colstrip,
-                              std::vector<Strip>& rowstrip, int align)
-{
-  Cell* cell;
+void Grid::calculateStripSize(std::vector<Strip>& colstrip, std::vector<Strip>& rowstrip, int align) {
+  Cell* cell = nullptr;
 
   // For each column
   for (int col=0; col<(int)colstrip.size(); ++col) {
@@ -271,7 +247,7 @@ void Grid::calculateStripSize(std::vector<Strip>& colstrip,
     // For each row
     for (int row=0; row<(int)rowstrip.size(); ++row) {
       // For each cell
-      if (&colstrip == &m_colstrip)
+      if (&colstrip == &m_colStrip)
         cell = &m_cells[row][col];
       else
         cell = &m_cells[col][row]; // Transposed
@@ -297,7 +273,7 @@ void Grid::calculateStripSize(std::vector<Strip>& colstrip,
           }
         }
 
-        if (&colstrip == &m_colstrip)
+        if (&colstrip == &m_colStrip)
           row += cell->vspan-1;
         else
           row += cell->hspan-1; // Transposed
@@ -325,7 +301,7 @@ void Grid::expandStrip(std::vector<Strip>& colstrip,
         Cell* cell = nullptr;
 
         // For each cell
-        if (&colstrip == &m_colstrip) {
+        if (&colstrip == &m_colStrip) {
           cell = &m_cells[row][col];
           cell_size = cell->w;
           cell_span = cell->hspan;
@@ -363,7 +339,7 @@ void Grid::expandStrip(std::vector<Strip>& colstrip,
               if (colstrip[i].expand_count == max_expand_count) {
                 // For the last column, use all the available space in the column
                 if (last_expand == i) {
-                  if (&colstrip == &m_colstrip)
+                  if (&colstrip == &m_colStrip)
                     size = cell->w;
                   else
                     size = cell->h; // Transposed
@@ -385,11 +361,11 @@ void Grid::expandStrip(std::vector<Strip>& colstrip,
 
 void Grid::distributeSize(const gfx::Rect& rect)
 {
-  if (m_rowstrip.size() == 0)
+  if (m_rowStrip.size() == 0)
     return;
 
-  distributeStripSize(m_colstrip, rect.w, border().width(), m_same_width_columns);
-  distributeStripSize(m_rowstrip, rect.h, border().height(), false);
+  distributeStripSize(m_colStrip, rect.w, border().width(), m_sameWidthColumns);
+  distributeStripSize(m_rowStrip, rect.h, border().height(), false);
 }
 
 void Grid::distributeStripSize(std::vector<Strip>& colstrip,
@@ -457,8 +433,8 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
   int col, row, colbeg, colend, rowend;
   Cell *cell, *parentcell;
 
-  for (row=0; row<(int)m_rowstrip.size(); ++row) {
-    for (col=0; col<(int)m_colstrip.size(); ++col) {
+  for (row=0; row<(int)m_rowStrip.size(); ++row) {
+    for (col=0; col<(int)m_colStrip.size(); ++col) {
       cell = &m_cells[row][col];
 
       if (cell->child == nullptr) {
@@ -469,7 +445,7 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
 
         parentcell = cell;
         colbeg = col;
-        colend = MIN(col+hspan, (int)m_colstrip.size());
+        colend = MIN(col+hspan, (int)m_colStrip.size());
         rowend = row+vspan;
 
         expandRows(row+vspan);
@@ -514,23 +490,21 @@ bool Grid::putWidgetInCell(Widget* child, int hspan, int vspan, int align)
 // the parameter.
 void Grid::expandRows(int rows)
 {
-  if ((int)m_rowstrip.size() < rows) {
-    int old_size = (int)m_rowstrip.size();
+  if ((int)m_rowStrip.size() < rows) {
+    int old_size = (int)m_rowStrip.size();
 
     m_cells.resize(rows);
-    m_rowstrip.resize(rows);
+    m_rowStrip.resize(rows);
 
     for (int row=old_size; row<rows; ++row) {
-      m_cells[row].resize(m_colstrip.size());
-      m_rowstrip[row].size = 0;
-      m_rowstrip[row].expand_count = 0;
+      m_cells[row].resize(m_colStrip.size());
     }
   }
 }
 
 void Grid::incColSize(int col, int size) {
-  m_colstrip[col].size += size;
-  for (int row=0; row<(int)m_rowstrip.size(); ) {
+  m_colStrip[col].size += size;
+  for (int row=0; row<(int)m_rowStrip.size(); ) {
     auto cell = &m_cells[row][col];
     if (cell->child) {
       (cell->parent ?: cell)->w -= size;
@@ -541,8 +515,8 @@ void Grid::incColSize(int col, int size) {
 }
 
 void Grid::incRowSize(int row, int size) {
-  m_rowstrip[row].size += size;
-  for (int col=0; col<(int)m_colstrip.size(); ) {
+  m_rowStrip[row].size += size;
+  for (int col=0; col<(int)m_colStrip.size(); ) {
     auto cell = &m_cells[row][col];
     if (cell->child) {
       (cell->parent ?: cell)->h -= size;

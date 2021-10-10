@@ -20,7 +20,10 @@ namespace ui {
       int grid_cols = 0, grid_rows = 0;
     };
 
-    Grid(int columns, bool same_width_columns);
+    Grid(int columns = 1, bool same_width_columns = true);
+
+    void setSameWidthColumns(bool value) {m_sameWidthColumns = value;}
+    void setColumns(int columns);
 
     void addChildInCell(Widget* child, int hspan, int vspan, int align);
     void addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align);
@@ -43,8 +46,8 @@ namespace ui {
     };
 
     struct Strip {
-      int size;
-      int expand_count;
+      int size = 0;
+      int expand_count = 0;
     };
 
     void sumStripSize(const std::vector<Strip>& strip, int& size);
@@ -63,9 +66,9 @@ namespace ui {
     void incColSize(int col, int size);
     void incRowSize(int row, int size);
 
-    bool m_same_width_columns;
-    std::vector<Strip> m_colstrip;
-    std::vector<Strip> m_rowstrip;
+    bool m_sameWidthColumns;
+    std::vector<Strip> m_colStrip;
+    std::vector<Strip> m_rowStrip;
     std::vector<std::vector<Cell> > m_cells;
   };
 
