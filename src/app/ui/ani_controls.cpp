@@ -144,4 +144,6 @@ std::string AniControls::getTooltipFor(int index) const
   return tooltip;
 }
 
+static Widget::Shared<AniControls> _ac{"AniControls"};
+
 } // namespace app

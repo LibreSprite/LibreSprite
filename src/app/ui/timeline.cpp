@@ -117,8 +117,7 @@ struct Timeline::DrawCelData {
   CelIterator lastLink;         // Last link to the active cel
 };
 
-Timeline::Timeline()
-  : Widget(kGenericWidget)
+Timeline::Timeline() : Widget(kGenericWidget)
   , m_hbar(HORIZONTAL, this)
   , m_vbar(VERTICAL, this)
   , m_context(UIContext::instance())
@@ -140,7 +139,7 @@ Timeline::Timeline()
   m_context->documents().addObserver(this);
 
   setDoubleBuffered(true);
-  addChild(&m_aniControls);
+  addChild(m_aniControls);
   addChild(&m_hbar);
   addChild(&m_vbar);
 
@@ -164,7 +163,7 @@ Timeline::~Timeline()
 
 void Timeline::updateUsingEditor(Editor* editor)
 {
-  m_aniControls.updateUsingEditor(editor);
+  m_aniControls->updateUsingEditor(editor);
 
   detachDocument();
 
@@ -906,8 +905,8 @@ void Timeline::onResize(ui::ResizeEvent& ev)
   gfx::Rect rc = ev.bounds();
   setBoundsQuietly(rc);
 
-  gfx::Size sz = m_aniControls.sizeHint();
-  m_aniControls.setBounds(
+  gfx::Size sz = m_aniControls->sizeHint();
+  m_aniControls->setBounds(
     gfx::Rect(rc.x, rc.y, MIN(sz.w, m_separator_x),
       font()->height() +
       skinTheme()->dimensions.timelineTagsAreaHeight()));
@@ -1157,7 +1156,7 @@ void Timeline::onLayerNameChange(doc::DocumentEvent& ev)
 
 void Timeline::onStateChanged(Editor* editor)
 {
-  m_aniControls.updateUsingEditor(editor);
+  m_aniControls->updateUsingEditor(editor);
 }
 
 void Timeline::onAfterFrameChanged(Editor* editor)
