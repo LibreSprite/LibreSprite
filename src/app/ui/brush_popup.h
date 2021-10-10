@@ -34,10 +34,10 @@ namespace app {
     void onStandardBrush();
     void onBrushChanges();
 
-    ui::TooltipManager* m_tooltipManager;
+    ui::TooltipManager* m_tooltipManager = nullptr;
     ui::VBox m_box;
-    ButtonSet m_standardBrushes;
-    ButtonSet* m_customBrushes;
+    std::shared_ptr<ButtonSet> m_standardBrushes = inject<Widget>{"ButtonSet"};
+    std::shared_ptr<ButtonSet> m_customBrushes;
   };
 
 } // namespace app

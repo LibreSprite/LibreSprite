@@ -339,49 +339,45 @@ static ui::Widget::Shared<NewBrushOptionsItem> _nboi("NewBrushOptionsItem");
 
 } // anonymous namespace
 
-BrushPopup::BrushPopup()
-  : PopupWindow("", ClickBehavior::CloseOnClickInOtherWindow)
-  , m_tooltipManager(nullptr)
-  , m_standardBrushes(3)
-  , m_customBrushes(nullptr)
-{
+BrushPopup::BrushPopup() : PopupWindow("", ClickBehavior::CloseOnClickInOtherWindow) {
+  m_standardBrushes->setColumns(3);
   auto& brushes = App::instance()->brushes();
 
   setAutoRemap(false);
   setBorder(gfx::Border(2)*guiscale());
   setChildSpacing(0);
   m_box.noBorderNoChildSpacing();
-  m_standardBrushes.setTriggerOnMouseUp(true);
+  m_standardBrushes->setTriggerOnMouseUp(true);
 
   addChild(&m_box);
 
   HBox* top = new HBox;
-  top->addChild(&m_standardBrushes);
+  top->addChild(m_standardBrushes);
   top->addChild(new BoxFiller);
 
   m_box.addChild(top);
   m_box.addChild(new Separator("", HORIZONTAL));
 
   for (const auto& brush : brushes.getStandardBrushes()) {
-    m_standardBrushes.addItem(SelectBrushItem::create({BrushSlot::Flags::BrushType, brush}));
+    m_standardBrushes->addItem(SelectBrushItem::create({BrushSlot::Flags::BrushType, brush}));
   }
 
-  m_standardBrushes.setTransparent(true);
-  m_standardBrushes.setBgColor(gfx::ColorNone);
+  m_standardBrushes->setTransparent(true);
+  m_standardBrushes->setBgColor(gfx::ColorNone);
 
   brushes.ItemsChange.connect(&BrushPopup::onBrushChanges, this);
 }
 
 void BrushPopup::setBrush(Brush* brush)
 {
-  for (auto child : m_standardBrushes.children()) {
+  for (auto child : m_standardBrushes->children()) {
     auto item = std::static_pointer_cast<SelectBrushItem>(child->shared_from_this());
     // Same type and same image
     if (item->brush().hasBrush() &&
         item->brush().brush()->type() == brush->type() &&
         (brush->type() != kImageBrushType ||
          item->brush().brush()->image() == brush->image())) {
-      m_standardBrushes.setSelectedItem(item);
+      m_standardBrushes->setSelectedItem(item);
       return;
     }
   }
@@ -399,7 +395,8 @@ void BrushPopup::regenerate(const gfx::Rect& box)
     m_customBrushes->deferDelete();
   }
 
-  m_customBrushes = new ButtonSet(3);
+  m_customBrushes = inject<Widget>{"ButtonSet"};
+  m_customBrushes->setColumns(3);
   m_customBrushes->setTriggerOnMouseUp(true);
 
   int slot = 0;

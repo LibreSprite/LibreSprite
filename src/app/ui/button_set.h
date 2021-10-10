@@ -29,13 +29,11 @@ namespace app {
       bool onProcessMessage(ui::Message* msg) override;
       void onSizeHint(ui::SizeHintEvent& ev) override;
       virtual void onClick();
-      virtual void onRightClick();
+      virtual void onRightClick() {}
     private:
       skin::SkinPartPtr m_icon{nullptr};
       bool m_mono;
     };
-
-    ButtonSet(int columns);
 
     std::shared_ptr<Item> addItem(const std::string& text, int hspan = 1, int vspan = 1);
     std::shared_ptr<Item> addItem(const skin::SkinPartPtr& icon, int hspan = 1, int vspan = 1);
@@ -55,15 +53,17 @@ namespace app {
     base::Signal1<void, Item*> RightClick;
 
   protected:
+    ButtonSet();
+
     virtual void onItemChange(std::shared_ptr<Item> item);
     virtual void onRightClick(std::shared_ptr<Item> item);
 
   private:
     std::shared_ptr<Item> findSelectedItem() const;
 
-    bool m_offerCapture;
-    bool m_triggerOnMouseUp;
-    bool m_multipleSelection;
+    bool m_offerCapture = true;
+    bool m_triggerOnMouseUp = false;
+    bool m_multipleSelection = false;
   };
 
 } // namespace app

@@ -127,7 +127,6 @@ ColorBar* ColorBar::m_instance = NULL;
 
 ColorBar::ColorBar(int align)
   : Box(align)
-  , m_buttons(int(PalButton::MAX))
   , m_splitter(Splitter::ByPercentage, VERTICAL)
   , m_paletteView(true, PaletteView::FgBgColors, this,
       Preferences::instance().colorBar.boxSize() * guiscale())
@@ -147,7 +146,7 @@ ColorBar::ColorBar(int align)
   , m_lastButtons(kButtonLeft)
 {
   m_instance = this;
-
+  m_buttons->setColumns(int(PalButton::MAX));
   SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 
   setBorder(gfx::Border(2*guiscale(), 0, 0, 0));
@@ -181,9 +180,8 @@ ColorBar::ColorBar(int align)
     Preferences::instance().colorBar.selector());
 
   Box* buttonsBox = new HBox();
-  buttonsBox->addChild(&m_buttons);
-  m_buttons.setMaxSize(gfx::Size(m_buttons.maxSize().w,
-                                 16*ui::guiscale()));
+  buttonsBox->addChild(m_buttons);
+  m_buttons->setMaxSize(gfx::Size(m_buttons->maxSize().w, 16*ui::guiscale()));
 
   addChild(buttonsBox);
   addChild(&m_splitter);
@@ -227,20 +225,20 @@ ColorBar::ColorBar(int align)
   m_paletteView.setBgColor(theme->colors.tabActiveFace());
 
   // Change labels foreground color
-  m_buttons.ItemChange.connect(base::Bind<void>(&ColorBar::onPaletteButtonClick, this));
+  m_buttons->ItemChange.connect(base::Bind<void>(&ColorBar::onPaletteButtonClick, this));
 
-  m_buttons.addItem(theme->parts.palEdit());
-  m_buttons.addItem(theme->parts.palSort());
-  m_buttons.addItem(theme->parts.palPresets());
-  m_buttons.addItem(theme->parts.palOptions());
+  m_buttons->addItem(theme->parts.palEdit());
+  m_buttons->addItem(theme->parts.palSort());
+  m_buttons->addItem(theme->parts.palPresets());
+  m_buttons->addItem(theme->parts.palOptions());
 
   // Tooltips
   TooltipManager* tooltipManager = new TooltipManager();
   addChild(tooltipManager);
-  tooltipManager->addTooltipFor(m_buttons.getItem((int)PalButton::EDIT), "Edit Color", BOTTOM);
-  tooltipManager->addTooltipFor(m_buttons.getItem((int)PalButton::SORT), "Sort & Gradients", BOTTOM);
-  tooltipManager->addTooltipFor(m_buttons.getItem((int)PalButton::PRESETS), "Presets", BOTTOM);
-  tooltipManager->addTooltipFor(m_buttons.getItem((int)PalButton::OPTIONS), "Options", BOTTOM);
+  tooltipManager->addTooltipFor(m_buttons->getItem((int)PalButton::EDIT), "Edit Color", BOTTOM);
+  tooltipManager->addTooltipFor(m_buttons->getItem((int)PalButton::SORT), "Sort & Gradients", BOTTOM);
+  tooltipManager->addTooltipFor(m_buttons->getItem((int)PalButton::PRESETS), "Presets", BOTTOM);
+  tooltipManager->addTooltipFor(m_buttons->getItem((int)PalButton::OPTIONS), "Options", BOTTOM);
   tooltipManager->addTooltipFor(&m_remapButton, "Matches old indexes with new indexes", BOTTOM);
 
   onColorButtonChange(getFgColor());
@@ -360,7 +358,7 @@ void ColorBar::setColorSelector(ColorSelector selector)
 
 void ColorBar::setPaletteEditorButtonState(bool state)
 {
-  m_buttons.getItem(int(PalButton::EDIT))->setSelected(state);
+  m_buttons->getItem(int(PalButton::EDIT))->setSelected(state);
 }
 
 void ColorBar::onActiveSiteChange(const doc::Site& site)
@@ -425,8 +423,8 @@ void ColorBar::onAfterExecuteCommand(CommandExecutionEvent& ev)
 // Switches the palette-editor
 void ColorBar::onPaletteButtonClick()
 {
-  int item = m_buttons.selectedItem();
-  m_buttons.deselectItems();
+  int item = m_buttons->selectedItem();
+  m_buttons->deselectItems();
 
   switch (static_cast<PalButton>(item)) {
 
@@ -440,7 +438,7 @@ void ColorBar::onPaletteButtonClick()
     }
 
     case PalButton::SORT: {
-      gfx::Rect bounds = m_buttons.getItem(item)->bounds();
+      gfx::Rect bounds = m_buttons->getItem(item)->bounds();
 
       Menu menu;
       MenuItem
@@ -504,7 +502,7 @@ void ColorBar::onPaletteButtonClick()
       }
 
       if (!m_palettePopup->isVisible()) {
-        gfx::Rect bounds = m_buttons.getItem(item)->bounds();
+        gfx::Rect bounds = m_buttons->getItem(item)->bounds();
 
         m_palettePopup->showPopup(
           gfx::Rect(bounds.x, bounds.y+bounds.h,
@@ -519,7 +517,7 @@ void ColorBar::onPaletteButtonClick()
     case PalButton::OPTIONS: {
       Menu* menu = AppMenus::instance()->getPalettePopupMenu();
       if (menu) {
-        gfx::Rect bounds = m_buttons.getItem(item)->bounds();
+        gfx::Rect bounds = m_buttons->getItem(item)->bounds();
 
         menu->showPopup(gfx::Point(bounds.x, bounds.y+bounds.h));
       }

@@ -42,7 +42,7 @@ namespace app {
     void updateComponentTooltip(std::shared_ptr<Item> item, const char* channelName, int align);
     skin::SkinPartPtr getCelsIcon() const;
 
-    Target m_target;
+    Target m_target = 0;
     std::shared_ptr<Item> m_red;
     std::shared_ptr<Item> m_green;
     std::shared_ptr<Item> m_blue;

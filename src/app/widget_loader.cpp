@@ -402,10 +402,13 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
     }
   }
   else if (elem_name == "buttonset") {
-    const char* columns = elem->Attribute("columns");
+    auto columns = strtol(elem->Attribute("columns") ?: "", NULL, 10);
 
-    if (!widget && columns)
-      widget = new ButtonSet(strtol(columns, NULL, 10));
+    if (!widget && columns) {
+        std::shared_ptr<ButtonSet> buttonset = inject<Widget>{"ButtonSet"};
+        buttonset->setColumns(columns);
+        widget = buttonset->holdUntilAdded();
+    }
 
     if (ButtonSet* buttonset = dynamic_cast<ButtonSet*>(widget)) {
       bool multiple = bool_attr_is_true(elem, "multiple");

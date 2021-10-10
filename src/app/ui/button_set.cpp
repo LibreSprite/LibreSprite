@@ -271,16 +271,7 @@ void ButtonSet::Item::onClick()
   buttonSet()->onItemChange(std::static_pointer_cast<ButtonSet::Item>(shared_from_this()));
 }
 
-void ButtonSet::Item::onRightClick()
-{
-}
-
-ButtonSet::ButtonSet(int columns)
-  : Grid(columns, false)
-  , m_offerCapture(true)
-  , m_triggerOnMouseUp(false)
-  , m_multipleSelection(false)
-{
+ButtonSet::ButtonSet() : Grid(1, false) {
   noBorderNoChildSpacing();
 }
 
@@ -386,5 +377,7 @@ std::shared_ptr<ButtonSet::Item> ButtonSet::findSelectedItem() const
   }
   return nullptr;
 }
+
+static ui::Widget::Shared<ButtonSet> _bs{"ButtonSet"};
 
 } // namespace app

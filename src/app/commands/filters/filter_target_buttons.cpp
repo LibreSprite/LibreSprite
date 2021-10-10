@@ -30,20 +30,10 @@ using namespace app::skin;
 using namespace filters;
 using namespace ui;
 
-FilterTargetButtons::FilterTargetButtons(int imgtype, bool withChannels)
-  : ButtonSet(4)
-  , m_target(0)
-  , m_red(nullptr)
-  , m_green(nullptr)
-  , m_blue(nullptr)
-  , m_alpha(nullptr)
-  , m_gray(nullptr)
-  , m_index(nullptr)
-  , m_cels(nullptr)
-{
+FilterTargetButtons::FilterTargetButtons(int imgtype, bool withChannels) {
   setMultipleSelection(true);
   addChild(&m_tooltips);
-
+  setColumns(4);
   if (withChannels) {
     switch (imgtype) {
 

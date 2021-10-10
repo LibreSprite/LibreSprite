@@ -61,9 +61,8 @@ enum AniAction {
   ACTIONS
 };
 
-AniControls::AniControls()
-  : ButtonSet(5)
-{
+AniControls::AniControls() : ButtonSet() {
+  setColumns(5);
   SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 
   addItem(theme->parts.aniFirst());
