@@ -69,7 +69,7 @@ namespace app {
     ui::Button m_okButton;
     ui::Button m_cancelButton;
     std::shared_ptr<FilterPreview> m_preview = inject<ui::Widget>{"FilterPreview"};
-    FilterTargetButtons m_targetButton;
+    std::shared_ptr<FilterTargetButtons> m_targetButton = inject<ui::Widget>{"FilterTargetButtons"};
     ui::CheckBox m_showPreview;
     ui::CheckBox* m_tiledCheck;
   };

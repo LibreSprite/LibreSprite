@@ -10,6 +10,7 @@
 #include "app/ui/button_set.h"
 #include "app/ui/skin/skin_part.h"
 #include "base/signal.h"
+#include "doc/pixel_format.h"
 #include "filters/target.h"
 #include "ui/tooltips.h"
 
@@ -22,16 +23,18 @@ namespace app {
 
   class FilterTargetButtons : public ButtonSet {
   public:
-    // Creates a new button to handle "targets" to apply some filter in
-    // the a sprite.
-    FilterTargetButtons(int imgtype, bool withChannels);
-
     Target getTarget() const { return m_target; }
     void setTarget(Target target);
+
+    void setImageFormat(doc::PixelFormat format);
 
     base::Signal0<void> TargetChange;
 
   protected:
+    // Creates a new button to handle "targets" to apply some filter in
+    // the a sprite.
+    FilterTargetButtons();
+
     void onItemChange(std::shared_ptr<Item> item) override;
     void onChannelChange(ui::ButtonBase* button);
     void onImagesChange(ui::ButtonBase* button);

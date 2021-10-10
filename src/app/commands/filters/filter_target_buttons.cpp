@@ -30,34 +30,32 @@ using namespace app::skin;
 using namespace filters;
 using namespace ui;
 
-FilterTargetButtons::FilterTargetButtons(int imgtype, bool withChannels) {
+FilterTargetButtons::FilterTargetButtons() {
+  setColumns(4);
   setMultipleSelection(true);
   addChild(&m_tooltips);
-  setColumns(4);
-  if (withChannels) {
-    switch (imgtype) {
-
-      case IMAGE_RGB:
-      case IMAGE_INDEXED:
-        m_red   = addItem("R");
-        m_green = addItem("G");
-        m_blue  = addItem("B");
-        m_alpha = addItem("A");
-
-        if (imgtype == IMAGE_INDEXED)
-          m_index = addItem("Index", 4, 1);
-        break;
-
-      case IMAGE_GRAYSCALE:
-        m_gray = addItem("K", 2, 1);
-        m_alpha = addItem("A", 2, 1);
-        break;
-    }
-  }
-
-  // Create the button to select which cels will be modified by the
-  // filter.
+  // Create the button to select which cels will be modified by the filter.
   m_cels = addItem(getCelsIcon(), 4, 1);
+}
+
+void FilterTargetButtons::setImageFormat(doc::PixelFormat format) {
+  switch (format) {
+  case IMAGE_RGB:
+  case IMAGE_INDEXED:
+    m_red   = addItem("R");
+    m_green = addItem("G");
+    m_blue  = addItem("B");
+    m_alpha = addItem("A");
+
+    if (format == IMAGE_INDEXED)
+      m_index = addItem("Index", 4, 1);
+    break;
+
+  case IMAGE_GRAYSCALE:
+    m_gray = addItem("K", 2, 1);
+    m_alpha = addItem("A", 2, 1);
+    break;
+  }
 }
 
 void FilterTargetButtons::setTarget(int target)
@@ -187,5 +185,7 @@ SkinPartPtr FilterTargetButtons::getCelsIcon() const
       theme->parts.targetOne();
   }
 }
+
+static Widget::Shared<FilterTargetButtons> _ftb{"FilterTargetButtons"};
 
 } // namespace app
