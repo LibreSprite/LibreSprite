@@ -212,6 +212,11 @@ public:
     return std::dynamic_pointer_cast<Derived>(m_ptr->shared_from_this());
   }
 
+  template <typename Derived = BaseClass>
+  std::shared_ptr<Derived> shared() {
+    return std::dynamic_pointer_cast<Derived>(m_ptr->shared_from_this());
+  }
+
   template<typename Derived = BaseClass>
   Derived* get() const {return dynamic_cast<Derived*>(m_ptr);}
 
