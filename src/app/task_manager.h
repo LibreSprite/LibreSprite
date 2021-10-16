@@ -47,6 +47,7 @@ TaskManager::instance().addTask<Data>(
 
 #include "ui/timer.h"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
