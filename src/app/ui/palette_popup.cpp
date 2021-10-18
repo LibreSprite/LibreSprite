@@ -41,6 +41,7 @@ PalettePopup::PalettePopup()
 
   m_popup->view()->attachToView(&m_paletteListBox);
 
+  m_paletteListBox.DoubleClickItem.connect(base::Bind<void>(&PalettePopup::onLoadPal, this));
   m_paletteListBox.PalChange.connect(&PalettePopup::onPalChange, this);
 }
 
