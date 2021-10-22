@@ -27,7 +27,7 @@ You should be able to compile LibreSprite on the following platforms:
 
 To compile LibreSprite you will need:
 
-* [CMake](http://www.cmake.org/) (3.4 or greater)
+* [CMake](http://www.cmake.org/) (3.18 or greater)
 * [Ninja](https://ninja-build.org)
 * [vcpkg](https://vcpkg.io/en/getting-started.html) (Windows and MacOS only)
 

@@ -1,7 +1,8 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
-cmake_minimum_required(VERSION 3.4)
+# For recent Lua 5.4
+cmake_minimum_required(VERSION 3.18)
 
 enable_testing()
 
@@ -32,6 +33,7 @@ option(WITH_GTK_FILE_DIALOG_SUPPORT "Enable support for the experimental native 
 option(WITH_DEPRECATED_GLIB_SUPPORT "Enable support for older glib versions" off)
 option(WITH_DESKTOP_INTEGRATION     "Enable desktop integration modules" off)
 option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
+option(WITH_LUA                     "Enable Lua support (>=lua-5.2 required)" off)
 
 option(USE_SHARED_ALLEGRO4 "Use shared Allegro 4 library (without resize support)" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
@@ -180,8 +182,8 @@ find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
 # Lua
-find_package(Lua)
-if(LUA_FOUND)
+if(WITH_LUA)
+  find_package(Lua 5.2 REQUIRED)
   add_definitions(-DSCRIPT_ENGINE_LUA=1)
   include_directories(${LUA_INCLUDE_DIR})
 endif()
