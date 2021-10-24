@@ -247,6 +247,10 @@ bool is_key_pressed(KeyScancode scancode)
   return key[scancode] ? true: false;
 }
 
+void set_input_rect(const gfx::Rect& rect) {
+  // Do nothing
+}
+
 void clear_keyboard_buffer()
 {
   clear_keybuf();
