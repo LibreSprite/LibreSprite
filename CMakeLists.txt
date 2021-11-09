@@ -190,7 +190,13 @@ endif()
 find_package(V8)
 if(V8_FOUND)
   include_directories(${V8_INCLUDE_DIR})
-  add_definitions(-DSCRIPT_ENGINE_V8=1 -DV8_COMPRESS_POINTERS)
+  add_definitions(-DSCRIPT_ENGINE_V8=1)
+
+  # pointers compression doesn't work on 32bit machines
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    add_definitions(-DV8_COMPRESS_POINTERS)
+  endif()
+
   message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
 else()
   message(STATUS "Optional V8 library NOT found. Disabling V8 scripting engine.")
