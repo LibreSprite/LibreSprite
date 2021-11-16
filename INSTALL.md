@@ -22,7 +22,7 @@ If you want to compile LibreSprite from source, continue reading.
 You should be able to compile LibreSprite on the following platforms:
 
 * Windows 10 + VS2015 Community Edition + Windows 10 SDK
-* Mac OS X 10.11.4 El Capitan + Xcode 7.3 + OS X 10.11 SDK
+* Mac OS X 11.0 Big Sur + Xcode 7.3 + OS X 11.0 SDK
 * Linux + GCC 5.2 with C++14 support
 
 To compile LibreSprite you will need:
@@ -78,7 +78,7 @@ build.
 
 ### MacOS dependencies
 
-On MacOS you will need Mac OS X 10.11 SDK and Xcode 7.3 (older versions
+On MacOS you will need Mac OS X 11.0 SDK and Xcode 7.3 (older versions
 might work).
 
 ## Compiling
@@ -139,7 +139,7 @@ To compile LibreSprite, run the following commands:
     cmake \
       -DCMAKE_OSX_ARCHITECTURES=x86_64 \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7 \
-      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
+      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk \
       -G Ninja \
       ..
     ninja libresprite
