@@ -23,7 +23,7 @@ You should be able to compile LibreSprite on the following platforms:
 
 * Windows 10 + VS2015 Community Edition + Windows 10 SDK
 * Mac OS X 11.0 Big Sur + Xcode 7.3 + OS X 11.0 SDK
-* Linux + GCC 10 or higher with C++14 support
+* Linux + GCC 8.5 or higher with C++14 support
 
 To compile LibreSprite you will need:
 
