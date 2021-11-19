@@ -27,17 +27,17 @@ SetMask::SetMask(Document* doc, Mask* newMask)
 void SetMask::setNewMask(Mask* newMask)
 {
   m_newMask.reset(newMask ? new Mask(*newMask): nullptr);
-  setMask(m_newMask);
+  setMask(m_newMask.get());
 }
 
 void SetMask::onExecute()
 {
-  setMask(m_newMask);
+  setMask(m_newMask.get());
 }
 
 void SetMask::onUndo()
 {
-  setMask(m_oldMask);
+  setMask(m_oldMask.get());
 }
 
 size_t SetMask::onMemSize() const

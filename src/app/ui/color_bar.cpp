@@ -541,7 +541,7 @@ void ColorBar::onRemapButtonClick()
       return;
 
     remap = create_remap_to_change_palette(
-      m_oldPalette, get_current_palette(),
+      m_oldPalette.get(), get_current_palette(),
       sprite->transparentColor(), true);
   }
   catch (base::Exception& e) {

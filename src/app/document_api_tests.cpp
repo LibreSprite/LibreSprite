@@ -11,16 +11,17 @@
 #include "app/document.h"
 #include "app/document_api.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/primitives.h"
 #include "doc/test_context.h"
 
+#include <memory>
+
 using namespace app;
 using namespace doc;
 
-typedef base::UniquePtr<app::Document> DocumentPtr;
+typedef std::unique_ptr<app::Document> DocumentPtr;
 
 TEST(DocumentApi, MoveCel) {
   TestContextT<app::Context> ctx;

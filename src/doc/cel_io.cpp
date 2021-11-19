@@ -11,11 +11,11 @@
 #include "doc/cel_io.h"
 
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/subobjects_io.h"
 
 #include <iostream>
+#include <memory>
 
 namespace doc {
 
@@ -38,7 +38,7 @@ Cel* read_cel(std::istream& is, SubObjectsIO* subObjects, bool setId)
   if (!celData)
     return nullptr;
 
-  base::UniquePtr<Cel> cel(new Cel(frame, celData));
+  std::unique_ptr<Cel> cel(new Cel(frame, celData));
   if (setId)
     cel->setId(id);
   return cel.release();
