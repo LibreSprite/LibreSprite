@@ -13,7 +13,6 @@
 #include "base/concurrent_queue.h"
 #include "base/exception.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "she/sdl2/sdl2_display.h"
 #include "she/sdl2/sdl2_surface.h"
 #include "she/common/system.h"
