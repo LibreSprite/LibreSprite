@@ -9,7 +9,6 @@
 
 #include "app/ui/animated_widget.h"
 #include "base/debug.h"
-#include "base/unique_ptr.h"
 #include "ui/mouse_buttons.h"
 #include "ui/timer.h"
 #include "ui/widget.h"
@@ -279,7 +278,7 @@ namespace app {
     // (this overlay floats next to the mouse cursor).  It's destroyed
     // and recreated every time the tab is put inside or outside the
     // Tabs widget.
-    base::UniquePtr<ui::Overlay> m_floatingOverlay;
+    std::unique_ptr<ui::Overlay> m_floatingOverlay;
 
     // Relative mouse position inside the m_dragTab (used to adjust
     // the m_floatingOverlay precisely).

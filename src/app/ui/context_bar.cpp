@@ -37,7 +37,6 @@
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "base/scoped_value.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
 #include "doc/palette.h"
@@ -57,6 +56,8 @@
 #include "ui/system.h"
 #include "ui/theme.h"
 #include "ui/tooltips.h"
+
+#include <memory>
 
 namespace app {
 
@@ -400,7 +401,7 @@ class ContextBar::InkShadesField : public HBox {
     }
 
     doc::Remap* createShadeRemap(bool left) {
-      base::UniquePtr<doc::Remap> remap;
+      std::unique_ptr<doc::Remap> remap;
       Shade colors = getShade();
 
       // We need two or more colors to create a shading remap. In
