@@ -21,7 +21,6 @@
 #include "base/path.h"
 #include "base/serialization.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cel_data_io.h"
 #include "doc/cel_io.h"
@@ -39,6 +38,7 @@
 
 #include <fstream>
 #include <map>
+#include <memory>
 
 namespace app {
 namespace crash {
@@ -222,7 +222,7 @@ private:
       return (Sprite*)1;
     }
 
-    base::UniquePtr<Sprite> spr(new Sprite(format, w, h, 256));
+    std::unique_ptr<Sprite> spr(new Sprite(format, w, h, 256));
     m_sprite = spr.get();
     spr->setTransparentColor(transparentColor);
 
@@ -284,7 +284,7 @@ private:
     std::string name = read_string(s);
 
     if (type == ObjectType::LayerImage) {
-      base::UniquePtr<LayerImage> lay(new LayerImage(m_sprite));
+      std::unique_ptr<LayerImage> lay(new LayerImage(m_sprite));
       lay->setName(name);
       lay->setFlags(flags);
 

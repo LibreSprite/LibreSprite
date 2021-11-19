@@ -13,7 +13,6 @@
 #include "base/disable_copying.h"
 #include "base/mutex.h"
 #include "base/observable.h"
-#include "base/unique_ptr.h"
 #include "doc/blend_mode.h"
 #include "doc/color.h"
 #include "doc/document.h"
@@ -66,8 +65,8 @@ namespace app {
     //////////////////////////////////////////////////////////////////////
     // Main properties
 
-    const DocumentUndo* undoHistory() const { return m_undo; }
-    DocumentUndo* undoHistory() { return m_undo; }
+    const DocumentUndo* undoHistory() const { return m_undo.get(); }
+    DocumentUndo* undoHistory() { return m_undo.get(); }
 
     color_t bgColor() const;
     color_t bgColor(Layer* layer) const;
@@ -128,7 +127,7 @@ namespace app {
     // Returns the current mask, it can be empty. The mask could be not
     // empty but hidden to the user if the setMaskVisible(false) was
     // used called before.
-    Mask* mask() const { return m_mask; }
+    Mask* mask() const { return m_mask.get(); }
 
     // Sets the current mask. The new mask will be visible by default,
     // so you don't need to call setMaskVisible(true).
@@ -179,13 +178,13 @@ namespace app {
 
   private:
     // Undo and redo information about the document.
-    base::UniquePtr<DocumentUndo> m_undo;
+    std::unique_ptr<DocumentUndo> m_undo;
 
     // True if this sprite is associated to a file in the file-system.
     bool m_associated_to_file;
 
     // Selected mask region boundaries
-    base::UniquePtr<doc::MaskBoundaries> m_maskBoundaries;
+    std::unique_ptr<doc::MaskBoundaries> m_maskBoundaries;
 
     // Mutex to modify the 'locked' flag.
     base::mutex m_mutex;
@@ -203,7 +202,7 @@ namespace app {
     ExtraCelRef m_extraCel;
 
     // Current mask.
-    base::UniquePtr<Mask> m_mask;
+    std::unique_ptr<Mask> m_mask;
     bool m_maskVisible;
 
     // Current transformation.
