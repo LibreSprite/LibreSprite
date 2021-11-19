@@ -12,10 +12,11 @@
 #include "app/transaction.h"
 #include "app/ui/editor/handle_type.h"
 #include "base/connection.h"
-#include "base/shared_ptr.h"
 #include "doc/algorithm/flip_type.h"
 #include "doc/site.h"
 #include "gfx/size.h"
+
+#include <memory>
 
 namespace doc {
   class Image;
@@ -136,6 +137,6 @@ namespace app {
     return a;
   }
 
-  typedef base::SharedPtr<PixelsMovement> PixelsMovementPtr;
+  typedef std::shared_ptr<PixelsMovement> PixelsMovementPtr;
 
 } // namespace app

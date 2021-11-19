@@ -129,21 +129,15 @@ static void update_mouse_cursor()
   update_mouse_overlay(cursor);
 }
 
-UISystem::UISystem()
-{
+UISystem::UISystem() {
   mouse_cursor_type = kOutsideDisplay;
-
-  details::initWidgets();
 }
 
-UISystem::~UISystem()
-{
+UISystem::~UISystem() {
   OverlayManager::destroyInstance();
 
   // finish theme
   CurrentTheme::set(NULL);
-
-  details::exitWidgets();
 
   _internal_set_mouse_display(NULL);
   update_mouse_overlay(NULL);

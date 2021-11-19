@@ -57,8 +57,7 @@ void NewSpriteFromSelectionCommand::onExecute(Context* context)
   const app::Document* doc = static_cast<const app::Document*>(site.document());
   const Sprite* sprite = site.sprite();
   const Mask* mask = doc->mask();
-  ImageRef image(
-    new_image_from_mask(site, mask));
+  std::shared_ptr<Image> image(new_image_from_mask(site, mask));
   if (!image)
     return;
 

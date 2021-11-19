@@ -1179,7 +1179,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int h = fgetw(f);
 
       if (w > 0 && h > 0) {
-        ImageRef image(Image::create(pixelFormat, w, h));
+        std::shared_ptr<Image> image(Image::create(pixelFormat, w, h));
 
         // Read pixel data
         switch (image->pixelFormat()) {
@@ -1237,7 +1237,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int h = fgetw(f);
 
       if (w > 0 && h > 0) {
-        ImageRef image(Image::create(pixelFormat, w, h));
+        std::shared_ptr<Image> image(Image::create(pixelFormat, w, h));
 
         // Try to read pixel data
         try {

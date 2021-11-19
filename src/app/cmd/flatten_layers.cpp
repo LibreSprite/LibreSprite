@@ -40,7 +40,7 @@ void FlattenLayers::onExecute()
   app::Document* doc = static_cast<app::Document*>(sprite->document());
 
   // Create a temporary image.
-  ImageRef image(Image::create(sprite->pixelFormat(),
+  std::shared_ptr<Image> image(Image::create(sprite->pixelFormat(),
       sprite->width(),
       sprite->height()));
 
@@ -72,7 +72,7 @@ void FlattenLayers::onExecute()
 
     // TODO Keep cel links when possible
 
-    ImageRef cel_image;
+    std::shared_ptr<Image> cel_image;
     Cel* cel = flatLayer->cel(frame);
     if (cel) {
       if (cel->links())

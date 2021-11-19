@@ -33,7 +33,7 @@ FlipMaskedCel::FlipMaskedCel(Cel* cel, doc::algorithm::FlipType flipType)
   if (!mask->bitmap())
     return;
 
-  ImageRef copy(Image::createCopy(image));
+  std::shared_ptr<Image> copy(Image::createCopy(image));
   int x = cel->x();
   int y = cel->y();
   mask->offsetOrigin(-x, -y);

@@ -30,44 +30,32 @@ using namespace app::skin;
 using namespace filters;
 using namespace ui;
 
-FilterTargetButtons::FilterTargetButtons(int imgtype, bool withChannels)
-  : ButtonSet(4)
-  , m_target(0)
-  , m_red(nullptr)
-  , m_green(nullptr)
-  , m_blue(nullptr)
-  , m_alpha(nullptr)
-  , m_gray(nullptr)
-  , m_index(nullptr)
-  , m_cels(nullptr)
-{
+FilterTargetButtons::FilterTargetButtons() {
+  setColumns(4);
   setMultipleSelection(true);
   addChild(&m_tooltips);
-
-  if (withChannels) {
-    switch (imgtype) {
-
-      case IMAGE_RGB:
-      case IMAGE_INDEXED:
-        m_red   = addItem("R");
-        m_green = addItem("G");
-        m_blue  = addItem("B");
-        m_alpha = addItem("A");
-
-        if (imgtype == IMAGE_INDEXED)
-          m_index = addItem("Index", 4, 1);
-        break;
-
-      case IMAGE_GRAYSCALE:
-        m_gray = addItem("K", 2, 1);
-        m_alpha = addItem("A", 2, 1);
-        break;
-    }
-  }
-
-  // Create the button to select which cels will be modified by the
-  // filter.
+  // Create the button to select which cels will be modified by the filter.
   m_cels = addItem(getCelsIcon(), 4, 1);
+}
+
+void FilterTargetButtons::setImageFormat(doc::PixelFormat format) {
+  switch (format) {
+  case IMAGE_RGB:
+  case IMAGE_INDEXED:
+    m_red   = addItem("R");
+    m_green = addItem("G");
+    m_blue  = addItem("B");
+    m_alpha = addItem("A");
+
+    if (format == IMAGE_INDEXED)
+      m_index = addItem("Index", 4, 1);
+    break;
+
+  case IMAGE_GRAYSCALE:
+    m_gray = addItem("K", 2, 1);
+    m_alpha = addItem("A", 2, 1);
+    break;
+  }
 }
 
 void FilterTargetButtons::setTarget(int target)
@@ -85,8 +73,7 @@ void FilterTargetButtons::setTarget(int target)
   updateFromTarget();
 }
 
-void FilterTargetButtons::selectTargetButton(Item* item, Target specificTarget)
-{
+void FilterTargetButtons::selectTargetButton(std::shared_ptr<Item> item, Target specificTarget) {
   if (item)
     item->setSelected((m_target & specificTarget) == specificTarget);
 }
@@ -121,7 +108,7 @@ void FilterTargetButtons::updateFromTarget()
   m_tooltips.addTooltipFor(m_cels, celsTooltip, LEFT);
 }
 
-void FilterTargetButtons::updateComponentTooltip(Item* item, const char* channelName, int align)
+void FilterTargetButtons::updateComponentTooltip(std::shared_ptr<Item> item, const char* channelName, int align)
 {
   if (item) {
     char buf[256];
@@ -132,7 +119,7 @@ void FilterTargetButtons::updateComponentTooltip(Item* item, const char* channel
   }
 }
 
-void FilterTargetButtons::onItemChange(Item* item)
+void FilterTargetButtons::onItemChange(std::shared_ptr<Item> item)
 {
   ButtonSet::onItemChange(item);
   Target flags = (m_target & (TARGET_ALL_FRAMES | TARGET_ALL_LAYERS));
@@ -198,5 +185,7 @@ SkinPartPtr FilterTargetButtons::getCelsIcon() const
       theme->parts.targetOne();
   }
 }
+
+static Widget::Shared<FilterTargetButtons> _ftb{"FilterTargetButtons"};
 
 } // namespace app

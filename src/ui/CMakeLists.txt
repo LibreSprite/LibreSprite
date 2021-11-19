@@ -20,7 +20,22 @@ if(WIN32)
 endif()
 
 add_library(ui-lib
+# events
+  paint_event.cpp
+  resize_event.cpp
+  size_hint_event.cpp
+
+# messages
+  message.cpp
+  paint_message.cpp
+  timer_message.cpp
+
+# other
   accelerator.cpp
+  theme.cpp
+  timer.cpp
+
+# widgets
   alert.cpp
   box.cpp
   button.cpp
@@ -39,32 +54,27 @@ add_library(ui-lib
   listitem.cpp
   manager.cpp
   menu.cpp
-  message.cpp
   message_loop.cpp
   move_region.cpp
   overlay.cpp
   overlay_manager.cpp
-  paint_event.cpp
   panel.cpp
   popup_window.cpp
   property.cpp
   register_message.cpp
-  resize_event.cpp
   scroll_bar.cpp
   scroll_helper.cpp
   separator.cpp
-  size_hint_event.cpp
   slider.cpp
   splitter.cpp
   system.cpp
   textbox.cpp
-  theme.cpp
-  timer.cpp
   tooltips.cpp
   view.cpp
   viewport.cpp
   widget.cpp
-  window.cpp)
+  window.cpp
+)
 
 target_link_libraries(ui-lib
   she

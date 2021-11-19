@@ -88,7 +88,7 @@ void MergeDownLayerCommand::onExecute(Context* context)
     else
       src_image = NULL;
 
-    ImageRef dst_image;
+    std::shared_ptr<Image> dst_image;
     if (dst_cel)
       dst_image = dst_cel->imageRef();
 
@@ -127,7 +127,7 @@ void MergeDownLayerCommand::onExecute(Context* context)
 
         doc::color_t bgcolor = app_get_color_to_clear_layer(dst_layer);
 
-        ImageRef new_image(doc::crop_image(
+        std::shared_ptr<Image> new_image(doc::crop_image(
             dst_image.get(),
             bounds.x-dst_cel->x(),
             bounds.y-dst_cel->y(),

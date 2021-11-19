@@ -56,7 +56,7 @@ namespace app {
     ui::ComboBox m_language;
     ui::Label m_label;
     CommmandEntry* m_entry;
-    Provides m_dev{this};
+    script::EngineDelegate::Provides m_dev{this};
     AppScripting m_engine;
   };
 

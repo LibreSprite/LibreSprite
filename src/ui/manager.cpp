@@ -14,6 +14,7 @@
 
 #include "ui/manager.h"
 
+#include "base/iterator.h"
 #include "base/scoped_value.h"
 #include "base/time.h"
 #include "she/display.h"
@@ -32,6 +33,7 @@
 #include <iostream>
 #endif
 
+#include <deque>
 #include <limits>
 #include <list>
 #include <vector>
@@ -47,29 +49,24 @@ namespace ui {
 
 static const int NFILTERS = (int)(kFirstRegisteredMessage+1);
 
-struct Filter
-{
+struct Filter {
   int message;
-  Widget* widget;
-
-  Filter(int message, Widget* widget)
-    : message(message)
-    , widget(widget) { }
+  base::safe_ptr<Widget> widget;
+  Filter(int message, Widget* widget) : message(message), widget(widget->safePtr) {}
 };
 
-typedef std::list<Message*> Messages;
-typedef std::list<Filter*> Filters;
+typedef std::list<Filter> Filters;
 
 Manager* Manager::m_defaultManager = NULL;
 gfx::Region Manager::m_dirtyRegion;
 
 static WidgetsList new_windows; // Windows that we should show
 static WidgetsList mouse_widgets_list; // List of widgets to send mouse events
-static Messages msg_queue;             // Messages queue
-static Filters msg_filters[NFILTERS]; // Filters for every enqueued message
+static std::deque<std::shared_ptr<Message>> msg_queue;             // Messages queue
+static std::array<Filters, NFILTERS> msg_filters; // Filters for every enqueued message
 
-static Widget* focus_widget;    // The widget with the focus
-static Widget* mouse_widget;    // The widget with the mouse
+static base::safe_ptr<Widget> focus_widget;    // The widget with the focus
+static base::safe_ptr<Widget> mouse_widget;    // The widget with the mouse
 static Widget* capture_widget;  // The widget that captures the mouse
 
 static bool first_time = true;    // true when we don't enter in poll yet
@@ -98,8 +95,8 @@ Manager::Manager()
     mouse_widgets_list.clear();
 
     // Reset variables
-    focus_widget = NULL;
-    mouse_widget = NULL;
+    focus_widget.reset();
+    mouse_widget.reset();
     capture_widget = NULL;
   }
 
@@ -124,19 +121,13 @@ Manager::~Manager()
     // No more cursor
     set_mouse_cursor(kNoCursor);
 
-    // Destroy timers
-    Timer::checkNoTimers();
-
     // Destroy filters
-    for (int c=0; c<NFILTERS; ++c) {
-      for (Filters::iterator it=msg_filters[c].begin(), end=msg_filters[c].end();
-           it != end; ++it)
-        delete *it;
-      msg_filters[c].clear();
+    for (auto& filters : msg_filters) {
+      filters.clear();
     }
 
     // No more default manager
-    m_defaultManager = NULL;
+    m_defaultManager = nullptr;
 
     // Shutdown system
     ASSERT(msg_queue.empty());
@@ -216,7 +207,7 @@ bool Manager::generateMessages()
       // 1) get the magnetic widget
       Widget* magnet = findMagneticWidget(window->window());
       // 2) if magnetic widget exists and it doesn't have the focus
-      if (magnet && !magnet->hasFocus())
+      if (magnet)
         setFocus(magnet);
       // 3) if not, put the focus in the first child
       else if (static_cast<Window*>(window)->isWantFocus())
@@ -233,11 +224,7 @@ bool Manager::generateMessages()
 
   // Generate redraw events.
   flushRedraw();
-
-  if (!msg_queue.empty())
-    return true;
-  else
-    return false;
+  return !msg_queue.empty();
 }
 
 void Manager::generateSetCursorMessage(const gfx::Point& mousePos,
@@ -247,7 +234,7 @@ void Manager::generateSetCursorMessage(const gfx::Point& mousePos,
   if (get_mouse_cursor() == kOutsideDisplay)
     return;
 
-  Widget* dst = (capture_widget ? capture_widget: mouse_widget);
+  Widget* dst = capture_widget ?: mouse_widget ?: this;
   if (dst)
     enqueueMessage(
       newMouseMessage(
@@ -270,14 +257,10 @@ static MouseButtons mouse_buttons_from_she_to_ui(const she::Event& sheEvent)
   }
 }
 
-void Manager::generateMessagesFromSheEvents()
-{
+void Manager::generateMessagesFromSheEvents() {
   she::Event lastMouseMoveEvent;
-
-  // Events from "she" layer.
   she::Event sheEvent;
   for (;;) {
-    // bool canWait = (msg_queue.empty());
     bool canWait = false;
 
     m_eventQueue->getEvent(sheEvent, canWait);
@@ -285,23 +268,22 @@ void Manager::generateMessagesFromSheEvents()
       break;
 
     switch (sheEvent.type()) {
-
       case she::Event::CloseDisplay: {
-        Message* msg = new Message(kCloseDisplayMessage);
+        auto msg = std::make_shared<Message>(kCloseDisplayMessage);
         msg->broadcastToChildren(this);
         enqueueMessage(msg);
         break;
       }
 
       case she::Event::ResizeDisplay: {
-        Message* msg = new Message(kResizeDisplayMessage);
+        auto msg = std::make_shared<Message>(kResizeDisplayMessage);
         msg->broadcastToChildren(this);
         enqueueMessage(msg);
         break;
       }
 
       case she::Event::DropFiles: {
-        Message* msg = new DropFilesMessage(sheEvent.files());
+        auto msg = std::make_shared<DropFilesMessage>(sheEvent.files());
         msg->addRecipient(this);
         enqueueMessage(msg);
         break;
@@ -309,14 +291,13 @@ void Manager::generateMessagesFromSheEvents()
 
       case she::Event::KeyDown:
       case she::Event::KeyUp: {
-        Message* msg = new KeyMessage(
-          (sheEvent.type() == she::Event::KeyDown ?
-             kKeyDownMessage:
-             kKeyUpMessage),
+        auto keymsg = std::make_shared<KeyMessage>(
+          (sheEvent.type() == she::Event::KeyDown ? kKeyDownMessage : kKeyUpMessage),
           sheEvent.scancode(),
           sheEvent.modifiers(),
           sheEvent.unicodeChar(),
           sheEvent.repeat());
+        auto msg = std::static_pointer_cast<Message>(keymsg);
         broadcastKeyMsg(msg);
         enqueueMessage(msg);
         break;
@@ -435,16 +416,10 @@ void Manager::handleMouseMove(const gfx::Point& mousePos,
       break;
   }
 
-  // Fixup "mouse" flag
-  if (widget != mouse_widget) {
-    if (!widget)
-      freeMouse();
-    else
-      setMouse(widget);
-  }
+  setMouse(widget);
 
   // Send the mouse movement message
-  Widget* dst = (capture_widget ? capture_widget: mouse_widget);
+  Widget* dst = capture_widget ?: mouse_widget ?: this;
   enqueueMessage(
     newMouseMessage(
       kMouseMoveMessage, dst,
@@ -464,7 +439,7 @@ void Manager::handleMouseDown(const gfx::Point& mousePos,
   enqueueMessage(
     newMouseMessage(
       kMouseDownMessage,
-      (capture_widget ? capture_widget: mouse_widget),
+      capture_widget ?: mouse_widget,
       mousePos,
       pointerType,
       mouseButtons,
@@ -479,7 +454,7 @@ void Manager::handleMouseUp(const gfx::Point& mousePos,
   enqueueMessage(
     newMouseMessage(
       kMouseUpMessage,
-      (capture_widget ? capture_widget: mouse_widget),
+      capture_widget ?: mouse_widget,
       mousePos,
       pointerType,
       mouseButtons,
@@ -491,7 +466,7 @@ void Manager::handleMouseDoubleClick(const gfx::Point& mousePos,
                                      KeyModifiers modifiers,
                                      PointerType pointerType)
 {
-  Widget* dst = (capture_widget ? capture_widget: mouse_widget);
+  Widget* dst = capture_widget ?: mouse_widget;
   if (dst) {
     enqueueMessage(
       newMouseMessage(
@@ -510,7 +485,7 @@ void Manager::handleMouseWheel(const gfx::Point& mousePos,
 {
   enqueueMessage(newMouseMessage(
       kMouseWheelMessage,
-      (capture_widget ? capture_widget: mouse_widget),
+      capture_widget ?: mouse_widget,
       mousePos, pointerType, mouseButtons, modifiers,
       wheelDelta, preciseWheel));
 }
@@ -519,18 +494,16 @@ void Manager::handleTouchMagnify(const gfx::Point& mousePos,
                                  const KeyModifiers modifiers,
                                  const double magnification)
 {
-  Widget* widget = (capture_widget ? capture_widget: mouse_widget);
-  if (widget) {
-    Message* msg = new TouchMessage(
-      kTouchMagnifyMessage,
-      modifiers,
-      mousePos,
-      magnification);
-
-    msg->addRecipient(widget);
-
-    enqueueMessage(msg);
-  }
+  Widget* widget = capture_widget ?: mouse_widget;
+  if (!widget)
+    return;
+  auto msg = std::make_shared<TouchMessage>(
+    kTouchMagnifyMessage,
+    modifiers,
+    mousePos,
+    magnification);
+  msg->addRecipient(widget);
+  enqueueMessage(msg);
 }
 
 // Handles Z order: Send the window to top (only when you click in a
@@ -542,7 +515,7 @@ void Manager::handleWindowZOrder()
 
   // The clicked window
   Window* window = mouse_widget->window();
-  Manager* win_manager = (window ? window->manager(): NULL);
+  Manager* win_manager = window ? window->manager() : nullptr;
 
   if ((window) &&
     // We cannot change Z-order of desktop windows
@@ -562,10 +535,9 @@ void Manager::handleWindowZOrder()
       win_manager->insertChild(0, window);
     else {
       int pos = (int)win_manager->children().size();
-      UI_FOREACH_WIDGET_BACKWARD(win_manager->children(), it) {
-        if (static_cast<Window*>(*it)->isOnTop())
+      for (auto child : base::reverse(win_manager->children())) {
+        if (static_cast<Window*>(child)->isOnTop())
           break;
-
         --pos;
       }
       win_manager->insertChild(pos, window);
@@ -594,48 +566,22 @@ void Manager::addToGarbage(Widget* widget)
  *            routine. The message will be automatically freed through
  *            @ref jmessage_free
  */
-void Manager::enqueueMessage(Message* msg)
-{
-  ASSERT(msg != NULL);
-
-#ifdef REPORT_EVENTS
-  if (msg->type() == kKeyDownMessage ||
-      msg->type() == kKeyUpMessage) {
-    int mods = (int)static_cast<KeyMessage*>(msg)->modifiers();
-    TRACE("Key%s scancode=%d unicode=%d mods=%s%s%s\n",
-          (msg->type() == kKeyDownMessage ? "Down": "Up"),
-          static_cast<KeyMessage*>(msg)->scancode(),
-          static_cast<KeyMessage*>(msg)->unicodeChar(),
-          mods & kKeyShiftModifier ? " Shift": "",
-          mods & kKeyCtrlModifier ? " Ctrl": "",
-          mods & kKeyAltModifier ? " Alt": "");
-  }
-#endif
-
+void Manager::enqueueMessage(std::shared_ptr<Message> msg) {
   // Check if this message must be filtered by some widget before
-  int c = msg->type();
-  if (c >= kFirstRegisteredMessage)
-    c = kFirstRegisteredMessage;
-
-  if (!msg_filters[c].empty()) { // OK, so are filters to add...
-    // Add all the filters in the destination list of the message
-    for (Filters::reverse_iterator it=msg_filters[c].rbegin(),
-           end=msg_filters[c].rend(); it != end; ++it) {
-      Filter* filter = *it;
-      if (msg->type() == filter->message)
-        msg->prependRecipient(filter->widget);
+  int c = msg->type() % msg_filters.size();
+  for (auto& filter : base::reverse(msg_filters[c])) {
+    if (filter.widget && msg->type() == filter.message) {
+      msg->prependRecipient(filter.widget);
     }
   }
 
   if (msg->hasRecipients())
     msg_queue.push_back(msg);
-  else
-    delete msg;
 }
 
 Window* Manager::getTopWindow()
 {
-  return static_cast<Window*>(UI_FIRST_WIDGET(children()));
+  return static_cast<Window*>(firstChild());
 }
 
 Window* Manager::getForegroundWindow()
@@ -664,76 +610,76 @@ Widget* Manager::getCapture()
   return capture_widget;
 }
 
-void Manager::setFocus(Widget* widget)
-{
-  if ((focus_widget != widget)
-      && (!(widget)
-          || (!(widget->hasFlags(DISABLED))
-              && !(widget->hasFlags(HIDDEN))
-              && !(widget->hasFlags(DECORATIVE))
-              && someParentIsFocusStop(widget)))) {
-    WidgetsList widget_parents;
-    Widget* common_parent = NULL;
+void Manager::setFocus(Widget* widget) {
+  if (focus_widget == widget)
+    return;
 
-    if (widget)
-      widget->getParents(false, widget_parents);
+  if (widget &&
+      (widget->hasFlags(DISABLED) ||
+       widget->hasFlags(HIDDEN) ||
+       widget->hasFlags(DECORATIVE) ||
+       !someParentIsFocusStop(widget)))
+    return;
 
-    // Fetch the focus
-    if (focus_widget) {
-      WidgetsList focus_parents;
-      focus_widget->getParents(true, focus_parents);
+  WidgetsList widget_parents;
+  Widget* common_parent = NULL;
 
-      Message* msg = new Message(kFocusLeaveMessage);
+  if (widget)
+    widget->getParents(false, widget_parents);
 
-      for (Widget* parent1 : focus_parents) {
-        if (widget) {
-          for (Widget* parent2 : widget_parents) {
-            if (parent1 == parent2) {
-              common_parent = parent1;
-              break;
-            }
-          }
-          if (common_parent)
+  // Fetch the focus
+  if (focus_widget) {
+    WidgetsList focus_parents;
+    focus_widget->getParents(true, focus_parents);
+
+    auto msg = std::make_shared<Message>(kFocusLeaveMessage);
+
+    for (Widget* parent1 : focus_parents) {
+      if (widget) {
+        for (Widget* parent2 : widget_parents) {
+          if (parent1 == parent2) {
+            common_parent = parent1;
             break;
+          }
         }
-
-        if (parent1->hasFocus()) {
-          parent1->disableFlags(HAS_FOCUS);
-          msg->addRecipient(parent1);
-        }
+        if (common_parent)
+          break;
       }
 
-      enqueueMessage(msg);
+      if (parent1->hasFocus()) {
+        parent1->disableFlags(HAS_FOCUS);
+        msg->addRecipient(parent1);
+      }
     }
 
-    // Put the focus
-    focus_widget = widget;
-    if (widget) {
-      WidgetsList::iterator it;
+    enqueueMessage(msg);
+    focus_widget.reset();
+  }
 
-      if (common_parent) {
-        it = std::find(widget_parents.begin(),
-                       widget_parents.end(),
-                       common_parent);
-        ASSERT(it != widget_parents.end());
-        ++it;
-      }
-      else
-        it = widget_parents.begin();
+  // Put the focus
+  if (widget) {
+    focus_widget = widget->safePtr;
 
-      Message* msg = new Message(kFocusEnterMessage);
-
-      for (; it != widget_parents.end(); ++it) {
-        Widget* w = *it;
-
-        if (w->hasFlags(FOCUS_STOP)) {
-          w->enableFlags(HAS_FOCUS);
-          msg->addRecipient(w);
-        }
-      }
-
-      enqueueMessage(msg);
+    auto it = widget_parents.begin();
+    if (common_parent) {
+      it = std::find(widget_parents.begin(),
+                     widget_parents.end(),
+                     common_parent);
+      ASSERT(it != widget_parents.end());
+      ++it;
     }
+
+    auto msg = std::make_shared<Message>(kFocusEnterMessage);
+
+    for (; it != widget_parents.end(); ++it) {
+      auto w = *it;
+      if (w->hasFlags(FOCUS_STOP)) {
+        w->enableFlags(HAS_FOCUS);
+        msg->addRecipient(w);
+      }
+    }
+
+    enqueueMessage(msg);
   }
 }
 
@@ -764,7 +710,7 @@ void Manager::setMouse(Widget* widget)
       WidgetsList mouse_parents;
       mouse_widget->getParents(true, mouse_parents);
 
-      Message* msg = new Message(kMouseLeaveMessage);
+      auto msg = std::make_shared<Message>(kMouseLeaveMessage);
 
       for (Widget* parent1 : mouse_parents) {
         if (widget) {
@@ -787,9 +733,11 @@ void Manager::setMouse(Widget* widget)
       enqueueMessage(msg);
     }
 
+    mouse_widget.reset();
+
     // Put the mouse
-    mouse_widget = widget;
     if (widget) {
+      mouse_widget = widget->safePtr;
       WidgetsList::iterator it;
 
       if (common_parent) {
@@ -802,7 +750,7 @@ void Manager::setMouse(Widget* widget)
       else
         it = widget_parents.begin();
 
-      Message* msg = newMouseMessage(
+      auto msg = newMouseMessage(
         kMouseEnterMessage, NULL,
         get_mouse_position(),
         PointerType::Unknown,
@@ -837,7 +785,7 @@ void Manager::attractFocus(Widget* widget)
   Widget* magnet = findMagneticWidget(widget->window());
 
   // If magnetic widget exists and it doesn't have the focus
-  if (magnet && !magnet->hasFocus())
+  if (magnet)
     setFocus(magnet);
 }
 
@@ -853,12 +801,12 @@ void Manager::focusFirstChild(Widget* widget)
 
 void Manager::freeFocus()
 {
-  setFocus(NULL);
+  setFocus(nullptr);
 }
 
 void Manager::freeMouse()
 {
-  setMouse(NULL);
+  setMouse(nullptr);
 }
 
 void Manager::freeCapture()
@@ -873,7 +821,7 @@ void Manager::freeCapture()
 
 void Manager::freeWidget(Widget* widget)
 {
-  if (widget->hasFocus() || (widget == focus_widget))
+  if (widget->hasFocus() || (focus_widget == widget))
     freeFocus();
 
   // We shouldn't free widgets that are locked, it means, widgets that
@@ -886,83 +834,41 @@ void Manager::freeWidget(Widget* widget)
   if (widget->hasCapture() || (widget == capture_widget))
     freeCapture();
 
-  if (widget->hasMouse() || (widget == mouse_widget))
+  if (widget->hasMouse() || (mouse_widget == widget))
     freeMouse();
-}
-
-void Manager::removeMessage(Message* msg)
-{
-  auto it = std::find(msg_queue.begin(), msg_queue.end(), msg);
-  ASSERT(it != msg_queue.end());
-  msg_queue.erase(it);
-}
-
-void Manager::removeMessagesFor(Widget* widget)
-{
-  for (Message* msg : msg_queue)
-    removeWidgetFromRecipients(widget, msg);
 }
 
 void Manager::removeMessagesFor(Widget* widget, MessageType type)
 {
-  for (Message* msg : msg_queue)
+  for (auto msg : msg_queue)
     if (msg->type() == type)
-      removeWidgetFromRecipients(widget, msg);
-}
-
-void Manager::removeMessagesForTimer(Timer* timer)
-{
-  for (auto it=msg_queue.begin(); it != msg_queue.end(); ) {
-    Message* msg = *it;
-
-    if (!msg->isUsed() &&
-        msg->type() == kTimerMessage &&
-        static_cast<TimerMessage*>(msg)->timer() == timer) {
-      delete msg;
-      it = msg_queue.erase(it);
-    }
-    else
-      ++it;
-  }
+      msg->removeRecipient(widget);
 }
 
 void Manager::addMessageFilter(int message, Widget* widget)
 {
-  int c = message;
-  if (c >= kFirstRegisteredMessage)
-    c = kFirstRegisteredMessage;
-
-  msg_filters[c].push_back(new Filter(message, widget));
+  int c = message % msg_filters.size();
+  auto& filters = msg_filters[c];
+  filters.emplace_back(message, widget);
+  for (auto it = filters.begin(); it != filters.end();) {
+    if (!it->widget) {
+      it = filters.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 
 void Manager::removeMessageFilter(int message, Widget* widget)
 {
-  int c = message;
-  if (c >= kFirstRegisteredMessage)
-    c = kFirstRegisteredMessage;
-
-  for (Filters::iterator it=msg_filters[c].begin(); it != msg_filters[c].end(); ) {
-    Filter* filter = *it;
-    if (filter->widget == widget) {
-      delete filter;
-      it = msg_filters[c].erase(it);
-    }
-    else
+  int c = message % msg_filters.size();
+  auto& filters = msg_filters[c];
+  for (auto it=filters.begin(); it != filters.end(); ) {
+    auto& filter = *it;
+    if (!filter.widget || filter.widget == widget) {
+      it = filters.erase(it);
+    } else {
       ++it;
-  }
-}
-
-void Manager::removeMessageFilterFor(Widget* widget)
-{
-  for (int c=0; c<NFILTERS; ++c) {
-    for (Filters::iterator it=msg_filters[c].begin(); it != msg_filters[c].end(); ) {
-      Filter* filter = *it;
-      if (filter->widget == widget) {
-        delete filter;
-        it = msg_filters[c].erase(it);
-      }
-      else
-        ++it;
     }
   }
 }
@@ -1000,7 +906,7 @@ void Manager::_openWindow(Window* window)
   insertChild(0, window);
 
   // Broadcast the open message.
-  Message* msg = new Message(kOpenMessage);
+  auto msg = std::make_shared<Message>(kOpenMessage);
   msg->addRecipient(window);
   enqueueMessage(msg);
 
@@ -1047,7 +953,7 @@ void Manager::_closeWindow(Window* window, bool redraw_background)
   window->setVisible(false);
 
   // Close message.
-  Message* msg = new Message(kCloseMessage);
+  auto msg = std::make_shared<Message>(kCloseMessage);
   msg->addRecipient(window);
   enqueueMessage(msg);
 
@@ -1168,8 +1074,7 @@ void Manager::onBroadcastMouseMessage(WidgetsList& targets)
 {
   // Ask to the first window in the "children" list to know how to
   // propagate mouse messages.
-  Widget* widget = UI_FIRST_WIDGET(children());
-  if (widget)
+  if (Widget* widget = firstChild())
     widget->broadcastMouseMessage(targets);
 }
 
@@ -1223,136 +1128,14 @@ void Manager::pumpQueue()
   base::tick_t t = base::current_tick();
 #endif
 
-  Messages::iterator it = msg_queue.begin();
-  while (it != msg_queue.end()) {
+  while (!msg_queue.empty()) {
 #ifdef LIMIT_DISPATCH_TIME
     if (base::current_tick()-t > 250)
       break;
 #endif
-
-    // The message to process
-    Message* msg = *it;
-
-    // Go to next message
-    if (msg->isUsed()) {
-      ++it;
-      continue;
-    }
-
-    // This message is in use
-    msg->markAsUsed();
-    Message* first_msg = msg;
-
-    // Call Timer::tick() if this is a tick message.
-    if (msg->type() == kTimerMessage) {
-      ASSERT(static_cast<TimerMessage*>(msg)->timer() != NULL);
-      static_cast<TimerMessage*>(msg)->timer()->tick();
-    }
-
-    bool done = false;
-    for (auto widget : msg->recipients()) {
-      if (!widget)
-        continue;
-
-#ifdef REPORT_EVENTS
-      {
-        static char *msg_name[] = {
-          "kOpenMessage",
-          "kCloseMessage",
-          "kCloseDisplayMessage",
-          "kResizeDisplayMessage",
-          "kPaintMessage",
-          "kTimerMessage",
-          "kDropFilesMessage",
-          "kWinMoveMessage",
-
-          "kKeyDownMessage",
-          "kKeyUpMessage",
-          "kFocusEnterMessage",
-          "kFocusLeaveMessage",
-
-          "kMouseDownMessage",
-          "kMouseUpMessage",
-          "kDoubleClickMessage",
-          "kMouseEnterMessage",
-          "kMouseLeaveMessage",
-          "kMouseMoveMessage",
-          "kSetCursorMessage",
-          "kMouseWheelMessage",
-          "kTouchMagnifyMessage",
-        };
-        const char* string =
-          (msg->type() >= kOpenMessage &&
-           msg->type() <= kMouseWheelMessage) ? msg_name[msg->type()]:
-                                                "Unknown";
-
-        std::cout << "Event " << msg->type() << " (" << string << ") "
-                  << "for " << typeid(*widget).name();
-        if (!widget->id().empty())
-          std::cout << " (" << widget->id() << ")";
-        std::cout << std::endl;
-      }
-#endif
-
-      // We need to configure the clip region for paint messages
-      // before we call Widget::sendMessage().
-      if (msg->type() == kPaintMessage) {
-        if (widget->hasFlags(HIDDEN))
-          continue;
-
-        PaintMessage* paintMsg = static_cast<PaintMessage*>(msg);
-        she::Surface* surface = m_display->getSurface();
-        gfx::Rect oldClip = surface->getClipBounds();
-
-        if (surface->intersectClipRect(paintMsg->rect())) {
-#ifdef REPORT_EVENTS
-          std::cout << " - clip("
-                    << paintMsg->rect().x << ", "
-                    << paintMsg->rect().y << ", "
-                    << paintMsg->rect().w << ", "
-                    << paintMsg->rect().h << ")"
-                    << std::endl;
-#endif
-
-#ifdef DEBUG_PAINT_EVENTS
-          {
-            she::SurfaceLock lock(surface);
-            surface->fillRect(gfx::rgba(0, 0, 255), paintMsg->rect());
-          }
-
-          if (m_display)
-            m_display->flip(gfx::Rect(0, 0, display_w(), display_h()));
-
-          base::this_thread::sleep_for(0.002);
-#endif
-
-          if (surface) {
-            // Call the message handler
-            done = widget->sendMessage(msg);
-
-            // Restore clip region for paint messages.
-            surface->setClipBounds(oldClip);
-          }
-        }
-
-        // As this kPaintMessage's rectangle was updated, we can
-        // remove it from "m_invalidRegion".
-        m_invalidRegion -= gfx::Region(paintMsg->rect());
-      }
-      else {
-        // Call the message handler
-        done = widget->sendMessage(msg);
-      }
-
-      if (done)
-        break;
-    }
-
-    // Remove the message from the msg_queue
-    it = msg_queue.erase(it);
-
-    // Destroy the message
-    delete first_msg;
+    auto msg = msg_queue.front();
+    msg_queue.pop_front();
+    msg->send();
   }
 }
 
@@ -1413,12 +1196,6 @@ void Manager::collectGarbage()
  **********************************************************************/
 
 // static
-void Manager::removeWidgetFromRecipients(Widget* widget, Message* msg)
-{
-  msg->removeRecipient(widget);
-}
-
-// static
 bool Manager::someParentIsFocusStop(Widget* widget)
 {
   if (widget->isFocusStop())
@@ -1448,7 +1225,7 @@ Widget* Manager::findMagneticWidget(Widget* widget)
 }
 
 // static
-Message* Manager::newMouseMessage(
+std::shared_ptr<Message> Manager::newMouseMessage(
   MessageType type,
   Widget* widget,
   const gfx::Point& mousePos,
@@ -1471,9 +1248,7 @@ Message* Manager::newMouseMessage(
   }
 #endif
 
-  Message* msg = new MouseMessage(
-    type, pointerType, buttons, modifiers, mousePos,
-    wheelDelta, preciseWheel);
+  auto msg = std::make_shared<MouseMessage>(type, pointerType, buttons, modifiers, mousePos, wheelDelta, preciseWheel);
 
   if (widget)
     msg->addRecipient(widget);
@@ -1482,7 +1257,7 @@ Message* Manager::newMouseMessage(
 }
 
 // static
-void Manager::broadcastKeyMsg(Message* msg)
+void Manager::broadcastKeyMsg(std::shared_ptr<Message> msg)
 {
   // Send the message to the widget with capture
   if (capture_widget) {
@@ -1537,7 +1312,7 @@ static bool move_focus(Manager* manager, Message* msg)
         list[c++] = it;
     }
 
-    for (it=window; it != focus_widget; it=next_widget(it)) {
+    for (it = window; focus_widget != it; it = next_widget(it)) {
       if (ACCEPT_FOCUS(it) && !(childs_accept_focus(it, true)))
         list[c++] = it;
     }
@@ -1601,7 +1376,7 @@ static bool move_focus(Manager* manager, Message* msg)
         break;
     }
 
-    if ((focus) && (focus != focus_widget))
+    if (focus)
       Manager::getDefault()->setFocus(focus);
   }
 
@@ -1635,7 +1410,7 @@ static bool childs_accept_focus(Widget* widget, bool first)
 static Widget* next_widget(Widget* widget)
 {
   if (!widget->children().empty())
-    return UI_FIRST_WIDGET(widget->children());
+    return widget->firstChild();
 
   while (widget->parent()->type() != kManagerWidget) {
     WidgetsList::const_iterator begin = widget->parent()->children().begin();

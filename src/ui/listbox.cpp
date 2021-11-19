@@ -9,7 +9,7 @@
 #endif
 
 #include "ui/listbox.h"
-
+#include "base/iterator.h"
 #include "base/path.h"
 #include "ui/listitem.h"
 #include "ui/message.h"
@@ -299,12 +299,11 @@ void ListBox::onResize(ResizeEvent& ev)
 void ListBox::onSizeHint(SizeHintEvent& ev)
 {
   int w = 0, h = 0;
-
-  UI_FOREACH_WIDGET_WITH_END(children(), it, end) {
-    Size reqSize = static_cast<ListItem*>(*it)->sizeHint();
+  for (std::size_t i = 0, end = children().size(); i < end; ++i) {
+    Size reqSize = static_cast<ListItem*>(at(i))->sizeHint();
 
     w = MAX(w, reqSize.w);
-    h += reqSize.h + (it+1 != end ? this->childSpacing(): 0);
+    h += reqSize.h + (i+1 != end ? this->childSpacing(): 0);
   }
 
   w += border().width();

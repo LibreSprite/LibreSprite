@@ -5,7 +5,7 @@
 
 Cross-platform core functionality to do basic tasks:
 
-* Smart pointers ([UniquePtr](unique_ptr.h), [SharedPtr](shared_ptr.h))
+* Smart pointers ([UniquePtr](unique_ptr.h))
 * Signals & Slots ([signal](signal.h), [slot](slot.h), [bind](bind.h), [Observable](observable.h)/[Observers](observers.h))
 * Type conversion ([convert_to](convert_to.h))
 * String utilities ([string](string.h), [split_string](split_string.h), [trim_string](trim_string.h))

@@ -93,7 +93,7 @@ protected:
         // Resize the image
         int w = scale_x(image->width());
         int h = scale_y(image->height());
-        ImageRef new_image(Image::create(image->pixelFormat(), MAX(1, w), MAX(1, h)));
+        std::shared_ptr<Image> new_image(Image::create(image->pixelFormat(), MAX(1, w), MAX(1, h)));
         new_image->setMaskColor(image->maskColor());
 
         doc::algorithm::fixup_image_transparent_colors(image);
@@ -117,7 +117,7 @@ protected:
 
     // Resize mask
     if (m_document->isMaskVisible()) {
-      ImageRef old_bitmap
+      std::shared_ptr<Image> old_bitmap
         (crop_image(m_document->mask()->bitmap(), -1, -1,
                     m_document->mask()->bitmap()->width()+2,
                     m_document->mask()->bitmap()->height()+2, 0));

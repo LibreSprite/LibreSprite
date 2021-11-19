@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
-
+#include <memory>
 #include <vector>
 
 #define FILE_SUPPORT_LOAD               0x00000001
@@ -55,7 +54,7 @@ namespace app {
 
     // Returns extra options for this format. It can return != NULL
     // only if flags() returns FILE_SUPPORT_GET_FORMAT_OPTIONS.
-    base::SharedPtr<FormatOptions> getFormatOptions(FileOp* fop) {
+    std::shared_ptr<FormatOptions> getFormatOptions(FileOp* fop) {
       return onGetFormatOptions(fop);
     }
 
@@ -74,8 +73,8 @@ namespace app {
     virtual bool onSave(FileOp* fop) = 0;
     virtual void onDestroyData(FileOp* fop) { }
 
-    virtual base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) {
-      return base::SharedPtr<FormatOptions>(0);
+    virtual std::shared_ptr<FormatOptions> onGetFormatOptions(FileOp* fop) {
+      return std::shared_ptr<FormatOptions>(0);
     }
 
   };

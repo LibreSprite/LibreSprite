@@ -127,8 +127,7 @@ Layer* read_layer(std::istream& is, SubObjectsFromSprite* subObjects)
       // Read images
       int images = read16(is);  // Number of images
       for (int c=0; c<images; ++c) {
-        ImageRef image(read_image(is));
-        subObjects->addImageRef(image);
+        subObjects->addImageRef(std::shared_ptr<Image>(read_image(is)));
       }
 
       // Read celdatas

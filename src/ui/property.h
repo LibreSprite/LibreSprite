@@ -7,9 +7,9 @@
 #pragma once
 
 #include "base/disable_copying.h"
-#include "base/shared_ptr.h"
 
 #include <string>
+#include <memory>
 
 namespace ui {
 
@@ -26,6 +26,6 @@ namespace ui {
     DISABLE_COPYING(Property);
   };
 
-  typedef base::SharedPtr<Property> PropertyPtr;
+  typedef std::shared_ptr<Property> PropertyPtr;
 
 } // namespace ui

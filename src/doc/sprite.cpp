@@ -105,7 +105,7 @@ Sprite* Sprite::createBasicSprite(doc::PixelFormat format, int width, int height
   sprite->setTotalFrames(doc::frame_t(1));
 
   // Create the main image.
-  doc::ImageRef image(doc::Image::create(format, width, height));
+  std::shared_ptr<doc::Image> image(doc::Image::create(format, width, height));
   doc::clear_image(image.get(), 0);
 
   // Create the first transparent layer.
@@ -433,13 +433,13 @@ void Sprite::setDurationForAllFrames(int msecs)
 //////////////////////////////////////////////////////////////////////
 // Shared Images and CelData (for linked Cels)
 
-ImageRef Sprite::getImageRef(ObjectId imageId)
+std::shared_ptr<Image> Sprite::getImageRef(ObjectId imageId)
 {
   for (Cel* cel : cels()) {
     if (cel->image()->id() == imageId)
       return cel->imageRef();
   }
-  return ImageRef(nullptr);
+  return nullptr;
 }
 
 CelDataRef Sprite::getCelDataRef(ObjectId celDataId)
@@ -454,7 +454,7 @@ CelDataRef Sprite::getCelDataRef(ObjectId celDataId)
 //////////////////////////////////////////////////////////////////////
 // Images
 
-void Sprite::replaceImage(ObjectId curImageId, const ImageRef& newImage)
+void Sprite::replaceImage(ObjectId curImageId, const std::shared_ptr<Image>& newImage)
 {
   for (Cel* cel : cels()) {
     if (cel->image()->id() == curImageId)

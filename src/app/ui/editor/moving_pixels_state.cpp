@@ -112,7 +112,7 @@ MovingPixelsState::~MovingPixelsState()
   contextBar->removeObserver(this);
   contextBar->updateForActiveTool();
 
-  m_pixelsMovement.reset(NULL);
+  m_pixelsMovement.reset();
 
   removeAsEditorObserver();
   m_editor->manager()->removeMessageFilter(kKeyDownMessage, m_editor);
@@ -177,7 +177,7 @@ EditorState::LeaveAction MovingPixelsState::onLeaveState(Editor* editor, EditorS
 
     editor->document()->resetTransformation();
 
-    m_pixelsMovement.reset(NULL);
+    m_pixelsMovement.reset();
 
     editor->releaseMouse();
 

@@ -128,7 +128,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   sprite->folder()->addLayer(layer);
 
   // Create the first image/cel
-  ImageRef image(Image::create(pixelFormat, width, height));
+  std::shared_ptr<Image> image(Image::create(pixelFormat, width, height));
   Cel* cel = new Cel(frame_t(0), image);
   layer->addCel(cel);
   clear_image(image.get(), 0);
@@ -149,6 +149,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   bmpHeader.yPelsPerMeter        = fgetl(f); // unused for ico
   bmpHeader.clrUsed              = fgetl(f); // unused for ico
   bmpHeader.clrImportant         = fgetl(f); // unused for ico
+  (void) bmpHeader;
 
   // Read the palette
   if (entry.bpp <= 8) {

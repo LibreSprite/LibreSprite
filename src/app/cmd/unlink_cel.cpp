@@ -35,7 +35,7 @@ void UnlinkCel::onExecute()
   CelDataRef oldCelData = cel->sprite()->getCelDataRef(m_oldCelDataId);
   ASSERT(oldCelData);
 
-  ImageRef imgCopy(Image::createCopy(oldCelData->image()));
+  std::shared_ptr<Image> imgCopy(Image::createCopy(oldCelData->image()));
   CelDataRef celDataCopy(new CelData(*oldCelData));
   celDataCopy->setImage(imgCopy);
   celDataCopy->setUserData(oldCelData->userData());

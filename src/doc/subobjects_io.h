@@ -7,7 +7,7 @@
 #pragma once
 
 #include "doc/cel_data.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 
 #include <iosfwd>
 #include <map>
@@ -18,7 +18,7 @@ namespace doc {
   class SubObjectsIO {
   public:
     virtual ~SubObjectsIO() { }
-    virtual ImageRef getImageRef(ObjectId imageId) = 0;
+    virtual std::shared_ptr<Image> getImageRef(ObjectId imageId) = 0;
     virtual CelDataRef getCelDataRef(ObjectId celdataId) = 0;
   };
 
@@ -29,10 +29,10 @@ namespace doc {
 
     Sprite* sprite() const { return m_sprite; }
 
-    void addImageRef(const ImageRef& image);
+    void addImageRef(const std::shared_ptr<Image>& image);
     void addCelDataRef(const CelDataRef& celdata);
 
-    ImageRef getImageRef(ObjectId imageId) override;
+    std::shared_ptr<Image> getImageRef(ObjectId imageId) override;
     CelDataRef getCelDataRef(ObjectId celdataId) override;
 
   private:
@@ -40,7 +40,7 @@ namespace doc {
 
     // Images list that can be queried from doc::read_celdata() using
     // getImageRef().
-    std::map<ObjectId, ImageRef> m_images;
+    std::map<ObjectId, std::shared_ptr<Image>> m_images;
 
     // CelData list that can be queried from doc::read_cel() using
     // getCelDataRef().

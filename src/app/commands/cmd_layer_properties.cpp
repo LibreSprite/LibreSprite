@@ -55,10 +55,7 @@ class LayerPropertiesWindow : public app::gen::LayerProperties
                             , public doc::ContextObserver
                             , public doc::DocumentObserver {
 public:
-  LayerPropertiesWindow()
-    : m_timer(250, this)
-    , m_layer(nullptr)
-    , m_selfUpdate(false) {
+  LayerPropertiesWindow() {
     name()->setMinSize(gfx::Size(128, 0));
     name()->setExpansive(true);
 
@@ -82,7 +79,7 @@ public:
     name()->Change.connect(base::Bind<void>(&LayerPropertiesWindow::onStartTimer, this));
     mode()->Change.connect(base::Bind<void>(&LayerPropertiesWindow::onStartTimer, this));
     opacity()->Change.connect(base::Bind<void>(&LayerPropertiesWindow::onStartTimer, this));
-    m_timer.Tick.connect(base::Bind<void>(&LayerPropertiesWindow::onCommitChange, this));
+    m_timer->Tick.connect(base::Bind<void>(&LayerPropertiesWindow::onCommitChange, this));
     userData()->Click.connect(base::Bind<void>(&LayerPropertiesWindow::onPopupUserData, this));
 
     remapWindow();
@@ -102,7 +99,7 @@ public:
       m_layer = nullptr;
     }
 
-    m_timer.stop();
+    m_timer->stop();
     m_layer = const_cast<LayerImage*>(layer);
 
     if (m_layer)
@@ -166,13 +163,13 @@ private:
     if (m_selfUpdate)
       return;
 
-    m_timer.start();
+    m_timer->start();
   }
 
   void onCommitChange() {
     base::ScopedValue<bool> switchSelf(m_selfUpdate, true, false);
 
-    m_timer.stop();
+    m_timer->stop();
 
     std::string newName = nameValue();
     int newOpacity = opacityValue();
@@ -250,7 +247,7 @@ private:
     if (m_selfUpdate)
       return;
 
-    m_timer.stop(); // Cancel current editions (just in case)
+    m_timer->stop(); // Cancel current editions (just in case)
 
     base::ScopedValue<bool> switchSelf(m_selfUpdate, true, false);
 
@@ -272,9 +269,9 @@ private:
     }
   }
 
-  Timer m_timer;
-  LayerImage* m_layer;
-  bool m_selfUpdate;
+  inject<Timer> m_timer = Timer::create(250, *this);
+  LayerImage* m_layer = nullptr;
+  bool m_selfUpdate = false;
   UserData m_userData;
 };
 
