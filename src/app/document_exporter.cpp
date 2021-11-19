@@ -701,9 +701,7 @@ Document* DocumentExporter::createEmptyTexture(const Samples& samples)
   if (palette != NULL)
     sprite->setPalette(palette, false);
 
-  std::unique_ptr<Document> document(new Document(sprite.release()));
-
-  return document.release();
+  return new Document(sprite.release());
 }
 
 void DocumentExporter::renderTexture(const Samples& samples, Image* textureImage)

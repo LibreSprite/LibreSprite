@@ -36,7 +36,6 @@
 #include "app/util/clipboard.h"
 #include "base/bind.h"
 #include "base/pi.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/flip_image.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
@@ -47,6 +46,7 @@
 #include "ui/view.h"
 
 #include <cstring>
+#include <memory>
 
 namespace app {
 
@@ -491,8 +491,8 @@ void MovingPixelsState::onBeforeCommandExecution(CommandExecutionEvent& ev)
     // Copy the floating image to the clipboard on Cut/Copy.
     if (command->id() != CommandId::Clear) {
       Document* document = m_editor->document();
-      base::UniquePtr<Image> floatingImage;
-      base::UniquePtr<Mask> floatingMask;
+      std::unique_ptr<Image> floatingImage;
+      std::unique_ptr<Mask> floatingMask;
       m_pixelsMovement->getDraggedImageCopy(floatingImage, floatingMask);
 
       clipboard::copy_image(floatingImage.get(),

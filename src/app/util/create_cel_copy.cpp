@@ -9,7 +9,6 @@
 #include "config.h"
 #endif
 
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/layer.h"
@@ -17,6 +16,8 @@
 #include "doc/sprite.h"
 #include "render/quantization.h"
 #include "render/render.h"
+
+#include <memory>
 
 namespace app {
 
@@ -28,7 +29,7 @@ Cel* create_cel_copy(const Cel* srcCel,
 {
   const Image* celImage = srcCel->image();
 
-  base::UniquePtr<Cel> dstCel(
+  std::unique_ptr<Cel> dstCel(
     new Cel(dstFrame,
             std::shared_ptr<Image>(Image::create(dstSprite->pixelFormat(),
                                    celImage->width(),
