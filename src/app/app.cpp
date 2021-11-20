@@ -689,7 +689,7 @@ void App::run()
 
   if (isGui()) {
     // Destroy the window.
-    m_mainWindow.reset(NULL);
+    m_mainWindow.reset(nullptr);
   }
 
   // Delete backups (this is a normal shutdown, we are not handling

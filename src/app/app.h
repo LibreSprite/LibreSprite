@@ -10,7 +10,6 @@
 #include "app/app_brushes.h"
 #include "base/debug.h"
 #include "base/signal.h"
-#include "base/unique_ptr.h"
 #include "doc/pixel_format.h"
 
 #include <memory>
@@ -72,7 +71,7 @@ namespace app {
     tools::Tool* activeTool() const;
     tools::ActiveToolManager* activeToolManager() const;
     RecentFiles* recentFiles() const;
-    MainWindow* mainWindow() const { return m_mainWindow; }
+    MainWindow* mainWindow() const { return m_mainWindow.get(); }
     Workspace* workspace() const;
     ContextBar* contextBar() const;
     Timeline* timeline() const;
@@ -105,7 +104,7 @@ namespace app {
     LegacyModules* m_legacy;
     bool m_isGui;
     bool m_isShell;
-    base::UniquePtr<MainWindow> m_mainWindow;
+    std::unique_ptr<MainWindow> m_mainWindow;
     FileList m_files;
     std::unique_ptr<DocumentExporter> m_exporter;
     std::unique_ptr<AppBrushes> m_brushes;
