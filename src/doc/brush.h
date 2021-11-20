@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "base/unique_ptr.h"
 #include "doc/brush_pattern.h"
 #include "doc/brush_type.h"
 #include "doc/color.h"
@@ -69,8 +68,8 @@ namespace doc {
 
     // Extra data used for setImageColor()
     std::shared_ptr<Image> m_backupImage; // Backup image to avoid losing original brush colors/pattern
-    base::UniquePtr<color_t> m_mainColor; // Main image brush color (nullptr if it wasn't specified)
-    base::UniquePtr<color_t> m_bgColor;   // Background color (nullptr if it wasn't specified)
+    std::unique_ptr<color_t> m_mainColor; // Main image brush color (nullptr if it wasn't specified)
+    std::unique_ptr<color_t> m_bgColor;   // Background color (nullptr if it wasn't specified)
   };
 
   typedef std::shared_ptr<Brush> BrushRef;

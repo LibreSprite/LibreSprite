@@ -10,9 +10,10 @@
 
 #include <gtest/gtest.h>
 
-#include "base/unique_ptr.h"
 #include "doc/image_impl.h"
 #include "doc/primitives.h"
+
+#include <memory>
 
 using namespace base;
 using namespace doc;
@@ -51,7 +52,7 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
   for (std::vector<gfx::Size>::iterator sizes_it=sizes.begin(); sizes_it!=sizes.end(); ++sizes_it) {
     int w = sizes_it->w;
     int h = sizes_it->h;
-    UniquePtr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
+    std::unique_ptr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
     std::vector<int> data(w*h);
 
     for (int y=0; y<h; ++y)
@@ -59,10 +60,10 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
         data[y*w+x] = (std::rand() % ImageTraits::max_value);
 
     for (int i=0; i<w*h; ++i)
-      put_pixel(image, i%w, i/w, data[i]);
+      put_pixel(image.get(), i%w, i/w, data[i]);
 
     for (int i=0; i<w*h; ++i)
-      ASSERT_EQ(data[i], get_pixel(image, i%w, i/w));
+      ASSERT_EQ(data[i], get_pixel(image.get(), i%w, i/w));
 
     std::vector<gfx::Rect> areas;
 
@@ -128,19 +129,19 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
 
 TEST(Image, DiffRgbImages)
 {
-  UniquePtr<Image> a(Image::create(IMAGE_RGB, 32, 32));
-  UniquePtr<Image> b(Image::create(IMAGE_RGB, 32, 32));
+  std::unique_ptr<Image> a(Image::create(IMAGE_RGB, 32, 32));
+  std::unique_ptr<Image> b(Image::create(IMAGE_RGB, 32, 32));
 
-  clear_image(a, rgba(0, 0, 0, 0));
-  clear_image(b, rgba(0, 0, 0, 0));
+  clear_image(a.get(), rgba(0, 0, 0, 0));
+  clear_image(b.get(), rgba(0, 0, 0, 0));
 
-  ASSERT_EQ(0, count_diff_between_images(a, b));
+  ASSERT_EQ(0, count_diff_between_images(a.get(), b.get()));
 
-  put_pixel(a, 0, 0, rgba(255, 0, 0, 0));
-  ASSERT_EQ(1, count_diff_between_images(a, b));
+  put_pixel(a.get(), 0, 0, rgba(255, 0, 0, 0));
+  ASSERT_EQ(1, count_diff_between_images(a.get(), b.get()));
 
-  put_pixel(a, 1, 1, rgba(0, 0, 255, 0));
-  ASSERT_EQ(2, count_diff_between_images(a, b));
+  put_pixel(a.get(), 1, 1, rgba(0, 0, 255, 0));
+  ASSERT_EQ(2, count_diff_between_images(a.get(), b.get()));
 }
 
 TYPED_TEST(ImageAllTypes, DrawHLine)
@@ -166,7 +167,7 @@ TYPED_TEST(ImageAllTypes, DrawHLine)
   for (std::vector<gfx::Size>::iterator sizes_it=sizes.begin(); sizes_it!=sizes.end(); ++sizes_it) {
     int w = sizes_it->w;
     int h = sizes_it->h;
-    UniquePtr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
+    std::unique_ptr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
     image->clear(0);
 
     for (int c=0; c<100; ++c) {
@@ -186,7 +187,7 @@ TYPED_TEST(ImageAllTypes, FillRect)
     int w = 1+i;
     int h = 1+i;
 
-    UniquePtr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
+    std::unique_ptr<Image> image(Image::create(ImageTraits::pixel_format, w, h));
     color_t color = (rand() % ImageTraits::max_value);
     if (!color)
       color = 1;
@@ -198,12 +199,12 @@ TYPED_TEST(ImageAllTypes, FillRect)
       int y2 = y1 + (rand() % (h-y1));
 
       image->clear(0);
-      fill_rect(image, x1, y1, x2, y2, color);
+      fill_rect(image.get(), x1, y1, x2, y2, color);
 
       // Check
       for (int v=0; v<h; ++v) {
         for (int u=0; u<w; ++u) {
-          color_t pixel = get_pixel_fast<ImageTraits>(image, u, v);
+          color_t pixel = get_pixel_fast<ImageTraits>(image.get(), u, v);
           if (u >= x1 && v >= y1 &&
               u <= x2 && v <= y2)
             EXPECT_EQ(color, pixel);

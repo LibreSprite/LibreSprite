@@ -11,11 +11,11 @@
 #include "doc/frame_tag_io.h"
 
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/frame_tag.h"
 #include "doc/string_io.h"
 
 #include <iostream>
+#include <memory>
 
 namespace doc {
 
@@ -43,7 +43,7 @@ FrameTag* read_frame_tag(std::istream& is, bool setId)
   AniDir aniDir = (AniDir)read8(is);
   std::string name = read_string(is);
 
-  base::UniquePtr<FrameTag> tag(new FrameTag(from, to));
+  std::unique_ptr<FrameTag> tag(new FrameTag(from, to));
   tag->setColor(color);
   tag->setAniDir(aniDir);
   tag->setName(name);
