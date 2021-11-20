@@ -37,6 +37,7 @@
 #include <limits>
 #include <list>
 #include <vector>
+#include <array>
 
 namespace ui {
 
