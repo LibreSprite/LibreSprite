@@ -58,7 +58,7 @@ private:
   Mask* generateMask(const Sprite* sprite, const Image* image, int xpos, int ypos);
   void maskPreview(const ContextReader& reader);
 
-  Window* m_window; // TODO we cannot use a UniquePtr because clone() needs a copy ctor
+  Window* m_window; // TODO we cannot use a unique_ptr because clone() needs a copy ctor
   ColorButton* m_buttonColor;
   CheckBox* m_checkPreview;
   Slider* m_sliderTolerance;

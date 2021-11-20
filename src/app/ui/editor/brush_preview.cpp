@@ -200,16 +200,16 @@ void BrushPreview::show(const gfx::Point& screenPos)
     }
 
     {
-      base::UniquePtr<tools::ToolLoop> loop(
+      std::unique_ptr<tools::ToolLoop> loop(
         create_tool_loop_preview(
           m_editor, extraImage,
           brushBounds.origin()));
       if (loop) {
-        loop->getInk()->prepareInk(loop);
+        loop->getInk()->prepareInk(loop.get());
         loop->getIntertwine()->prepareIntertwine();
-        loop->getPointShape()->preparePointShape(loop);
+        loop->getPointShape()->preparePointShape(loop.get());
         loop->getPointShape()->transformPoint(
-          loop,
+          loop.get(),
           brushBounds.x-origBrushBounds.x,
           brushBounds.y-origBrushBounds.y);
       }

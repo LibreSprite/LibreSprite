@@ -13,6 +13,7 @@
 #include "base/unique_ptr.h"
 #include "doc/pixel_format.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -98,7 +99,7 @@ namespace app {
 
     static App* m_instance;
 
-    base::UniquePtr<ui::UISystem> m_uiSystem;
+    std::unique_ptr<ui::UISystem> m_uiSystem;
     CoreModules* m_coreModules;
     Modules* m_modules;
     LegacyModules* m_legacy;
@@ -106,8 +107,8 @@ namespace app {
     bool m_isShell;
     base::UniquePtr<MainWindow> m_mainWindow;
     FileList m_files;
-    base::UniquePtr<DocumentExporter> m_exporter;
-    base::UniquePtr<AppBrushes> m_brushes;
+    std::unique_ptr<DocumentExporter> m_exporter;
+    std::unique_ptr<AppBrushes> m_brushes;
   };
 
   void app_refresh_screen();
