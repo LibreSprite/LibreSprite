@@ -12,6 +12,8 @@
 #include "gfx/clip.h"
 #include "render/render.h"
 
+#include <memory>
+
 namespace render {
 
 using namespace doc;
@@ -21,12 +23,12 @@ color_t get_sprite_pixel(const Sprite* sprite, int x, int y, frame_t frame)
   color_t color = 0;
 
   if ((x >= 0) && (y >= 0) && (x < sprite->width()) && (y < sprite->height())) {
-    base::UniquePtr<Image> image(Image::create(sprite->pixelFormat(), 1, 1));
+    std::unique_ptr<Image> image(Image::create(sprite->pixelFormat(), 1, 1));
 
-    render::Render().renderSprite(image, sprite, frame,
+    render::Render().renderSprite(image.get(), sprite, frame,
       gfx::Clip(0, 0, x, y, 1, 1));
 
-    color = get_pixel(image, 0, 0);
+    color = get_pixel(image.get(), 0, 0);
   }
 
   return color;

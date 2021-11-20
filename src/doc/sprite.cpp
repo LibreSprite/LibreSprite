@@ -13,7 +13,6 @@
 #include "base/base.h"
 #include "base/memory.h"
 #include "base/remove_from_container.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cels_range.h"
 #include "doc/frame_tag.h"
@@ -27,6 +26,7 @@
 
 #include <cstring>
 #include <vector>
+#include <memory>
 
 namespace doc {
 
@@ -101,7 +101,7 @@ Sprite::~Sprite()
 Sprite* Sprite::createBasicSprite(doc::PixelFormat format, int width, int height, int ncolors)
 {
   // Create the sprite.
-  base::UniquePtr<doc::Sprite> sprite(new doc::Sprite(format, width, height, ncolors));
+  std::unique_ptr<doc::Sprite> sprite(new doc::Sprite(format, width, height, ncolors));
   sprite->setTotalFrames(doc::frame_t(1));
 
   // Create the main image.
@@ -110,17 +110,16 @@ Sprite* Sprite::createBasicSprite(doc::PixelFormat format, int width, int height
 
   // Create the first transparent layer.
   {
-    base::UniquePtr<doc::LayerImage> layer(new doc::LayerImage(sprite));
+    std::unique_ptr<doc::LayerImage> layer(new doc::LayerImage(sprite.get()));
     layer->setName("Layer 1");
 
     // Create the cel.
     {
-      base::UniquePtr<doc::Cel> cel(new doc::Cel(doc::frame_t(0), image));
+      std::unique_ptr<doc::Cel> cel(new doc::Cel(doc::frame_t(0), image));
       cel->setPosition(0, 0);
 
       // Add the cel in the layer.
-      layer->addCel(cel);
-      cel.release();            // Release the cel because it is in the layer
+      layer->addCel(cel.release()); // Release the cel because it's in the layer
     }
 
     // Add the layer in the sprite.
