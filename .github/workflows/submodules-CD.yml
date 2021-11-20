@@ -1,0 +1,39 @@
+name: Deliver submodules too on release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: checkout modules
+        run: git submodule update --init --recursive
+        
+      # Can't create a tar.gz directly, so it creates a tar first, converting it into a tar.gz in the end.
+      # The last command should get rid of the tar file instead of packing it into the tar.gz, but hey,
+      # here apparently doesn't work (...)
+      - name: create tar.gz
+        run: |
+          git archive -o SOURCE.CODE.+.submodules.tar HEAD
+          git submodule --quiet foreach 'cd $toplevel; tar -uf SOURCE.CODE.+.submodules.tar $sm_path'
+          gzip -9 SOURCE.CODE.+.submodules.tar
+          
+      - name: create zip
+        run: |
+          git archive -o SOURCE.CODE.+.submodules.zip HEAD
+          git submodule --quiet foreach 'cd $toplevel; zip -ru SOURCE.CODE.+.submodules.zip $sm_path'
+          
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            SOURCE.CODE.+.submodules.tar.gz
+            SOURCE.CODE.+.submodules.zip
