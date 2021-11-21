@@ -99,9 +99,9 @@ namespace app {
     static App* m_instance;
 
     std::unique_ptr<ui::UISystem> m_uiSystem;
-    CoreModules* m_coreModules;
-    Modules* m_modules;
-    LegacyModules* m_legacy;
+    std::unique_ptr<CoreModules> m_coreModules;
+    std::unique_ptr<Modules> m_modules;
+    std::unique_ptr<LegacyModules> m_legacy;
     bool m_isGui;
     bool m_isShell;
     std::unique_ptr<MainWindow> m_mainWindow;
