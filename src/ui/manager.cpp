@@ -33,6 +33,7 @@
 #include <iostream>
 #endif
 
+#include <array>
 #include <deque>
 #include <limits>
 #include <list>
