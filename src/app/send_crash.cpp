@@ -22,7 +22,7 @@
 namespace app {
 
 #ifdef _WIN32
-static const char* kDefaultCrashName = PACKAGE "-crash-" VERSION ".dmp";
+static const char* kDefaultCrashName = PACKAGE_AND_VERSION "-crash.dmp";
 #endif
 
 std::string memory_dump_filename()
