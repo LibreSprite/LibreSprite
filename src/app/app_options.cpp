@@ -99,7 +99,7 @@ bool AppOptions::hasExporterParams() const
 void AppOptions::showHelp()
 {
   std::cout
-    << PACKAGE << " v" << VERSION << " | A pixel art program\n" << COPYRIGHT
+    << PACKAGE_AND_VERSION << " | A pixel art program\n" << COPYRIGHT
     << "\n\nUsage:\n"
     << "  " << m_exeName << " [OPTIONS] [FILES]...\n\n"
     << "Options:\n"
@@ -110,7 +110,7 @@ void AppOptions::showHelp()
 
 void AppOptions::showVersion()
 {
-  std::cout << PACKAGE << ' ' << VERSION << '\n';
+  std::cout << PACKAGE_AND_VERSION << '\n';
 }
 
 }

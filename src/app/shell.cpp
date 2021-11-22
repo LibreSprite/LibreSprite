@@ -28,7 +28,7 @@ Shell::~Shell()
 
 void Shell::run(AppScripting& engine)
 {
-  std::cout << "Welcome to " PACKAGE " v" VERSION " interactive console" << std::endl;
+  std::cout << "Welcome to " PACKAGE_AND_VERSION " interactive console" << std::endl;
   std::string line;
   while (std::getline(std::cin, line)) {
     engine.eval(line);

@@ -22,7 +22,7 @@ LoggerModule::LoggerModule(bool createLogInDesktop)
   app::ResourceFinder rf(false);
 
   if (createLogInDesktop)
-    rf.includeDesktopDir(PACKAGE "-v" VERSION "-DebugOutput.txt");
+    rf.includeDesktopDir(PACKAGE_AND_VERSION "-DebugOutput.txt");
   else
     rf.includeUserDir("libresprite.log");
 
