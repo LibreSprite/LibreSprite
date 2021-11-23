@@ -33,5 +33,6 @@ namespace gfx {
   inline ColorComponent geta(Color c) { return (c >> ColorAShift) & 0xff; }
 
   inline bool is_transparent(Color c) { return geta(c) == 0; }
+  inline bool is_solid(Color c) { return geta(c) == 255; }
 
 } // namespace gfx

@@ -19,6 +19,7 @@
 #include "base/string.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
+#include "gfx/color.h"
 
 #include <iostream>
 
@@ -422,7 +423,17 @@ namespace she {
   void SDL2Surface::fillRect(gfx::Color color, const gfx::Rect& rc)
   {
     SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
-    SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
+    if (gfx::is_solid(color)){
+        SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
+    } else {
+        // Make temporary surface with the color and blit it with alpha-blend
+        SDL_Surface *surface_tmp = SDL_CreateRGBSurface(0, rc.w, rc.h, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000);
+        SDL_SetSurfaceBlendMode(surface_tmp, SDL_BLENDMODE_BLEND);
+        SDL_Rect rect_tmp{0, 0, rc.w, rc.h};
+        SDL_FillRect(surface_tmp, &rect_tmp, to_sdl(m_bmp->format, color));
+        SDL_BlitSurface(surface_tmp, NULL, m_bmp, &rect);
+        SDL_FreeSurface(surface_tmp);
+    }
   }
 
   void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, int width, int height) const
