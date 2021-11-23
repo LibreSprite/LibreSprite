@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -99,7 +99,7 @@ bool AppOptions::hasExporterParams() const
 void AppOptions::showHelp()
 {
   std::cout
-    << PACKAGE << " v" << VERSION << " | A pixel art program\n" << COPYRIGHT
+    << PACKAGE_AND_VERSION << " | A pixel art program\n" << COPYRIGHT
     << "\n\nUsage:\n"
     << "  " << m_exeName << " [OPTIONS] [FILES]...\n\n"
     << "Options:\n"
@@ -110,7 +110,7 @@ void AppOptions::showHelp()
 
 void AppOptions::showVersion()
 {
-  std::cout << PACKAGE << ' ' << VERSION << '\n';
+  std::cout << PACKAGE_AND_VERSION << '\n';
 }
 
 }
