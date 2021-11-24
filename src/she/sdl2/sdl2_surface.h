@@ -59,6 +59,7 @@ namespace she {
 
   private:
     SDL_Surface* m_bmp = nullptr;
+    SDL_Surface* m_tmp = nullptr;
     DestroyFlag m_destroy;
     int m_lock;
   };

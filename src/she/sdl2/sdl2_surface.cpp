@@ -53,6 +53,7 @@ namespace she {
 
   SDL2Surface::SDL2Surface(SDL_Surface* bmp, DestroyFlag destroy)
     : m_bmp(bmp)
+    , m_tmp(SDL_CreateRGBSurface(0, bmp->w/3, bmp->h/3, bmp->format->BitsPerPixel, 0xFF, 0xFF00, 0xFF0000, bmp->format->BitsPerPixel == 32 ? 0xFF000000 : 0))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -60,6 +61,7 @@ namespace she {
 
   SDL2Surface::SDL2Surface(int width, int height, DestroyFlag destroy)
     : m_bmp(SDL_CreateRGBSurface(0, width, height, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000))
+    , m_tmp(SDL_CreateRGBSurface(0, width/3, height/3, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -70,6 +72,7 @@ namespace she {
 
   SDL2Surface::SDL2Surface(int width, int height, int bpp, DestroyFlag destroy)
     : m_bmp(SDL_CreateRGBSurface(0, width, height, bpp, 0xFF, 0xFF00, 0xFF0000, bpp == 32 ? 0xFF000000 : 0))
+    , m_tmp(SDL_CreateRGBSurface(0, width/3, height/3, bpp, 0xFF, 0xFF00, 0xFF0000, bpp == 32 ? 0xFF000000 : 0))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -84,6 +87,8 @@ namespace she {
     if (m_destroy & DestroyHandle) {
       if (m_bmp)
         SDL_FreeSurface(m_bmp);
+      if (m_tmp)
+        SDL_FreeSurface(m_tmp);
     }
   }
 
@@ -424,15 +429,20 @@ namespace she {
   {
     SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
     if (gfx::is_solid(color)){
-        SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
+      SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
     } else {
-        // Make temporary surface with the color and blit it with alpha-blend
-        SDL_Surface *surface_tmp = SDL_CreateRGBSurface(0, rc.w, rc.h, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000);
-        SDL_SetSurfaceBlendMode(surface_tmp, SDL_BLENDMODE_BLEND);
-        SDL_Rect rect_tmp{0, 0, rc.w, rc.h};
-        SDL_FillRect(surface_tmp, &rect_tmp, to_sdl(m_bmp->format, color));
-        SDL_BlitSurface(surface_tmp, NULL, m_bmp, &rect);
-        SDL_FreeSurface(surface_tmp);
+      // Color has transparency: paint the temporary surface with the color and blit it with alpha-blend
+      if (!m_tmp || m_tmp->h < rc.h || m_tmp->w < rc.w){
+        // Not enough space on the temporary surface
+        if (m_tmp){
+          SDL_FreeSurface(m_tmp);
+        }
+        m_tmp = SDL_CreateRGBSurface(0, rc.w, rc.h, m_bmp->format->BitsPerPixel, 0xFF, 0xFF00, 0xFF0000, m_bmp->format->BitsPerPixel == 32 ? 0xFF000000 : 0);
+      }
+      SDL_SetSurfaceBlendMode(m_tmp, SDL_BLENDMODE_BLEND);
+      SDL_Rect rect_tmp{0, 0, rc.w, rc.h};
+      SDL_FillRect(m_tmp, &rect_tmp, to_sdl(m_bmp->format, color));
+      SDL_BlitSurface(m_tmp, &rect_tmp, m_bmp, &rect);
     }
   }
 
