@@ -23,10 +23,10 @@
 #include "ui/alert.h"
 #include "ui/button.h"
 #include "ui/entry.h"
+#include "ui/events/resize_event.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/listitem.h"
 #include "ui/message.h"
-#include "ui/resize_event.h"
-#include "ui/size_hint_event.h"
 #include "ui/system.h"
 
 namespace app {

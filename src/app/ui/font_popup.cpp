@@ -28,7 +28,7 @@
 #include "she/system.h"
 #include "ui/box.h"
 #include "ui/button.h"
-#include "ui/size_hint_event.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/theme.h"
 #include "ui/view.h"
 

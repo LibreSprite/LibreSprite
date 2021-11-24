@@ -21,9 +21,9 @@ endif()
 
 add_library(ui-lib
 # events
-  paint_event.cpp
-  resize_event.cpp
-  size_hint_event.cpp
+  events/paint_event.cpp
+  events/resize_event.cpp
+  events/size_hint_event.cpp
 
 # messages
   message.cpp

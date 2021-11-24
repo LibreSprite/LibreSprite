@@ -7,7 +7,7 @@
 #pragma once
 
 #include "gfx/region.h"
-#include "ui/event.h"
+#include "ui/events/event.h"
 
 namespace ui {
 

@@ -15,11 +15,11 @@
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/status_bar.h"
 #include "she/surface.h"
+#include "ui/events/paint_event.h"
+#include "ui/events/size_hint_event.h"
+#include "ui/events/resize_event.h"
 #include "ui/graphics.h"
 #include "ui/message.h"
-#include "ui/paint_event.h"
-#include "ui/size_hint_event.h"
-#include "ui/resize_event.h"
 #include "ui/system.h"
 
 namespace app {

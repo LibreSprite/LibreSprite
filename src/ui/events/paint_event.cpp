@@ -8,7 +8,7 @@
 #include "config.h"
 #endif
 
-#include "ui/paint_event.h"
+#include "ui/events/paint_event.h"
 #include "ui/widget.h"
 
 namespace ui {

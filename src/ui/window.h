@@ -8,9 +8,9 @@
 
 #include "base/signal.h"
 #include "gfx/point.h"
-#include "ui/close_event.h"
-#include "ui/event.h"
-#include "ui/hit_test_event.h"
+#include "ui/events/close_event.h"
+#include "ui/events/event.h"
+#include "ui/events/hit_test_event.h"
 #include "ui/widget.h"
 
 namespace ui {

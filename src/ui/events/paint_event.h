@@ -6,21 +6,25 @@
 
 #pragma once
 
-#include "gfx/rect.h"
-#include "ui/event.h"
+#include "ui/events/event.h"
 
 namespace ui {
 
+  class Graphics;
   class Widget;
 
-  class ResizeEvent : public Event {
+  class PaintEvent : public Event {
   public:
-    ResizeEvent(Widget* source, const gfx::Rect& bounds);
+    PaintEvent(Widget* source, Graphics* graphics);
+    virtual ~PaintEvent();
 
-    const gfx::Rect& bounds() { return m_bounds; }
+    Graphics* graphics();
+
+    bool isPainted() const;
 
   private:
-    gfx::Rect m_bounds;
+    Graphics* m_graphics;
+    bool m_painted;
   };
 
 } // namespace ui

@@ -19,9 +19,9 @@
 #include "app/ui/skin/skin_theme.h"
 #include "base/bind.h"
 #include "she/surface.h"
-#include "ui/paint_event.h"
-#include "ui/resize_event.h"
-#include "ui/scroll_region_event.h"
+#include "ui/events/paint_event.h"
+#include "ui/events/resize_event.h"
+#include "ui/events/scroll_region_event.h"
 
 namespace app {
 

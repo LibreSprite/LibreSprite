@@ -8,7 +8,7 @@
 #include "config.h"
 #endif
 
-#include "ui/resize_event.h"
+#include "ui/events/resize_event.h"
 #include "ui/widget.h"
 
 namespace ui {

@@ -12,7 +12,7 @@
 #include "app/ui/marching_ants.h"
 #include "base/connection.h"
 #include "doc/palette_picks.h"
-#include "ui/event.h"
+#include "ui/events/event.h"
 #include "ui/mouse_buttons.h"
 #include "ui/widget.h"
 

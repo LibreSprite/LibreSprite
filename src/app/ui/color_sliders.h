@@ -9,7 +9,7 @@
 
 #include "app/color.h"
 #include "base/signal.h"
-#include "ui/event.h"
+#include "ui/events/event.h"
 #include "ui/grid.h"
 #include "ui/widget.h"
 

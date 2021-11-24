@@ -16,8 +16,8 @@
 #include "app/ui/keyboard_shortcuts.h"
 #include "app/ui_context.h"
 #include "ui/accelerator.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/message.h"
-#include "ui/size_hint_event.h"
 #include "ui/widget.h"
 
 #include <cstdarg>

@@ -55,10 +55,10 @@
 #include "doc/sprite.h"
 #include "she/surface.h"
 #include "ui/alert.h"
+#include "ui/events/paint_event.h"
 #include "ui/graphics.h"
 #include "ui/menu.h"
 #include "ui/message.h"
-#include "ui/paint_event.h"
 #include "ui/separator.h"
 #include "ui/system.h"
 

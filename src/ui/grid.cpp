@@ -10,10 +10,10 @@
 
 #include "base/memory.h"
 #include "gfx/size.h"
+#include "ui/events/size_hint_event.h"
+#include "ui/events/resize_event.h"
 #include "ui/grid.h"
 #include "ui/message.h"
-#include "ui/size_hint_event.h"
-#include "ui/resize_event.h"
 #include "ui/theme.h"
 #include "ui/widget.h"
 

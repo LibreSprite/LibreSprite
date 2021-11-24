@@ -11,9 +11,9 @@
 #include "ui/textbox.h"
 
 #include "gfx/size.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/intern.h"
 #include "ui/message.h"
-#include "ui/size_hint_event.h"
 #include "ui/system.h"
 #include "ui/theme.h"
 #include "ui/view.h"

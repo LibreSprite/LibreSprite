@@ -17,9 +17,9 @@
 #include "base/bind.h"
 #include "ui/box.h"
 #include "ui/entry.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/graphics.h"
 #include "ui/label.h"
-#include "ui/size_hint_event.h"
 #include "ui/slider.h"
 #include "ui/theme.h"
 

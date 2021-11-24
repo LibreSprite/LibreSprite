@@ -9,8 +9,8 @@
 
 #include "app/ui/skin/skin_theme.h"
 #include "ui/button.h"
+#include "ui/events/paint_event.h"
 #include "ui/graphics.h"
-#include "ui/paint_event.h"
 
 namespace app {
   namespace skin {

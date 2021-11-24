@@ -11,8 +11,8 @@
 #include "ui/separator.h"
 
 #include "gfx/size.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/message.h"
-#include "ui/size_hint_event.h"
 #include "ui/theme.h"
 
 namespace ui {

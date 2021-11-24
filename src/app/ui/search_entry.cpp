@@ -13,10 +13,10 @@
 
 #include "app/ui/skin/skin_theme.h"
 #include "she/surface.h"
+#include "ui/events/paint_event.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/graphics.h"
 #include "ui/message.h"
-#include "ui/paint_event.h"
-#include "ui/size_hint_event.h"
 
 namespace app {
 

@@ -9,9 +9,9 @@
 #endif
 
 #include "gfx/size.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"
-#include "ui/size_hint_event.h"
 #include "ui/theme.h"
 #include "ui/ui.h"
 

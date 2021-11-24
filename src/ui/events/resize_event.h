@@ -6,24 +6,21 @@
 
 #pragma once
 
-#include "ui/event.h"
-#include <iosfwd>
+#include "gfx/rect.h"
+#include "ui/events/event.h"
 
 namespace ui {
 
   class Widget;
 
-  class LoadLayoutEvent : public Event {
+  class ResizeEvent : public Event {
   public:
-    LoadLayoutEvent(Widget* source, std::istream& stream)
-      : Event(source)
-      , m_stream(stream) {
-    }
+    ResizeEvent(Widget* source, const gfx::Rect& bounds);
 
-    std::istream& stream() { return m_stream; }
+    const gfx::Rect& bounds() { return m_bounds; }
 
   private:
-    std::istream& m_stream;
+    gfx::Rect m_bounds;
   };
 
 } // namespace ui

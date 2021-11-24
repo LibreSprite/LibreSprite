@@ -12,12 +12,12 @@
 
 #include "base/unique_ptr.h"
 #include "gfx/size.h"
+#include "ui/events/paint_event.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"
 #include "ui/manager.h"
 #include "ui/message.h"
-#include "ui/paint_event.h"
-#include "ui/size_hint_event.h"
 #include "ui/system.h"
 #include "ui/theme.h"
 

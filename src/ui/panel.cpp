@@ -10,8 +10,8 @@
 
 #include "ui/panel.h"
 
-#include "ui/resize_event.h"
-#include "ui/size_hint_event.h"
+#include "ui/events/resize_event.h"
+#include "ui/events/size_hint_event.h"
 
 namespace ui {
 

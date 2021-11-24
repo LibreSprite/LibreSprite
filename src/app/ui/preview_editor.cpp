@@ -31,7 +31,7 @@
 #include "gfx/rect.h"
 #include "ui/base.h"
 #include "ui/button.h"
-#include "ui/close_event.h"
+#include "ui/events/close_event.h"
 #include "ui/message.h"
 #include "ui/system.h"
 

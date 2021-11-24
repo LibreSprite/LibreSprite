@@ -17,8 +17,8 @@
 #include "app/ui/workspace_view.h"
 #include "base/remove_from_container.h"
 #include "ui/box.h"
-#include "ui/paint_event.h"
-#include "ui/resize_event.h"
+#include "ui/events/paint_event.h"
+#include "ui/events/resize_event.h"
 #include "ui/splitter.h"
 
 namespace app {

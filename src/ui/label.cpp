@@ -9,9 +9,9 @@
 #endif
 
 #include "she/font.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/label.h"
 #include "ui/message.h"
-#include "ui/size_hint_event.h"
 #include "ui/theme.h"
 
 namespace ui {

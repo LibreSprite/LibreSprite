@@ -25,7 +25,7 @@
 #include "doc/layer.h"
 #include "doc/site.h"
 #include "doc/sprite.h"
-#include "ui/size_hint_event.h"
+#include "ui/events/size_hint_event.h"
 #include "ui/ui.h"
 
 namespace app {

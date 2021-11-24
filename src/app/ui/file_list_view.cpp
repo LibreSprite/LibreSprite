@@ -12,7 +12,7 @@
 #include "app/ui/file_list_view.h"
 
 #include "app/ui/file_list.h"
-#include "ui/scroll_region_event.h"
+#include "ui/events/scroll_region_event.h"
 
 namespace app {
 

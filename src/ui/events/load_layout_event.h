@@ -6,24 +6,24 @@
 
 #pragma once
 
-#include "ui/event.h"
+#include "ui/events/event.h"
 #include <iosfwd>
 
 namespace ui {
 
   class Widget;
 
-  class SaveLayoutEvent : public Event {
+  class LoadLayoutEvent : public Event {
   public:
-    SaveLayoutEvent(Widget* source, std::ostream& stream)
+    LoadLayoutEvent(Widget* source, std::istream& stream)
       : Event(source)
       , m_stream(stream) {
     }
 
-    std::ostream& stream() { return m_stream; }
+    std::istream& stream() { return m_stream; }
 
   private:
-    std::ostream& m_stream;
+    std::istream& m_stream;
   };
 
 } // namespace ui
