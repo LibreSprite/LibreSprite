@@ -14,6 +14,8 @@
 #include "base/bind.h"
 #include "ui/ui.h"
 
+#include <memory>
+
 namespace app {
 
 using namespace ui;
@@ -36,24 +38,24 @@ AboutCommand::AboutCommand()
 
 void AboutCommand::onExecute(Context* context)
 {
-  std::unique_ptr<Window> window(new Window(Window::WithTitleBar, "About " PACKAGE));
-  Box* box1 = new Box(VERTICAL);
-  Grid* grid = new Grid(2, false);
-  Label* title = new Label(PACKAGE " v" VERSION);
-  Label* subtitle = new Label("Animated sprite editor & pixel art tool");
-  Separator* authors_separator1 = new Separator("Authors:", HORIZONTAL | TOP);
-  Separator* authors_separator2 = new Separator("", HORIZONTAL);
-  Label* author1 = new LinkLabel("http://davidcapello.com/", "David Capello");
-  Label* author1_desc = new Label("- Lead developer, graphics & maintainer");
-  Label* author2 = new LinkLabel("http://ilkke.blogspot.com/", "Ilija Melentijevic");
-  Label* author2_desc = new Label("- Default skin & graphics introduced in v0.8");
-  Label* author3 = new LinkLabel(WEBSITE_CONTRIBUTORS, "Contributors");
-  Box* bottom_box1 = new Box(HORIZONTAL);
-  Box* bottom_box2 = new Box(HORIZONTAL);
-  Box* bottom_box3 = new Box(HORIZONTAL);
-  Label* copyright = new Label(COPYRIGHT);
-  Label* website = new LinkLabel(WEBSITE);
-  Button* close_button = new Button("&Close");
+  std::unique_ptr<Window> window = std::make_unique<Window>(Window::WithTitleBar, "About " PACKAGE);
+  std::shared_ptr<Box> box1 = std::make_shared<Box>(VERTICAL);
+  std::shared_ptr<Grid> grid = std::make_shared<Grid>(2, false);
+  std::shared_ptr<Label> title = std::make_shared<Label>(PACKAGE " v" VERSION);
+  std::shared_ptr<Label> subtitle = std::make_shared<Label>("Animated sprite editor & pixel art tool");
+  std::shared_ptr<Separator> authors_separator1 = std::make_shared<Separator>("Authors:", HORIZONTAL | TOP);
+  std::shared_ptr<Separator> authors_separator2 = std::make_shared<Separator>("", HORIZONTAL);
+  std::shared_ptr<Label> author1 = std::make_shared<LinkLabel>("http://davidcapello.com/", "David Capello");
+  std::shared_ptr<Label> author1_desc = std::make_shared<Label>("- Lead developer, graphics & maintainer");
+  std::shared_ptr<Label> author2 = std::make_shared<LinkLabel>("http://ilkke.blogspot.com/", "Ilija Melentijevic");
+  std::shared_ptr<Label> author2_desc = std::make_shared<Label>("- Default skin & graphics introduced in v0.8");
+  std::shared_ptr<Label> author3 = std::make_shared<LinkLabel>(WEBSITE_CONTRIBUTORS, "Contributors");
+  std::shared_ptr<Box> bottom_box1 = std::make_shared<Box>(HORIZONTAL);
+  std::shared_ptr<Box> bottom_box2 = std::make_shared<Box>(HORIZONTAL);
+  std::shared_ptr<Box> bottom_box3 = std::make_shared<Box>(HORIZONTAL);
+  std::shared_ptr<Label> copyright = std::make_shared<Label>(COPYRIGHT);
+  std::shared_ptr<Label> website = std::make_shared<LinkLabel>(WEBSITE);
+  std::shared_ptr<Button> close_button = std::make_shared<Button>("&Close");
 
   grid->addChildInCell(title, 2, 1, 0);
   grid->addChildInCell(subtitle, 2, 1, 0);
@@ -87,7 +89,7 @@ void AboutCommand::onExecute(Context* context)
       close_button->border().right() + 16*guiscale(),
       close_button->border().bottom()));
 
-  close_button->Click.connect(base::Bind<void>(&Window::closeWindow, window.get(), close_button));
+  close_button->Click.connect(base::Bind<void>(&Window::closeWindow, window.get(), close_button.get()));
 
   window->openWindowInForeground();
 }
