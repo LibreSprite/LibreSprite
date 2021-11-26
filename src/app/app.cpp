@@ -807,7 +807,7 @@ void App::showNotification(INotificationDelegate* del)
 
 void App::updateDisplayTitleBar()
 {
-  std::string defaultTitle = PACKAGE " v" VERSION;
+  std::string defaultTitle = PACKAGE_AND_VERSION;
   std::string title;
 
   DocumentView* docView = UIContext::instance()->activeView();
@@ -869,7 +869,7 @@ PixelFormat app_get_current_pixel_format()
 void app_default_statusbar_message()
 {
   StatusBar::instance()
-    ->setStatusText(250, "%s %s | %s", PACKAGE, VERSION, COPYRIGHT);
+    ->setStatusText(250, "%s | %s", PACKAGE_AND_VERSION, COPYRIGHT);
 }
 
 int app_get_color_to_clear_layer(Layer* layer)

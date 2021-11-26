@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    - Copyright (C) 2001-2015  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -41,7 +41,7 @@ void AboutCommand::onExecute(Context* context)
   std::unique_ptr<Window> window = std::make_unique<Window>(Window::WithTitleBar, "About " PACKAGE);
   std::shared_ptr<Box> box1 = std::make_shared<Box>(VERTICAL);
   std::shared_ptr<Grid> grid = std::make_shared<Grid>(2, false);
-  std::shared_ptr<Label> title = std::make_shared<Label>(PACKAGE " v" VERSION);
+  std::shared_ptr<Label> title = std::make_shared<Label>(PACKAGE_AND_VERSION);
   std::shared_ptr<Label> subtitle = std::make_shared<Label>("Animated sprite editor & pixel art tool");
   std::shared_ptr<Separator> authors_separator1 = std::make_shared<Separator>("Authors:", HORIZONTAL | TOP);
   std::shared_ptr<Separator> authors_separator2 = std::make_shared<Separator>("", HORIZONTAL);
