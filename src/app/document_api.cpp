@@ -104,7 +104,7 @@ void DocumentApi::cropSprite(Sprite* sprite, const gfx::Rect& bounds)
           ASSERT(cel->y() == 0);
 
           // Create the new image through a crop
-          ImageRef new_image(
+          std::shared_ptr<Image> new_image(
             crop_image(image,
               bounds.x, bounds.y,
               bounds.w, bounds.h,
@@ -479,7 +479,7 @@ void DocumentApi::duplicateLayerBefore(Layer* sourceLayer, Layer* beforeLayer)
   duplicateLayerAfter(sourceLayer, sourceLayer->sprite()->indexToLayer(afterThisIdx));
 }
 
-Cel* DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image)
+Cel* DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const std::shared_ptr<Image>& image)
 {
   ASSERT(layer->cel(frameNumber) == NULL);
 
@@ -491,7 +491,7 @@ Cel* DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const ImageRef&
   return cel;
 }
 
-void DocumentApi::replaceImage(Sprite* sprite, const ImageRef& oldImage, const ImageRef& newImage)
+void DocumentApi::replaceImage(Sprite* sprite, const std::shared_ptr<Image>& oldImage, const std::shared_ptr<Image>& newImage)
 {
   ASSERT(oldImage);
   ASSERT(newImage);

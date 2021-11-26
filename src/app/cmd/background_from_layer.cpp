@@ -47,7 +47,7 @@ void BackgroundFromLayer::onExecute()
 
   // create a temporary image to draw each frame of the new
   // `Background' layer
-  ImageRef bg_image(Image::create(sprite->pixelFormat(),
+  std::shared_ptr<Image> bg_image(Image::create(sprite->pixelFormat(),
       sprite->width(),
       sprite->height()));
 
@@ -80,7 +80,7 @@ void BackgroundFromLayer::onExecute()
           gfx::Clip(0, 0, cel_image->bounds())));
     }
     else {
-      ImageRef bg_image2(Image::createCopy(bg_image.get()));
+      std::shared_ptr<Image> bg_image2(Image::createCopy(bg_image.get()));
       executeAndAdd(new cmd::ReplaceImage(sprite, cel->imageRef(), bg_image2));
     }
   }
@@ -89,7 +89,7 @@ void BackgroundFromLayer::onExecute()
   for (frame_t frame(0); frame<sprite->totalFrames(); ++frame) {
     Cel* cel = layer->cel(frame);
     if (!cel) {
-      ImageRef cel_image(Image::create(sprite->pixelFormat(),
+      std::shared_ptr<Image> cel_image(Image::create(sprite->pixelFormat(),
           sprite->width(), sprite->height()));
       clear_image(cel_image.get(), bgcolor);
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <application>
-  <id type="desktop">libresprite.desktop</id>  
+  <id type="desktop">libresprite.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0</project_license>
   <name>LibreSprite</name>
@@ -15,6 +15,6 @@
   <url type="bugtracker">https://github.com/LibreSprite/LibreSprite/issues/</url>
   <content_rating type="oars-1.1" />
   <releases>
-    <release date="2021-02-18" version="1.0-dev" />
+    <release date="2021-11-17" version="1.1-dev" />
   </releases>
 </application>

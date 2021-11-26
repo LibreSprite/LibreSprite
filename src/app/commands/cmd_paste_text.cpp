@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -25,10 +25,12 @@
 #include "base/string.h"
 #include "base/unique_ptr.h"
 #include "doc/image.h"
-#include "doc/image_ref.h"
 #include "render/quantization.h"
-
+#include "she/system.h"
+#include "she/font.h"
 #include "paste_text.xml.h"
+
+#include <memory>
 
 namespace app {
 
@@ -53,15 +55,17 @@ PasteTextCommand::PasteTextCommand()
 
 bool PasteTextCommand::onEnabled(Context* ctx)
 {
-  return ctx->checkFlags(ContextFlags::ActiveDocumentIsWritable);
+  return ctx->checkFlags(ContextFlags::ActiveDocumentIsWritable | ContextFlags::ActiveLayerIsEditable);
 }
 
 class PasteTextWindow : public app::gen::PasteText {
 public:
   PasteTextWindow(const std::string& face, int size,
                   bool antialias,
-                  const app::Color& color)
-    : m_face(face) {
+                  const app::Color& color) {
+    this->antialias()->setSelected(antialias);
+    if (!face.empty())
+      setFontFace(face);
     ok()->setEnabled(!m_face.empty());
     if (!m_face.empty())
       updateFontFaceButton();
@@ -70,7 +74,7 @@ public:
     fontFace()->Click.connect(base::Bind<void>(&PasteTextWindow::onSelectFontFile, this));
     fontFace()->DropDownClick.connect(base::Bind<void>(&PasteTextWindow::onSelectSystemFont, this));
     fontColor()->setColor(color);
-    this->antialias()->setSelected(antialias);
+    this->antialias()->Click.connect([=](ui::Event&){onChangeAntialias();});
   }
 
   std::string faceValue() const {
@@ -94,7 +98,7 @@ private:
     std::string face = show_file_selector(
       "Select a TrueType Font",
       m_face,
-      "ttf",
+      "ttf,otf",
       FileSelectorType::Open,
       nullptr);
 
@@ -104,9 +108,26 @@ private:
   }
 
   void setFontFace(const std::string& face) {
+    if (face == m_face)
+      return;
+
     m_face = face;
     ok()->setEnabled(true);
     updateFontFaceButton();
+
+    m_font.reset(she::instance()->loadTrueTypeFont(face.c_str(), 12));
+    if (m_font)
+      m_font->setAntialias(antialias()->isSelected());
+
+    userText()->resetFont(m_font.get());
+    userText()->invalidate();
+  }
+
+  void onChangeAntialias() {
+    if (m_font) {
+      m_font->setAntialias(antialias()->isSelected());
+      userText()->invalidate();
+    }
   }
 
   void onSelectSystemFont() {
@@ -137,6 +158,7 @@ private:
     fontFace()->dropDown()->requestFocus();
   }
 
+  std::shared_ptr<she::Font> m_font;
   std::string m_face;
   base::UniquePtr<FontPopup> m_fontPopup;
 };
@@ -177,7 +199,7 @@ void PasteTextCommand::onExecute(Context* ctx)
                                    appColor.getBlue(),
                                    appColor.getAlpha());
 
-    doc::ImageRef image(render_text(faceName, size, text, color, antialias));
+    std::shared_ptr<Image> image(render_text(faceName, size, text, color, antialias));
     if (image) {
       Sprite* sprite = editor->sprite();
       if (image->pixelFormat() != sprite->pixelFormat()) {

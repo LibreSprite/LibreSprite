@@ -13,7 +13,7 @@
 #include "doc/cel.h"
 #include "doc/frame.h"
 #include "doc/image_buffer.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "gfx/rect.h"
 #include "render/extra_type.h"
 
@@ -42,13 +42,13 @@ namespace app {
   private:
     render::ExtraType m_type;
     base::UniquePtr<doc::Cel> m_cel;
-    doc::ImageRef m_image;
+    std::shared_ptr<doc::Image> m_image;
     doc::ImageBufferPtr m_imageBuffer;
     doc::BlendMode m_blendMode;
 
     DISABLE_COPYING(ExtraCel);
   };
 
-  typedef base::SharedPtr<ExtraCel> ExtraCelRef;
+typedef std::shared_ptr<ExtraCel> ExtraCelRef;
 
 } // namespace app

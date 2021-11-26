@@ -10,7 +10,7 @@
 #include "base/exception.h"
 #include "base/unique_ptr.h"
 #include "doc/image_impl.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/pixel_format.h"
 #include "doc/site.h"
 #include "filters/filter_indexed_data.h"
@@ -116,8 +116,8 @@ namespace app {
     doc::Site m_site;
     Filter* m_filter;
     doc::Cel* m_cel;
-    doc::ImageRef m_src;
-    doc::ImageRef m_dst;
+    std::shared_ptr<doc::Image> m_src;
+    std::shared_ptr<doc::Image> m_dst;
     int m_row;
     gfx::Rect m_bounds;
     doc::Mask* m_mask;

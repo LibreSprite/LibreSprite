@@ -53,15 +53,15 @@ ColorPopup::ColorPopup()
   , m_topBox(HORIZONTAL)
   , m_color(app::Color::fromMask())
   , m_colorPalette(false, PaletteView::SelectOneColor, this, 7*guiscale())
-  , m_colorType(5)
   , m_maskLabel("Transparent Color Selected")
   , m_disableHexUpdate(false)
 {
-  m_colorType.addItem("Index");
-  m_colorType.addItem("RGB");
-  m_colorType.addItem("HSB");
-  m_colorType.addItem("Gray");
-  m_colorType.addItem("Mask");
+  m_colorType->setColumns(5);
+  m_colorType->addItem("Index");
+  m_colorType->addItem("RGB");
+  m_colorType->addItem("HSB");
+  m_colorType->addItem("Gray");
+  m_colorType->addItem("Mask");
 
   m_topBox.setBorder(gfx::Border(0));
   m_topBox.setChildSpacing(0);
@@ -70,7 +70,7 @@ ColorPopup::ColorPopup()
 
   m_colorPaletteContainer.setExpansive(true);
 
-  m_topBox.addChild(&m_colorType);
+  m_topBox.addChild(m_colorType);
   m_topBox.addChild(new Separator("", VERTICAL));
   m_topBox.addChild(&m_hexColorEntry);
   {
@@ -87,7 +87,7 @@ ColorPopup::ColorPopup()
   m_vbox.addChild(&m_maskLabel);
   addChild(&m_vbox);
 
-  m_colorType.ItemChange.connect(base::Bind<void>(&ColorPopup::onColorTypeClick, this));
+  m_colorType->ItemChange.connect(base::Bind<void>(&ColorPopup::onColorTypeClick, this));
 
   m_rgbSliders.ColorChange.connect(&ColorPopup::onColorSlidersChange, this);
   m_hsvSliders.ColorChange.connect(&ColorPopup::onColorSlidersChange, this);
@@ -159,7 +159,7 @@ void ColorPopup::onColorTypeClick()
 {
   app::Color newColor = getColor();
 
-  switch (m_colorType.selectedItem()) {
+  switch (m_colorType->selectedItem()) {
     case INDEX_MODE:
       newColor = app::Color::fromIndex(newColor.getIndex());
       break;
@@ -226,11 +226,11 @@ void ColorPopup::selectColorType(app::Color::Type type)
   m_maskLabel.setVisible(type == app::Color::MaskType);
 
   switch (type) {
-    case app::Color::IndexType: m_colorType.setSelectedItem(INDEX_MODE); break;
-    case app::Color::RgbType:   m_colorType.setSelectedItem(RGB_MODE); break;
-    case app::Color::HsvType:   m_colorType.setSelectedItem(HSB_MODE); break;
-    case app::Color::GrayType:  m_colorType.setSelectedItem(GRAY_MODE); break;
-    case app::Color::MaskType:  m_colorType.setSelectedItem(MASK_MODE); break;
+    case app::Color::IndexType: m_colorType->setSelectedItem(INDEX_MODE); break;
+    case app::Color::RgbType:   m_colorType->setSelectedItem(RGB_MODE); break;
+    case app::Color::HsvType:   m_colorType->setSelectedItem(HSB_MODE); break;
+    case app::Color::GrayType:  m_colorType->setSelectedItem(GRAY_MODE); break;
+    case app::Color::MaskType:  m_colorType->setSelectedItem(MASK_MODE); break;
   }
 
   m_vbox.layout();

@@ -11,7 +11,7 @@
 #include "doc/color.h"
 #include "doc/dithering_method.h"
 #include "doc/frame.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/pixel_format.h"
 #include "gfx/rect.h"
 
@@ -60,7 +60,7 @@ namespace app {
 
     // Cels API
     void addCel(LayerImage* layer, Cel* cel);
-    Cel* addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image);
+    Cel* addCel(LayerImage* layer, frame_t frameNumber, const std::shared_ptr<Image>& image);
     void clearCel(LayerImage* layer, frame_t frame);
     void clearCel(Cel* cel);
     void setCelPosition(Sprite* sprite, Cel* cel, int x, int y);
@@ -91,7 +91,7 @@ namespace app {
     void duplicateLayerBefore(Layer* sourceLayer, Layer* beforeLayer);
 
     // Images API
-    void replaceImage(Sprite* sprite, const ImageRef& oldImage, const ImageRef& newImage);
+    void replaceImage(Sprite* sprite, const std::shared_ptr<Image>& oldImage, const std::shared_ptr<Image>& newImage);
 
     // Image API
     void flipImage(Image* image, const gfx::Rect& bounds, doc::algorithm::FlipType flipType);

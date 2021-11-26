@@ -47,12 +47,13 @@ TaskManager::instance().addTask<Data>(
 
 #include "ui/timer.h"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <mutex>
-#include <queue>
+#include <deque>
 #include <thread>
 #include <unordered_set>
 
@@ -62,7 +63,7 @@ namespace app {
       std::function<std::shared_ptr<void>(std::atomic_bool&)> funcTask;
       std::function<void(std::shared_ptr<void>)> funcCallback;
       std::function<void(Task&)> funcAbort;
-      std::vector<std::shared_ptr<void>> data;
+      std::deque<std::shared_ptr<void>> data;
       std::mutex dataMutex;
       std::atomic_bool isAlive{true};
       bool isDone = false;
@@ -104,21 +105,21 @@ namespace app {
   };
 
   class TaskManager {
-    ui::Timer m_timer{10};
+    inject<ui::Timer> m_timer = ui::Timer::create(10);
     std::atomic_bool isAlive{true};
     std::array<std::thread, 8> threads;
 
-    std::queue<std::shared_ptr<detail::Task>> pending;
+    std::deque<std::shared_ptr<detail::Task>> pending;
     std::mutex pendingMutex;
 
-    std::queue<std::shared_ptr<detail::Task>> ready;
+    std::deque<std::shared_ptr<detail::Task>> ready;
     std::recursive_mutex readyMutex;
 
     std::array<std::shared_ptr<detail::Task>, std::tuple_size<decltype(threads)>::value> processing;
     std::mutex processingMutex;
 
     TaskManager() {
-      m_timer.Tick.connect(&TaskManager::onTick, this);
+      m_timer->Tick.connect(&TaskManager::onTick, this);
       for (std::size_t i = 0; i < threads.size(); ++i) {
         threads[i] = std::thread([this, i]{this->thread(i);});
       }
@@ -126,7 +127,7 @@ namespace app {
 
     ~TaskManager() {
       isAlive = false;
-      m_timer.stop();
+      m_timer->stop();
 
       {
         std::lock_guard<std::mutex> guard(processingMutex);
@@ -151,8 +152,8 @@ namespace app {
           if (pending.empty()) {
             continue;
           }
-          task = std::move(pending.front());
-          pending.pop();
+          task = pending.front();
+          pending.pop_front();
         }
 
         if (task->isAlive) {
@@ -170,7 +171,7 @@ namespace app {
               }
               {
                 std::lock_guard<std::recursive_mutex> guard(readyMutex);
-                ready.push(task);
+                ready.push_back(task);
               }
             } catch (...) {
               task->isAlive = false;
@@ -188,17 +189,33 @@ namespace app {
       }
     }
 
-    void onTick() {
+    std::shared_ptr<detail::Task> getReady(std::size_t& maxTasks) {
+      if (maxTasks == 0)
+        return nullptr;
+      maxTasks--;
       std::lock_guard<std::recursive_mutex> guard(readyMutex);
-      auto count = ready.size();
-      while (count--) {
-        auto task = std::move(ready.front());
-        ready.pop();
+      if (ready.empty())
+        return nullptr;
+      auto ret = ready.front();
+      ready.pop_front();
+      return ret;
+    }
+
+    void onTick() {
+      std::size_t maxTasks;
+      {
+        std::lock_guard<std::recursive_mutex> guard(readyMutex);
+        maxTasks = ready.size();
+      }
+
+      while (auto task = getReady(maxTasks)) {
         std::shared_ptr<void> data;
         {
           std::lock_guard<std::mutex> dataLock(task->dataMutex);
-          data = task->data.back();
-          task->data.pop_back();
+          if (!task->data.empty()) {
+            data = task->data.front();
+            task->data.pop_front();
+          }
         }
         task->funcCallback(data);
       }
@@ -206,10 +223,10 @@ namespace app {
 
   public:
     void delayed(std::function<void()>&& func) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::recursive_mutex> guard(readyMutex);
-      ready.emplace(new detail::Task{
+      ready.emplace_back(new detail::Task{
           nullptr,
           [func=std::move(func)](std::shared_ptr<void>){
             func();
@@ -218,11 +235,11 @@ namespace app {
     }
 
     template<typename Data>
-    TaskHandle addTask(std::function<Data(std::atomic_bool& isAlive)>&& worker, std::function<void(Data)>&& consumer) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+    TaskHandle addTask(std::function<Data(std::atomic_bool& isAlive)>&& worker, std::function<void(Data&&)>&& consumer) {
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
-      pending.emplace(new detail::Task{
+      pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
             return std::static_pointer_cast<void>(std::make_shared<Data>(worker(isAlive)));
           },
@@ -235,11 +252,11 @@ namespace app {
     }
 
     template<typename Data>
-    TaskHandle addTask(std::function<Data()>&& worker, std::function<void(Data)>&& consumer, std::function<void()>&& aborter) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+    TaskHandle addTask(std::function<Data()>&& worker, std::function<void(Data&&)>&& consumer, std::function<void()>&& aborter) {
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
-      pending.emplace(new detail::Task{
+      pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
             auto ret = std::static_pointer_cast<void>(std::make_shared<Data>(worker()));
             isAlive = false;

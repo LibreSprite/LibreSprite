@@ -17,7 +17,7 @@
 
 namespace doc {
 
-Cel::Cel(frame_t frame, const ImageRef& image)
+Cel::Cel(frame_t frame, const std::shared_ptr<Image>& image)
   : Object(ObjectType::Cel)
   , m_layer(NULL)
   , m_frame(frame)
@@ -37,7 +37,7 @@ Cel::Cel(frame_t frame, const CelDataRef& celData)
 Cel* Cel::createCopy(const Cel* other)
 {
   Cel* cel = new Cel(other->frame(),
-    ImageRef(Image::createCopy(other->image())));
+    std::shared_ptr<Image>(Image::createCopy(other->image())));
 
   cel->setPosition(other->position());
   cel->setOpacity(other->opacity());

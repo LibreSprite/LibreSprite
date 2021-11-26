@@ -9,7 +9,7 @@
 #include "base/disable_copying.h"
 #include "doc/cel_data.h"
 #include "doc/frame.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/object.h"
 #include "gfx/fwd.h"
 #include "gfx/point.h"
@@ -22,7 +22,7 @@ namespace doc {
 
   class Cel : public Object {
   public:
-    Cel(frame_t frame, const ImageRef& image);
+    Cel(frame_t frame, const std::shared_ptr<Image>& image);
     Cel(frame_t frame, const CelDataRef& celData);
 
     static Cel* createCopy(const Cel* other);
@@ -36,7 +36,7 @@ namespace doc {
 
     LayerImage* layer() const { return m_layer; }
     Image* image() const { return m_data->image(); }
-    ImageRef imageRef() const { return m_data->imageRef(); }
+    std::shared_ptr<Image> imageRef() const { return m_data->imageRef(); }
     CelData* data() const { return const_cast<CelData*>(m_data.get()); }
     CelDataRef dataRef() const { return m_data; }
     Document* document() const;

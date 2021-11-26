@@ -17,19 +17,20 @@ namespace app {
   // Invisible widget to control a effect-preview in the current editor.
   class FilterPreview : public ui::Widget {
   public:
-    FilterPreview(FilterManagerImpl* filterMgr);
     ~FilterPreview();
 
     void stop();
     void restartPreview();
+    void setFilterManager(FilterManagerImpl* filterMgr) { m_filterMgr = filterMgr; }
     FilterManagerImpl* getFilterManager() const;
 
   protected:
+    FilterPreview();
     bool onProcessMessage(ui::Message* msg) override;
 
   private:
     FilterManagerImpl* m_filterMgr;
-    ui::Timer m_timer;
+    inject<ui::Timer> m_timer = ui::Timer::create(1, *this);
   };
 
 } // namespace app

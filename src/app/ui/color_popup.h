@@ -58,7 +58,7 @@ namespace app {
     app::Color m_color;
     ui::View m_colorPaletteContainer;
     PaletteView m_colorPalette;
-    ButtonSet m_colorType;
+    std::shared_ptr<ButtonSet> m_colorType = inject<Widget>{"ButtonSet"};
     HexColorEntry m_hexColorEntry;
     RgbSliders m_rgbSliders;
     HsvSliders m_hsvSliders;

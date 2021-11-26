@@ -91,7 +91,7 @@ private:
 
     for (ConvolutionMatrixStock::iterator it = m_stock.begin(), end = m_stock.end();
          it != end; ++it) {
-      base::SharedPtr<ConvolutionMatrix> matrix = *it;
+      auto matrix = *it;
       ListItem* listitem = new ListItem(matrix->getName());
       m_stockListBox->addChild(listitem);
     }
@@ -101,7 +101,7 @@ private:
 
   void selectMatrixByName(const char* oldSelected)
   {
-    Widget* select_this = UI_FIRST_WIDGET(m_stockListBox->children());
+    Widget* select_this = m_stockListBox->firstChild();
 
     if (oldSelected) {
       for (auto child : m_stockListBox->children()) {
@@ -123,7 +123,7 @@ private:
   void onMatrixChange()
   {
     Widget* selected = m_stockListBox->getSelectedChild();
-    base::SharedPtr<ConvolutionMatrix> matrix = m_stock.getByName(selected->text().c_str());
+    auto matrix = m_stock.getByName(selected->text().c_str());
     Target newTarget = matrix->getDefaultTarget();
 
     m_filter.setMatrix(matrix);
@@ -170,8 +170,7 @@ void ConvolutionMatrixCommand::onExecute(Context* context)
   ConvolutionMatrixStock m_stock;
 
   // Get last used (selected) matrix
-  base::SharedPtr<ConvolutionMatrix> matrix =
-    m_stock.getByName(get_config_string(ConfigSection, "Selected", ""));
+  auto matrix = m_stock.getByName(get_config_string(ConfigSection, "Selected", ""));
 
   // Create the filter and setup initial settings
   DocumentPreferences& docPref = Preferences::instance()

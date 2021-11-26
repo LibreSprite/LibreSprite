@@ -34,9 +34,9 @@ using namespace base::serialization::little_endian;
 
 namespace {
 
-ImageRef load_xml_image(const TiXmlElement* imageElem)
+std::shared_ptr<Image> load_xml_image(const TiXmlElement* imageElem)
 {
-  ImageRef image;
+  std::shared_ptr<Image> image;
   int w, h;
   if (imageElem->QueryIntAttribute("width", &w) != TIXML_SUCCESS ||
       imageElem->QueryIntAttribute("height", &h) != TIXML_SUCCESS ||
@@ -317,7 +317,7 @@ void AppBrushes::load(const std::string& filename)
 
     // Brush image
     if (TiXmlElement* imageElem = brushElem->FirstChildElement("image")) {
-      ImageRef image = load_xml_image(imageElem);
+      auto image = load_xml_image(imageElem);
       if (image) {
         if (!brush)
           brush.reset(new Brush());

@@ -34,7 +34,7 @@ public:
     auto image = m_cel->image();
     if (!image) {
       auto sprite = m_cel->sprite();
-      doc::ImageRef imgref(doc::Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
+      std::shared_ptr<doc::Image> imgref(doc::Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
       m_cel->data()->setImage(imgref);
     }
     m_image->setWrapped(image);

@@ -1,5 +1,6 @@
 // SHE library
 // Copyright (C) 2012-2016  David Capello
+// Copyright (C) 2021       LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -245,6 +246,10 @@ bool is_key_pressed(KeyScancode scancode)
   }
 #endif
   return key[scancode] ? true: false;
+}
+
+void set_input_rect(const gfx::Rect& rect) {
+  // Do nothing
 }
 
 void clear_keyboard_buffer()

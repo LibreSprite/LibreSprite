@@ -1,9 +1,10 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -21,6 +22,7 @@
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
 #include "app/pref/preferences.h"
+#include "app/resource_finder.h"
 #include "app/tools/ink.h"
 #include "app/tools/tool_box.h"
 #include "app/ui/editor/editor.h"
@@ -34,7 +36,6 @@
 #include "app/ui/toolbar.h"
 #include "app/ui_context.h"
 #include "base/memory.h"
-#include "base/shared_ptr.h"
 #include "base/unique_ptr.h"
 #include "doc/sprite.h"
 #include "she/display.h"
@@ -46,6 +47,7 @@
 
 #include <algorithm>
 #include <list>
+#include <memory>
 #include <vector>
 
 namespace app {
@@ -67,9 +69,7 @@ static struct {
 
 //////////////////////////////////////////////////////////////////////
 
-class CustomizedGuiManager : public Manager
-                           , public LayoutIO
-{
+class CustomizedGuiManager : public Manager, public LayoutIO {
 protected:
   bool onProcessMessage(Message* msg) override;
   LayoutIO* onGetLayoutIO() override { return this; }
@@ -80,11 +80,13 @@ protected:
   void saveLayout(Widget* widget, const std::string& str) override;
 };
 
+Widget::Shared<CustomizedGuiManager> _cgm{"GuiManager"};
+
 static she::Display* main_display = NULL;
-static CustomizedGuiManager* manager = NULL;
+static std::shared_ptr<CustomizedGuiManager> manager;
 static Theme* gui_theme = NULL;
 
-static ui::Timer* defered_invalid_timer = nullptr;
+static inject<ui::Timer> defered_invalid_timer{nullptr};
 static gfx::Region defered_invalid_region;
 
 // Load & save graphics configuration
@@ -138,6 +140,11 @@ static bool create_main_display(bool gpuAccel,
     if (scale == 0)
       Preferences::instance().general.screenScale(main_display->scale());
 
+    ResourceFinder rf;
+    rf.includeDataDir("icons/ase64.png");
+    if (rf.findFirst())
+        main_display->setIcon(she::instance()->loadRgbaSurface(rf.filename().c_str()));
+
     if (!windowLayout.empty()) {
       main_display->setLayout(windowLayout);
       if (main_display->isMinimized())
@@ -174,8 +181,7 @@ int init_module_gui()
     return -1;
   }
 
-  // Create the default-manager
-  manager = new CustomizedGuiManager();
+  manager = inject<Widget>{"GuiManager"};
   manager->setDisplay(main_display);
 
   // Setup the GUI theme for all widgets
@@ -196,8 +202,8 @@ void exit_module_gui()
 {
   save_gui_config();
 
-  delete defered_invalid_timer;
-  delete manager;
+  defered_invalid_timer.reset();
+  manager.reset();
 
   // Now we can destroy theme
   CurrentTheme::set(NULL);
@@ -320,7 +326,7 @@ CheckBox* check_button_new(const char *text, int b1, int b2, int b3, int b4)
 void defer_invalid_rect(const gfx::Rect& rc)
 {
   if (!defered_invalid_timer)
-    defered_invalid_timer = new ui::Timer(250, manager);
+    defered_invalid_timer = ui::Timer::create(250, *manager.get());
 
   defered_invalid_timer->stop();
   defered_invalid_timer->start();
@@ -474,7 +480,7 @@ bool CustomizedGuiManager::onProcessMessage(Message* msg)
     }
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == defered_invalid_timer) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == defered_invalid_timer) {
         invalidateDisplayRegion(defered_invalid_region);
         defered_invalid_region.clear();
         defered_invalid_timer->stop();

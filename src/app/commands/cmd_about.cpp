@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    - Copyright (C) 2001-2015  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -40,7 +40,11 @@ void AboutCommand::onExecute(Context* context)
   base::UniquePtr<Window> window(new Window(Window::WithTitleBar, "About " PACKAGE));
   Box* box1 = new Box(VERTICAL);
   Grid* grid = new Grid(2, false);
+<<<<<<< HEAD
   Label* title = new Label(PACKAGE " v" VERSION " (" GIT_HEAD_SHA1 ")");
+=======
+  Label* title = new Label(PACKAGE_AND_VERSION);
+>>>>>>> origin/master
   Label* subtitle = new Label("Animated sprite editor & pixel art tool");
   Separator* authors_separator1 = new Separator("Authors:", HORIZONTAL | TOP);
   Separator* authors_separator2 = new Separator("", HORIZONTAL);

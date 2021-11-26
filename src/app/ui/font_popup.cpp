@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C)      2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -24,7 +24,6 @@
 #include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
-#include "doc/image_ref.h"
 #include "she/surface.h"
 #include "she/system.h"
 #include "ui/box.h"
@@ -47,7 +46,7 @@ namespace app {
 
 using namespace ui;
 
-static std::map<std::string, doc::ImageRef> g_thumbnails;
+static std::map<std::string, std::shared_ptr<doc::Image>> g_thumbnails;
 
 class FontItem : public ListItem {
 public:
@@ -124,7 +123,7 @@ private:
   }
 
 private:
-  doc::ImageRef m_image;
+std::shared_ptr<doc::Image> m_image;
   std::string m_filename;
 };
 
@@ -166,6 +165,7 @@ FontPopup::FontPopup()
   {
     fontDirs.push("/usr/share/fonts");
     fontDirs.push("/usr/local/share/fonts");
+    fontDirs.push("~/.local/share/fonts");
     fontDirs.push("~/.fonts");
   }
 #endif
@@ -196,7 +196,8 @@ FontPopup::FontPopup()
 
   // Create one FontItem for each font
   for (auto& file : files) {
-    if (base::string_to_lower(base::get_file_extension(file)) == "ttf")
+    auto ext = base::string_to_lower(base::get_file_extension(file));
+    if (ext == "ttf" || ext == "otf")
       m_listBox.addChild(new FontItem(file));
   }
 

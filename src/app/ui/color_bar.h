@@ -139,7 +139,7 @@ namespace app {
     class WarningIcon;
 
     ui::TooltipManager m_tooltips;
-    ButtonSet m_buttons;
+    std::shared_ptr<ButtonSet> m_buttons = inject<Widget>{"ButtonSet"};
     base::UniquePtr<PalettePopup> m_palettePopup;
     ui::Splitter m_splitter;
     ui::VBox m_palettePlaceholder;

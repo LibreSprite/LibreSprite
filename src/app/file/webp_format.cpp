@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -54,7 +55,7 @@ class WebPFormat : public FileFormat {
   bool onLoad(FileOp* fop) override;
   bool onSave(FileOp* fop) override;
 
-base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
+  std::shared_ptr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
 FileFormat* CreateWebPFormat()
@@ -152,7 +153,7 @@ bool WebPFormat::onLoad(FileOp* fop)
   }
 
   if (!fop->sequenceGetFormatOptions()) {
-    base::SharedPtr<WebPOptions> webPOptions(new WebPOptions());
+    std::shared_ptr<WebPOptions> webPOptions(new WebPOptions());
     webPOptions->setLossless(std::min(config.input.format - 1, 1));
     fop->sequenceSetFormatOptions(webPOptions);
   }
@@ -246,8 +247,7 @@ bool WebPFormat::onSave(FileOp* fop)
     return false;
   }
 
-  base::SharedPtr<WebPOptions> webp_options =
-    fop->sequenceGetFormatOptions();
+  auto webp_options = std::static_pointer_cast<WebPOptions>(fop->sequenceGetFormatOptions());
 
   WebPConfig config;
 
@@ -309,11 +309,11 @@ bool WebPFormat::onSave(FileOp* fop)
 }
 
 // Shows the WebP configuration dialog.
-base::SharedPtr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
+  std::shared_ptr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
 {
-  base::SharedPtr<WebPOptions> webp_options;
+  std::shared_ptr<WebPOptions> webp_options;
   if (fop->document()->getFormatOptions())
-    webp_options = base::SharedPtr<WebPOptions>(fop->document()->getFormatOptions());
+    webp_options = std::static_pointer_cast<WebPOptions>(fop->document()->getFormatOptions());
 
   if (!webp_options)
     webp_options.reset(new WebPOptions);
@@ -355,14 +355,14 @@ base::SharedPtr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
       set_config_int("WEBP", "ImagePreset", webp_options->getImagePreset());
     }
     else {
-      webp_options.reset(NULL);
+      webp_options.reset();
     }
 
     return webp_options;
   }
   catch (std::exception& e) {
     Console::showException(e);
-    return base::SharedPtr<WebPOptions>(0);
+    return std::shared_ptr<WebPOptions>(0);
   }
 }
 

@@ -42,8 +42,8 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
     return;
 
   for (Cel* cel : sprite->uniqueCels()) {
-    ImageRef old_image = cel->imageRef();
-    ImageRef new_image(
+    std::shared_ptr<Image> old_image = cel->imageRef();
+    std::shared_ptr<Image> new_image(
       render::convert_pixel_format
       (old_image.get(), NULL, newFormat, m_dithering,
        sprite->rgbMap(cel->frame()),

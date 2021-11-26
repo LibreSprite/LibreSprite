@@ -7,6 +7,9 @@
 #pragma once
 
 #include "base/disable_copying.h"
+#include "base/injection.h"
+#include "base/weak_set.h"
+#include "base/safe_ptr.h"
 #include "gfx/border.h"
 #include "gfx/color.h"
 #include "gfx/point.h"
@@ -19,7 +22,9 @@
 #include "ui/widget_type.h"
 #include "ui/widgets_list.h"
 
+#include <climits>
 #include <map>
+#include <memory>
 #include <string>
 
 #define ASSERT_VALID_WIDGET(widget) ASSERT((widget) != NULL)
@@ -45,19 +50,26 @@ namespace ui {
   /* Widgets are the basic visual object in LibreSprite, such as menus and grids.
 
   Widgets are non-copyable */
-  class Widget {
-  public:
-
-    // ===============================================================
-    // CTOR & DTOR
-    // ===============================================================
-
+  class Widget : public Injectable<Widget>, public std::enable_shared_from_this<Widget> {
+  protected:
+    // Widget and derivatives should always have protected constructors!
     Widget(WidgetType type = kGenericWidget);
+
+  public:
+    void postInject() override;
     virtual ~Widget();
+
+    base::safe_ptr<Widget> safePtr{this};
+    Widget* holdUntilAdded() {
+      m_hold = shared_from_this();
+      return this;
+    }
 
     // Safe way to delete a widget when it is not in the manager message
     // queue anymore.
     void deferDelete();
+
+    static base::weak_set<Widget>& getAll();
 
     // Properties handler
 
@@ -148,7 +160,7 @@ namespace ui {
     // ===============================================================
 
     she::Font* font() const;
-    void resetFont();
+    void resetFont(she::Font* font = nullptr);
 
     // Gets the background color of the widget.
     gfx::Color bgColor() const {
@@ -219,8 +231,12 @@ namespace ui {
       return NULL;
     }
 
+    void addChild(std::shared_ptr<Widget> child);
     void addChild(Widget* child);
+
+    void removeChild(std::shared_ptr<Widget> child);
     void removeChild(Widget* child);
+
     void removeAllChildren();
     void replaceChild(Widget* oldChild, Widget* newChild);
     void insertChild(int index, Widget* child);
@@ -387,30 +403,39 @@ namespace ui {
     virtual void onSetText();
     virtual void onSetBgColor();
 
+    void setManager(Manager* manager);
+
   private:
-    void removeChild(WidgetsList::iterator& it);
+    void removeChild(const WidgetsList::iterator& it);
     void paint(Graphics* graphics, const gfx::Region& drawRegion);
     bool paintEvent(Graphics* graphics);
 
-    WidgetType m_type;           // Widget's type
-    std::string m_id;            // Widget's id
-    int m_flags;                 // Special boolean properties (see flags in ui/base.h)
-    Theme* m_theme;              // Widget's theme
-    std::string m_text;          // Widget text
-    mutable she::Font* m_font;   // Cached font returned by the theme
-    gfx::Color m_bgColor;        // Background color
+    // TODO: Remove when widget can own all children
+    std::vector<std::shared_ptr<Widget>> m_ownedChildren;
+    bool m_wasInjected = false;
+    std::shared_ptr<Widget> m_hold;
+
+    WidgetType m_type;                             // Widget's type
+    std::string m_id;                              // Widget's id
+    int m_flags = 0;                               // Special boolean properties (see flags in ui/base.h)
+    Theme* m_theme = nullptr;                      // Widget's theme
+    std::string m_text;                            // Widget text
+    mutable she::Font* m_font = nullptr;           // Cached font returned by the theme
+    gfx::Color m_bgColor = gfx::ColorNone;         // Background color
     gfx::Rect m_bounds;
-    gfx::Region m_updateRegion;   // Region to be redrawed.
-    WidgetsList m_children;       // Sub-widgets
-    Widget* m_parent;             // Who is the parent?
-    gfx::Size* m_sizeHint;
+    gfx::Region m_updateRegion;                    // Region to be redrawed.
+    WidgetsList m_children;                        // Sub-widgets
+    Widget* m_parent = nullptr;                    // Who is the parent?
+    Manager* m_manager = nullptr;
+    std::unique_ptr<gfx::Size> m_sizeHint;
     Properties m_properties;
 
     // Widget size limits
-    gfx::Size m_minSize, m_maxSize;
+    gfx::Size m_minSize{0, 0};
+    gfx::Size m_maxSize{INT_MAX, INT_MAX};
 
-    gfx::Border m_border;       // Border separation with the parent
-    int m_childSpacing;         // Separation between children
+    gfx::Border m_border;                          // Border separation with the parent
+    int m_childSpacing = 0;                        // Separation between children
 
     DISABLE_COPYING(Widget);
   };

@@ -48,7 +48,7 @@ Palette* create_palette_from_sprite(
     palette = new Palette(fromFrame, 256);
 
   // Add a flat image with the current sprite's frame rendered
-  ImageRef flat_image(Image::create(IMAGE_RGB,
+  std::shared_ptr<Image> flat_image(Image::create(IMAGE_RGB,
       sprite->width(), sprite->height()));
 
   // Feed the optimizer with all rendered frames

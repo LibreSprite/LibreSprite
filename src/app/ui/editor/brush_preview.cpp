@@ -316,12 +316,11 @@ void BrushPreview::generateBoundaries()
   m_brushWidth = w;
   m_brushHeight = h;
 
-  ImageRef mask;
+  std::shared_ptr<Image> mask;
   if (isOnePixel) {
     mask.reset(Image::create(IMAGE_BITMAP, w, w));
     mask->putPixel(0, 0, (color_t)1);
-  }
-  else if (brushImage->pixelFormat() != IMAGE_BITMAP) {
+  } else if (brushImage->pixelFormat() != IMAGE_BITMAP) {
     mask.reset(Image::create(IMAGE_BITMAP, w, h));
 
     LockImageBits<BitmapTraits> bits(mask.get());

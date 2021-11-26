@@ -75,16 +75,16 @@ namespace app {
 
     // Timer to start generating the thumbnail after an item is
     // selected.
-    ui::Timer m_generateThumbnailTimer;
+    inject<ui::Timer> m_generateThumbnailTimer = ui::Timer::create(200, *this);
 
     // Monitoring the progress of each thumbnail.
-    ui::Timer m_monitoringTimer;
+    inject<ui::Timer> m_monitoringTimer = ui::Timer::create(50, *this);
 
     // Used keep the last-selected item in the list so we know
     // thumbnail to generate when the m_generateThumbnailTimer ticks.
     IFileItem* m_itemToGenerateThumbnail;
 
-    she::Surface* m_thumbnail;
+    she::Surface* m_thumbnail = nullptr;
   };
 
 } // namespace app

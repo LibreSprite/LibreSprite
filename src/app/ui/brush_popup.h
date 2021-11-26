@@ -8,11 +8,12 @@
 #pragma once
 
 #include "app/ui/button_set.h"
-#include "base/shared_ptr.h"
 #include "doc/brushes.h"
 #include "ui/box.h"
 #include "ui/popup_window.h"
 #include "ui/tooltips.h"
+
+#include <memory>
 
 namespace app {
 
@@ -33,10 +34,10 @@ namespace app {
     void onStandardBrush();
     void onBrushChanges();
 
-    ui::TooltipManager* m_tooltipManager;
+    ui::TooltipManager* m_tooltipManager = nullptr;
     ui::VBox m_box;
-    ButtonSet m_standardBrushes;
-    ButtonSet* m_customBrushes;
+    std::shared_ptr<ButtonSet> m_standardBrushes = inject<Widget>{"ButtonSet"};
+    std::shared_ptr<ButtonSet> m_customBrushes;
   };
 
 } // namespace app

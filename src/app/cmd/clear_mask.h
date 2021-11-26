@@ -12,7 +12,7 @@
 #include "app/cmd/with_image.h"
 #include "app/cmd_sequence.h"
 #include "base/unique_ptr.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 
 namespace app {
 namespace cmd {
@@ -38,7 +38,7 @@ namespace cmd {
 
     CmdSequence m_seq;
     base::UniquePtr<WithImage> m_dstImage;
-    ImageRef m_copy;
+    std::shared_ptr<Image>  m_copy;
     int m_offsetX, m_offsetY;
     int m_boundsX, m_boundsY;
     color_t m_bgcolor;

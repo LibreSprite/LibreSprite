@@ -161,8 +161,6 @@ Editor::Editor(Document* document, EditorFlags flags)
   , m_toolLoopModifiers(tools::ToolLoopModifiers::kNone)
   , m_autoSelectLayer(false)
   , m_padding(0, 0)
-  , m_antsTimer(100, this)
-  , m_antsOffset(0)
   , m_customizationDelegate(NULL)
   , m_docView(NULL)
   , m_flags(flags)
@@ -220,7 +218,7 @@ Editor::~Editor()
 
   setCustomizationDelegate(NULL);
 
-  m_antsTimer.stop();
+  m_antsTimer->stop();
 }
 
 void Editor::destroyEditorSharedInternals()
@@ -1150,7 +1148,7 @@ bool Editor::onProcessMessage(Message* msg)
   switch (msg->type()) {
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == &m_antsTimer) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_antsTimer) {
         if (isVisible() && m_sprite) {
           drawMaskSafe();
 
@@ -1160,8 +1158,8 @@ bool Editor::onProcessMessage(Message* msg)
           else
             m_antsOffset = 0;
         }
-        else if (m_antsTimer.isRunning()) {
-          m_antsTimer.stop();
+        else if (m_antsTimer->isRunning()) {
+          m_antsTimer->stop();
         }
       }
       break;
@@ -1351,10 +1349,10 @@ void Editor::onPaint(ui::PaintEvent& ev)
       // Draw the mask boundaries
       if (m_document->getMaskBoundaries()) {
         drawMask(g);
-        m_antsTimer.start();
+        m_antsTimer->start();
       }
       else {
-        m_antsTimer.stop();
+        m_antsTimer->stop();
       }
     }
     catch (const LockedDocumentException&) {

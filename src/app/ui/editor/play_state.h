@@ -40,7 +40,7 @@ namespace app {
     Editor* m_editor;
     bool m_playOnce;
     bool m_toScroll;
-    ui::Timer m_playTimer;
+    inject<ui::Timer> m_playTimer = ui::Timer::create(10);
 
     // Number of milliseconds to go to the next frame if m_playTimer
     // is activated.

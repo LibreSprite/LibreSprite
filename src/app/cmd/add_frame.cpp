@@ -45,7 +45,7 @@ void AddFrame::onExecute()
   else {
     LayerImage* bglayer = sprite->backgroundLayer();
     if (bglayer) {
-      ImageRef bgimage(Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
+      std::shared_ptr<Image> bgimage(Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
       clear_image(bgimage.get(), doc->bgColor(bglayer));
       Cel* cel = new Cel(m_newFrame, bgimage);
       m_addCel.reset(new cmd::AddCel(bglayer, cel));

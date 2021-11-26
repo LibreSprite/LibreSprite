@@ -47,7 +47,7 @@ namespace ui {
     // distpatched through jmanager_dispatch_messages().
     bool generateMessages();
     void dispatchMessages();
-    void enqueueMessage(Message* msg);
+    void enqueueMessage(std::shared_ptr<Message> msg);
 
     void addToGarbage(Widget* widget);
     void collectGarbage();
@@ -68,14 +68,11 @@ namespace ui {
     void freeMouse();
     void freeCapture();
     void freeWidget(Widget* widget);
-    void removeMessage(Message* msg);
     void removeMessagesFor(Widget* widget);
     void removeMessagesFor(Widget* widget, MessageType type);
-    void removeMessagesForTimer(Timer* timer);
 
     void addMessageFilter(int message, Widget* widget);
     void removeMessageFilter(int message, Widget* widget);
-    void removeMessageFilterFor(Widget* widget);
 
     void invalidateDisplayRegion(const gfx::Region& region);
 
@@ -94,6 +91,10 @@ namespace ui {
       m_invalidRegion |= b;
     }
 
+    void removeInvalidRegion(const gfx::Region& b) {
+      m_invalidRegion -= b;
+    }
+
     // Mark the given rectangle as a area to be flipped to the real
     // screen
     void dirtyRect(const gfx::Rect& bounds);
@@ -109,6 +110,11 @@ namespace ui {
     void onBroadcastMouseMessage(WidgetsList& targets) override;
     virtual LayoutIO* onGetLayoutIO();
     virtual void onNewDisplayConfiguration();
+
+    void postInject() override {
+      setManager(this);
+      Widget::postInject();
+    }
 
   private:
     void generateSetCursorMessage(const gfx::Point& mousePos,
@@ -146,7 +152,7 @@ namespace ui {
     static void removeWidgetFromRecipients(Widget* widget, Message* msg);
     static bool someParentIsFocusStop(Widget* widget);
     static Widget* findMagneticWidget(Widget* widget);
-    static Message* newMouseMessage(
+    static std::shared_ptr<Message> newMouseMessage(
       MessageType type,
       Widget* widget, const gfx::Point& mousePos,
       PointerType pointerType,
@@ -154,7 +160,7 @@ namespace ui {
       KeyModifiers modifiers,
       const gfx::Point& wheelDelta = gfx::Point(0, 0),
       bool preciseWheel = false);
-    void broadcastKeyMsg(Message* msg);
+    void broadcastKeyMsg(std::shared_ptr<Message> msg);
 
     static Manager* m_defaultManager;
     static gfx::Region m_dirtyRegion;

@@ -34,7 +34,7 @@ LayerImage* create_flatten_layer_copy(Sprite* dstSprite, const Layer* srcLayer,
     // Does this frame have cels to render?
     if (has_cels(srcLayer, frame)) {
       // Create a new image to render each frame.
-      ImageRef image(Image::create(flatLayer->sprite()->pixelFormat(), bounds.w, bounds.h));
+      std::shared_ptr<Image> image(Image::create(flatLayer->sprite()->pixelFormat(), bounds.w, bounds.h));
 
       // Create the new cel for the output layer.
       base::UniquePtr<Cel> cel(new Cel(frame, image));

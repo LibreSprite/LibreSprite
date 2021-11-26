@@ -60,7 +60,7 @@ namespace app {
     static void monitor_free(void* data);
 
     base::thread* m_thread;
-    base::UniquePtr<ui::Timer> m_timer;
+    inject<ui::Timer> m_timer{nullptr};
     Progress* m_progress;
     base::mutex* m_mutex;
     ui::AlertPtr m_alert_window;

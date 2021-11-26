@@ -34,7 +34,7 @@ public:
 
 class BrushPointShape : public PointShape {
   Brush* m_brush;
-  base::SharedPtr<CompressedImage> m_compressedImage;
+  std::shared_ptr<CompressedImage> m_compressedImage;
   bool m_firstPoint;
 
 public:

@@ -8,7 +8,6 @@
 
 #include "doc/image.h"
 #include "doc/image_buffer.h"
-#include "doc/image_ref.h"
 #include "doc/object.h"
 #include "doc/primitives.h"
 #include "gfx/rect.h"
@@ -101,7 +100,7 @@ namespace doc {
     int m_freeze_count;
     std::string m_name;           // Mask name
     gfx::Rect m_bounds;           // Region bounds
-    ImageRef m_bitmap;            // Bitmapped image mask
+    std::shared_ptr<Image> m_bitmap;            // Bitmapped image mask
     ImageBufferPtr m_buffer;      // Buffer used in m_bitmap
 
     Mask& operator=(const Mask& mask);

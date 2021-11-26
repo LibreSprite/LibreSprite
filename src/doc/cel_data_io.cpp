@@ -42,7 +42,7 @@ CelData* read_celdata(std::istream& is, SubObjectsIO* subObjects, bool setId)
   ObjectId imageId = read32(is);
   UserData userData = read_user_data(is);
 
-  ImageRef image(subObjects->getImageRef(imageId));
+  auto image = subObjects->getImageRef(imageId);
   if (!image)
     return nullptr;
 

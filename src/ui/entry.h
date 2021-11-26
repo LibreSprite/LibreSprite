@@ -82,7 +82,7 @@ namespace ui {
     bool isPosInSelection(int pos);
     void showEditPopupMenu(const gfx::Point& pt);
 
-    Timer m_timer;
+    inject<Timer> m_timer = Timer::create(500, *this);
     std::size_t m_maxsize;
     int m_caret;
     int m_scroll;
@@ -93,6 +93,7 @@ namespace ui {
     bool m_password;
     bool m_recent_focused;
     bool m_lock_selection;
+    bool m_got_focus_message;
     std::string m_suffix;
   };
 
