@@ -172,7 +172,7 @@ namespace app {
     gfx::Point autoScroll(ui::MouseMessage* msg, AutoScroll dir);
 
     tools::Tool* getCurrentEditorTool();
-    tools::Ink* getCurrentEditorInk();
+    std::shared_ptr<tools::Ink> getCurrentEditorInk();
 
     tools::ToolLoopModifiers getToolLoopModifiers() const { return m_toolLoopModifiers; }
     bool isAutoSelectLayer() const { return m_autoSelectLayer; }

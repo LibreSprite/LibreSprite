@@ -9,6 +9,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "app/tools/tool.h"
@@ -85,7 +86,7 @@ namespace app {
       ToolConstIterator end() const { return m_tools.end(); }
 
       Tool* getToolById(const std::string& id);
-      Ink* getInkById(const std::string& id);
+      std::shared_ptr<Ink> getInkById(const std::string& id);
       Intertwine* getIntertwinerById(const std::string& id);
       PointShape* getPointShapeById(const std::string& id);
       int getGroupsCount() const { return m_groups.size(); }
@@ -94,7 +95,7 @@ namespace app {
       void loadTools();
       void loadToolProperties(TiXmlElement* xmlTool, Tool* tool, int button, const std::string& suffix);
 
-      std::map<std::string, Ink*> m_inks;
+      std::map<std::string, std::shared_ptr<Ink>> m_inks;
       std::map<std::string, Controller*> m_controllers;
       std::map<std::string, PointShape*> m_pointshapers;
       std::map<std::string, Intertwine*> m_intertwiners;

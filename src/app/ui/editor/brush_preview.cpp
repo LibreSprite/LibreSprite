@@ -108,7 +108,7 @@ void BrushPreview::show(const gfx::Point& screenPos)
   gfx::Point spritePos = m_editor->screenToEditor(screenPos);
 
   // Get the current tool
-  tools::Ink* ink = m_editor->getCurrentEditorInk();
+  tools::Ink* ink = m_editor->getCurrentEditorInk().get();
 
   bool isFloodfill = m_editor->getCurrentEditorTool()->getPointShape(0)->isFloodFill();
 

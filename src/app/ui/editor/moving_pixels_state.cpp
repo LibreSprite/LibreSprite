@@ -227,7 +227,7 @@ bool MovingPixelsState::onMouseDown(Editor* editor, MouseMessage* msg)
     return true;
 
   // Call the eyedropper command
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
+  tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
   if (clickedInk->isEyedropper()) {
     callEyedropper(editor);
     return true;

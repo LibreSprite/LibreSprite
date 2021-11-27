@@ -68,13 +68,13 @@ Tool* ActiveToolManager::activeTool() const
   return m_selectedTool;
 }
 
-Ink* ActiveToolManager::activeInk() const
+std::shared_ptr<Ink> ActiveToolManager::activeInk() const
 {
   if (!m_quickTool && m_rightClickInk)
     return m_rightClickInk;
 
   Tool* tool = activeTool();
-  Ink* ink = tool->getInk(m_rightClick ? 1: 0);
+  std::shared_ptr<Ink> ink = tool->getInk(m_rightClick ? 1: 0);
   if (ink->isPaint() && !ink->isEffect()) {
     tools::InkType inkType = Preferences::instance().tool(tool).ink();
     const char* id = nullptr;
@@ -156,7 +156,7 @@ void ActiveToolManager::pressButton(const Pointer& pointer)
 {
   ActiveToolChangeTrigger trigger(this);
   Tool* tool = nullptr;
-  Ink* ink = nullptr;
+  std::shared_ptr<Ink> ink = nullptr;
 
   if (pointer.button() == Pointer::Right) {
     m_rightClick = true;

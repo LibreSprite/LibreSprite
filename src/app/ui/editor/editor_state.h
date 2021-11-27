@@ -115,7 +115,7 @@ namespace app {
     virtual bool acceptQuickTool(tools::Tool* tool) { return true; }
 
     // Custom ink in this state.
-    virtual tools::Ink* getStateInk() { return nullptr; }
+    virtual std::shared_ptr<tools::Ink> getStateInk() { return nullptr; }
 
   private:
     DISABLE_COPYING(EditorState);
