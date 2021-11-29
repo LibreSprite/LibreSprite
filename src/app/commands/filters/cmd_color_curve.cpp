@@ -19,18 +19,19 @@
 #include "app/modules/gui.h"
 #include "app/ui/color_button.h"
 #include "base/bind.h"
-#include "base/unique_ptr.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
 #include "filters/color_curve.h"
 #include "filters/color_curve_filter.h"
 #include "ui/ui.h"
 
+#include <memory>
+
 namespace app {
 
 using namespace filters;
 
-static base::UniquePtr<ColorCurve> the_curve;
+static std::unique_ptr<ColorCurve> the_curve;
 
 class ColorCurveWindow : public FilterWindow {
 public:

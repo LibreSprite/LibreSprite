@@ -11,10 +11,10 @@
 #include "doc/mask_io.h"
 
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/mask.h"
 
 #include <iostream>
+#include <memory>
 
 namespace doc {
 
@@ -53,7 +53,7 @@ Mask* read_mask(std::istream& is)
   int w = read16(is);           // Width
   int h = read16(is);           // Height
 
-  base::UniquePtr<Mask> mask(new Mask());
+  std::unique_ptr<Mask> mask(new Mask());
 
   if (w > 0 && h > 0) {
     int size = BitmapTraits::getRowStrideBytes(w);

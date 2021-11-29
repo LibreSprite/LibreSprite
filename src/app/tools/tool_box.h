@@ -12,7 +12,6 @@
 #include <string>
 
 #include "app/tools/tool.h"
-#include "base/unique_ptr.h"
 
 class TiXmlElement;
 

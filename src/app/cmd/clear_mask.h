@@ -11,8 +11,9 @@
 #include "app/cmd/with_cel.h"
 #include "app/cmd/with_image.h"
 #include "app/cmd_sequence.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
+
+#include <memory>
 
 namespace app {
 namespace cmd {
@@ -37,7 +38,7 @@ namespace cmd {
     void restore();
 
     CmdSequence m_seq;
-    base::UniquePtr<WithImage> m_dstImage;
+    std::unique_ptr<WithImage> m_dstImage;
     std::shared_ptr<Image>  m_copy;
     int m_offsetX, m_offsetY;
     int m_boundsX, m_boundsY;

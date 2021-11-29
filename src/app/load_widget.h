@@ -8,7 +8,6 @@
 #pragma once
 
 #include "app/widget_loader.h"
-#include "base/unique_ptr.h"
 
 namespace app {
 

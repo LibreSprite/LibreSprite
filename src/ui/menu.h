@@ -7,7 +7,6 @@
 #pragma once
 
 #include "base/signal.h"
-#include "base/unique_ptr.h"
 #include "ui/register_message.h"
 #include "ui/separator.h"
 #include "ui/widget.h"

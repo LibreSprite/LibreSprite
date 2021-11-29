@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include "base/connection.h"
 #include "base/disable_copying.h"
-#include "base/unique_ptr.h"
 #include "recent_files_menu.h"
 #include "script/script_menu.h"
 #include "ui/base.h"

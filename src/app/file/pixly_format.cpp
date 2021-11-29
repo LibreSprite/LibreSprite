@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <cctype>
+#include <memory>
 
 namespace app {
 
@@ -104,7 +105,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
     int frameWidth  = check_number<int>(xmlInfo->Attribute("frameWidth"));
     int frameHeight = check_number<int>(xmlInfo->Attribute("frameHeight"));
 
-    UniquePtr<Sprite> sprite(new Sprite(IMAGE_RGB, frameWidth, frameHeight, 0));
+    std::unique_ptr<Sprite> sprite(new Sprite(IMAGE_RGB, frameWidth, frameHeight, 0));
 
     TiXmlElement* xmlFrames = check(xmlAnim->FirstChild("Frames"))->ToElement();
     int imageCount = check_number<int>(xmlFrames->Attribute("length"));
@@ -118,7 +119,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
     sprite->setDurationForAllFrames(200);
 
     for (int i=0; i<layerCount; i++) {
-      sprite->folder()->addLayer(new LayerImage(sprite));
+      sprite->folder()->addLayer(new LayerImage(sprite.get()));
     }
 
     // load image sheet
@@ -219,7 +220,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
       layer->setVisible(visible[i] > frameCount/2);
     }
 
-    fop->createDocument(sprite);
+    fop->createDocument(sprite.get());
     sprite.release();
   }
   catch(Exception &e) {
@@ -261,7 +262,7 @@ bool PixlyFormat::onSave(FileOp* fop)
   Sprite* sheet_sprite = new Sprite(IMAGE_RGB, sheetWidth, sheetHeight, 256);
   LayerImage* sheet_layer = new LayerImage(sheet_sprite);
   sheet_sprite->folder()->addLayer(sheet_layer);
-  UniquePtr<Document> sheet_doc(new Document(sheet_sprite));
+  std::unique_ptr<Document> sheet_doc(new Document(sheet_sprite));
   std::shared_ptr<Image> sheet_image(Image::create(IMAGE_RGB, sheetWidth, sheetHeight));
   Image* sheet = sheet_image.get();
   sheet_layer->addCel(new Cel(0, sheet_image));
@@ -346,7 +347,7 @@ bool PixlyFormat::onSave(FileOp* fop)
    );
 
   sheet_doc->setFilename(base::replace_extension(fop->filename(),"png"));
-  save_document(nullptr, sheet_doc);
+  save_document(nullptr, sheet_doc.get());
 
   return true;
 }

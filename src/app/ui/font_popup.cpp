@@ -21,7 +21,6 @@
 #include "base/fs.h"
 #include "base/path.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
 #include "she/surface.h"

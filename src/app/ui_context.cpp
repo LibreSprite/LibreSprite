@@ -80,6 +80,10 @@ void UIContext::setActiveView(DocumentView* docView)
 {
   MainWindow* mainWin = App::instance()->mainWindow();
 
+  // mainWin returns nullptr when closing down the app whilst the home view is open
+  if (!mainWin)
+    return;
+
   // Prioritize workspace for user input.
   App::instance()->inputChain().prioritize(mainWin->getWorkspace());
 
