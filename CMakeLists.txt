@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 3.4)
 ######################################################################
 # Git watcher. This has to be created first
 
-set(PRE_CONFIGURE_FILE "src/git/git.h.in")
-set(POST_CONFIGURE_FILE "src/git.h")
-include(src/git/git_watcher.cmake)
+set(PRE_CONFIGURE_FILE "git/git.h.in")
+set(POST_CONFIGURE_FILE "./git.h")
+include(git/git_watcher.cmake)
 
 ######################################################################
 
