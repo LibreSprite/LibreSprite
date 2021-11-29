@@ -364,9 +364,9 @@ base::SharedPtr<FormatOptions> JpegFormat::onGetFormatOptions(FileOp* fop)
     jpeg_options->quality = get_config_float("JPEG", "Quality", 1.0f);
 
     // Load the window to ask to the user the JPEG options he wants.
-    UniquePtr<ui::Window> window(app::load_widget<ui::Window>("jpeg_options.xml", "jpeg_options"));
-    ui::Slider* slider_quality = app::find_widget<ui::Slider>(window, "quality");
-    ui::Widget* ok = app::find_widget<ui::Widget>(window, "ok");
+    std::unique_ptr<ui::Window> window(app::load_widget<ui::Window>("jpeg_options.xml", "jpeg_options"));
+    ui::Slider* slider_quality = app::find_widget<ui::Slider>(window.get(), "quality");
+    ui::Widget* ok = app::find_widget<ui::Widget>(window.get(), "ok");
 
     slider_quality->setValue(int(jpeg_options->quality * 10.0f));
 

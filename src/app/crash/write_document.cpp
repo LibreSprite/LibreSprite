@@ -19,7 +19,6 @@
 #include "base/path.h"
 #include "base/serialization.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cel_data_io.h"
 #include "doc/cel_io.h"

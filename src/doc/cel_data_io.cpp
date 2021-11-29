@@ -11,12 +11,12 @@
 #include "doc/cel_data_io.h"
 
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/cel_data.h"
 #include "doc/subobjects_io.h"
 #include "doc/user_data_io.h"
 
 #include <iostream>
+#include <memory>
 
 namespace doc {
 
@@ -46,7 +46,7 @@ CelData* read_celdata(std::istream& is, SubObjectsIO* subObjects, bool setId)
   if (!image)
     return nullptr;
 
-  base::UniquePtr<CelData> celdata(new CelData(image));
+  std::unique_ptr<CelData> celdata(new CelData(image));
   celdata->setPosition(x, y);
   celdata->setOpacity(opacity);
   celdata->setUserData(userData);

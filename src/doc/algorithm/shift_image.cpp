@@ -10,7 +10,6 @@
 
 #include "doc/algorithm/shift_image.h"
 
-#include "base/unique_ptr.h"
 #include "gfx/rect.h"
 #include "doc/image.h"
 #include "doc/mask.h"

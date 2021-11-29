@@ -21,6 +21,8 @@
 #include "doc/sprite.h"
 #include "ui/alert.h"
 
+#include <memory>
+
 namespace app {
 
 class LoadMaskCommand : public Command {
@@ -71,7 +73,7 @@ void LoadMaskCommand::onExecute(Context* context)
     m_filename = filename;
   }
 
-  base::UniquePtr<Mask> mask(load_msk_file(m_filename.c_str()));
+  std::unique_ptr<Mask> mask(load_msk_file(m_filename.c_str()));
   if (!mask)
     throw base::Exception("Error loading .msk file: %s",
                           static_cast<const char*>(m_filename.c_str()));
@@ -80,7 +82,7 @@ void LoadMaskCommand::onExecute(Context* context)
     ContextWriter writer(reader);
     Document* document = writer.document();
     Transaction transaction(writer.context(), "Mask Load", DoesntModifyDocument);
-    transaction.execute(new cmd::SetMask(document, mask));
+    transaction.execute(new cmd::SetMask(document, mask.get()));
     transaction.commit();
 
     document->generateMaskBoundaries();

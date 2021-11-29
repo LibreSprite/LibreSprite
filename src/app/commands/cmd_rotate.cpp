@@ -114,7 +114,7 @@ protected:
     // rotate mask
     if (m_document->isMaskVisible()) {
       Mask* origMask = m_document->mask();
-      base::UniquePtr<Mask> new_mask(new Mask());
+      std::unique_ptr<Mask> new_mask(new Mask());
       const gfx::Rect& origBounds = origMask->bounds();
       int x = 0, y = 0;
 
@@ -141,7 +141,7 @@ protected:
       doc::rotate_image(origMask->bitmap(), new_mask->bitmap(), m_angle);
 
       // Copy new mask
-      api.copyToCurrentMask(new_mask);
+      api.copyToCurrentMask(new_mask.get());
 
       // Regenerate mask
       m_document->resetTransformation();

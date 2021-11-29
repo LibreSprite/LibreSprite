@@ -23,7 +23,6 @@
 #include "base/bind.h"
 #include "base/path.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "doc/image_ref.h"
 #include "render/quantization.h"
@@ -161,7 +160,7 @@ private:
 
   std::shared_ptr<she::Font> m_font;
   std::string m_face;
-  base::UniquePtr<FontPopup> m_fontPopup;
+  std::unique_ptr<FontPopup> m_fontPopup;
 };
 
 void PasteTextCommand::onExecute(Context* ctx)

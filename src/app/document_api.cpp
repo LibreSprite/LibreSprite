@@ -46,7 +46,6 @@
 #include "app/document.h"
 #include "app/document_undo.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/flip_image.h"
 #include "doc/algorithm/shrink_bounds.h"
 #include "doc/cel.h"
@@ -57,6 +56,7 @@
 #include "render/quantization.h"
 #include "render/render.h"
 
+#include <memory>
 #include <set>
 
 namespace app {
@@ -131,7 +131,7 @@ void DocumentApi::trimSprite(Sprite* sprite)
 {
   gfx::Rect bounds;
 
-  base::UniquePtr<Image> image_wrap(Image::create(sprite->pixelFormat(),
+  std::unique_ptr<Image> image_wrap(Image::create(sprite->pixelFormat(),
                                                   sprite->width(),
                                                   sprite->height()));
   Image* image = image_wrap.get();
@@ -459,13 +459,13 @@ void DocumentApi::flattenLayers(Sprite* sprite)
 
 void DocumentApi::duplicateLayerAfter(Layer* sourceLayer, Layer* afterLayer)
 {
-  base::UniquePtr<LayerImage> newLayerPtr(new LayerImage(sourceLayer->sprite()));
+  std::unique_ptr<LayerImage> newLayerPtr(new LayerImage(sourceLayer->sprite()));
 
-  m_document->copyLayerContent(sourceLayer, m_document, newLayerPtr);
+  m_document->copyLayerContent(sourceLayer, m_document, newLayerPtr.get());
 
   newLayerPtr->setName(newLayerPtr->name() + " Copy");
 
-  addLayer(sourceLayer->parent(), newLayerPtr, afterLayer);
+  addLayer(sourceLayer->parent(), newLayerPtr.get(), afterLayer);
 
   // Release the pointer as it is owned by the sprite now.
   newLayerPtr.release();
@@ -483,12 +483,12 @@ Cel* DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const ImageRef&
 {
   ASSERT(layer->cel(frameNumber) == NULL);
 
-  base::UniquePtr<Cel> cel(new Cel(frameNumber, image));
+  std::unique_ptr<Cel> cel(new Cel(frameNumber, image));
 
-  addCel(layer, cel);
+  addCel(layer, cel.get());
   cel.release();
 
-  return cel;
+  return cel.release();
 }
 
 void DocumentApi::replaceImage(Sprite* sprite, const ImageRef& oldImage, const ImageRef& newImage)

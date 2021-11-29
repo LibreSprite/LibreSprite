@@ -14,7 +14,6 @@
 #include "app/ui/palette_view.h"
 #include "base/connection.h"
 #include "base/signal.h"
-#include "base/unique_ptr.h"
 #include "doc/context_observer.h"
 #include "doc/document_observer.h"
 #include "doc/documents_observer.h"
@@ -25,6 +24,8 @@
 #include "ui/splitter.h"
 #include "ui/tooltips.h"
 #include "ui/view.h"
+
+#include <memory>
 
 namespace app {
 
@@ -140,7 +141,7 @@ namespace app {
 
     ui::TooltipManager m_tooltips;
     ButtonSet m_buttons;
-    base::UniquePtr<PalettePopup> m_palettePopup;
+    std::unique_ptr<PalettePopup> m_palettePopup;
     ui::Splitter m_splitter;
     ui::VBox m_palettePlaceholder;
     ui::VBox m_selectorPlaceholder;
@@ -157,7 +158,7 @@ namespace app {
     WarningIcon* m_bgWarningIcon;
     bool m_lock;
     bool m_syncingWithPref;
-    base::UniquePtr<doc::Palette> m_oldPalette;
+    std::unique_ptr<doc::Palette> m_oldPalette;
     doc::Document* m_lastDocument;
     bool m_ascending;
     base::ScopedConnection m_beforeCmdConn;

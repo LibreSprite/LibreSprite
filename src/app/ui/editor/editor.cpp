@@ -45,7 +45,6 @@
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "base/convert_to.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/doc.h"
 #include "doc/document_event.h"
@@ -441,7 +440,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
   if (!m_renderBuffer)
     m_renderBuffer.reset(new doc::ImageBuffer());
 
-  base::UniquePtr<Image> rendered(NULL);
+  std::unique_ptr<Image> rendered = nullptr;
   try {
     // Generate a "expose sprite pixels" notification. This is used by
     // tool managers that need to validate this region (copy pixels from
@@ -505,7 +504,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
         m_layer, m_frame);
     }
 
-    m_renderEngine.renderSprite(rendered, m_sprite, m_frame,
+    m_renderEngine.renderSprite(rendered.get(), m_sprite, m_frame,
       gfx::Clip(0, 0, rc), m_zoom);
 
     m_renderEngine.removeExtraImage();
@@ -517,7 +516,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
   if (rendered) {
     // Pre-render decorator.
     if ((m_flags & kShowDecorators) && m_decorator) {
-      EditorPreRenderImpl preRender(this, rendered,
+      EditorPreRenderImpl preRender(this, rendered.get(),
         Point(-rc.x, -rc.y), m_zoom);
       m_decorator->preRenderDecorator(&preRender);
     }
@@ -532,7 +531,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
     }
 
     if (tmp->nativeHandle()) {
-      convert_image_to_surface(rendered, m_sprite->palette(m_frame),
+      convert_image_to_surface(rendered.get(), m_sprite->palette(m_frame),
         tmp, 0, 0, 0, 0, rc.w, rc.h);
 
       g->blit(tmp, 0, 0, dest_x, dest_y, rc.w, rc.h);
@@ -1488,7 +1487,7 @@ void Editor::pasteImage(const Image* image, const Mask* mask)
 {
   ASSERT(image);
 
-  base::UniquePtr<Mask> temp_mask;
+  std::unique_ptr<Mask> temp_mask;
   if (!mask) {
     gfx::Rect visibleBounds = getVisibleSpriteBounds();
     gfx::Rect imageBounds = image->bounds();

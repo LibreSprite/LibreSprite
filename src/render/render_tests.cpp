@@ -12,7 +12,6 @@
 
 #include "render/render.h"
 
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/context.h"
 #include "doc/document.h"
@@ -71,7 +70,7 @@ TEST(Render, Basic)
   Image* src = doc->sprite()->layer(0)->cel(0)->image();
   clear_image(src, 2);
 
-  base::UniquePtr<Image> dst(Image::create(IMAGE_RGB, 2, 2));
+  std::unique_ptr<Image> dst(Image::create(IMAGE_RGB, 2, 2));
   clear_image(dst, 1);
   EXPECT_2X2_PIXELS(dst, 1, 1, 1, 1);
 
@@ -93,7 +92,7 @@ TYPED_TEST(RenderAllModes, CheckDefaultBackgroundMode)
   clear_image(src, 0);
   put_pixel(src, 1, 1, 1);
 
-  base::UniquePtr<Image> dst(Image::create(ImageTraits::pixel_format, 2, 2));
+  std::unique_ptr<Image> dst(Image::create(ImageTraits::pixel_format, 2, 2));
   clear_image(dst, 1);
   EXPECT_2X2_PIXELS(dst, 1, 1, 1, 1);
 
@@ -114,7 +113,7 @@ TEST(Render, DefaultBackgroundModeWithNonzeroTransparentIndex)
   clear_image(src, 2);
   put_pixel(src, 1, 1, 1);
 
-  base::UniquePtr<Image> dst(Image::create(IMAGE_INDEXED, 2, 2));
+  std::unique_ptr<Image> dst(Image::create(IMAGE_INDEXED, 2, 2));
   clear_image(dst, 1);
   EXPECT_2X2_PIXELS(dst, 1, 1, 1, 1);
 
@@ -136,7 +135,7 @@ TEST(Render, CheckedBackground)
   Context ctx;
   Document* doc = ctx.documents().add(4, 4, ColorMode::RGB);
 
-  base::UniquePtr<Image> dst(Image::create(IMAGE_RGB, 4, 4));
+  std::unique_ptr<Image> dst(Image::create(IMAGE_RGB, 4, 4));
   clear_image(dst, 0);
 
   Render render;
@@ -147,7 +146,7 @@ TEST(Render, CheckedBackground)
 
   render.setBgCheckedSize(gfx::Size(1, 1));
   render.renderSprite(dst, doc->sprite(), frame_t(0));
-  EXPECT_4X4_PIXELS(dst, 
+  EXPECT_4X4_PIXELS(dst,
     1, 2, 1, 2,
     2, 1, 2, 1,
     1, 2, 1, 2,
@@ -155,7 +154,7 @@ TEST(Render, CheckedBackground)
 
   render.setBgCheckedSize(gfx::Size(2, 2));
   render.renderSprite(dst, doc->sprite(), frame_t(0));
-  EXPECT_4X4_PIXELS(dst, 
+  EXPECT_4X4_PIXELS(dst,
     1, 1, 2, 2,
     1, 1, 2, 2,
     2, 2, 1, 1,
@@ -163,7 +162,7 @@ TEST(Render, CheckedBackground)
 
   render.setBgCheckedSize(gfx::Size(3, 3));
   render.renderSprite(dst, doc->sprite(), frame_t(0));
-  EXPECT_4X4_PIXELS(dst, 
+  EXPECT_4X4_PIXELS(dst,
     1, 1, 1, 2,
     1, 1, 1, 2,
     1, 1, 1, 2,
@@ -194,7 +193,7 @@ TEST(Render, ZoomAndDstBounds)
   clear_image(src, 0);
   fill_rect(src, 1, 1, 2, 2, 4);
 
-  base::UniquePtr<Image> dst(Image::create(IMAGE_RGB, 4, 4));
+  std::unique_ptr<Image> dst(Image::create(IMAGE_RGB, 4, 4));
   clear_image(dst, 0);
 
   Render render;
@@ -207,7 +206,7 @@ TEST(Render, ZoomAndDstBounds)
   render.renderSprite(dst, doc->sprite(), frame_t(0),
     gfx::Clip(1, 1, 0, 0, 2, 2),
     Zoom(1, 1));
-  EXPECT_4X4_PIXELS(dst, 
+  EXPECT_4X4_PIXELS(dst,
     0, 0, 0, 0,
     0, 1, 2, 0,
     0, 2, 4, 0,

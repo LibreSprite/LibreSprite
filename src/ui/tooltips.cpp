@@ -10,7 +10,6 @@
 
 #include "ui/tooltips.h"
 
-#include "base/unique_ptr.h"
 #include "gfx/size.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"

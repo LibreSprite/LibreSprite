@@ -17,6 +17,8 @@
 #include "doc/palette.h"
 #include "script/script_object.h"
 
+#include <memory>
+
 class SpriteScriptObject : public script::ScriptObject {
   Provides provides{this, "activeSprite"};
   inject<ScriptObject> m_document{"activeDocument"};
@@ -183,10 +185,10 @@ public:
   }
 
   void loadPalette(const std::string& fileName){
-    base::UniquePtr<doc::Palette> palette(app::load_palette(fileName.c_str()));
+    std::unique_ptr<doc::Palette> palette(app::load_palette(fileName.c_str()));
     if (palette) {
       // TODO Merge this with the code in LoadPaletteCommand
-      doc()->getApi(transaction()).setPalette(m_sprite, 0, palette);
+      doc()->getApi(transaction()).setPalette(m_sprite, 0, palette.get());
     }
   }
 };

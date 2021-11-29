@@ -8,7 +8,6 @@
 #pragma once
 
 #include "base/exception.h"
-#include "base/unique_ptr.h"
 #include "doc/image_impl.h"
 #include "doc/image_ref.h"
 #include "doc/pixel_format.h"
@@ -18,6 +17,7 @@
 #include "gfx/rect.h"
 
 #include <cstring>
+#include <memory>
 
 namespace doc {
   class Cel;
@@ -121,7 +121,7 @@ namespace app {
     int m_row;
     gfx::Rect m_bounds;
     doc::Mask* m_mask;
-    base::UniquePtr<doc::Mask> m_previewMask;
+    std::unique_ptr<doc::Mask> m_previewMask;
     doc::ImageBits<doc::BitmapTraits> m_maskBits;
     doc::ImageBits<doc::BitmapTraits>::iterator m_maskIterator;
     Target m_targetOrig;          // Original targets

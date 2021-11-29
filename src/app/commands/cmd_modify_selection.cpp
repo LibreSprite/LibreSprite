@@ -132,11 +132,11 @@ void ModifySelectionCommand::onExecute(Context* context)
   Document* document(writer.document());
   Sprite* sprite(writer.sprite());
 
-  base::UniquePtr<Mask> mask(new Mask());
+  std::unique_ptr<Mask> mask(new Mask());
   {
     mask->reserve(sprite->bounds());
     mask->freeze();
-    applyModifier(document->mask(), mask, quantity, brush);
+    applyModifier(document->mask(), mask.get(), quantity, brush);
     mask->unfreeze();
   }
 
@@ -144,7 +144,7 @@ void ModifySelectionCommand::onExecute(Context* context)
   Transaction transaction(writer.context(),
                           getActionName() + " Selection",
                           DoesntModifyDocument);
-  transaction.execute(new cmd::SetMask(document, mask));
+  transaction.execute(new cmd::SetMask(document, mask.get()));
   transaction.commit();
 
   document->generateMaskBoundaries();
@@ -193,13 +193,13 @@ void ModifySelectionCommand::applyModifier(const Mask* srcMask, Mask* dstMask,
 
   // Create a kernel
   const int size = 2*radius+1;
-  base::UniquePtr<doc::Image> kernel(doc::Image::create(IMAGE_BITMAP, size, size));
-  doc::clear_image(kernel, 0);
+  std::unique_ptr<doc::Image> kernel(doc::Image::create(IMAGE_BITMAP, size, size));
+  doc::clear_image(kernel.get(), 0);
   if (brush == doc::kCircleBrushType)
-    doc::fill_ellipse(kernel, 0, 0, size-1, size-1, 1);
+    doc::fill_ellipse(kernel.get(), 0, 0, size-1, size-1, 1);
   else
-    doc::fill_rect(kernel, 0, 0, size-1, size-1, 1);
-  doc::put_pixel(kernel, radius, radius, 0);
+    doc::fill_rect(kernel.get(), 0, 0, size-1, size-1, 1);
+  doc::put_pixel(kernel.get(), radius, radius, 0);
 
   int total = 0;                // Number of 1s in the kernel image
   for (int v=0; v<size; ++v)

@@ -20,7 +20,6 @@
 #include "app/document_api.h"
 #include "app/modules/gui.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/blend_internals.h"
 #include "doc/cel.h"
 #include "doc/image.h"

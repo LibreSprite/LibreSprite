@@ -73,7 +73,7 @@ std::string get_writable_extensions()
 Document* load_document(Context* context, const char* filename)
 {
   /* TODO add a option to configure what to do with the sequence */
-  base::UniquePtr<FileOp> fop(FileOp::createLoadDocumentOperation(context, filename, FILE_LOAD_SEQUENCE_NONE));
+  std::unique_ptr<FileOp> fop(FileOp::createLoadDocumentOperation(context, filename, FILE_LOAD_SEQUENCE_NONE));
   if (!fop)
     return nullptr;
 
@@ -100,7 +100,7 @@ int save_document(Context* context, doc::Document* document)
 {
   ASSERT(dynamic_cast<app::Document*>(document));
 
-  UniquePtr<FileOp> fop(
+  std::unique_ptr<FileOp> fop(
     FileOp::createSaveDocumentOperation(
       context,
       static_cast<app::Document*>(document),
@@ -123,7 +123,7 @@ int save_document(Context* context, doc::Document* document)
 // static
 FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filename, int flags)
 {
-  base::UniquePtr<FileOp> fop(
+  std::unique_ptr<FileOp> fop(
     new FileOp(FileOpLoad, context));
   if (!fop)
     return nullptr;
@@ -222,7 +222,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
                                             const char* filename,
                                             const char* fn_format_arg)
 {
-  base::UniquePtr<FileOp> fop(
+  std::unique_ptr<FileOp> fop(
     new FileOp(FileOpSave, const_cast<Context*>(context)));
 
   // Document to save
@@ -464,8 +464,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
   // Configure output format?
   if (fop->m_format->support(FILE_SUPPORT_GET_FORMAT_OPTIONS)) {
-    base::SharedPtr<FormatOptions> format_options =
-      fop->m_format->getFormatOptions(fop);
+    auto format_options = fop->m_format->getFormatOptions(fop.get());
 
     // Does the user cancelled the operation?
     if (!format_options)

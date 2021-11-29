@@ -132,7 +132,7 @@ App::App()
   , m_legacy(NULL)
   , m_isGui(false)
   , m_isShell(false)
-  , m_exporter(NULL)
+  , m_exporter(nullptr)
 {
   ASSERT(m_instance == NULL);
   m_instance = this;
@@ -631,7 +631,7 @@ void App::initialize(const AppOptions& options)
     if (trim)
       m_exporter->setTrimCels(true);
 
-    base::UniquePtr<Document> spriteSheet(m_exporter->exportSheet());
+    std::unique_ptr<Document> spriteSheet(m_exporter->exportSheet());
     m_exporter.reset(NULL);
 
     LOG("Export sprite sheet: Done\n");
@@ -689,7 +689,7 @@ void App::run()
 
   if (isGui()) {
     // Destroy the window.
-    m_mainWindow.reset(NULL);
+    m_mainWindow.reset(nullptr);
   }
 
   // Delete backups (this is a normal shutdown, we are not handling

@@ -36,7 +36,7 @@ AboutCommand::AboutCommand()
 
 void AboutCommand::onExecute(Context* context)
 {
-  base::UniquePtr<Window> window(new Window(Window::WithTitleBar, "About " PACKAGE));
+  std::unique_ptr<Window> window(new Window(Window::WithTitleBar, "About " PACKAGE));
   Box* box1 = new Box(VERTICAL);
   Grid* grid = new Grid(2, false);
   Label* title = new Label(PACKAGE_AND_VERSION);
