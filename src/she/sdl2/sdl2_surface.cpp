@@ -27,7 +27,7 @@ namespace {
 
   she::DrawMode drawMode = she::DrawMode::Solid;
   int checkedModeOffset = 0;
-
+  SDL_Surface* m_tmp = nullptr;
 }
 
 namespace she {
@@ -53,7 +53,6 @@ namespace she {
 
   SDL2Surface::SDL2Surface(SDL_Surface* bmp, DestroyFlag destroy)
     : m_bmp(bmp)
-    , m_tmp(SDL_CreateRGBSurface(0, 1, 1, bmp->format->BitsPerPixel, 0xFF, 0xFF00, 0xFF0000, bmp->format->BitsPerPixel == 32 ? 0xFF000000 : 0))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -61,7 +60,6 @@ namespace she {
 
   SDL2Surface::SDL2Surface(int width, int height, DestroyFlag destroy)
     : m_bmp(SDL_CreateRGBSurface(0, width, height, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000))
-    , m_tmp(SDL_CreateRGBSurface(0, 1, 1, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -72,7 +70,6 @@ namespace she {
 
   SDL2Surface::SDL2Surface(int width, int height, int bpp, DestroyFlag destroy)
     : m_bmp(SDL_CreateRGBSurface(0, width, height, bpp, 0xFF, 0xFF00, 0xFF0000, bpp == 32 ? 0xFF000000 : 0))
-    , m_tmp(SDL_CreateRGBSurface(0, 1, 1, bpp, 0xFF, 0xFF00, 0xFF0000, bpp == 32 ? 0xFF000000 : 0))
     , m_destroy(destroy)
     , m_lock(0)
   {
@@ -87,8 +84,6 @@ namespace she {
     if (m_destroy & DestroyHandle) {
       if (m_bmp)
         SDL_FreeSurface(m_bmp);
-      if (m_tmp)
-        SDL_FreeSurface(m_tmp);
     }
   }
 
@@ -428,9 +423,12 @@ namespace she {
   void SDL2Surface::fillRect(gfx::Color color, const gfx::Rect& rc)
   {
     SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
-    if (gfx::is_solid(color)){
+    if (gfx::is_solid(color)) {
       SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
     } else {
+      if(!m_tmp) {
+        m_tmp = SDL_CreateRGBSurface(0, 1, 1, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000);
+      }
       // Color has transparency: paint the temporary surface with the color and blit it with alpha-blend
       SDL_SetSurfaceBlendMode(m_tmp, SDL_BLENDMODE_BLEND);
       SDL_Rect rect_tmp{0, 0, 1, 1};
