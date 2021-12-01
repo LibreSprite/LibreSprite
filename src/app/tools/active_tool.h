@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2016  David Capello
+// Aseprite    - Copyright (C) 2016       David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -25,7 +25,7 @@ public:
   ActiveToolManager(ToolBox* toolbox);
 
   Tool* activeTool() const;
-  Ink* activeInk() const;
+  std::shared_ptr<Ink> activeInk() const;
 
   // Returns the quick tool.
   Tool* quickTool() const;
@@ -55,7 +55,7 @@ private:
   // Special tool by stylus proximity.
   bool m_rightClick;
   Tool* m_rightClickTool;
-  Ink* m_rightClickInk;
+  std::shared_ptr<Ink> m_rightClickInk;
 
   // Special tool by stylus proximity (e.g. eraser).
   Tool* m_proximityTool;

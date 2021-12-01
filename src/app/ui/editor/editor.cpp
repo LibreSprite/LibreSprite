@@ -921,9 +921,9 @@ tools::Tool* Editor::getCurrentEditorTool()
   return App::instance()->activeTool();
 }
 
-tools::Ink* Editor::getCurrentEditorInk()
+std::shared_ptr<tools::Ink> Editor::getCurrentEditorInk()
 {
-  tools::Ink* ink = m_state->getStateInk();
+  std::shared_ptr<tools::Ink> ink = m_state->getStateInk();
   if (ink)
     return ink;
   else

@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -115,7 +115,7 @@ namespace app {
     virtual bool acceptQuickTool(tools::Tool* tool) { return true; }
 
     // Custom ink in this state.
-    virtual tools::Ink* getStateInk() { return nullptr; }
+    virtual std::shared_ptr<tools::Ink> getStateInk() { return nullptr; }
 
   private:
     DISABLE_COPYING(EditorState);

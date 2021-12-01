@@ -58,8 +58,7 @@ void Grid::setColumns(int columns) {
  * - BOTTOM: Sets vertical alignment to the end of the cell.
  * - None: Uses the whole vertical space of the cell.
  */
-void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
-{
+void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align) {
   ASSERT(hspan > 0);
   ASSERT(vspan > 0);
 
@@ -72,7 +71,15 @@ void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
 }
 
 void Grid::addChildInCell(std::shared_ptr<Widget> child, int hspan, int vspan, int align) {
-  addChildInCell(child.get(), hspan, vspan, align);
+  ASSERT(hspan > 0);
+  ASSERT(vspan > 0);
+
+  addChild(child);
+
+  if (!putWidgetInCell(child.get(), hspan, vspan, align)) {
+    expandRows(m_rowStrip.size()+1);
+    putWidgetInCell(child.get(), hspan, vspan, align);
+  }
 }
 
 Grid::Info Grid::getChildInfo(Widget* child) {
