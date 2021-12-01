@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    - Copyright (C) 2001-2015  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -12,8 +12,9 @@
 #include "app/ui/editor/standby_state.h"
 #include "ui/mouse_buttons.h"
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace app {
 
@@ -79,7 +80,7 @@ namespace app {
     virtual bool onSetCursor(Editor* editor, const gfx::Point& mouseScreenPos) override;
     virtual bool acceptQuickTool(tools::Tool* tool) override;
     virtual bool requireBrushPreview() override;
-    virtual tools::Ink* getStateInk() override;
+    virtual std::shared_ptr<tools::Ink> getStateInk() override;
 
     // EditorDecorator overrides
     virtual void preRenderDecorator(EditorPreRender* render) override;

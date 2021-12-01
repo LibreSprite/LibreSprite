@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -99,9 +99,9 @@ namespace app {
     static App* m_instance;
 
     std::unique_ptr<ui::UISystem> m_uiSystem;
-    CoreModules* m_coreModules;
-    Modules* m_modules;
-    LegacyModules* m_legacy;
+    std::unique_ptr<CoreModules> m_coreModules;
+    std::unique_ptr<Modules> m_modules;
+    std::unique_ptr<LegacyModules> m_legacy;
     bool m_isGui;
     bool m_isShell;
     std::unique_ptr<MainWindow> m_mainWindow;
