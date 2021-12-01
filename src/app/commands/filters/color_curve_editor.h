@@ -20,13 +20,15 @@ namespace app {
 
   class ColorCurveEditor : public ui::Widget {
   public:
-    ColorCurveEditor(ColorCurve* curve, const gfx::Rect& viewBounds);
-
     ColorCurve* getCurve() const { return m_curve; }
+    void setCurve(ColorCurve* curve) { m_curve = curve; }
+
+    void setViewBounds(const gfx::Rect& rect) { m_viewBounds = rect; }
 
     base::Signal0<void> CurveEditorChange;
 
   protected:
+    ColorCurveEditor();
     bool onProcessMessage(ui::Message* msg) override;
     void onSizeHint(ui::SizeHintEvent& ev) override;
     void onPaint(ui::PaintEvent& ev) override;
@@ -40,11 +42,11 @@ namespace app {
     void addPoint(const gfx::Point& viewPoint);
     void removePoint(gfx::Point* viewPoint);
 
-    ColorCurve* m_curve;
+    ColorCurve* m_curve = nullptr;
     int m_status;
     gfx::Rect m_viewBounds;
-    gfx::Point* m_hotPoint;
-    gfx::Point* m_editPoint;
+    gfx::Point* m_hotPoint = nullptr;
+    gfx::Point* m_editPoint = nullptr;
   };
 
 } // namespace app

@@ -8,12 +8,14 @@
 #pragma once
 
 #include "doc/frame.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "filters/tiled_mode.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
 #include "gfx/region.h"
 #include "gfx/size.h"
+
+#include <memory>
 
 namespace doc {
   class Cel;
@@ -70,20 +72,20 @@ namespace app {
 
   private:
     gfx::Rect getTrimDstImageBounds() const;
-    ImageRef trimDstImage(const gfx::Rect& bounds) const;
+    std::shared_ptr<Image> trimDstImage(const gfx::Rect& bounds) const;
 
     Document* m_document;
     Sprite* m_sprite;
     Layer* m_layer;
     frame_t m_frame;
     Cel* m_cel;
-    ImageRef m_celImage;
+    std::shared_ptr<Image> m_celImage;
     bool m_celCreated;
     gfx::Point m_origCelPos;
     Flags m_flags;
     gfx::Rect m_bounds;
-    ImageRef m_srcImage;
-    ImageRef m_dstImage;
+    std::shared_ptr<Image> m_srcImage;
+    std::shared_ptr<Image> m_dstImage;
     bool m_closed;
     bool m_committed;
     Transaction& m_transaction;

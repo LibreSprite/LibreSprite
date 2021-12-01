@@ -61,7 +61,7 @@ namespace base {
   public:
     safe_ptr(std::nullptr_t) {}
 
-    safe_ptr() = delete;
+    safe_ptr() = default;
 
     explicit safe_ptr(Type* ptr) :
       storage{std::make_shared<Type*>(ptr)},
@@ -73,13 +73,23 @@ namespace base {
     safe_ptr(safe_ptr<Type>&& other) : storage{other.storage} {}
     safe_ptr<Type>& operator = (safe_ptr<Type>&& other) {storage = other.storage; return *this;}
 
+    bool operator == (Type* other) {
+      if (!storage) return !other;
+      return *storage == other;
+    }
+
+    bool operator != (Type* other) {
+      if (!storage) return other;
+      return *storage != other;
+    }
+
     operator bool () const {
       return storage && *storage;
     }
 
     template<typename Derived = Type>
     Derived* get() const {
-      return *storage;
+      return storage ? *storage : nullptr;
     }
 
     Type* operator -> () const {
@@ -92,7 +102,11 @@ namespace base {
 
     template<typename T>
     operator T () const {
-      return static_cast<T>(*storage);
+      return storage ? static_cast<T>(*storage) : nullptr;
+    }
+
+    void reset() {
+      storage.reset();
     }
 
     ~safe_ptr(){

@@ -34,7 +34,7 @@ void DeselectMask::onUndo()
 {
   app::Document* doc = document();
 
-  doc->setMask(m_oldMask);
+  doc->setMask(m_oldMask.get());
   doc->setMaskVisible(true);
 
   m_oldMask.reset();

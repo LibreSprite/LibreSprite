@@ -15,6 +15,7 @@
 #include "doc/document.h"
 
 #include <algorithm>
+#include <memory>
 
 namespace doc {
 
@@ -38,7 +39,7 @@ Document* Documents::add(int width, int height, ColorMode mode, int ncolors)
   if (!args.document())
     args.setDocument(new Document());
 
-  base::UniquePtr<Document> doc(args.document());
+  std::unique_ptr<Document> doc(args.document());
   doc->sprites().add(width, height, mode, ncolors);
   doc->setFilename("Sprite");
   doc->setContext(m_ctx); // Change the document context to add the doc in this collection

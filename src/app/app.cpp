@@ -132,7 +132,7 @@ App::App()
   , m_legacy(NULL)
   , m_isGui(false)
   , m_isShell(false)
-  , m_exporter(NULL)
+  , m_exporter(nullptr)
 {
   ASSERT(m_instance == NULL);
   m_instance = this;
@@ -631,7 +631,7 @@ void App::initialize(const AppOptions& options)
     if (trim)
       m_exporter->setTrimCels(true);
 
-    base::UniquePtr<Document> spriteSheet(m_exporter->exportSheet());
+    std::unique_ptr<Document> spriteSheet(m_exporter->exportSheet());
     m_exporter.reset(NULL);
 
     LOG("Export sprite sheet: Done\n");
@@ -689,7 +689,7 @@ void App::run()
 
   if (isGui()) {
     // Destroy the window.
-    m_mainWindow.reset(NULL);
+    m_mainWindow.reset(nullptr);
   }
 
   // Delete backups (this is a normal shutdown, we are not handling
@@ -811,7 +811,7 @@ void App::showNotification(INotificationDelegate* del)
 
 void App::updateDisplayTitleBar()
 {
-  std::string defaultTitle = PACKAGE " v" VERSION;
+  std::string defaultTitle = PACKAGE_AND_VERSION;
   std::string title;
 
   DocumentView* docView = UIContext::instance()->activeView();
@@ -873,7 +873,7 @@ PixelFormat app_get_current_pixel_format()
 void app_default_statusbar_message()
 {
   StatusBar::instance()
-    ->setStatusText(250, "%s %s | %s", PACKAGE, VERSION, COPYRIGHT);
+    ->setStatusText(250, "%s | %s", PACKAGE_AND_VERSION, COPYRIGHT);
 }
 
 int app_get_color_to_clear_layer(Layer* layer)

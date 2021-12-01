@@ -15,7 +15,6 @@
 #include "doc/cels_range.h"
 #include "doc/image.h"
 #include "doc/image_io.h"
-#include "doc/image_ref.h"
 #include "doc/sprite.h"
 #include "doc/subobjects_io.h"
 
@@ -24,7 +23,7 @@ namespace cmd {
 
 using namespace doc;
 
-ReplaceImage::ReplaceImage(Sprite* sprite, const ImageRef& oldImage, const ImageRef& newImage)
+ReplaceImage::ReplaceImage(Sprite* sprite, const std::shared_ptr<Image>& oldImage, const std::shared_ptr<Image>& newImage)
   : WithSprite(sprite)
   , m_oldImageId(oldImage->id())
   , m_newImageId(newImage->id())
@@ -37,7 +36,7 @@ void ReplaceImage::onExecute()
   // Save old image in m_copy. We cannot keep an ImageRef to this
   // image, because there are other undo branches that could try to
   // modify/re-add this same image ID
-  ImageRef oldImage = sprite()->getImageRef(m_oldImageId);
+  auto oldImage = sprite()->getImageRef(m_oldImageId);
   ASSERT(oldImage);
   m_copy.reset(Image::createCopy(oldImage.get()));
 
@@ -47,7 +46,7 @@ void ReplaceImage::onExecute()
 
 void ReplaceImage::onUndo()
 {
-  ImageRef newImage = sprite()->getImageRef(m_newImageId);
+  auto newImage = sprite()->getImageRef(m_newImageId);
   ASSERT(newImage);
   ASSERT(!sprite()->getImageRef(m_oldImageId));
   m_copy->setId(m_oldImageId);
@@ -58,7 +57,7 @@ void ReplaceImage::onUndo()
 
 void ReplaceImage::onRedo()
 {
-  ImageRef oldImage = sprite()->getImageRef(m_oldImageId);
+  auto oldImage = sprite()->getImageRef(m_oldImageId);
   ASSERT(oldImage);
   ASSERT(!sprite()->getImageRef(m_newImageId));
   m_copy->setId(m_newImageId);
@@ -67,7 +66,7 @@ void ReplaceImage::onRedo()
   m_copy.reset(Image::createCopy(oldImage.get()));
 }
 
-void ReplaceImage::replaceImage(ObjectId oldId, const ImageRef& newImage)
+void ReplaceImage::replaceImage(ObjectId oldId, const std::shared_ptr<Image>& newImage)
 {
   Sprite* spr = sprite();
 

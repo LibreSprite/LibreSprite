@@ -10,7 +10,6 @@
 
 #include "doc/algorithm/shift_image.h"
 
-#include "base/unique_ptr.h"
 #include "gfx/rect.h"
 #include "doc/image.h"
 #include "doc/mask.h"
@@ -29,7 +28,7 @@ void shift_image_with_mask(Image* image, const Mask* mask, int dx, int dy)
 
   // To simplify the algorithm we use a copy of the original image, we
   // could avoid this copy swapping rows and columns.
-  ImageRef crop(crop_image(image, bounds.x, bounds.y, bounds.w, bounds.h,
+  std::shared_ptr<Image> crop(crop_image(image, bounds.x, bounds.y, bounds.w, bounds.h,
                            image->maskColor()));
 
   int u = dx;

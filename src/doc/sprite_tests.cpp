@@ -30,14 +30,14 @@ TEST(Sprite, CelsRange)
   spr->folder()->addLayer(lay1);
   spr->folder()->addLayer(lay2);
 
-  ImageRef imgA(Image::create(IMAGE_RGB, 32, 32));
+  std::shared_ptr<Image> imgA(Image::create(IMAGE_RGB, 32, 32));
   Cel* celA = new Cel(frame_t(0), imgA);
   Cel* celB = Cel::createLink(celA);
   celB->setFrame(frame_t(2));
   lay1->addCel(celA);
   lay1->addCel(celB);
 
-  ImageRef imgC(Image::create(IMAGE_RGB, 32, 32));
+  std::shared_ptr<Image> imgC(Image::create(IMAGE_RGB, 32, 32));
   Cel* celC = new Cel(frame_t(0), imgC);
   Cel* celD = Cel::createCopy(celC);
   Cel* celE = Cel::createLink(celD);

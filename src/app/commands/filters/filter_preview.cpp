@@ -25,35 +25,30 @@ namespace app {
 using namespace ui;
 using namespace filters;
 
-FilterPreview::FilterPreview(FilterManagerImpl* filterMgr)
-  : Widget(kGenericWidget)
-  , m_filterMgr(filterMgr)
-  , m_timer(1, this)
-{
+FilterPreview::FilterPreview() : Widget(kGenericWidget) {
   setVisible(false);
 }
 
-FilterPreview::~FilterPreview()
-{
+FilterPreview::~FilterPreview() {
   stop();
 }
 
 void FilterPreview::stop()
 {
-  if (m_timer.isRunning()) {
+  if (m_timer->isRunning()) {
     ASSERT(m_filterMgr != NULL);
 
     m_filterMgr->end();
   }
 
   m_filterMgr = NULL;
-  m_timer.stop();
+  m_timer->stop();
 }
 
 void FilterPreview::restartPreview()
 {
   m_filterMgr->beginForPreview();
-  m_timer.start();
+  m_timer->start();
 }
 
 FilterManagerImpl* FilterPreview::getFilterManager() const
@@ -78,7 +73,7 @@ bool FilterPreview::onProcessMessage(Message* msg)
       current_editor->renderEngine().removePreviewImage();
 
       // Stop the preview timer.
-      m_timer.stop();
+      m_timer->stop();
       break;
 
     case kTimerMessage:
@@ -86,12 +81,14 @@ bool FilterPreview::onProcessMessage(Message* msg)
         if (m_filterMgr->applyStep())
           m_filterMgr->flush();
         else
-          m_timer.stop();
+          m_timer->stop();
       }
       break;
   }
 
   return Widget::onProcessMessage(msg);
 }
+
+static ui::Widget::Shared<FilterPreview> _reg("FilterPreview");
 
 } // namespace app

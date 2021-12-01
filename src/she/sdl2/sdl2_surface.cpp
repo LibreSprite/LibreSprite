@@ -4,9 +4,12 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#include <SDL2/SDL_blendmode.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL.h>
+
+#ifdef HAVE_STDINT_H
+#undef HAVE_STDINT_H
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -18,7 +21,6 @@
 #include "gfx/rect.h"
 
 #include <iostream>
-#include <SDL2/SDL.h>
 
 namespace {
 

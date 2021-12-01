@@ -6,7 +6,6 @@
 
 #pragma once
 
-#define DISABLE_COPYING(ClassName)              \
-  private:                                      \
-    ClassName(const ClassName&);                \
-    ClassName& operator=(const ClassName&);
+#define DISABLE_COPYING(ClassName)                       \
+    ClassName(const ClassName&) = delete;                \
+    ClassName& operator=(const ClassName&) = delete;

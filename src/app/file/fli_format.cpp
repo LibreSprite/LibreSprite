@@ -65,7 +65,7 @@ bool FliFormat::onLoad(FileOp* fop)
   int h = header.height;
 
   // Create a temporal bitmap
-  ImageRef bmp(Image::create(IMAGE_INDEXED, w, h));
+  std::shared_ptr<Image> bmp(Image::create(IMAGE_INDEXED, w, h));
   Palette pal(0, 1);
   Cel* prevCel = nullptr;
 
@@ -115,7 +115,7 @@ bool FliFormat::onLoad(FileOp* fop)
     if (!prevCel ||
         (count_diff_between_images(prevCel->image(), bmp.get()))) {
       // Add the new frame
-      ImageRef image(Image::createCopy(bmp.get()));
+      std::shared_ptr<Image> image(Image::createCopy(bmp.get()));
       Cel* cel = new Cel(frame_out, image);
       layer->addCel(cel);
 
@@ -192,7 +192,7 @@ bool FliFormat::onSave(FileOp* fop)
   encoder.writeHeader(header);
 
   // Create the bitmaps
-  ImageRef bmp(Image::create(IMAGE_INDEXED, sprite->width(), sprite->height()));
+  std::shared_ptr<Image> bmp(Image::create(IMAGE_INDEXED, sprite->width(), sprite->height()));
   render::Render render;
 
   // Write frame by frame

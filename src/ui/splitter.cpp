@@ -55,10 +55,10 @@ bool Splitter::onProcessMessage(Message* msg)
 
         bar = click_bar = 0;
 
-        UI_FOREACH_WIDGET_WITH_END(children(), it, end) {
-          if (it+1 != end) {
-            c1 = *it;
-            c2 = *(it+1);
+        for(std::size_t i = 0, end = children().size(); i != end; ++i) {
+          if (i+1 != end) {
+            c1 = at(i);
+            c2 = at(i+1);
 
             ++bar;
 
@@ -136,10 +136,10 @@ bool Splitter::onProcessMessage(Message* msg)
         int x1, y1, x2, y2;
         bool change_cursor = false;
 
-        UI_FOREACH_WIDGET_WITH_END(children(), it, end) {
-          if (it+1 != end) {
-            c1 = *it;
-            c2 = *(it+1);
+        for(std::size_t i = 0, end = children().size(); i != end; ++i) {
+          if (i+1 != end) {
+            c1 = at(i);
+            c2 = at(i+1);
 
             if (this->align() & HORIZONTAL) {
               x1 = c1->bounds().x2();

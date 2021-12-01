@@ -21,14 +21,14 @@
 #include "app/transaction.h"
 #include "app/ui/color_bar.h"
 #include "app/ui_context.h"
-#include "base/unique_ptr.h"
-#include "base/unique_ptr.h"
 #include "doc/palette.h"
 #include "doc/sprite.h"
 #include "render/quantization.h"
 #include "ui/manager.h"
 
 #include "palette_from_sprite.xml.h"
+
+#include <memory>
 
 namespace app {
 
@@ -150,7 +150,7 @@ void ColorQuantizationCommand::onExecute(Context* context)
     if (job.isCanceled())
       return;
 
-    base::UniquePtr<Palette> newPalette(
+    std::unique_ptr<Palette> newPalette(
       new Palette(createPal ? tmpPalette:
                               *get_current_palette()));
 

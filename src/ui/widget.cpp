@@ -42,6 +42,8 @@
 #include <queue>
 #include <sstream>
 
+static base::weak_set<ui::Widget> widgets;
+
 namespace ui {
 
 using namespace gfx;
@@ -60,51 +62,41 @@ WidgetType register_widget_type()
   return (WidgetType)type++;
 }
 
-Widget::Widget(WidgetType type)
-  : m_type(type)
-  , m_flags(0)
-  , m_theme(CurrentTheme::get())
-  , m_font(nullptr)
-  , m_bgColor(gfx::ColorNone)
-  , m_bounds(0, 0, 0, 0)
-  , m_parent(nullptr)
-  , m_sizeHint(nullptr)
-  , m_minSize(0, 0)
-  , m_maxSize(INT_MAX, INT_MAX)
-  , m_childSpacing(0)
-{
-  details::addWidget(this);
+Widget::Widget(WidgetType type) : m_type(type),
+                                  m_theme(CurrentTheme::get()) {
+  getAll().insert(safePtr); // to-do: use postInject below instead
+}
+
+void Widget::postInject() {
+  m_wasInjected = true;
+//   getAll().insert(shared_from_this());
 }
 
 Widget::~Widget()
 {
   // Break relationship with the manager.
-  if (this->type() != kManagerWidget) {
-    Manager* manager = this->manager();
-    manager->freeWidget(this);
-    manager->removeMessagesFor(this);
-    manager->removeMessageFilterFor(this);
-  }
+  if (this->type() != kManagerWidget)
+    manager()->freeWidget(this);
 
   // Remove from parent
   if (m_parent)
     m_parent->removeChild(this);
 
+  while (!m_ownedChildren.empty())
+    removeChild(m_ownedChildren.back().get());
+
   // Remove children. The ~Widget dtor modifies the parent's
   // m_children.
   while (!m_children.empty())
     delete m_children.front();
-
-  // Delete fixed size hint if it isn't nullptr
-  delete m_sizeHint;
-
-  // Low level free
-  details::removeWidget(this);
 }
 
-void Widget::deferDelete()
-{
+void Widget::deferDelete() {
   manager()->addToGarbage(this);
+}
+
+base::weak_set<Widget>& Widget::getAll() {
+  return widgets;
 }
 
 PropertyPtr Widget::getProperty(const std::string& name) const
@@ -357,8 +349,7 @@ bool Widget::isFocusMagnet() const
 // PARENTS & CHILDREN
 // ===============================================================
 
-Window* Widget::window()
-{
+Window* Widget::window() {
   Widget* widget = this;
 
   while (widget) {
@@ -371,18 +362,17 @@ Window* Widget::window()
   return NULL;
 }
 
-Manager* Widget::manager()
-{
-  Widget* widget = this;
+Manager* Widget::manager() {
+  return m_manager ?: Manager::getDefault();
+}
 
-  while (widget) {
-    if (widget->type() == kManagerWidget)
-      return static_cast<Manager*>(widget);
-
-    widget = widget->m_parent;
+void Widget::setManager(Manager* manager) {
+  if (manager == m_manager)
+    return;
+  m_manager = manager;
+  for (auto child : children()) {
+    child->setManager(manager);
   }
-
-  return Manager::getDefault();
 }
 
 void Widget::getParents(bool ascendant, WidgetsList& parents)
@@ -489,22 +479,45 @@ Widget* Widget::findSibling(const char* id)
   return window()->findChild(id);
 }
 
-void Widget::addChild(Widget* child)
-{
+// TODO: Remove when widget can own all children
+void Widget::addChild(Widget* child) {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
 
+  if (child->m_wasInjected)
+    m_ownedChildren.push_back(child->shared_from_this());
+  child->m_hold.reset();
+
   m_children.push_back(child);
   child->m_parent = this;
+  child->setManager(manager());
 }
 
-void Widget::removeChild(WidgetsList::iterator& it)
+void Widget::addChild(std::shared_ptr<Widget> child) {
+  m_ownedChildren.push_back(child);
+  child->m_hold.reset();
+
+  m_children.push_back(child.get());
+  child->m_parent = this;
+  child->setManager(manager());
+}
+
+void Widget::removeChild(const WidgetsList::iterator& it)
 {
   Widget* child = *it;
 
   ASSERT(it != m_children.end());
-  if (it != m_children.end())
-    m_children.erase(it);
+  if (it == m_children.end())
+    return;
+
+  m_children.erase(it);
+
+  for (auto it = m_ownedChildren.begin(); it != m_ownedChildren.end(); ++it) {
+    if (it->get() == child) {
+      m_ownedChildren.erase(it);
+      break;
+    }
+  }
 
   // Free from manager
   Manager* manager = this->manager();
@@ -514,13 +527,15 @@ void Widget::removeChild(WidgetsList::iterator& it)
   child->m_parent = NULL;
 }
 
-void Widget::removeChild(Widget* child)
-{
+// TODO: Remove when widget can own all children
+void Widget::removeChild(Widget* child) {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
+  removeChild(std::find(m_children.begin(), m_children.end(), child));
+}
 
-  WidgetsList::iterator it = std::find(m_children.begin(), m_children.end(), child);
-  removeChild(it);
+void Widget::removeChild(std::shared_ptr<Widget> child) {
+  removeChild(child.get());
 }
 
 void Widget::removeAllChildren()
@@ -544,6 +559,10 @@ void Widget::replaceChild(Widget* oldChild, Widget* newChild)
 
   removeChild(oldChild);
 
+  if (newChild->m_wasInjected)
+    m_ownedChildren.push_back(newChild->shared_from_this());
+  newChild->m_hold.reset();
+
   m_children.insert(m_children.begin()+index, newChild);
   newChild->m_parent = this;
 }
@@ -552,6 +571,10 @@ void Widget::insertChild(int index, Widget* child)
 {
   ASSERT_VALID_WIDGET(this);
   ASSERT_VALID_WIDGET(child);
+
+  if (child->m_wasInjected)
+    m_ownedChildren.push_back(child->shared_from_this());
+  child->m_hold.reset();
 
   m_children.insert(m_children.begin()+index, child);
   child->m_parent = this;
@@ -893,11 +916,8 @@ void Widget::setMaxSize(const gfx::Size& sz)
   m_maxSize = sz;
 }
 
-void Widget::flushRedraw()
-{
+void Widget::flushRedraw() {
   std::queue<Widget*> processing;
-  Message* msg;
-
   if (hasFlags(DIRTY)) {
     disableFlags(DIRTY);
     processing.push(this);
@@ -938,10 +958,8 @@ void Widget::flushRedraw()
       int count = nrects-1;
       for (c=0; c<nrects; ++c, ++it, --count) {
         // Create the draw message
-        msg = new PaintMessage(count, *it);
+        auto msg = std::make_shared<PaintMessage>(count, *it);
         msg->addRecipient(widget);
-
-        // Enqueue the draw message
         manager->enqueueMessage(msg);
       }
 
@@ -1205,8 +1223,7 @@ Size Widget::sizeHint(const Size& fitIn)
 */
 void Widget::setSizeHint(const Size& fixedSize)
 {
-  delete m_sizeHint;
-  m_sizeHint = new Size(fixedSize);
+  m_sizeHint.reset(new Size(fixedSize));
 }
 
 void Widget::setSizeHint(int fixedWidth, int fixedHeight)
@@ -1256,8 +1273,7 @@ bool Widget::offerCapture(ui::MouseMessage* mouseMsg, int widget_type)
     Widget* pick = manager()->pick(mouseMsg->position());
     if (pick && pick != this && pick->type() == widget_type) {
       releaseMouse();
-
-      MouseMessage* mouseMsg2 = new MouseMessage(
+      auto mouseMsg2 = std::make_shared<MouseMessage>(
         kMouseDownMessage,
         mouseMsg->pointerType(),
         mouseMsg->buttons(),
@@ -1341,20 +1357,18 @@ bool Widget::onProcessMessage(Message* msg)
       else
         break;
 
-    case kDoubleClickMessage:
+    case kDoubleClickMessage: {
       // Convert double clicks into mouse down
-      if (kMouseDownMessage) {
-        MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
-        MouseMessage mouseMsg2(kMouseDownMessage,
-                               mouseMsg->pointerType(),
-                               mouseMsg->buttons(),
-                               mouseMsg->modifiers(),
-                               mouseMsg->position(),
-                               mouseMsg->wheelDelta());
-
-        sendMessage(&mouseMsg2);
-      }
+      MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
+      MouseMessage mouseMsg2(kMouseDownMessage,
+                             mouseMsg->pointerType(),
+                             mouseMsg->buttons(),
+                             mouseMsg->modifiers(),
+                             mouseMsg->position(),
+                             mouseMsg->wheelDelta());
+      sendMessage(&mouseMsg2);
       break;
+    }
 
     case kMouseDownMessage:
     case kMouseUpMessage:

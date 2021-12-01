@@ -8,10 +8,11 @@
 #pragma once
 
 #include "app/app_brushes.h"
+#include "base/debug.h"
 #include "base/signal.h"
-#include "base/unique_ptr.h"
 #include "doc/pixel_format.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -70,7 +71,7 @@ namespace app {
     tools::Tool* activeTool() const;
     tools::ActiveToolManager* activeToolManager() const;
     RecentFiles* recentFiles() const;
-    MainWindow* mainWindow() const { return m_mainWindow; }
+    MainWindow* mainWindow() const { return m_mainWindow.get(); }
     Workspace* workspace() const;
     ContextBar* contextBar() const;
     Timeline* timeline() const;
@@ -97,16 +98,16 @@ namespace app {
 
     static App* m_instance;
 
-    base::UniquePtr<ui::UISystem> m_uiSystem;
+    std::unique_ptr<ui::UISystem> m_uiSystem;
     CoreModules* m_coreModules;
     Modules* m_modules;
     LegacyModules* m_legacy;
     bool m_isGui;
     bool m_isShell;
-    base::UniquePtr<MainWindow> m_mainWindow;
+    std::unique_ptr<MainWindow> m_mainWindow;
     FileList m_files;
-    base::UniquePtr<DocumentExporter> m_exporter;
-    base::UniquePtr<AppBrushes> m_brushes;
+    std::unique_ptr<DocumentExporter> m_exporter;
+    std::unique_ptr<AppBrushes> m_brushes;
   };
 
   void app_refresh_screen();

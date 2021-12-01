@@ -37,7 +37,7 @@ Job::Job(const char* jobName)
     m_alert_window = ui::Alert::create("%s<<Working...||&Cancel", jobName);
     m_alert_window->addProgress();
 
-    m_timer.reset(new ui::Timer(kMonitoringPeriod, m_alert_window.get()));
+    m_timer = ui::Timer::create(kMonitoringPeriod, *m_alert_window);
     m_timer->Tick.connect(&Job::onMonitoringTick, this);
     m_timer->start();
   }

@@ -11,7 +11,6 @@
 #include "base/fstream_path.h"
 #include "base/split_string.h"
 #include "base/trim_string.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "doc/palette.h"
 
@@ -49,7 +48,7 @@ Palette* load_pal_file(const char *filename)
   if (!std::getline(f, line))
     return nullptr;
 
-  base::UniquePtr<Palette> pal(new Palette(frame_t(0), 0));
+  std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
 
   while (std::getline(f, line)) {
     // Trim line

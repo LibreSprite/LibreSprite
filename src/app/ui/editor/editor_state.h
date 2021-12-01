@@ -8,8 +8,9 @@
 #pragma once
 
 #include "base/disable_copying.h"
-#include "base/shared_ptr.h"
 #include "gfx/point.h"
+
+#include <memory>
 
 namespace gfx {
   class Region;
@@ -120,6 +121,6 @@ namespace app {
     DISABLE_COPYING(EditorState);
   };
 
-  typedef base::SharedPtr<EditorState> EditorStatePtr;
+  typedef std::shared_ptr<EditorState> EditorStatePtr;
 
 } // namespace app

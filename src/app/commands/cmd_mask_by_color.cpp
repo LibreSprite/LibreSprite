@@ -26,7 +26,6 @@
 #include "base/bind.h"
 #include "base/chrono.h"
 #include "base/convert_to.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
@@ -36,6 +35,8 @@
 #include "ui/slider.h"
 #include "ui/widget.h"
 #include "ui/window.h"
+
+#include <memory>
 
 // Uncomment to see the performance of doc::MaskBoundaries ctor
 //#define SHOW_BOUNDARIES_GEN_PERFORMANCE
@@ -57,7 +58,7 @@ private:
   Mask* generateMask(const Sprite* sprite, const Image* image, int xpos, int ypos);
   void maskPreview(const ContextReader& reader);
 
-  Window* m_window; // TODO we cannot use a UniquePtr because clone() needs a copy ctor
+  Window* m_window; // TODO we cannot use a unique_ptr because clone() needs a copy ctor
   ColorButton* m_buttonColor;
   CheckBox* m_checkPreview;
   Slider* m_sliderTolerance;
@@ -159,8 +160,8 @@ void MaskByColorCommand::onExecute(Context* context)
 
   if (apply) {
     Transaction transaction(writer.context(), "Mask by Color", DoesntModifyDocument);
-    base::UniquePtr<Mask> mask(generateMask(sprite, image, xpos, ypos));
-    transaction.execute(new cmd::SetMask(document, mask));
+    std::unique_ptr<Mask> mask(generateMask(sprite, image, xpos, ypos));
+    transaction.execute(new cmd::SetMask(document, mask.get()));
     transaction.commit();
 
     set_config_color("MaskColor", "Color", m_buttonColor->getColor());
@@ -184,7 +185,7 @@ Mask* MaskByColorCommand::generateMask(const Sprite* sprite, const Image* image,
   color = color_utils::color_for_image(m_buttonColor->getColor(), sprite->pixelFormat());
   tolerance = m_sliderTolerance->getValue();
 
-  base::UniquePtr<Mask> mask(new Mask());
+  std::unique_ptr<Mask> mask(new Mask());
   mask->byColor(image, color, tolerance);
   mask->offsetOrigin(xpos, ypos);
 
@@ -196,7 +197,7 @@ void MaskByColorCommand::maskPreview(const ContextReader& reader)
   if (m_checkPreview->isSelected()) {
     int xpos, ypos;
     const Image* image = reader.image(&xpos, &ypos);
-    base::UniquePtr<Mask> mask(generateMask(reader.sprite(), image, xpos, ypos));
+    std::unique_ptr<Mask> mask(generateMask(reader.sprite(), image, xpos, ypos));
     {
       ContextWriter writer(reader);
 
@@ -204,7 +205,7 @@ void MaskByColorCommand::maskPreview(const ContextReader& reader)
       base::Chrono chrono;
 #endif
 
-      writer.document()->generateMaskBoundaries(mask);
+      writer.document()->generateMaskBoundaries(mask.get());
 
 #ifdef SHOW_BOUNDARIES_GEN_PERFORMANCE
       double time = chrono.elapsed();

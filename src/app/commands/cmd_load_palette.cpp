@@ -17,9 +17,10 @@
 #include "app/file_selector.h"
 #include "app/modules/palettes.h"
 #include "base/fs.h"
-#include "base/unique_ptr.h"
 #include "doc/palette.h"
 #include "ui/alert.h"
+
+#include <memory>
 
 namespace app {
 
@@ -66,14 +67,14 @@ void LoadPaletteCommand::onExecute(Context* context)
   }
 
   if (!filename.empty()) {
-    base::UniquePtr<doc::Palette> palette(load_palette(filename.c_str()));
+    std::unique_ptr<doc::Palette> palette(load_palette(filename.c_str()));
     if (!palette) {
       Alert::show("Error<<Loading palette file||&Close");
     }
     else {
       SetPaletteCommand* cmd = static_cast<SetPaletteCommand*>(
         CommandsModule::instance()->getCommandByName(CommandId::SetPalette));
-      cmd->setPalette(palette);
+      cmd->setPalette(palette.get());
       context->executeCommand(cmd);
     }
   }

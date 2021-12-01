@@ -43,13 +43,25 @@ void Theme::regenerate()
 
   onRegenerate();
 
-  details::resetFontAllWidgets();
+  for (auto widget : Widget::getAll())
+    widget->resetFont();
 
   // TODO We cannot reinitialize all widgets because this mess all
   // child spacing, border, etc. But it could be good to change the
   // uiscale() and get the new look without the need to restart the
   // whole app.
-  //details::reinitThemeForAllWidgets();
+  // // Reinitialize the theme of each widget
+  // for (auto widget : Widget::getAll()) {
+  //   widget->setTheme(CurrentTheme::get());
+  //   widget->initTheme();
+  // }
+  // // Remap the windows
+  // for (auto widget : Widget::getAll()) {
+  //   if (widget->type() == kWindowWidget)
+  //     std::static_pointer_cast<Window>(widget)->remapWindow();
+  // }
+  // // Redraw the whole screen
+  // Manager::getDefault()->invalidate();
 
   set_mouse_cursor(type);
 }

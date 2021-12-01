@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2018       LibreSprite contributors
+// LibreSprite | Copyright (C) 2018-2021  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -22,7 +22,7 @@ LoggerModule::LoggerModule(bool createLogInDesktop)
   app::ResourceFinder rf(false);
 
   if (createLogInDesktop)
-    rf.includeDesktopDir(PACKAGE "-v" VERSION "-DebugOutput.txt");
+    rf.includeDesktopDir(PACKAGE_AND_VERSION "-DebugOutput.txt");
   else
     rf.includeUserDir("libresprite.log");
 

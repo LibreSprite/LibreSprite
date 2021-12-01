@@ -57,7 +57,7 @@ void NewLayerSetCommand::onExecute(Context* context)
   Sprite* sprite(writer.sprite());
 
   // load the window widget
-  base::UniquePtr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer_set"));
+  std::unique_ptr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer_set"));
 
   window->openWindowInForeground();
 

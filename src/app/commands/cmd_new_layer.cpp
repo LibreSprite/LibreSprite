@@ -89,8 +89,8 @@ void NewLayerCommand::onExecute(Context* context)
   // If params specify to ask the user about the name...
   if (m_ask) {
     // We open the window to ask the name
-    base::UniquePtr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer"));
-    Widget* name_widget = app::find_widget<Widget>(window, "name");
+    std::unique_ptr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer"));
+    Widget* name_widget = app::find_widget<Widget>(window.get(), "name");
     name_widget->setText(name.c_str());
     name_widget->setMinSize(gfx::Size(128, 0));
 

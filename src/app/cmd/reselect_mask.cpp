@@ -28,7 +28,7 @@ void ReselectMask::onExecute()
   app::Document* doc = document();
 
   if (m_oldMask) {
-    doc->setMask(m_oldMask);
+    doc->setMask(m_oldMask.get());
     m_oldMask.reset();
   }
 

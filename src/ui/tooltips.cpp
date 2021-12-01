@@ -10,7 +10,6 @@
 
 #include "ui/tooltips.h"
 
-#include "base/unique_ptr.h"
 #include "gfx/size.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"
@@ -41,22 +40,16 @@ TooltipManager::TooltipManager()
   setVisible(false);
 }
 
-TooltipManager::~TooltipManager()
-{
-  Manager* manager = Manager::getDefault();
-  manager->removeMessageFilterFor(this);
+void TooltipManager::addTooltipFor(std::shared_ptr<Widget> widget, const std::string& text, int arrowAlign) {
+  m_tips[widget.get()] = TipInfo{text, arrowAlign};
 }
 
-void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign)
-{
-  m_tips[widget] = TipInfo(text, arrowAlign);
+void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign) {
+  m_tips[widget] = TipInfo{text, arrowAlign};
 }
 
-void TooltipManager::removeTooltipFor(Widget* widget)
-{
-  auto it = m_tips.find(widget);
-  if (it != m_tips.end())
-    m_tips.erase(it);
+void TooltipManager::removeTooltipFor(Widget* widget) {
+  m_tips.erase(widget);
 }
 
 bool TooltipManager::onProcessMessage(Message* msg)
@@ -70,8 +63,8 @@ bool TooltipManager::onProcessMessage(Message* msg)
           m_target.widget = it->first;
           m_target.tipInfo = it->second;
 
-          if (m_timer == NULL) {
-            m_timer.reset(new Timer(kTooltipDelayMsecs, this));
+          if (!m_timer) {
+            m_timer = Timer::create(kTooltipDelayMsecs, *this);
             m_timer->Tick.connect(&TooltipManager::onTick, this);
           }
 
@@ -114,7 +107,6 @@ void TooltipManager::onTick()
     else {
       // No enough room for the tooltip
       m_tipWindow.reset();
-      m_timer->stop();
     }
   }
   m_timer->stop();

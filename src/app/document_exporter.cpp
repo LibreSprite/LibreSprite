@@ -23,9 +23,7 @@
 #include "base/fstream_path.h"
 #include "base/path.h"
 #include "base/replace_string.h"
-#include "base/shared_ptr.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/shrink_bounds.h"
 #include "doc/cel.h"
 #include "doc/dithering_method.h"
@@ -44,6 +42,7 @@
 #include <iomanip>
 #include <iostream>
 #include <list>
+#include <memory>
 
 using namespace doc;
 
@@ -107,7 +106,7 @@ private:
   gfx::Rect m_inTextureBounds;
 };
 
-typedef base::SharedPtr<SampleBounds> SampleBoundsPtr;
+typedef std::shared_ptr<SampleBounds> SampleBoundsPtr;
 
 int DocumentExporter::Item::frames() const
 {
@@ -506,7 +505,7 @@ Document* DocumentExporter::exportSheet()
   }
 
   // 3) Create and render the texture.
-  base::UniquePtr<Document> textureDocument(
+  std::unique_ptr<Document> textureDocument(
     createEmptyTexture(samples));
 
   Sprite* texture = textureDocument->sprite();
@@ -604,15 +603,15 @@ void DocumentExporter::captureSamples(Samples& samples)
         if (layer && layer->isImage() && !cel)
           continue;
 
-        base::UniquePtr<Image> sampleRender(
+        std::unique_ptr<Image> sampleRender(
           Image::create(sprite->pixelFormat(),
             sprite->width(),
             sprite->height(),
             m_sampleRenderBuf));
 
         sampleRender->setMaskColor(sprite->transparentColor());
-        clear_image(sampleRender, sprite->transparentColor());
-        renderSample(sample, sampleRender, 0, 0);
+        clear_image(sampleRender.get(), sprite->transparentColor());
+        renderSample(sample, sampleRender.get(), 0, 0);
 
         gfx::Rect frameBounds;
         doc::color_t refColor = 0;
@@ -623,7 +622,7 @@ void DocumentExporter::captureSamples(Samples& samples)
               (!layer &&
                sprite->backgroundLayer() &&
                sprite->backgroundLayer()->isVisible())) {
-            refColor = get_pixel(sampleRender, 0, 0);
+            refColor = get_pixel(sampleRender.get(), 0, 0);
           }
           else {
             refColor = sprite->transparentColor();
@@ -632,7 +631,7 @@ void DocumentExporter::captureSamples(Samples& samples)
         else if (m_ignoreEmptyCels)
           refColor = sprite->transparentColor();
 
-        if (!algorithm::shrink_bounds(sampleRender, frameBounds, refColor)) {
+        if (!algorithm::shrink_bounds(sampleRender.get(), frameBounds, refColor)) {
           // If shrink_bounds() returns false, it's because the whole
           // image is transparent (equal to the mask color).
           continue;
@@ -693,7 +692,7 @@ Document* DocumentExporter::createEmptyTexture(const Samples& samples)
   if (m_textureWidth == 0) fullTextureBounds.w += m_borderPadding;
   if (m_textureHeight == 0) fullTextureBounds.h += m_borderPadding;
 
-  base::UniquePtr<Sprite> sprite(
+  std::unique_ptr<Sprite> sprite(
     Sprite::createBasicSprite(
       pixelFormat,
       fullTextureBounds.x+fullTextureBounds.w,
@@ -702,10 +701,7 @@ Document* DocumentExporter::createEmptyTexture(const Samples& samples)
   if (palette != NULL)
     sprite->setPalette(palette, false);
 
-  base::UniquePtr<Document> document(new Document(sprite));
-  sprite.release();
-
-  return document.release();
+  return new Document(sprite.release());
 }
 
 void DocumentExporter::renderTexture(const Samples& samples, Image* textureImage)

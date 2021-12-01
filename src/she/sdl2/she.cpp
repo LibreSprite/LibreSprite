@@ -13,7 +13,6 @@
 #include "base/concurrent_queue.h"
 #include "base/exception.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "she/sdl2/sdl2_display.h"
 #include "she/sdl2/sdl2_surface.h"
 #include "she/common/system.h"
@@ -349,6 +348,8 @@ namespace sdl {
                   if (modifiers & (she::kKeyCtrlModifier | she::kKeyCmdModifier)) {
                     SDL_StopTextInput();
                     break;
+                  } else if (!SDL_IsTextInputActive()) {
+                    SDL_StartTextInput();
                   }
                   continue;
                 }
