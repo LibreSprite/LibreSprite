@@ -34,7 +34,7 @@ Image::~Image()
 
 int Image::getMemSize() const
 {
-  return sizeof(Image) + getRowStrideSize()*m_height;
+  return sizeof(Image) + static_cast<long>(getRowStrideSize())*m_height;
 }
 
 int Image::getRowStrideSize() const

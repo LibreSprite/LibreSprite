@@ -96,17 +96,17 @@ namespace render {
     uint32_t meanColor(const Histogram& histogram) const {
       std::size_t r = 0, g = 0, b = 0, a = 0;
       std::size_t count = 0;
-      int i, j, k, l;
+      long i, j, k, l;
 
       for (i=r1; i<=r2; ++i)
         for (j=g1; j<=g2; ++j)
           for (k=b1; k<=b2; ++k)
             for (l=a1; l<=a2; ++l) {
-              int c = histogram.at(i, j, k, l);
-              r += c * i;
-              g += c * j;
-              b += c * k;
-              a += c * l;
+              long c = histogram.at(i, j, k, l);
+              r += static_cast<long>(c) * i;
+              g += static_cast<long>(c) * j;
+              b += static_cast<long>(c) * k;
+              a += static_cast<long>(c) * l;
               count += c;
             }
 

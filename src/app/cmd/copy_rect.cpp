@@ -30,7 +30,7 @@ CopyRect::CopyRect(Image* dst, const Image* src, const gfx::Clip& clip)
   // Fill m_data with "src" data
 
   int lineSize = src->getRowStrideSize(m_clip.size.w);
-  m_data.resize(lineSize * m_clip.size.h);
+  m_data.resize(static_cast<long>(lineSize) * m_clip.size.h);
 
   auto it = m_data.begin();
   for (int v=0; v<m_clip.size.h; ++v) {

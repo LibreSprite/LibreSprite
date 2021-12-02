@@ -1030,7 +1030,7 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
     throw base::Exception("ZLib error %d in inflateInit().", err);
 
   std::vector<uint8_t> scanline(ImageTraits::getRowStrideBytes(image->width()));
-  std::vector<uint8_t> uncompressed(image->height() * ImageTraits::getRowStrideBytes(image->width()));
+  std::vector<uint8_t> uncompressed(static_cast<long>(image->height()) * ImageTraits::getRowStrideBytes(image->width()));
   std::vector<uint8_t> compressed(4096);
   int uncompressed_offset = 0;
 
