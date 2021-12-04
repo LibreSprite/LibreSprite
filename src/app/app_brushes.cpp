@@ -118,7 +118,7 @@ void save_xml_image(TiXmlElement* imageElem, const Image* image)
     imageElem->SetAttribute("format", format.c_str());
 
   base::buffer data;
-  data.reserve(h * image->getRowStrideSize());
+  data.reserve(static_cast<long>(h) * image->getRowStrideSize());
   switch (image->pixelFormat()) {
     case IMAGE_RGB:{
       const LockImageBits<RgbTraits> pixels(image);
