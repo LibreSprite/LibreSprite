@@ -102,7 +102,7 @@ namespace render {
         for (j=g1; j<=g2; ++j)
           for (k=b1; k<=b2; ++k)
             for (l=a1; l<=a2; ++l) {
-              long c = histogram.at(i, j, k, l);
+              int c = histogram.at(i, j, k, l);
               r += static_cast<long>(c) * i;
               g += static_cast<long>(c) * j;
               b += static_cast<long>(c) * k;
