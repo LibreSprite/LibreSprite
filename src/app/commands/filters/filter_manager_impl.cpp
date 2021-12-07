@@ -112,7 +112,7 @@ void FilterManagerImpl::beginForPreview()
   }
 
   m_row = 0;
-  m_mask = m_previewMask;
+  m_mask = m_previewMask.get();
 
   {
     Editor* editor = current_editor;

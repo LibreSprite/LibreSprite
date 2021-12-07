@@ -45,7 +45,7 @@ void exit_module_palette()
 
 void load_default_palette(const std::string& userDefined)
 {
-  base::UniquePtr<Palette> pal;
+  std::unique_ptr<Palette> pal;
 
   // Load specific palette file defined by the user in the command line.
   std::string palFile = userDefined;

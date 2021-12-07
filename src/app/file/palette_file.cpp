@@ -26,6 +26,7 @@
 #include "doc/sprite.h"
 
 #include <cstring>
+#include <memory>
 
 namespace app {
 
@@ -62,7 +63,7 @@ Palette* load_palette(const char *filename)
   else {
     FileFormat* ff = FileFormatsManager::instance()->getFileFormatByExtension(ext.c_str());
     if (ff && ff->support(FILE_SUPPORT_LOAD)) {
-      base::UniquePtr<FileOp> fop(
+      std::unique_ptr<FileOp> fop(
         FileOp::createLoadDocumentOperation(
           nullptr, filename,
           FILE_LOAD_SEQUENCE_NONE |

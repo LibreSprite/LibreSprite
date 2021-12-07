@@ -6,14 +6,13 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
-
 #include <cstdio>
+#include <memory>
 #include <string>
 
 namespace base {
 
-  typedef base::SharedPtr<FILE> FileHandle;
+  typedef std::shared_ptr<FILE> FileHandle;
 
   FILE* open_file_raw(const std::string& filename, const std::string& mode);
   FileHandle open_file(const std::string& filename, const std::string& mode);

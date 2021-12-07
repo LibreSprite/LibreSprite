@@ -19,35 +19,34 @@
 #include "app/modules/gui.h"
 #include "app/ui/color_button.h"
 #include "base/bind.h"
-#include "base/unique_ptr.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
 #include "filters/color_curve.h"
 #include "filters/color_curve_filter.h"
 #include "ui/ui.h"
 
+#include <memory>
+
 namespace app {
 
 using namespace filters;
 
-static base::UniquePtr<ColorCurve> the_curve;
+static std::unique_ptr<ColorCurve> the_curve;
 
 class ColorCurveWindow : public FilterWindow {
 public:
-  ColorCurveWindow(ColorCurveFilter& filter, FilterManagerImpl& filterMgr)
-    : FilterWindow("Color Curve", "ColorCurve", &filterMgr,
-                   WithChannelsSelector,
-                   WithoutTiledCheckBox)
-    , m_filter(filter)
-    , m_editor(filter.getCurve(), gfx::Rect(0, 0, 256, 256))
-  {
-    m_view.attachToView(&m_editor);
+  ColorCurveWindow(ColorCurveFilter& filter, FilterManagerImpl& filterMgr) :
+    FilterWindow{"Color Curve", "ColorCurve", &filterMgr, WithChannelsSelector, WithoutTiledCheckBox},
+    m_filter{filter} {
+    m_editor->setCurve(filter.getCurve());
+    m_editor->setViewBounds({0, 0, 256, 256});
+    m_view.attachToView(m_editor.get());
     m_view.setExpansive(true);
     m_view.setMinSize(gfx::Size(128, 64));
 
     getContainer()->addChild(&m_view);
 
-    m_editor.CurveEditorChange.connect(&ColorCurveWindow::onCurveChange, this);
+    m_editor->CurveEditorChange.connect(&ColorCurveWindow::onCurveChange, this);
   }
 
 protected:
@@ -58,7 +57,7 @@ protected:
     // editor. But anyway, we have to re-set the same curve in the
     // filter to regenerate the map used internally by the filter
     // (which is calculated inside setCurve() method).
-    m_filter.setCurve(m_editor.getCurve());
+    m_filter.setCurve(m_editor->getCurve());
 
     restartPreview();
   }
@@ -66,7 +65,7 @@ protected:
 private:
   ColorCurveFilter& m_filter;
   ui::View m_view;
-  ColorCurveEditor m_editor;
+  std::shared_ptr<ColorCurveEditor> m_editor = inject<ui::Widget>{"ColorCurveEditor"};
 };
 
 class ColorCurveCommand : public Command {

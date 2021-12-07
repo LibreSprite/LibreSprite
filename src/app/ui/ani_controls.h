@@ -18,12 +18,11 @@ namespace app {
 
   class AniControls : public ButtonSet {
   public:
-    AniControls();
-
     void updateUsingEditor(Editor* editor);
 
   protected:
-    void onRightClick(Item* item) override;
+    AniControls();
+    void onRightClick(std::shared_ptr<Item> item) override;
 
   private:
     void onClickButton();

@@ -16,15 +16,12 @@ namespace app {
 
   class AnimatedWidget {
   public:
-    AnimatedWidget()
-      : m_timer(1000/60)
-      , m_animation(0)
-    {
-      m_scopedConn = m_timer.Tick.connect(&AnimatedWidget::onTick, this);
+    AnimatedWidget() {
+      m_scopedConn = m_timer->Tick.connect(&AnimatedWidget::onTick, this);
     }
 
     ~AnimatedWidget() {
-      m_timer.stop();
+      m_timer->stop();
     }
 
     // For each animation frame
@@ -41,7 +38,7 @@ namespace app {
       m_animation = animation;
       m_animationTime = 0;
       m_animationLifespan = lifespan;
-      m_timer.start();
+      m_timer->start();
 
       onAnimationStart();
     }
@@ -49,7 +46,7 @@ namespace app {
     void stopAnimation() {
       int animation = m_animation;
       m_animation = 0;
-      m_timer.stop();
+      m_timer->stop();
 
       onAnimationStop(animation);
     }
@@ -82,8 +79,8 @@ namespace app {
       }
     }
 
-    ui::Timer m_timer;
-    int m_animation;
+    inject<ui::Timer> m_timer = ui::Timer::create(1000/60);
+    int m_animation = 0;
     int m_animationTime;
     int m_animationLifespan;
     base::ScopedConnection m_scopedConn;

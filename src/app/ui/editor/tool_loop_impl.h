@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "doc/image_ref.h"
 #include "gfx/fwd.h"
 
 namespace doc {

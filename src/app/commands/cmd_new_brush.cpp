@@ -141,7 +141,7 @@ void NewBrushCommand::onQuickboxCancel(Editor* editor)
 
 void NewBrushCommand::createBrush(const Site& site, const Mask* mask)
 {
-  doc::ImageRef image(new_image_from_mask(site, mask));
+  std::shared_ptr<Image> image(new_image_from_mask(site, mask));
   if (!image)
     return;
 

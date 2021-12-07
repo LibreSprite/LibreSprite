@@ -61,9 +61,8 @@ enum AniAction {
   ACTIONS
 };
 
-AniControls::AniControls()
-  : ButtonSet(5)
-{
+AniControls::AniControls() : ButtonSet() {
+  setColumns(5);
   SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 
   addItem(theme->parts.aniFirst());
@@ -80,7 +79,7 @@ AniControls::AniControls()
   TooltipManager* tooltips = new TooltipManager;
   addChild(tooltips);
   for (int i=0; i<ACTIONS; ++i)
-    tooltips->addTooltipFor(getItem(i), getTooltipFor(i), BOTTOM);
+    tooltips->addTooltipFor(getItem(i).get(), getTooltipFor(i), BOTTOM);
 
   getItem(ACTION_PLAY)->enableFlags(CTRL_RIGHT_CLICK);
 }
@@ -106,8 +105,7 @@ void AniControls::onClickButton()
   }
 }
 
-void AniControls::onRightClick(Item* item)
-{
+void AniControls::onRightClick(std::shared_ptr<Item> item) {
   ButtonSet::onRightClick(item);
 
   if (item == getItem(ACTION_PLAY) && current_editor)
@@ -145,5 +143,7 @@ std::string AniControls::getTooltipFor(int index) const
 
   return tooltip;
 }
+
+static Widget::Shared<AniControls> _ac{"AniControls"};
 
 } // namespace app

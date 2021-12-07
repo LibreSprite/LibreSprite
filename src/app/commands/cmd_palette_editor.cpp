@@ -93,8 +93,8 @@ private:
   Box m_vbox;
   Box m_topBox;
   Box m_bottomBox;
-  ButtonSet m_colorType;
-  ButtonSet m_changeMode;
+  std::shared_ptr<ButtonSet> m_colorType = inject<Widget>{"ButtonSet"};
+  std::shared_ptr<ButtonSet> m_changeMode = inject<Widget>{"ButtonSet"};
   HexColorEntry m_hexColorEntry;
   Label m_entryLabel;
   RgbSliders m_rgbSliders;
@@ -106,7 +106,7 @@ private:
   // what the user is writting in the text field.
   bool m_disableHexUpdate;
 
-  ui::Timer m_redrawTimer;
+  inject<ui::Timer> m_redrawTimer = Timer::create(250, *this);
   bool m_redrawAll;
 
   // True if the palette change must be implant in the UndoHistory
@@ -243,29 +243,29 @@ PaletteEntryEditor::PaletteEntryEditor()
   , m_vbox(VERTICAL)
   , m_topBox(HORIZONTAL)
   , m_bottomBox(HORIZONTAL)
-  , m_colorType(2)
-  , m_changeMode(2)
   , m_entryLabel("")
   , m_disableHexUpdate(false)
-  , m_redrawTimer(250, this)
   , m_redrawAll(false)
   , m_implantChange(false)
   , m_selfPalChange(false)
   , m_fromPalette(0, 0)
 {
-  m_colorType.addItem("RGB");
-  m_colorType.addItem("HSB");
-  m_changeMode.addItem("Abs");
-  m_changeMode.addItem("Rel");
+  m_colorType->setColumns(2);
+  m_changeMode->setColumns(2);
+
+  m_colorType->addItem("RGB");
+  m_colorType->addItem("HSB");
+  m_changeMode->addItem("Abs");
+  m_changeMode->addItem("Rel");
 
   m_topBox.setBorder(gfx::Border(0));
   m_topBox.setChildSpacing(0);
   m_bottomBox.setBorder(gfx::Border(0));
 
   // Top box
-  m_topBox.addChild(&m_colorType);
+  m_topBox.addChild(m_colorType);
   m_topBox.addChild(new Separator("", VERTICAL));
-  m_topBox.addChild(&m_changeMode);
+  m_topBox.addChild(m_changeMode);
   m_topBox.addChild(new Separator("", VERTICAL));
   m_topBox.addChild(&m_hexColorEntry);
   m_topBox.addChild(&m_entryLabel);
@@ -278,14 +278,14 @@ PaletteEntryEditor::PaletteEntryEditor()
   m_vbox.addChild(&m_bottomBox);
   addChild(&m_vbox);
 
-  m_colorType.ItemChange.connect(base::Bind<void>(&PaletteEntryEditor::onColorTypeClick, this));
-  m_changeMode.ItemChange.connect(base::Bind<void>(&PaletteEntryEditor::onChangeModeClick, this));
+  m_colorType->ItemChange.connect(base::Bind<void>(&PaletteEntryEditor::onColorTypeClick, this));
+  m_changeMode->ItemChange.connect(base::Bind<void>(&PaletteEntryEditor::onChangeModeClick, this));
 
   m_rgbSliders.ColorChange.connect(&PaletteEntryEditor::onColorSlidersChange, this);
   m_hsvSliders.ColorChange.connect(&PaletteEntryEditor::onColorSlidersChange, this);
   m_hexColorEntry.ColorChange.connect(&PaletteEntryEditor::onColorHexEntryChange, this);
 
-  m_changeMode.setSelectedItem(ABS_MODE);
+  m_changeMode->setSelectedItem(ABS_MODE);
   selectColorType(app::Color::RgbType);
 
   // We hook fg/bg color changes (by eyedropper mainly) to update the selected entry color
@@ -352,12 +352,12 @@ void PaletteEntryEditor::setColor(const app::Color& color)
 bool PaletteEntryEditor::onProcessMessage(Message* msg)
 {
   if (msg->type() == kTimerMessage &&
-      static_cast<TimerMessage*>(msg)->timer() == &m_redrawTimer) {
+      static_cast<TimerMessage*>(msg)->timer().get() == m_redrawTimer) {
     // Redraw all editors
     if (m_redrawAll) {
       m_redrawAll = false;
       m_implantChange = false;
-      m_redrawTimer.stop();
+      m_redrawTimer->stop();
 
       // Call all observers of PaletteChange event.
       m_selfPalChange = true;
@@ -450,7 +450,7 @@ void PaletteEntryEditor::onColorHexEntryChange(const app::Color& color)
 
 void PaletteEntryEditor::onColorTypeClick()
 {
-  switch (m_colorType.selectedItem()) {
+  switch (m_colorType->selectedItem()) {
     case RGB_MODE:
       selectColorType(app::Color::RgbType);
       break;
@@ -462,7 +462,7 @@ void PaletteEntryEditor::onColorTypeClick()
 
 void PaletteEntryEditor::onChangeModeClick()
 {
-  switch (m_changeMode.selectedItem()) {
+  switch (m_changeMode->selectedItem()) {
     case ABS_MODE:
       m_rgbSliders.setMode(ColorSliders::Absolute);
       m_hsvSliders.setMode(ColorSliders::Absolute);
@@ -660,8 +660,8 @@ void PaletteEntryEditor::selectColorType(app::Color::Type type)
   resetRelativeInfo();
 
   switch (type) {
-    case app::Color::RgbType: m_colorType.setSelectedItem(RGB_MODE); break;
-    case app::Color::HsvType: m_colorType.setSelectedItem(HSV_MODE); break;
+    case app::Color::RgbType: m_colorType->setSelectedItem(RGB_MODE); break;
+    case app::Color::HsvType: m_colorType->setSelectedItem(HSV_MODE); break;
   }
 
   m_vbox.layout();
@@ -714,8 +714,8 @@ void PaletteEntryEditor::updateCurrentSpritePalette(const char* operationName)
   PaletteView* palette_editor = ColorBar::instance()->getPaletteView();
   palette_editor->invalidate();
 
-  if (!m_redrawTimer.isRunning())
-    m_redrawTimer.start();
+  if (!m_redrawTimer->isRunning())
+    m_redrawTimer->start();
 
   m_redrawAll = false;
   m_implantChange = true;

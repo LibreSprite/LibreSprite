@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -22,7 +22,7 @@
 namespace app {
 
 #ifdef _WIN32
-static const char* kDefaultCrashName = PACKAGE "-crash-" VERSION ".dmp";
+static const char* kDefaultCrashName = PACKAGE_AND_VERSION "-crash.dmp";
 #endif
 
 std::string memory_dump_filename()

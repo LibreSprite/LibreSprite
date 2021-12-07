@@ -23,6 +23,7 @@
 #include "zlib.h"
 
 #include <cstdio>
+#include <memory>
 
 #define ASE_FILE_MAGIC                      0xA5E0
 #define ASE_FILE_FRAME_MAGIC                0xF1FA
@@ -186,7 +187,7 @@ bool AseFormat::onLoad(FileOp* fop)
   }
 
   // Create the new sprite
-  UniquePtr<Sprite> sprite(new Sprite(header.depth == 32 ? IMAGE_RGB:
+  std::unique_ptr<Sprite> sprite(new Sprite(header.depth == 32 ? IMAGE_RGB:
       header.depth == 16 ? IMAGE_GRAYSCALE: IMAGE_INDEXED,
       header.width, header.height, header.ncolors));
 
@@ -234,7 +235,7 @@ bool AseFormat::onLoad(FileOp* fop)
           case ASE_FILE_CHUNK_FLI_COLOR2:
             if (!ignore_old_color_chunks) {
               Palette* prevPal = sprite->palette(frame);
-              UniquePtr<Palette> pal(chunk_type == ASE_FILE_CHUNK_FLI_COLOR ?
+              std::unique_ptr<Palette> pal(chunk_type == ASE_FILE_CHUNK_FLI_COLOR ?
                                      ase_file_read_color_chunk(f, prevPal, frame):
                                      ase_file_read_color2_chunk(f, prevPal, frame));
 
@@ -245,7 +246,7 @@ bool AseFormat::onLoad(FileOp* fop)
 
           case ASE_FILE_CHUNK_PALETTE: {
             Palette* prevPal = sprite->palette(frame);
-            UniquePtr<Palette> pal(ase_file_read_palette_chunk(f, prevPal, frame));
+            std::unique_ptr<Palette> pal(ase_file_read_palette_chunk(f, prevPal, frame));
 
             if (prevPal->countDiff(pal.get(), NULL, NULL) > 0)
               sprite->setPalette(pal.get(), true);
@@ -256,7 +257,7 @@ bool AseFormat::onLoad(FileOp* fop)
 
           case ASE_FILE_CHUNK_LAYER: {
             last_object_with_user_data =
-              ase_file_read_layer_chunk(f, &header, sprite,
+              ase_file_read_layer_chunk(f, &header, sprite.get(),
                                         &last_layer,
                                         &current_level);
             break;
@@ -264,7 +265,7 @@ bool AseFormat::onLoad(FileOp* fop)
 
           case ASE_FILE_CHUNK_CEL: {
             Cel* cel =
-              ase_file_read_cel_chunk(f, sprite, frame,
+              ase_file_read_cel_chunk(f, sprite.get(), frame,
                                       sprite->pixelFormat(), fop, &header,
                                       chunk_pos+chunk_size);
             if (cel) {
@@ -319,7 +320,7 @@ bool AseFormat::onLoad(FileOp* fop)
       break;
   }
 
-  fop->createDocument(sprite);
+  fop->createDocument(sprite.get());
   sprite.release();
 
   if (ferror(f)) {
@@ -1029,7 +1030,7 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
     throw base::Exception("ZLib error %d in inflateInit().", err);
 
   std::vector<uint8_t> scanline(ImageTraits::getRowStrideBytes(image->width()));
-  std::vector<uint8_t> uncompressed(image->height() * ImageTraits::getRowStrideBytes(image->width()));
+  std::vector<uint8_t> uncompressed(static_cast<long>(image->height()) * ImageTraits::getRowStrideBytes(image->width()));
   std::vector<uint8_t> compressed(4096);
   int uncompressed_offset = 0;
 
@@ -1169,7 +1170,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
   }
 
   // Create the new frame.
-  base::UniquePtr<Cel> cel;
+  std::unique_ptr<Cel> cel;
 
   switch (cel_type) {
 
@@ -1179,7 +1180,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int h = fgetw(f);
 
       if (w > 0 && h > 0) {
-        ImageRef image(Image::create(pixelFormat, w, h));
+        std::shared_ptr<Image> image(Image::create(pixelFormat, w, h));
 
         // Read pixel data
         switch (image->pixelFormat()) {
@@ -1237,7 +1238,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int h = fgetw(f);
 
       if (w > 0 && h > 0) {
-        ImageRef image(Image::create(pixelFormat, w, h));
+        std::shared_ptr<Image> image(Image::create(pixelFormat, w, h));
 
         // Try to read pixel data
         try {
@@ -1274,7 +1275,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
   if (!cel)
     return nullptr;
 
-  static_cast<LayerImage*>(layer)->addCel(cel);
+  static_cast<LayerImage*>(layer)->addCel(cel.get());
   return cel.release();
 }
 

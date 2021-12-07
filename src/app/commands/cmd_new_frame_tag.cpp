@@ -63,8 +63,8 @@ void NewFrameTagCommand::onExecute(Context* context)
     to = range.frameEnd();
   }
 
-  base::UniquePtr<FrameTag> frameTag(new FrameTag(from, to));
-  FrameTagWindow window(sprite, frameTag);
+  std::unique_ptr<FrameTag> frameTag(new FrameTag(from, to));
+  FrameTagWindow window(sprite, frameTag.get());
   if (!window.show())
     return;
 
@@ -77,8 +77,7 @@ void NewFrameTagCommand::onExecute(Context* context)
   {
     ContextWriter writer(reader);
     Transaction transaction(writer.context(), "New Frames Tag");
-    transaction.execute(new cmd::AddFrameTag(writer.sprite(), frameTag));
-    frameTag.release();
+    transaction.execute(new cmd::AddFrameTag(writer.sprite(), frameTag.release()));
     transaction.commit();
   }
 

@@ -12,10 +12,11 @@
 #include "app/transaction.h"
 #include "app/ui/editor/handle_type.h"
 #include "base/connection.h"
-#include "base/shared_ptr.h"
 #include "doc/algorithm/flip_type.h"
 #include "doc/site.h"
 #include "gfx/size.h"
+
+#include <memory>
 
 namespace doc {
   class Image;
@@ -66,8 +67,8 @@ namespace app {
 
     // Returns a copy of the current image being dragged with the
     // current transformation.
-    void getDraggedImageCopy(base::UniquePtr<Image>& outputImage,
-                             base::UniquePtr<Mask>& outputMask);
+    void getDraggedImageCopy(std::unique_ptr<Image>& outputImage,
+                             std::unique_ptr<Mask>& outputMask);
 
     // Copies the image being dragged in the current position.
     void stampImage();
@@ -136,6 +137,6 @@ namespace app {
     return a;
   }
 
-  typedef base::SharedPtr<PixelsMovement> PixelsMovementPtr;
+  typedef std::shared_ptr<PixelsMovement> PixelsMovementPtr;
 
 } // namespace app

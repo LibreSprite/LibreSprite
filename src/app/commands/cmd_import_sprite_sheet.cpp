@@ -322,7 +322,7 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
     return;
 
   // The list of frames imported from the sheet
-  std::vector<ImageRef> animation;
+  std::vector<std::shared_ptr<Image>> animation;
 
   try {
     Sprite* sprite = document->sprite();
@@ -367,7 +367,7 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
 
     // As first step, we cut each tile and add them into "animation" list.
     for (const auto& tileRect : tileRects) {
-      ImageRef resultImage(
+      std::shared_ptr<Image> resultImage(
         Image::create(
           sprite->pixelFormat(), tileRect.w, tileRect.h));
 
@@ -399,11 +399,10 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
     // Add all frames+cels to the new layer
     for (size_t i=0; i<animation.size(); ++i) {
       // Create the cel.
-      base::UniquePtr<Cel> resultCel(new Cel(frame_t(i), animation[i]));
+      std::unique_ptr<Cel> resultCel(new Cel(frame_t(i), animation[i]));
 
       // Add the cel in the layer.
-      api.addCel(resultLayer, resultCel);
-      resultCel.release();
+      api.addCel(resultLayer, resultCel.release());
     }
 
     // Copy the list of layers (because we will modify it in the iteration).

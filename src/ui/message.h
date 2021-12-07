@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "base/safe_ptr.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
 #include "ui/base.h"
@@ -13,8 +14,6 @@
 #include "ui/message_type.h"
 #include "ui/mouse_buttons.h"
 #include "ui/pointer_type.h"
-#include "ui/widgets_list.h"
-
 #include <string>
 #include <vector>
 
@@ -25,17 +24,15 @@ namespace ui {
 
   class Message {
   public:
-    typedef WidgetsList::iterator& recipients_iterator;
+    using WidgetsList = std::vector<base::safe_ptr<ui::Widget>>;
 
-    Message(MessageType type,
-            KeyModifiers modifiers = kKeyUninitializedModifier);
-    virtual ~Message();
+    Message(MessageType type, KeyModifiers modifiers = kKeyUninitializedModifier);
+    virtual ~Message() = default;
+    virtual bool send();
 
     MessageType type() const { return m_type; }
-    const WidgetsList& recipients() const { return m_recipients; }
+    WidgetsList& recipients() { return m_recipients; }
     bool hasRecipients() const { return !m_recipients.empty(); }
-    bool isUsed() const { return m_used; }
-    void markAsUsed() { m_used = true; }
     KeyModifiers modifiers() const { return m_modifiers; }
     bool shiftPressed() const { return (m_modifiers & kKeyShiftModifier) == kKeyShiftModifier; }
     bool ctrlPressed() const { return (m_modifiers & kKeyCtrlModifier) == kKeyCtrlModifier; }
@@ -54,7 +51,12 @@ namespace ui {
 
     void broadcastToChildren(Widget* widget);
 
+  protected:
+    virtual bool sendToWidget(Widget* widget);
+
   private:
+    void report(Widget* widget);
+
     MessageType m_type;         // Type of message
     WidgetsList m_recipients; // List of recipients of the message
     bool m_used;              // Was used
@@ -93,6 +95,9 @@ namespace ui {
 
     int count() const { return m_count; }
     const gfx::Rect& rect() const { return m_rect; }
+
+  protected:
+    bool sendToWidget(Widget* widget) override;
 
   private:
     int m_count;             // Cound=0 if it's last msg of draw-chain
@@ -155,16 +160,15 @@ namespace ui {
 
   class TimerMessage : public Message {
   public:
-    TimerMessage(int count, Timer* timer)
-      : Message(kTimerMessage), m_count(count), m_timer(timer) {
-    }
+    TimerMessage(int count, std::weak_ptr<Timer> timer) : Message(kTimerMessage), m_count(count), m_timer(timer) {}
+    bool send() override;
 
     int count() const { return m_count; }
-    Timer* timer() { return m_timer; }
+    std::shared_ptr<Timer> timer() { return m_timer.lock(); }
 
   private:
     int m_count;                    // Accumulated calls
-    Timer* m_timer;                 // Timer handle
+    std::weak_ptr<Timer> m_timer;   // Timer handle
   };
 
   class DropFilesMessage : public Message {

@@ -27,7 +27,6 @@
 #include "base/bind.h"
 #include "base/fs.h"
 #include "base/path.h"
-#include "base/shared_ptr.h"
 #include "base/string.h"
 #include "css/sheet.h"
 #include "gfx/border.h"
@@ -41,6 +40,8 @@
 #include "ui/ui.h"
 
 #include "tinyxml.h"
+
+#include <memory>
 
 #define BGCOLOR                 (getWidgetBgColor(widget))
 
@@ -802,9 +803,8 @@ she::Surface* SkinTheme::sliceSheet(she::Surface* sur, const gfx::Rect& bounds)
   return sur;
 }
 
-she::Font* SkinTheme::getWidgetFont(const Widget* widget) const
-{
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+she::Font* SkinTheme::getWidgetFont(const Widget* widget) const {
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery && skinPropery->hasMiniFont())
     return getMiniFont();
   else
@@ -1077,7 +1077,7 @@ void SkinTheme::paintButton(PaintEvent& ev)
 
   // Tool buttons are smaller
   LookType look = NormalLook;
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery)
     look = skinPropery->getLook();
 
@@ -1153,7 +1153,7 @@ void SkinTheme::paintCheckBox(PaintEvent& ev)
 
   // Check box look
   LookType look = NormalLook;
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery)
     look = skinPropery->getLook();
 
@@ -1206,7 +1206,7 @@ void SkinTheme::paintEntry(PaintEvent& ev)
   g->fillRect(BGCOLOR, bounds);
 
   bool isMiniLook = false;
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery)
     isMiniLook = (skinPropery->getLook() == MiniLook);
 
@@ -1295,7 +1295,7 @@ void SkinTheme::paintLabel(PaintEvent& ev)
   gfx::Color bg = BGCOLOR;
   Rect text, rc = widget->clientBounds();
 
-  SkinStylePropertyPtr styleProp = widget->getProperty(SkinStyleProperty::Name);
+  auto styleProp = std::static_pointer_cast<SkinStyleProperty>(widget->getProperty(SkinStyleProperty::Name));
   if (styleProp)
     style = styleProp->getStyle();
 
@@ -1316,7 +1316,7 @@ void SkinTheme::paintLinkLabel(PaintEvent& ev)
   gfx::Rect bounds = widget->clientBounds();
   gfx::Color bg = BGCOLOR;
 
-  SkinStylePropertyPtr styleProp = widget->getProperty(SkinStyleProperty::Name);
+  auto styleProp = std::static_pointer_cast<SkinStyleProperty>(widget->getProperty(SkinStyleProperty::Name));
   if (styleProp)
     style = styleProp->getStyle();
 
@@ -1585,11 +1585,11 @@ void SkinTheme::paintSlider(PaintEvent& ev)
   // customized background (e.g. RGB sliders)
   ISliderBgPainter* bgPainter = NULL;
 
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery)
     isMiniLook = (skinPropery->getLook() == MiniLook);
 
-  SkinSliderPropertyPtr skinSliderPropery = widget->getProperty(SkinSliderProperty::Name);
+  auto skinSliderPropery = std::static_pointer_cast<SkinSliderProperty>(widget->getProperty(SkinSliderProperty::Name));
   if (skinSliderPropery)
     bgPainter = skinSliderPropery->getBgPainter();
 
@@ -1809,7 +1809,7 @@ void SkinTheme::paintView(PaintEvent& ev)
   gfx::Color bg = BGCOLOR;
   Style* style = styles.view();
 
-  SkinStylePropertyPtr styleProp = widget->getProperty(SkinStyleProperty::Name);
+  auto styleProp = std::static_pointer_cast<SkinStyleProperty>(widget->getProperty(SkinStyleProperty::Name));
   if (styleProp)
     style = styleProp->getStyle();
 
@@ -1829,7 +1829,7 @@ void SkinTheme::paintViewScrollbar(PaintEvent& ev)
   int pos, len;
 
   bool isMiniLook = false;
-  SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
+  auto skinPropery = std::static_pointer_cast<SkinProperty>(widget->getProperty(SkinProperty::Name));
   if (skinPropery)
     isMiniLook = (skinPropery->getLook() == MiniLook);
 

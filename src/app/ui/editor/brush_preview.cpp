@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -108,7 +108,7 @@ void BrushPreview::show(const gfx::Point& screenPos)
   gfx::Point spritePos = m_editor->screenToEditor(screenPos);
 
   // Get the current tool
-  tools::Ink* ink = m_editor->getCurrentEditorInk();
+  tools::Ink* ink = m_editor->getCurrentEditorInk().get();
 
   bool isFloodfill = m_editor->getCurrentEditorTool()->getPointShape(0)->isFloodFill();
 
@@ -200,16 +200,16 @@ void BrushPreview::show(const gfx::Point& screenPos)
     }
 
     {
-      base::UniquePtr<tools::ToolLoop> loop(
+      std::unique_ptr<tools::ToolLoop> loop(
         create_tool_loop_preview(
           m_editor, extraImage,
           brushBounds.origin()));
       if (loop) {
-        loop->getInk()->prepareInk(loop);
+        loop->getInk()->prepareInk(loop.get());
         loop->getIntertwine()->prepareIntertwine();
-        loop->getPointShape()->preparePointShape(loop);
+        loop->getPointShape()->preparePointShape(loop.get());
         loop->getPointShape()->transformPoint(
-          loop,
+          loop.get(),
           brushBounds.x-origBrushBounds.x,
           brushBounds.y-origBrushBounds.y);
       }
@@ -316,12 +316,11 @@ void BrushPreview::generateBoundaries()
   m_brushWidth = w;
   m_brushHeight = h;
 
-  ImageRef mask;
+  std::shared_ptr<Image> mask;
   if (isOnePixel) {
     mask.reset(Image::create(IMAGE_BITMAP, w, w));
     mask->putPixel(0, 0, (color_t)1);
-  }
-  else if (brushImage->pixelFormat() != IMAGE_BITMAP) {
+  } else if (brushImage->pixelFormat() != IMAGE_BITMAP) {
     mask.reset(Image::create(IMAGE_BITMAP, w, h));
 
     LockImageBits<BitmapTraits> bits(mask.get());

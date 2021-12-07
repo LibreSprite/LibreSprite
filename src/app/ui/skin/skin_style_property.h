@@ -9,7 +9,8 @@
 
 #include "app/ui/skin/skin_property.h"
 #include "app/ui/skin/style.h"
-#include "base/shared_ptr.h"
+
+#include <memory>
 
 namespace app {
 namespace skin {
@@ -27,7 +28,7 @@ namespace skin {
     skin::Style* m_style;
   };
 
-  typedef base::SharedPtr<SkinStyleProperty> SkinStylePropertyPtr;
+  typedef std::shared_ptr<SkinStyleProperty> SkinStylePropertyPtr;
 
 } // namespace skin
 } // namespace app

@@ -56,7 +56,7 @@ class JpegFormat : public FileFormat {
   bool onLoad(FileOp* fop) override;
   bool onSave(FileOp* fop) override;
 
-  base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
+  std::shared_ptr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
 FileFormat* CreateJpegFormat()
@@ -234,8 +234,7 @@ bool JpegFormat::onSave(FileOp* fop)
   const Image* image = fop->sequenceImage();
   JSAMPARRAY buffer;
   JDIMENSION buffer_height;
-  const base::SharedPtr<JpegOptions> jpeg_options =
-    fop->sequenceGetFormatOptions();
+  auto jpeg_options = std::static_pointer_cast<JpegOptions>(fop->sequenceGetFormatOptions());
   int c;
 
   // Open the file for write in it.
@@ -345,11 +344,11 @@ bool JpegFormat::onSave(FileOp* fop)
 }
 
 // Shows the JPEG configuration dialog.
-base::SharedPtr<FormatOptions> JpegFormat::onGetFormatOptions(FileOp* fop)
+  std::shared_ptr<FormatOptions> JpegFormat::onGetFormatOptions(FileOp* fop)
 {
-  base::SharedPtr<JpegOptions> jpeg_options;
+  std::shared_ptr<JpegOptions> jpeg_options;
   if (fop->document()->getFormatOptions())
-    jpeg_options = base::SharedPtr<JpegOptions>(fop->document()->getFormatOptions());
+    jpeg_options = std::static_pointer_cast<JpegOptions>(fop->document()->getFormatOptions());
 
   if (!jpeg_options)
     jpeg_options.reset(new JpegOptions);
@@ -364,9 +363,9 @@ base::SharedPtr<FormatOptions> JpegFormat::onGetFormatOptions(FileOp* fop)
     jpeg_options->quality = get_config_float("JPEG", "Quality", 1.0f);
 
     // Load the window to ask to the user the JPEG options he wants.
-    UniquePtr<ui::Window> window(app::load_widget<ui::Window>("jpeg_options.xml", "jpeg_options"));
-    ui::Slider* slider_quality = app::find_widget<ui::Slider>(window, "quality");
-    ui::Widget* ok = app::find_widget<ui::Widget>(window, "ok");
+    std::unique_ptr<ui::Window> window(app::load_widget<ui::Window>("jpeg_options.xml", "jpeg_options"));
+    ui::Slider* slider_quality = app::find_widget<ui::Slider>(window.get(), "quality");
+    ui::Widget* ok = app::find_widget<ui::Widget>(window.get(), "ok");
 
     slider_quality->setValue(int(jpeg_options->quality * 10.0f));
 
@@ -375,16 +374,15 @@ base::SharedPtr<FormatOptions> JpegFormat::onGetFormatOptions(FileOp* fop)
     if (window->closer() == ok) {
       jpeg_options->quality = slider_quality->getValue() / 10.0f;
       set_config_float("JPEG", "Quality", jpeg_options->quality);
-    }
-    else {
-      jpeg_options.reset(NULL);
+    } else {
+      jpeg_options.reset();
     }
 
     return jpeg_options;
   }
   catch (std::exception& e) {
     Console::showException(e);
-    return base::SharedPtr<JpegOptions>(0);
+    return std::shared_ptr<JpegOptions>(0);
   }
 }
 

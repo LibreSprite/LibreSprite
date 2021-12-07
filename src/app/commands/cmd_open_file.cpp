@@ -25,11 +25,11 @@
 #include "base/bind.h"
 #include "base/path.h"
 #include "base/thread.h"
-#include "base/unique_ptr.h"
 #include "doc/sprite.h"
 #include "ui/ui.h"
 
 #include <cstdio>
+#include <memory>
 
 namespace app {
 
@@ -119,7 +119,7 @@ void OpenFileCommand::onExecute(Context* context)
   }
 
   if (!m_filename.empty()) {
-    base::UniquePtr<FileOp> fop(
+    std::unique_ptr<FileOp> fop(
       FileOp::createLoadDocumentOperation(
         context, m_filename.c_str(), FILE_LOAD_SEQUENCE_ASK));
     bool unrecent = false;
@@ -130,7 +130,7 @@ void OpenFileCommand::onExecute(Context* context)
         unrecent = true;
       }
       else {
-        OpenFileJob task(fop);
+        OpenFileJob task(fop.get());
         task.showProgressWindow();
 
         // Post-load processing, it is called from the GUI because may require user intervention.

@@ -32,7 +32,6 @@ namespace ui {
 
 Entry::Entry(std::size_t maxsize, const char* format, ...)
   : Widget(kEntryWidget)
-  , m_timer(500, this)
   , m_maxsize(maxsize)
   , m_caret(0)
   , m_scroll(0)
@@ -134,7 +133,7 @@ void Entry::setCaretPos(int pos)
       break;
   }
 
-  m_timer.start();
+  m_timer->start();
   m_state = true;
 
   invalidate();
@@ -195,7 +194,7 @@ bool Entry::onProcessMessage(Message* msg)
 {
   switch (msg->type()) {
     case kTimerMessage:
-      if (hasFocus() && static_cast<TimerMessage*>(msg)->timer() == &m_timer) {
+      if (hasFocus() && static_cast<TimerMessage*>(msg)->timer().get() == m_timer) {
         // Blinking caret
         m_state = m_state ? false: true;
         invalidate();
@@ -213,7 +212,7 @@ bool Entry::onProcessMessage(Message* msg)
       rect.w *= scale;
       she::set_input_rect(rect);
 
-      m_timer.start();
+      m_timer->start();
 
       m_state = true;
       invalidate();
@@ -231,7 +230,7 @@ bool Entry::onProcessMessage(Message* msg)
     case kFocusLeaveMessage:
       invalidate();
 
-      m_timer.stop();
+      m_timer->stop();
 
       if (!m_lock_selection)
         deselectText();
@@ -408,7 +407,7 @@ bool Entry::onProcessMessage(Message* msg)
 
         // Show the caret
         if (is_dirty) {
-          m_timer.start();
+          m_timer->start();
           m_state = true;
         }
 

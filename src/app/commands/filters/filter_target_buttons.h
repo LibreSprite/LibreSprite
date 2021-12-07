@@ -10,6 +10,7 @@
 #include "app/ui/button_set.h"
 #include "app/ui/skin/skin_part.h"
 #include "base/signal.h"
+#include "doc/pixel_format.h"
 #include "filters/target.h"
 #include "ui/tooltips.h"
 
@@ -22,34 +23,36 @@ namespace app {
 
   class FilterTargetButtons : public ButtonSet {
   public:
-    // Creates a new button to handle "targets" to apply some filter in
-    // the a sprite.
-    FilterTargetButtons(int imgtype, bool withChannels);
-
     Target getTarget() const { return m_target; }
     void setTarget(Target target);
+
+    void setImageFormat(doc::PixelFormat format);
 
     base::Signal0<void> TargetChange;
 
   protected:
-    void onItemChange(Item* item) override;
+    // Creates a new button to handle "targets" to apply some filter in
+    // the a sprite.
+    FilterTargetButtons();
+
+    void onItemChange(std::shared_ptr<Item> item) override;
     void onChannelChange(ui::ButtonBase* button);
     void onImagesChange(ui::ButtonBase* button);
 
   private:
-    void selectTargetButton(Item* item, Target specificTarget);
+    void selectTargetButton(std::shared_ptr<Item> item, Target specificTarget);
     void updateFromTarget();
-    void updateComponentTooltip(Item* item, const char* channelName, int align);
+    void updateComponentTooltip(std::shared_ptr<Item> item, const char* channelName, int align);
     skin::SkinPartPtr getCelsIcon() const;
 
-    Target m_target;
-    Item* m_red;
-    Item* m_green;
-    Item* m_blue;
-    Item* m_alpha;
-    Item* m_gray;
-    Item* m_index;
-    Item* m_cels;
+    Target m_target = 0;
+    std::shared_ptr<Item> m_red;
+    std::shared_ptr<Item> m_green;
+    std::shared_ptr<Item> m_blue;
+    std::shared_ptr<Item> m_alpha;
+    std::shared_ptr<Item> m_gray;
+    std::shared_ptr<Item> m_index;
+    std::shared_ptr<Item> m_cels;
     ui::TooltipManager m_tooltips;
   };
 

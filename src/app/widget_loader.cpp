@@ -45,25 +45,7 @@ using namespace app::skin;
 static int convert_align_value_to_flags(const char *value);
 static int int_attr(const TiXmlElement* elem, const char* attribute_name, int default_value);
 
-WidgetLoader::WidgetLoader()
-  : m_tooltipManager(NULL)
-{
-}
-
-WidgetLoader::~WidgetLoader()
-{
-  for (TypeCreatorsMap::iterator
-         it=m_typeCreators.begin(), end=m_typeCreators.end(); it != end; ++it)
-    it->second->dispose();
-}
-
-void WidgetLoader::addWidgetType(const char* tagName, IWidgetTypeCreator* creator)
-{
-  m_typeCreators[tagName] = creator;
-}
-
-Widget* WidgetLoader::loadWidget(const char* fileName, const char* widgetId, ui::Widget* widget)
-{
+Widget* WidgetLoader::loadWidget(const char* fileName, const char* widgetId, ui::Widget* widget) {
   std::string buf;
 
   ResourceFinder rf;
@@ -115,17 +97,7 @@ Widget* WidgetLoader::loadWidgetFromXmlFile(
 Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget* root, Widget* parent, Widget* widget)
 {
   const std::string elem_name = elem->Value();
-
-  // TODO error handling: add a message if the widget is bad specified
-
-  // Try to use one of the creators.
-  TypeCreatorsMap::iterator it = m_typeCreators.find(elem_name);
-
-  if (it != m_typeCreators.end()) {
-    if (!widget)
-      widget = it->second->createWidgetFromXml(elem);
-  }
-  else if (elem_name == "panel") {
+  if (elem_name == "panel") {
     if (!widget)
       widget = new Panel();
   }
@@ -430,10 +402,13 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
     }
   }
   else if (elem_name == "buttonset") {
-    const char* columns = elem->Attribute("columns");
+    auto columns = strtol(elem->Attribute("columns") ?: "", NULL, 10);
 
-    if (!widget && columns)
-      widget = new ButtonSet(strtol(columns, NULL, 10));
+    if (!widget && columns) {
+        std::shared_ptr<ButtonSet> buttonset = inject<Widget>{"ButtonSet"};
+        buttonset->setColumns(columns);
+        widget = buttonset->holdUntilAdded();
+    }
 
     if (ButtonSet* buttonset = dynamic_cast<ButtonSet*>(widget)) {
       bool multiple = bool_attr_is_true(elem, "multiple");
@@ -451,7 +426,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
       int hspan = int_attr(elem, "hspan", 1);
       int vspan = int_attr(elem, "vspan", 1);
 
-      ButtonSet::Item* item = new ButtonSet::Item();
+      std::shared_ptr<ButtonSet::Item> item = inject<ui::Widget>("ButtonSetItem");
 
       if (icon) {
         SkinPartPtr part = SkinTheme::instance()->getPartById(std::string(icon));
@@ -463,7 +438,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
         item->setText(text);
 
       buttonset->addItem(item, hspan, vspan);
-      fillWidgetWithXmlElementAttributes(elem, root, item);
+      fillWidgetWithXmlElementAttributes(elem, root, item.get());
     }
   }
   else if (elem_name == "image") {

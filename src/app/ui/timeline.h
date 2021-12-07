@@ -280,14 +280,14 @@ namespace app {
 
     // Marching ants stuff to show the range in the clipboard.
     // TODO merge this with the marching ants of the sprite editor (ui::Editor)
-    ui::Timer m_clipboard_timer;
+    inject<ui::Timer> m_clipboard_timer = ui::Timer::create(100, *this);
     int m_offset_count;
 
     bool m_scroll;   // True if the drag-and-drop operation is a scroll operation.
     bool m_copy;     // True if the drag-and-drop operation is a copy.
     bool m_fromTimeline;
 
-    AniControls m_aniControls;
+    std::shared_ptr<AniControls> m_aniControls = inject<Widget>{"AniControls"};
 
     // Temporal data used to move the range.
     struct MoveRange {

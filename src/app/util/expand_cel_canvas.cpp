@@ -20,7 +20,6 @@
 #include "app/document.h"
 #include "app/transaction.h"
 #include "app/util/range_utils.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/shrink_bounds.h"
 #include "doc/cel.h"
 #include "doc/image.h"
@@ -40,8 +39,8 @@ static doc::ImageBufferPtr dst_buffer;
 
 static void destroy_buffers()
 {
-  src_buffer.reset(NULL);
-  dst_buffer.reset(NULL);
+  src_buffer.reset();
+  dst_buffer.reset();
 }
 
 static void create_buffers()
@@ -90,7 +89,7 @@ ExpandCelCanvas::ExpandCelCanvas(
   // Create a new cel
   if (!m_cel) {
     m_celCreated = true;
-    m_cel = new Cel(site.frame(), ImageRef(NULL));
+    m_cel = new Cel(site.frame(), std::shared_ptr<Image>(nullptr));
   }
 
   m_origCelPos = m_cel->position();
@@ -167,7 +166,7 @@ void ExpandCelCanvas::commit()
     // Add a copy of m_dstImage in the sprite's image stock
     gfx::Rect trimBounds = getTrimDstImageBounds();
     if (!trimBounds.isEmpty()) {
-      ImageRef newImage(trimDstImage(trimBounds));
+      std::shared_ptr<Image> newImage(trimDstImage(trimBounds));
       ASSERT(newImage);
 
       m_cel->data()->setImage(newImage);
@@ -236,7 +235,7 @@ void ExpandCelCanvas::rollback()
       static_cast<LayerImage*>(m_layer)->removeCel(m_cel);
 
     delete m_cel;
-    m_celImage.reset(NULL);
+    m_celImage.reset();
   }
 
   m_closed = true;
@@ -384,9 +383,9 @@ gfx::Rect ExpandCelCanvas::getTrimDstImageBounds() const
   }
 }
 
-ImageRef ExpandCelCanvas::trimDstImage(const gfx::Rect& bounds) const
+std::shared_ptr<Image> ExpandCelCanvas::trimDstImage(const gfx::Rect& bounds) const
 {
-  return ImageRef(
+  return std::shared_ptr<Image>(
     crop_image(m_dstImage.get(),
                bounds.x, bounds.y,
                bounds.w, bounds.h,

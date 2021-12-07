@@ -9,7 +9,6 @@
 #include <string>
 
 #include "base/observable.h"
-#include "base/unique_ptr.h"
 #include "doc/document_observer.h"
 #include "doc/object.h"
 #include "doc/sprites.h"

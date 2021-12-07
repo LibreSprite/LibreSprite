@@ -44,6 +44,10 @@ namespace app {
       return m_params != params.m_params;
     }
 
+    std::string& set(const std::string& name, const std::string& value) {
+      return m_params[name] = value;
+    }
+
     std::string& set(const char* name, const char* value) {
       return m_params[name] = value;
     }

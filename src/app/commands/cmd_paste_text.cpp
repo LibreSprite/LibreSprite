@@ -23,9 +23,7 @@
 #include "base/bind.h"
 #include "base/path.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
-#include "doc/image_ref.h"
 #include "render/quantization.h"
 #include "she/system.h"
 #include "she/font.h"
@@ -161,7 +159,7 @@ private:
 
   std::shared_ptr<she::Font> m_font;
   std::string m_face;
-  base::UniquePtr<FontPopup> m_fontPopup;
+  std::unique_ptr<FontPopup> m_fontPopup;
 };
 
 void PasteTextCommand::onExecute(Context* ctx)
@@ -200,7 +198,7 @@ void PasteTextCommand::onExecute(Context* ctx)
                                    appColor.getBlue(),
                                    appColor.getAlpha());
 
-    doc::ImageRef image(render_text(faceName, size, text, color, antialias));
+    std::shared_ptr<Image> image(render_text(faceName, size, text, color, antialias));
     if (image) {
       Sprite* sprite = editor->sprite();
       if (image->pixelFormat() != sprite->pixelFormat()) {

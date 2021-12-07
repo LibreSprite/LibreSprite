@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    - Copyright (C) 2001-2015  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include <string>
-
 #include "app/tools/fill.h"
 #include "app/tools/trace_policy.h"
+
+#include <memory>
+#include <string>
 
 namespace app {
   namespace tools {
@@ -47,14 +48,14 @@ namespace app {
       int getDefaultBrushSize() const { return m_default_brush_size; }
 
       Fill getFill(int button) { return m_button[button].m_fill; }
-      Ink* getInk(int button) { return m_button[button].m_ink; }
+      std::shared_ptr<Ink> getInk(int button) { return m_button[button].m_ink; }
       Controller* getController(int button) { return m_button[button].m_controller; }
       PointShape* getPointShape(int button) { return m_button[button].m_point_shape; }
       Intertwine* getIntertwine(int button) { return m_button[button].m_intertwine; }
       TracePolicy getTracePolicy(int button) { return m_button[button].m_trace_policy; }
 
       void setFill(int button, Fill fill) { m_button[button].m_fill = fill; }
-      void setInk(int button, Ink* ink) { m_button[button].m_ink = ink; }
+      void setInk(int button, std::shared_ptr<Ink> ink) { m_button[button].m_ink = ink; }
       void setController(int button, Controller* controller) { m_button[button].m_controller = controller; }
       void setPointShape(int button, PointShape* point_shape) { m_button[button].m_point_shape = point_shape; }
       void setIntertwine(int button, Intertwine* intertwine) { m_button[button].m_intertwine = intertwine; }
@@ -69,7 +70,7 @@ namespace app {
 
       struct {
         Fill m_fill;
-        Ink* m_ink;
+        std::shared_ptr<Ink> m_ink;
         Controller* m_controller;
         PointShape* m_point_shape;
         Intertwine* m_intertwine;

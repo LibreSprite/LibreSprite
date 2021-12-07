@@ -374,7 +374,7 @@ public:
   void setInterval(int msecs)
   {
     if (!m_timer)
-      m_timer.reset(new ui::Timer(msecs, this));
+      m_timer = ui::Timer::create(msecs, *this);
     else
       m_timer->setInterval(msecs);
   }
@@ -395,7 +395,7 @@ protected:
   }
 
 private:
-  base::UniquePtr<ui::Timer> m_timer;
+  inject<ui::Timer> m_timer{nullptr};
 };
 
 // TODO Use a ui::TipWindow with rounded borders, when we add support

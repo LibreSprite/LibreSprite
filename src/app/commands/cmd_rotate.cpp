@@ -94,7 +94,7 @@ protected:
     for (Cel* cel : m_cels) {
       Image* image = cel->image();
       if (image) {
-        ImageRef new_image(Image::create(image->pixelFormat(),
+        std::shared_ptr<Image> new_image(Image::create(image->pixelFormat(),
             m_angle == 180 ? image->width(): image->height(),
             m_angle == 180 ? image->height(): image->width()));
         new_image->setMaskColor(image->maskColor());
@@ -114,7 +114,7 @@ protected:
     // rotate mask
     if (m_document->isMaskVisible()) {
       Mask* origMask = m_document->mask();
-      base::UniquePtr<Mask> new_mask(new Mask());
+      std::unique_ptr<Mask> new_mask(new Mask());
       const gfx::Rect& origBounds = origMask->bounds();
       int x = 0, y = 0;
 
@@ -141,7 +141,7 @@ protected:
       doc::rotate_image(origMask->bitmap(), new_mask->bitmap(), m_angle);
 
       // Copy new mask
-      api.copyToCurrentMask(new_mask);
+      api.copyToCurrentMask(new_mask.get());
 
       // Regenerate mask
       m_document->resetTransformation();

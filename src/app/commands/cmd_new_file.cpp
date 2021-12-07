@@ -22,7 +22,6 @@
 #include "app/ui/workspace.h"
 #include "app/ui_context.h"
 #include "app/util/clipboard.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/layer.h"
@@ -32,6 +31,8 @@
 #include "ui/ui.h"
 
 #include "new_sprite.xml.h"
+
+#include <memory>
 
 using namespace ui;
 
@@ -141,7 +142,7 @@ void NewFileCommand::onExecute(Context* context)
       ASSERT(format == IMAGE_RGB || format == IMAGE_GRAYSCALE || format == IMAGE_INDEXED);
       ASSERT(w > 0 && h > 0);
 
-      base::UniquePtr<Sprite> sprite(Sprite::createBasicSprite(format, w, h, ncolors));
+      std::unique_ptr<Sprite> sprite(Sprite::createBasicSprite(format, w, h, ncolors));
 
       if (sprite->pixelFormat() != IMAGE_GRAYSCALE)
         get_default_palette()->copyColorsTo(sprite->palette(frame_t(0)));
@@ -173,7 +174,7 @@ void NewFileCommand::onExecute(Context* context)
       }
 
       // Show the sprite to the user
-      base::UniquePtr<Document> doc(new Document(sprite));
+      std::unique_ptr<Document> doc(new Document(sprite.get()));
       sprite.release();
       sprintf(buf, "Sprite-%04d", ++_sprite_counter);
       doc->setFilename(buf);
