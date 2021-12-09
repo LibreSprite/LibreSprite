@@ -145,8 +145,29 @@ FontPopup::FontPopup()
   m_popup->view()->attachToView(&m_listBox);
 
   std::queue<std::string> fontDirs;
-  for (auto& dir : base::get_font_paths())
-      fontDirs.push(dir);
+#if _WIN32
+  {
+    std::vector<wchar_t> buf(MAX_PATH);
+    HRESULT hr = SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
+                                 SHGFP_TYPE_DEFAULT, &buf[0]);
+    if (hr == S_OK) {
+      fontDirs.push(base::to_utf8(&buf[0]));
+    }
+  }
+#elif __APPLE__
+  {
+    fontDirs.push("/System/Library/Fonts/");
+    fontDirs.push("/Library/Fonts");
+    fontDirs.push("~/Library/Fonts");
+  }
+#else  // Unix-like
+  {
+    fontDirs.push("/usr/share/fonts");
+    fontDirs.push("/usr/local/share/fonts");
+    fontDirs.push("~/.local/share/fonts");
+    fontDirs.push("~/.fonts");
+  }
+#endif
 
   // Create a list of fullpaths to every font found in all font
   // directories (fontDirs)

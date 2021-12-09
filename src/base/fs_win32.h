@@ -165,15 +165,4 @@ std::vector<std::string> list_files(const std::string& path)
   return files;
 }
 
-std::vector<std::string> get_font_paths()
-{
-    std::vector<wchar_t> buf(MAX_PATH);
-    HRESULT hr = SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
-                                 SHGFP_TYPE_DEFAULT, &buf[0]);
-    if (hr == S_OK) {
-        return {base::to_utf8(&buf[0]))};
-    }
-    return {};
-}
-
 }
