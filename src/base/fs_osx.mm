@@ -11,7 +11,6 @@
 #include <Foundation/Foundation.h>
 
 #include <string>
-#include <vector>
 
 namespace base {
 
@@ -25,15 +24,6 @@ std::string get_lib_app_support_path()
       return std::string([dir UTF8String]);
   }
   return std::string();
-}
-
-std::vector<std::string> get_font_paths()
-{
-    return {
-        "/System/Library/Fonts/",
-        "/Library/Fonts",
-        "~/Library/Fonts"
-    };
 }
 
 } // namespace base

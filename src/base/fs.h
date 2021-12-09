@@ -34,7 +34,6 @@ namespace base {
   std::string get_app_path();
   std::string get_temp_path();
   std::string get_user_docs_folder();
-  std::vector<std::string> get_font_paths();
 #if __APPLE__
   std::string get_lib_app_support_path();
 #endif
