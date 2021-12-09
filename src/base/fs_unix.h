@@ -183,4 +183,30 @@ std::vector<std::string> list_files(const std::string& path)
   return files;
 }
 
+std::vector<std::string> get_font_paths()
+{
+    return {
+        "/usr/share/fonts",
+        "/usr/local/share/fonts",
+        "~/.local/share/fonts",
+        "~/.fonts",
+        "/usr/share/fonts/OTF",
+        "/usr/local/share/fonts/OTF",
+        "~/.local/share/fonts/OTF",
+        "/usr/share/fonts/OTF",
+        "/usr/local/share/fonts/OTF",
+        "~/.local/share/fonts/OTF",
+        "~/.font/OTF",
+        "/usr/share/fonts/TTF",
+        "/usr/local/share/fonts/TTF",
+        "~/.local/share/fonts/TTF",
+        "~/.font/TTF",
+        "/usr/share/fonts/ttf",
+        "/usr/local/share/fonts/ttf",
+        "~/.local/share/fonts/ttf",
+        "~/.font/ttf"
+    };
+}
+
+
 }
