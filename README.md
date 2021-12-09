@@ -1,4 +1,4 @@
-# LibreSprite [![CMake](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml)
+# LibreSprite [![Liberapay](https://i.imgur.com/UOLKpPA.png "Support our work")](https://liberapay.com/LibreSprite/) [![CMake](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml)
 
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
