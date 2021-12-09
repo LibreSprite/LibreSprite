@@ -183,7 +183,17 @@ std::vector<std::string> list_files(const std::string& path)
   return files;
 }
 
-std::vector<std::string> get_font_paths()
+#if __APPLE__
+inline std::vector<std::string> get_font_paths()
+{
+    return {
+        "/System/Library/Fonts/",
+        "/Library/Fonts",
+        "~/Library/Fonts"
+    };
+}
+#else
+inline std::vector<std::string> get_font_paths()
 {
     return {
         "/usr/share/fonts",
@@ -207,6 +217,6 @@ std::vector<std::string> get_font_paths()
         "~/.font/ttf"
     };
 }
-
+#endif
 
 }
