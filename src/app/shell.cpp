@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -28,7 +28,7 @@ Shell::~Shell()
 
 void Shell::run(AppScripting& engine)
 {
-  std::cout << "Welcome to " PACKAGE " v" VERSION " interactive console" << std::endl;
+  std::cout << "Welcome to " PACKAGE_AND_VERSION " interactive console" << std::endl;
   std::string line;
   while (std::getline(std::cin, line)) {
     engine.eval(line);

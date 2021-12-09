@@ -13,11 +13,11 @@
 #include "base/base.h"
 #include "base/exception.h"
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "zlib.h"
 
 #include <iostream>
+#include <memory>
 
 namespace doc {
 
@@ -108,7 +108,7 @@ Image* read_image(std::istream& is, bool setId)
       (width > 0xfffff || height > 0xfffff))
     return nullptr;
 
-  base::UniquePtr<Image> image(Image::create(static_cast<PixelFormat>(pixelFormat), width, height));
+  std::unique_ptr<Image> image(Image::create(static_cast<PixelFormat>(pixelFormat), width, height));
   int rowSize = image->getRowStrideSize();
 
 #if 0

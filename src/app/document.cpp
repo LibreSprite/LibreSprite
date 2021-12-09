@@ -189,7 +189,7 @@ bool Document::needsBackup() const
 //////////////////////////////////////////////////////////////////////
 // Loaded options from file
 
-void Document::setFormatOptions(const base::SharedPtr<FormatOptions>& format_options)
+void Document::setFormatOptions(const std::shared_ptr<FormatOptions>& format_options)
 {
   m_format_options = format_options;
 }
@@ -303,7 +303,7 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
       if (sourceCel->frame() > destLayer->sprite()->lastFrame())
         break;
 
-      base::UniquePtr<Cel> newCel;
+      std::unique_ptr<Cel> newCel;
 
       auto it = linked.find(sourceCel->data()->id());
       if (it != linked.end()) {
@@ -317,8 +317,7 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
         linked.insert(std::make_pair(sourceCel->data()->id(), newCel.get()));
       }
 
-      destLayer->addCel(newCel);
-      newCel.release();
+      destLayer->addCel(newCel.release());
     }
   }
   else if (sourceLayer0->isFolder() && destLayer0->isFolder()) {
@@ -330,15 +329,15 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
 
     for (; it != end; ++it) {
       Layer* sourceChild = *it;
-      base::UniquePtr<Layer> destChild(NULL);
+      std::unique_ptr<Layer> destChild(nullptr);
 
       if (sourceChild->isImage()) {
         destChild.reset(new LayerImage(destLayer->sprite()));
-        copyLayerContent(sourceChild, destDoc, destChild);
+        copyLayerContent(sourceChild, destDoc, destChild.get());
       }
       else if (sourceChild->isFolder()) {
         destChild.reset(new LayerFolder(destLayer->sprite()));
-        copyLayerContent(sourceChild, destDoc, destChild);
+        copyLayerContent(sourceChild, destDoc, destChild.get());
       }
       else {
         ASSERT(false);
@@ -352,8 +351,6 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
       Layer* afterThis = destLayer->getLastLayer();
 
       destLayer->addLayer(newLayer);
-      destChild.release();
-
       destLayer->stackLayer(newLayer, afterThis);
     }
   }
@@ -365,13 +362,13 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
 Document* Document::duplicate(DuplicateType type) const
 {
   const Sprite* sourceSprite = sprite();
-  base::UniquePtr<Sprite> spriteCopyPtr(new Sprite(
+  std::unique_ptr<Sprite> spriteCopyPtr(new Sprite(
       sourceSprite->pixelFormat(),
       sourceSprite->width(),
       sourceSprite->height(),
       sourceSprite->palette(frame_t(0))->size()));
 
-  base::UniquePtr<Document> documentCopy(new Document(spriteCopyPtr));
+  std::unique_ptr<Document> documentCopy(new Document(spriteCopyPtr.get()));
   Sprite* spriteCopy = spriteCopyPtr.release();
 
   spriteCopy->setTotalFrames(sourceSprite->totalFrames());
@@ -398,7 +395,7 @@ Document* Document::duplicate(DuplicateType type) const
 
     case DuplicateExactCopy:
       // Copy the layer folder
-      copyLayerContent(sourceSprite->folder(), documentCopy, spriteCopy->folder());
+      copyLayerContent(sourceSprite->folder(), documentCopy.get(), spriteCopy->folder());
 
       ASSERT((spriteCopy->backgroundLayer() && sourceSprite->backgroundLayer()) ||
              (!spriteCopy->backgroundLayer() && !sourceSprite->backgroundLayer()));

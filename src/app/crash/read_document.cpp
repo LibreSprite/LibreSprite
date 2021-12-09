@@ -21,7 +21,6 @@
 #include "base/path.h"
 #include "base/serialization.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cel_data_io.h"
 #include "doc/cel_io.h"
@@ -39,6 +38,7 @@
 
 #include <fstream>
 #include <map>
+#include <memory>
 
 namespace app {
 namespace crash {
@@ -116,11 +116,11 @@ private:
     return loadObject<Sprite*>("spr", sprId, &Reader::readSprite);
   }
 
-  ImageRef getImageRef(ObjectId imageId) {
+  std::shared_ptr<Image> getImageRef(ObjectId imageId) {
     if (m_images.find(imageId) != m_images.end())
       return m_images[imageId];
 
-    ImageRef image(loadObject<Image*>("img", imageId, &Reader::readImage));
+    std::shared_ptr<Image> image(loadObject<Image*>("img", imageId, &Reader::readImage));
     return m_images[imageId] = image;
   }
 
@@ -222,7 +222,7 @@ private:
       return (Sprite*)1;
     }
 
-    base::UniquePtr<Sprite> spr(new Sprite(format, w, h, 256));
+    std::unique_ptr<Sprite> spr(new Sprite(format, w, h, 256));
     m_sprite = spr.get();
     spr->setTransparentColor(transparentColor);
 
@@ -284,7 +284,7 @@ private:
     std::string name = read_string(s);
 
     if (type == ObjectType::LayerImage) {
-      base::UniquePtr<LayerImage> lay(new LayerImage(m_sprite));
+      std::unique_ptr<LayerImage> lay(new LayerImage(m_sprite));
       lay->setName(name);
       lay->setFlags(flags);
 
@@ -342,7 +342,7 @@ private:
       for (frame_t fr=0; fr<spr->totalFrames(); ++fr) {
         Cel* cel = bg->cel(fr);
         if (!cel) {
-          ImageRef image(Image::create(spr->pixelFormat(),
+          std::shared_ptr<Image> image(Image::create(spr->pixelFormat(),
                                        spr->width(),
                                        spr->height()));
           image->clear(spr->transparentColor());
@@ -359,7 +359,7 @@ private:
   ObjVersionsMap m_objVersions;
   ObjVersions* m_docVersions;
   DocumentInfo* m_loadInfo;
-  std::map<ObjectId, ImageRef> m_images;
+  std::map<ObjectId, std::shared_ptr<Image>> m_images;
   std::map<ObjectId, CelDataRef> m_celdatas;
 };
 
@@ -407,7 +407,7 @@ app::Document* read_document_with_raw_images(const std::string& dir,
     if (!s)
       continue;
 
-    ImageRef img;
+    std::shared_ptr<Image> img;
     if (read32(s) == MAGIC_NUMBER)
       img.reset(read_image(s, false));
 

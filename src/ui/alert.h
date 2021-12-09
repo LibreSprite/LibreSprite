@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
 #include "ui/window.h"
+
+#include <memory>
 
 namespace ui {
 
@@ -15,7 +16,7 @@ namespace ui {
   class Slider;
 
   class Alert;
-  typedef base::SharedPtr<Alert> AlertPtr;
+  typedef std::shared_ptr<Alert> AlertPtr;
 
   class Alert : public Window {
   public:

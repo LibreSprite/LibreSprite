@@ -7,13 +7,13 @@
 #pragma once
 
 #include "base/disable_copying.h"
-#include "base/shared_ptr.h"
 #include "gfx/color.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
 #include "gfx/size.h"
 
 #include <string>
+#include <memory>
 
 namespace gfx {
   class Region;
@@ -174,6 +174,6 @@ namespace ui {
     DISABLE_COPYING(CheckedDrawMode);
   };
 
-  typedef base::SharedPtr<Graphics> GraphicsPtr;
+  typedef std::shared_ptr<Graphics> GraphicsPtr;
 
 } // namespace ui

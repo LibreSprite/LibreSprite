@@ -8,7 +8,6 @@
 #pragma once
 
 #include "app/extra_cel.h"
-#include "base/shared_ptr.h"
 #include "doc/brush.h"
 #include "doc/color.h"
 #include "doc/frame.h"
@@ -18,6 +17,7 @@
 #include "gfx/rect.h"
 #include "gfx/region.h"
 
+#include <memory>
 #include <vector>
 
 namespace doc {
@@ -89,7 +89,7 @@ namespace app {
     gfx::Point m_editorPosition; // Position in the editor (model)
 
     // Information about current brush
-    base::SharedPtr<doc::MaskBoundaries> m_brushBoundaries;
+    std::shared_ptr<doc::MaskBoundaries> m_brushBoundaries;
     int m_brushGen;
     int m_brushWidth;
     int m_brushHeight;

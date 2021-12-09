@@ -75,7 +75,7 @@ void MoveCel::onExecute()
     executeAndAdd(new cmd::AddFrame(dstSprite, dstSprite->totalFrames()));
 
   Image* srcImage = (srcCel ? srcCel->image(): NULL);
-  ImageRef dstImage;
+  std::shared_ptr<Image> dstImage;
   dstCel = dstLayer->cel(m_dstFrame);
   if (dstCel)
     dstImage = dstCel->imageRef();
@@ -100,7 +100,7 @@ void MoveCel::onExecute()
                          BlendMode::SRC:
                          BlendMode::NORMAL);
 
-      ImageRef tmp(Image::createCopy(dstImage.get()));
+      std::shared_ptr<Image> tmp(Image::createCopy(dstImage.get()));
       render::composite_image(
         tmp.get(), srcImage,
         srcSprite->palette(m_srcFrame),

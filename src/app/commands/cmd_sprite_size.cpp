@@ -21,7 +21,6 @@
 #include "app/modules/palettes.h"
 #include "app/transaction.h"
 #include "base/bind.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/resize_image.h"
 #include "doc/cel.h"
 #include "doc/cels_range.h"
@@ -33,6 +32,8 @@
 #include "ui/ui.h"
 
 #include "sprite_size.xml.h"
+
+#include <memory>
 
 #define PERC_FORMAT     "%.1f"
 
@@ -93,7 +94,7 @@ protected:
         // Resize the image
         int w = scale_x(image->width());
         int h = scale_y(image->height());
-        ImageRef new_image(Image::create(image->pixelFormat(), MAX(1, w), MAX(1, h)));
+        std::shared_ptr<Image> new_image(Image::create(image->pixelFormat(), MAX(1, w), MAX(1, h)));
         new_image->setMaskColor(image->maskColor());
 
         doc::algorithm::fixup_image_transparent_colors(image);
@@ -117,14 +118,14 @@ protected:
 
     // Resize mask
     if (m_document->isMaskVisible()) {
-      ImageRef old_bitmap
+      std::shared_ptr<Image> old_bitmap
         (crop_image(m_document->mask()->bitmap(), -1, -1,
                     m_document->mask()->bitmap()->width()+2,
                     m_document->mask()->bitmap()->height()+2, 0));
 
       int w = scale_x(old_bitmap->width());
       int h = scale_y(old_bitmap->height());
-      base::UniquePtr<Mask> new_mask(new Mask);
+      std::unique_ptr<Mask> new_mask(new Mask);
       new_mask->replace(
         gfx::Rect(
           scale_x(m_document->mask()->bounds().x-1),
@@ -140,7 +141,7 @@ protected:
       new_mask->intersect(new_mask->bounds());
 
       // Copy new mask
-      api.copyToCurrentMask(new_mask);
+      api.copyToCurrentMask(new_mask.get());
 
       // Regenerate mask
       m_document->resetTransformation();

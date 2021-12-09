@@ -22,6 +22,8 @@
 #include "doc/mask.h"
 #include "ui/system.h"
 
+#include <memory>
+
 namespace app {
 
 using namespace doc;
@@ -76,7 +78,7 @@ void SelectTileCommand::onExecute(Context* ctx)
   Document* doc(writer.document());
   auto& docPref = Preferences::instance().document(doc);
 
-  base::UniquePtr<Mask> mask(new Mask());
+  std::unique_ptr<Mask> mask(new Mask());
 
   if (m_mode != gen::SelectionMode::DEFAULT)
     mask->copyFrom(doc->mask());
@@ -97,7 +99,7 @@ void SelectTileCommand::onExecute(Context* ctx)
   Transaction transaction(writer.context(),
                           "Select Tile",
                           DoesntModifyDocument);
-  transaction.execute(new cmd::SetMask(doc, mask));
+  transaction.execute(new cmd::SetMask(doc, mask.get()));
   transaction.commit();
 
   doc->generateMaskBoundaries();

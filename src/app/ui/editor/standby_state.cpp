@@ -125,7 +125,7 @@ void StandbyState::onActiveToolChange(Editor* editor, tools::Tool* tool)
 
 bool StandbyState::checkForScroll(Editor* editor, MouseMessage* msg)
 {
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
+  tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
 
   // Start scroll loop
   if (msg->middle() || clickedInk->isScrollMovement()) { // TODO msg->middle() should be customizable
@@ -141,7 +141,7 @@ bool StandbyState::checkForScroll(Editor* editor, MouseMessage* msg)
 
 bool StandbyState::checkForZoom(Editor* editor, MouseMessage* msg)
 {
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
+  tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
 
   // Start scroll loop
   if (clickedInk->isZoom()) {
@@ -161,7 +161,7 @@ bool StandbyState::onMouseDown(Editor* editor, MouseMessage* msg)
     return true;
 
   UIContext* context = UIContext::instance();
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
+  std::shared_ptr<tools::Ink> clickedInk = editor->getCurrentEditorInk();
   Site site;
   editor->getSite(&site);
   app::Document* document = static_cast<app::Document*>(site.document());
@@ -333,7 +333,7 @@ bool StandbyState::onMouseMove(Editor* editor, MouseMessage* msg)
 {
   // We control eyedropper tool from here. TODO move this to another place
   if (msg->left() || msg->right()) {
-    tools::Ink* clickedInk = editor->getCurrentEditorInk();
+    tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
     if (clickedInk->isEyedropper() &&
         editor->hasCapture()) {
       callEyedropper(editor);
@@ -350,7 +350,7 @@ bool StandbyState::onDoubleClick(Editor* editor, MouseMessage* msg)
   if (editor->hasCapture())
     return false;
 
-  tools::Ink* ink = editor->getCurrentEditorInk();
+  tools::Ink* ink = editor->getCurrentEditorInk().get();
 
   // Select a tile with double-click
   if (ink->isSelection()) {
@@ -372,7 +372,7 @@ bool StandbyState::onDoubleClick(Editor* editor, MouseMessage* msg)
 
 bool StandbyState::onSetCursor(Editor* editor, const gfx::Point& mouseScreenPos)
 {
-  tools::Ink* ink = editor->getCurrentEditorInk();
+  tools::Ink* ink = editor->getCurrentEditorInk().get();
 
   // See if the cursor is in some selection handle.
   if (m_decorator->onSetCursor(ink, editor, mouseScreenPos))
@@ -440,7 +440,7 @@ bool StandbyState::onKeyUp(Editor* editor, KeyMessage* msg)
 
 bool StandbyState::onUpdateStatusBar(Editor* editor)
 {
-  tools::Ink* ink = editor->getCurrentEditorInk();
+  tools::Ink* ink = editor->getCurrentEditorInk().get();
   const Sprite* sprite = editor->sprite();
   gfx::Point spritePos = editor->screenToEditor(ui::get_mouse_position());
 
@@ -529,12 +529,12 @@ void StandbyState::transformSelection(Editor* editor, MouseMessage* msg, HandleT
     editor->brushPreview().hide();
 
     EditorCustomizationDelegate* customization = editor->getCustomizationDelegate();
-    base::UniquePtr<Image> tmpImage(new_image_from_mask(editor->getSite()));
+    std::unique_ptr<Image> tmpImage(new_image_from_mask(editor->getSite()));
 
     PixelsMovementPtr pixelsMovement(
       new PixelsMovement(UIContext::instance(),
                          editor->getSite(),
-                         tmpImage,
+                         tmpImage.get(),
                          document->mask(),
                          "Transformation"));
 
@@ -562,10 +562,7 @@ void StandbyState::transformSelection(Editor* editor, MouseMessage* msg, HandleT
 
 void StandbyState::callEyedropper(Editor* editor)
 {
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
-  if (!clickedInk->isEyedropper())
-    return;
-
+  tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
   Command* eyedropper_cmd =
     CommandsModule::instance()->getCommandByName(CommandId::Eyedropper);
   bool fg = (static_cast<tools::PickInk*>(clickedInk)->target() == tools::PickInk::Fg);
@@ -703,7 +700,7 @@ void StandbyState::Decorator::postRenderDecorator(EditorPostRender* render)
       editor->document()->isMaskVisible() &&
       !editor->document()->mask()->isFrozen()) {
     // And draw only when the user has a selection tool as active tool.
-    tools::Ink* ink = editor->getCurrentEditorInk();
+    tools::Ink* ink = editor->getCurrentEditorInk().get();
 
     if (ink->isSelection()) {
       getTransformHandles(editor)->drawHandles(editor,

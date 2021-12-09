@@ -117,8 +117,7 @@ struct Timeline::DrawCelData {
   CelIterator lastLink;         // Last link to the active cel
 };
 
-Timeline::Timeline()
-  : Widget(kGenericWidget)
+Timeline::Timeline() : Widget(kGenericWidget)
   , m_hbar(HORIZONTAL, this)
   , m_vbar(VERTICAL, this)
   , m_context(UIContext::instance())
@@ -129,7 +128,6 @@ Timeline::Timeline()
   , m_separator_x(100 * guiscale())
   , m_separator_w(1)
   , m_confPopup(NULL)
-  , m_clipboard_timer(100, this)
   , m_offset_count(0)
   , m_scroll(false)
   , m_fromTimeline(false)
@@ -141,7 +139,7 @@ Timeline::Timeline()
   m_context->documents().addObserver(this);
 
   setDoubleBuffered(true);
-  addChild(&m_aniControls);
+  addChild(m_aniControls);
   addChild(&m_hbar);
   addChild(&m_vbar);
 
@@ -156,7 +154,7 @@ Timeline::Timeline()
 
 Timeline::~Timeline()
 {
-  m_clipboard_timer.stop();
+  m_clipboard_timer->stop();
 
   detachDocument();
   m_context->documents().removeObserver(this);
@@ -165,7 +163,7 @@ Timeline::~Timeline()
 
 void Timeline::updateUsingEditor(Editor* editor)
 {
-  m_aniControls.updateUsingEditor(editor);
+  m_aniControls->updateUsingEditor(editor);
 
   detachDocument();
 
@@ -294,7 +292,7 @@ void Timeline::moveRange(Range& range)
 
 void Timeline::activateClipboardRange()
 {
-  m_clipboard_timer.start();
+  m_clipboard_timer->start();
   invalidate();
 }
 
@@ -307,7 +305,7 @@ bool Timeline::onProcessMessage(Message* msg)
       break;
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == &m_clipboard_timer) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_clipboard_timer) {
         Document* clipboard_document;
         DocumentRange clipboard_range;
         clipboard::get_document_range_info(
@@ -321,8 +319,8 @@ bool Timeline::onProcessMessage(Message* msg)
           else
             m_offset_count = 0;
         }
-        else if (m_clipboard_timer.isRunning()) {
-          m_clipboard_timer.stop();
+        else if (m_clipboard_timer->isRunning()) {
+          m_clipboard_timer->stop();
         }
 
         invalidate();
@@ -907,8 +905,8 @@ void Timeline::onResize(ui::ResizeEvent& ev)
   gfx::Rect rc = ev.bounds();
   setBoundsQuietly(rc);
 
-  gfx::Size sz = m_aniControls.sizeHint();
-  m_aniControls.setBounds(
+  gfx::Size sz = m_aniControls->sizeHint();
+  m_aniControls->setBounds(
     gfx::Rect(rc.x, rc.y, MIN(sz.w, m_separator_x),
       font()->height() +
       skinTheme()->dimensions.timelineTagsAreaHeight()));
@@ -1158,7 +1156,7 @@ void Timeline::onLayerNameChange(doc::DocumentEvent& ev)
 
 void Timeline::onStateChanged(Editor* editor)
 {
-  m_aniControls.updateUsingEditor(editor);
+  m_aniControls->updateUsingEditor(editor);
 }
 
 void Timeline::onAfterFrameChanged(Editor* editor)
@@ -1285,8 +1283,8 @@ void Timeline::drawClipboardRange(ui::Graphics* g)
   if (!m_document || clipboard_document != m_document)
     return;
 
-  if (!m_clipboard_timer.isRunning())
-    m_clipboard_timer.start();
+  if (!m_clipboard_timer->isRunning())
+    m_clipboard_timer->start();
 
   CheckedDrawMode checked(g, m_offset_count);
   g->drawRect(gfx::rgba(0, 0, 0),
@@ -2574,7 +2572,7 @@ void Timeline::clearClipboardRange()
     return;
 
   clipboard::clear_content();
-  m_clipboard_timer.stop();
+  m_clipboard_timer->stop();
 }
 
 bool Timeline::isCopyKeyPressed(ui::Message* msg)

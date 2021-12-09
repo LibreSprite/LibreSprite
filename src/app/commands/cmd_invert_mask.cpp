@@ -15,11 +15,12 @@
 #include "app/context_access.h"
 #include "app/modules/gui.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "doc/mask.h"
 #include "doc/primitives.h"
 #include "doc/sprite.h"
+
+#include <memory>
 
 namespace app {
 
@@ -69,7 +70,7 @@ void InvertMaskCommand::onExecute(Context* context)
     Sprite* sprite(writer.sprite());
 
     // Select all the sprite area
-    base::UniquePtr<Mask> mask(new Mask());
+    std::unique_ptr<Mask> mask(new Mask());
     mask->replace(sprite->bounds());
 
     // Remove in the new mask the current sprite marked region
@@ -98,7 +99,7 @@ void InvertMaskCommand::onExecute(Context* context)
 
     // Set the new mask
     Transaction transaction(writer.context(), "Mask Invert", DoesntModifyDocument);
-    transaction.execute(new cmd::SetMask(document, mask));
+    transaction.execute(new cmd::SetMask(document, mask.get()));
     transaction.commit();
 
     document->generateMaskBoundaries();

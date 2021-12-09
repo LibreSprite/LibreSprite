@@ -198,38 +198,38 @@ protected:
 
     if (m_index_bg_color == -1) {
       render.setupBackground(m_doc, m_doublebuf->pixelFormat());
-      render.renderBackground(m_doublebuf,
+      render.renderBackground(m_doublebuf.get(),
         gfx::Clip(0, 0, -m_pos.x, -m_pos.y,
           m_doublebuf->width(), m_doublebuf->height()), m_zoom);
     }
     else {
-      doc::clear_image(m_doublebuf, m_pal->getEntry(m_index_bg_color));
+      doc::clear_image(m_doublebuf.get(), m_pal->getEntry(m_index_bg_color));
     }
 
     switch (m_tiled) {
       case TiledMode::NONE:
-        render.renderImage(m_doublebuf, m_render, m_pal, x, y,
+        render.renderImage(m_doublebuf.get(), m_render.get(), m_pal, x, y,
                            m_zoom, 255, BlendMode::NORMAL);
         break;
       case TiledMode::X_AXIS:
         for (u=x-w; u<ui::display_w()+w; u+=w)
-          render.renderImage(m_doublebuf, m_render, m_pal, u, y,
+          render.renderImage(m_doublebuf.get(), m_render.get(), m_pal, u, y,
                              m_zoom, 255, BlendMode::NORMAL);
         break;
       case TiledMode::Y_AXIS:
         for (v=y-h; v<ui::display_h()+h; v+=h)
-          render.renderImage(m_doublebuf, m_render, m_pal, x, v,
+          render.renderImage(m_doublebuf.get(), m_render.get(), m_pal, x, v,
                              m_zoom, 255, BlendMode::NORMAL);
         break;
       case TiledMode::BOTH:
         for (v=y-h; v<ui::display_h()+h; v+=h)
           for (u=x-w; u<ui::display_w()+w; u+=w)
-            render.renderImage(m_doublebuf, m_render, m_pal, u, v,
+            render.renderImage(m_doublebuf.get(), m_render.get(), m_pal, u, v,
                                m_zoom, 255, BlendMode::NORMAL);
         break;
     }
 
-    doc::convert_image_to_surface(m_doublebuf, m_pal,
+    doc::convert_image_to_surface(m_doublebuf.get(), m_pal,
       m_doublesur, 0, 0, 0, 0, m_doublebuf->width(), m_doublebuf->height());
     g->blit(m_doublesur, 0, 0, 0, 0, m_doublesur->width(), m_doublesur->height());
   }
@@ -245,8 +245,8 @@ private:
   gfx::Point m_delta;
   render::Zoom m_zoom;
   int m_index_bg_color;
-  base::UniquePtr<Image> m_render;
-  base::UniquePtr<Image> m_doublebuf;
+  std::unique_ptr<Image> m_render;
+  std::unique_ptr<Image> m_doublebuf;
   she::ScopedHandle<she::Surface> m_doublesur;
   filters::TiledMode m_tiled;
 };

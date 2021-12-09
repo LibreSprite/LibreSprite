@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -21,7 +22,6 @@
 #include "app/util/autocrop.h"
 #include "base/file_handle.h"
 #include "base/fs.h"
-#include "base/unique_ptr.h"
 #include "doc/doc.h"
 #include "render/quantization.h"
 #include "render/render.h"
@@ -31,6 +31,7 @@
 #include "gif_options.xml.h"
 
 #include <gif_lib.h>
+#include <memory>
 
 #ifdef _WIN32
   #include <io.h>
@@ -80,7 +81,7 @@ class GifFormat : public FileFormat {
 
   bool onLoad(FileOp* fop) override;
   bool onSave(FileOp* fop) override;
-  base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
+  std::shared_ptr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
 FileFormat* CreateGifFormat()
@@ -305,7 +306,7 @@ private:
       m_sprite->addFrame(m_frameNum);
 
     // Create a temporary image loading the frame pixels from the GIF file
-    UniquePtr<Image> frameImage(
+    std::unique_ptr<Image> frameImage(
       readFrameIndexedImage(frameBounds));
 
     TRACE("[GifDecoder] Frame[%d] transparent index = %d\n", (int)m_frameNum, m_localTransparentIndex);
@@ -318,7 +319,7 @@ private:
     }
 
     // Merge this frame colors with the current palette
-    updatePalette(frameImage);
+    updatePalette(frameImage.get());
 
     // Convert the sprite to RGB if we have more than 256 colors
     if ((m_sprite->pixelFormat() == IMAGE_INDEXED) &&
@@ -331,10 +332,10 @@ private:
 
     // Composite frame with previous frame
     if (m_sprite->pixelFormat() == IMAGE_INDEXED) {
-      compositeIndexedImageToIndexed(frameBounds, frameImage);
+      compositeIndexedImageToIndexed(frameBounds, frameImage.get());
     }
     else {
-      compositeIndexedImageToRgb(frameBounds, frameImage);
+      compositeIndexedImageToRgb(frameBounds, frameImage.get());
     }
 
     // Create cel
@@ -364,7 +365,7 @@ private:
   }
 
   Image* readFrameIndexedImage(const gfx::Rect& frameBounds) {
-    UniquePtr<Image> frameImage(
+    std::unique_ptr<Image> frameImage(
       Image::create(IMAGE_INDEXED, frameBounds.w, frameBounds.h));
 
     IndexedTraits::address_t addr;
@@ -483,7 +484,7 @@ private:
       }
     }
 
-    UniquePtr<Palette> palette;
+    std::unique_ptr<Palette> palette;
     if (m_frameNum == 0)
       palette.reset(new Palette(m_frameNum, usedNColors + (needsExtraBgColor ? 1: 0)));
     else {
@@ -570,7 +571,7 @@ private:
     }
 
     ASSERT(base == palette->size());
-    m_sprite->setPalette(palette, false);
+    m_sprite->setPalette(palette.get(), false);
   }
 
   void compositeIndexedImageToIndexed(const gfx::Rect& frameBounds,
@@ -579,7 +580,7 @@ private:
     for (int y=0; y<frameBounds.h; ++y) {
       for (int x=0; x<frameBounds.w; ++x) {
         color_t i = get_pixel_fast<IndexedTraits>(frameImage, x, y);
-        if (i == m_localTransparentIndex)
+        if (static_cast<int>(i) == m_localTransparentIndex)
           continue;
 
         i = m_remap[i];
@@ -598,7 +599,7 @@ private:
     for (int y=0; y<frameBounds.h; ++y) {
       for (int x=0; x<frameBounds.w; ++x) {
         color_t i = get_pixel_fast<IndexedTraits>(frameImage, x, y);
-        if (i == m_localTransparentIndex)
+        if (static_cast<int>(i) == m_localTransparentIndex)
           continue;
 
         i = rgba(
@@ -614,9 +615,9 @@ private:
   }
 
   void createCel() {
-    Cel* cel = new Cel(m_frameNum, ImageRef(0));
+    Cel* cel = new Cel(m_frameNum, std::shared_ptr<Image>(nullptr));
     try {
-      ImageRef celImage(Image::createCopy(m_currentImage.get()));
+      std::shared_ptr<Image> celImage(Image::createCopy(m_currentImage.get()));
       try {
         cel->data()->setImage(celImage);
       }
@@ -691,7 +692,7 @@ private:
   void convertIndexedSpriteToRgb() {
     for (Cel* cel : m_sprite->uniqueCels()) {
       Image* oldImage = cel->image();
-      ImageRef newImage(
+      std::shared_ptr<Image> newImage(
         render::convert_pixel_format
         (oldImage, NULL, IMAGE_RGB, DitheringMethod::NONE,
          nullptr,
@@ -759,7 +760,7 @@ private:
   GifFileType* m_gifFile;
   int m_fd;
   int m_filesize;
-  UniquePtr<Sprite> m_sprite;
+  std::unique_ptr<Sprite> m_sprite;
   gfx::Rect m_spriteBounds;
   LayerImage* m_layer;
   int m_frameNum;
@@ -768,8 +769,8 @@ private:
   int m_bgIndex;
   int m_localTransparentIndex;
   int m_frameDelay;
-  ImageRef m_currentImage;
-  ImageRef m_previousImage;
+  std::shared_ptr<Image> m_currentImage;
+  std::shared_ptr<Image> m_previousImage;
   Remap m_remap;
   bool m_hasLocalColormaps;     // Indicates that this fila contains local colormaps
 
@@ -866,7 +867,7 @@ public:
     else
       m_clearColor = rgba(0, 0, 0, 0);
 
-    const base::SharedPtr<GifOptions> gifOptions = fop->sequenceGetFormatOptions();
+    auto gifOptions = std::static_pointer_cast<GifOptions>(fop->sequenceGetFormatOptions());
     m_interlaced = gifOptions->interlaced();
     m_loop = (gifOptions->loop() ? 0: -1);
 
@@ -1050,8 +1051,8 @@ private:
   }
 
   void writeImage(int frameNum, const gfx::Rect& frameBounds, DisposalMethod disposal) {
-    UniquePtr<Palette> framePaletteRef;
-    UniquePtr<RgbMap> rgbmapRef;
+    std::unique_ptr<Palette> framePaletteRef;
+    std::unique_ptr<RgbMap> rgbmapRef;
     Palette* framePalette = m_sprite->palette(frameNum);
     RgbMap* rgbmap = m_sprite->rgbMap(frameNum);
 
@@ -1071,7 +1072,7 @@ private:
     if (!m_frameImageBuf)
       m_frameImageBuf.reset(new ImageBuffer);
 
-    ImageRef frameImage(Image::create(IMAGE_INDEXED,
+    std::shared_ptr<Image> frameImage(Image::create(IMAGE_INDEXED,
                                       frameBounds.w,
                                       frameBounds.h,
                                       m_frameImageBuf));
@@ -1269,7 +1270,7 @@ private:
   bool m_interlaced;
   int m_loop;
   ImageBufferPtr m_frameImageBuf;
-  ImageRef m_images[3];
+  std::shared_ptr<Image> m_images[3];
   Image* m_previousImage;
   Image* m_currentImage;
   Image* m_nextImage;
@@ -1293,11 +1294,11 @@ bool GifFormat::onSave(FileOp* fop)
   return encoder.encode();
 }
 
-base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
+std::shared_ptr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
 {
-  base::SharedPtr<GifOptions> gif_options;
+  std::shared_ptr<GifOptions> gif_options;
   if (fop->document()->getFormatOptions())
-    gif_options = base::SharedPtr<GifOptions>(fop->document()->getFormatOptions());
+    gif_options = std::static_pointer_cast<GifOptions>(fop->document()->getFormatOptions());
 
   if (!gif_options)
     gif_options.reset(new GifOptions);
@@ -1326,16 +1327,15 @@ base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
 
       set_config_bool("GIF", "Interlaced", gif_options->interlaced());
       set_config_bool("GIF", "Loop", gif_options->loop());
-    }
-    else {
-      gif_options.reset(NULL);
+    } else {
+      gif_options.reset();
     }
 
     return gif_options;
   }
   catch (std::exception& e) {
     Console::showException(e);
-    return base::SharedPtr<GifOptions>(0);
+    return nullptr;
   }
 }
 

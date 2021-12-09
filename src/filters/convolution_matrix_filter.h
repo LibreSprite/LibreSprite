@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "base/ints.h"
-#include "base/shared_ptr.h"
 #include "filters/filter.h"
 #include "filters/tiled_mode.h"
 
@@ -22,10 +22,10 @@ namespace filters {
   public:
     ConvolutionMatrixFilter();
 
-    void setMatrix(const base::SharedPtr<ConvolutionMatrix>& matrix);
+    void setMatrix(const std::shared_ptr<ConvolutionMatrix>& matrix);
     void setTiledMode(TiledMode tiledMode);
 
-    base::SharedPtr<ConvolutionMatrix> getMatrix() { return m_matrix; }
+    std::shared_ptr<ConvolutionMatrix> getMatrix() { return m_matrix; }
     TiledMode getTiledMode() const { return m_tiledMode; }
 
     // Filter implementation
@@ -35,7 +35,7 @@ namespace filters {
     void applyToIndexed(FilterManager* filterMgr);
 
   private:
-    base::SharedPtr<ConvolutionMatrix> m_matrix;
+    std::shared_ptr<ConvolutionMatrix> m_matrix;
     TiledMode m_tiledMode;
     std::vector<uint8_t*> m_lines;
   };

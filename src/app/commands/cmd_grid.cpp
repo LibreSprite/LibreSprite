@@ -109,12 +109,12 @@ bool GridSettingsCommand::onEnabled(Context* context)
 
 void GridSettingsCommand::onExecute(Context* context)
 {
-  base::UniquePtr<Window> window(app::load_widget<Window>("grid_settings.xml", "grid_settings"));
-  Widget* button_ok = app::find_widget<Widget>(window, "ok");
-  Widget* grid_x = app::find_widget<Widget>(window, "grid_x");
-  Widget* grid_y = app::find_widget<Widget>(window, "grid_y");
-  Widget* grid_w = app::find_widget<Widget>(window, "grid_w");
-  Widget* grid_h = app::find_widget<Widget>(window, "grid_h");
+  std::unique_ptr<Window> window(app::load_widget<Window>("grid_settings.xml", "grid_settings"));
+  Widget* button_ok = app::find_widget<Widget>(window.get(), "ok");
+  Widget* grid_x = app::find_widget<Widget>(window.get(), "grid_x");
+  Widget* grid_y = app::find_widget<Widget>(window.get(), "grid_y");
+  Widget* grid_w = app::find_widget<Widget>(window.get(), "grid_w");
+  Widget* grid_h = app::find_widget<Widget>(window.get(), "grid_h");
 
   DocumentPreferences& docPref = Preferences::instance().document(context->activeDocument());
   Rect bounds = docPref.grid.bounds();

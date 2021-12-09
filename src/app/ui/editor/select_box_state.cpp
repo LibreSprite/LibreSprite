@@ -226,7 +226,7 @@ bool SelectBoxState::requireBrushPreview()
   return false;
 }
 
-tools::Ink* SelectBoxState::getStateInk()
+std::shared_ptr<tools::Ink> SelectBoxState::getStateInk()
 {
   if (hasFlag(Flags::QuickBox))
     return App::instance()->toolBox()->getInkById(

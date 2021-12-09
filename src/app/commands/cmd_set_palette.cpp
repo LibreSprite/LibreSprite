@@ -16,7 +16,6 @@
 #include "app/ini_file.h"
 #include "app/modules/palettes.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/palette.h"
 #include "ui/alert.h"
 #include "ui/manager.h"

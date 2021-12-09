@@ -127,12 +127,12 @@ public:
 App* App::m_instance = NULL;
 
 App::App()
-  : m_coreModules(NULL)
-  , m_modules(NULL)
-  , m_legacy(NULL)
+  : m_coreModules(nullptr)
+  , m_modules(nullptr)
+  , m_legacy(nullptr)
   , m_isGui(false)
   , m_isShell(false)
-  , m_exporter(NULL)
+  , m_exporter(nullptr)
 {
   ASSERT(m_instance == NULL);
   m_instance = this;
@@ -145,7 +145,7 @@ void App::initialize(const AppOptions& options)
   if (m_isGui)
     m_uiSystem.reset(new ui::UISystem);
 
-  m_coreModules = new CoreModules;
+  m_coreModules = std::make_unique<CoreModules>();
 
   bool createLogInDesktop = false;
   switch (options.verboseLevel()) {
@@ -161,8 +161,8 @@ void App::initialize(const AppOptions& options)
       break;
   }
 
-  m_modules = new Modules(createLogInDesktop);
-  m_legacy = new LegacyModules(isGui() ? REQUIRE_INTERFACE: 0);
+  m_modules = std::make_unique<Modules>(createLogInDesktop);
+  m_legacy = std::make_unique<LegacyModules>(isGui() ? REQUIRE_INTERFACE: 0);
   m_brushes.reset(new AppBrushes);
 
   if (options.hasExporterParams())
@@ -355,7 +355,7 @@ void App::initialize(const AppOptions& options)
         }
         // --save-as <filename>
         else if (opt == &options.saveAs()) {
-          Document* doc = NULL;
+          Document* doc = nullptr;
           if (!ctx->documents().empty())
             doc = dynamic_cast<Document*>(ctx->documents().lastAdded());
 
@@ -580,7 +580,7 @@ void App::initialize(const AppOptions& options)
             }
 
             if (!importLayer.empty()) {
-              Layer* foundLayer = NULL;
+              Layer* foundLayer = nullptr;
               for (Layer* layer : doc->sprite()->layers()) {
                 if (layer->name() == importLayer) {
                   foundLayer = layer;
@@ -631,7 +631,7 @@ void App::initialize(const AppOptions& options)
     if (trim)
       m_exporter->setTrimCels(true);
 
-    base::UniquePtr<Document> spriteSheet(m_exporter->exportSheet());
+    std::unique_ptr<Document> spriteSheet(m_exporter->exportSheet());
     m_exporter.reset(NULL);
 
     LOG("Export sprite sheet: Done\n");
@@ -689,7 +689,7 @@ void App::run()
 
   if (isGui()) {
     // Destroy the window.
-    m_mainWindow.reset(NULL);
+    m_mainWindow.reset(nullptr);
   }
 
   // Delete backups (this is a normal shutdown, we are not handling
@@ -718,15 +718,11 @@ App::~App()
     // Save brushes
     m_brushes.reset(nullptr);
 
-    delete m_legacy;
-    delete m_modules;
-    delete m_coreModules;
-
     // Destroy the loaded gui.xml data.
     delete KeyboardShortcuts::instance();
     delete GuiXml::instance();
 
-    m_instance = NULL;
+    m_instance = nullptr;
   }
   catch (const std::exception& e) {
     she::error_message(e.what());
@@ -742,7 +738,7 @@ App::~App()
 
 bool App::isPortable()
 {
-  static bool* is_portable = NULL;
+  static bool* is_portable = nullptr;
   if (!is_portable) {
     is_portable =
       new bool(
@@ -811,7 +807,7 @@ void App::showNotification(INotificationDelegate* del)
 
 void App::updateDisplayTitleBar()
 {
-  std::string defaultTitle = PACKAGE " v" VERSION;
+  std::string defaultTitle = PACKAGE_AND_VERSION;
   std::string title;
 
   DocumentView* docView = UIContext::instance()->activeView();
@@ -873,7 +869,7 @@ PixelFormat app_get_current_pixel_format()
 void app_default_statusbar_message()
 {
   StatusBar::instance()
-    ->setStatusText(250, "%s %s | %s", PACKAGE, VERSION, COPYRIGHT);
+    ->setStatusText(250, "%s | %s", PACKAGE_AND_VERSION, COPYRIGHT);
 }
 
 int app_get_color_to_clear_layer(Layer* layer)

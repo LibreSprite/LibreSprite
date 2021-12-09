@@ -49,7 +49,7 @@ void ExitCommand::onExecute(Context* ctx)
   }
 
   // Close the window
-  App::instance()->mainWindow()->closeWindow(NULL);
+  App::instance()->mainWindow()->closeWindow(nullptr);
 }
 
 Command* CommandFactory::createExitCommand()

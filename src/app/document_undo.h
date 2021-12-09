@@ -9,7 +9,6 @@
 
 #include "base/disable_copying.h"
 #include "base/observable.h"
-#include "base/unique_ptr.h"
 #include "doc/sprite_position.h"
 #include "undo/undo_history.h"
 

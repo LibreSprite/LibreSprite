@@ -10,7 +10,9 @@
 #include "app/cmd.h"
 #include "app/cmd/with_image.h"
 #include "doc/color.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
+
+#include <memory>
 
 namespace app {
 namespace cmd {
@@ -25,11 +27,11 @@ namespace cmd {
     void onExecute() override;
     void onUndo() override;
     size_t onMemSize() const override {
-      return sizeof(*this) + (m_copy ? m_copy->getMemSize(): 0);
+      return sizeof(*this) + (m_copy ? m_copy->getMemSize() : 0);
     }
 
   private:
-    ImageRef m_copy;
+    std::shared_ptr<Image> m_copy;
     color_t m_color;
   };
 
