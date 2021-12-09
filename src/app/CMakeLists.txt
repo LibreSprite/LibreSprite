@@ -352,6 +352,7 @@ add_library(app-lib
   script/api/layer_script.cpp
   script/api/pixelcolor_script.cpp
   script/api/palette_script.cpp
+  script/api/storage_script.cpp
   script/api/sprite_script.cpp
   script/api/selection_script.cpp
 
