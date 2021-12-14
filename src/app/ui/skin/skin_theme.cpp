@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/file_system.h"
 #include "app/modules/gui.h"
 #include "app/pref/preferences.h"
 #include "app/resource_finder.h"
@@ -25,6 +26,7 @@
 #include "app/xml_exception.h"
 #include "base/bind.h"
 #include "base/fs.h"
+#include "base/path.h"
 #include "base/string.h"
 #include "css/sheet.h"
 #include "gfx/border.h"
@@ -199,7 +201,6 @@ void SkinTheme::onRegenerate()
 void SkinTheme::loadAll(const std::string& skinId)
 {
   loadSheet(skinId);
-  loadFonts(skinId);
   loadXml(skinId);
 }
 
@@ -236,9 +237,30 @@ void SkinTheme::loadFonts(const std::string& skinId)
   if (m_miniFont) m_miniFont->dispose();
 
   Preferences& pref = Preferences::instance();
+  std::vector<std::string> paths;
 
-  m_defaultFont = loadFont(pref.theme.font(), "skins/" + skinId + "/font.png");
-  m_miniFont = loadFont(pref.theme.miniFont(), "skins/" + skinId + "/minifont.png");
+  {
+      ResourceFinder rf;
+      auto userFont = pref.theme.font();
+      if (!userFont.empty())
+          rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font.png").c_str());
+      while (rf.next())
+          paths.push_back(rf.filename());
+      m_defaultFont = loadFont(paths, 8);
+  }
+
+  {
+      ResourceFinder rf;
+      auto userFont = pref.theme.miniFont();
+      if (!userFont.empty())
+          rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/minifont.png").c_str());
+      while (rf.next())
+          paths.push_back(rf.filename());
+      m_defaultFont = loadFont(paths, 8);
+      m_miniFont = loadFont(paths, 8);
+  }
 }
 
 void SkinTheme::loadXml(const std::string& skinId)
@@ -247,12 +269,281 @@ void SkinTheme::loadXml(const std::string& skinId)
 
   // Load the skin XML
   std::string xml_filename = "skins/" + skinId + "/skin.xml";
-  ResourceFinder rf;
-  rf.includeDataDir(xml_filename.c_str());
-  if (!rf.findFirst())
-    return;
+  {
+      ResourceFinder rf;
+      rf.includeDataDir(xml_filename.c_str());
+      if (rf.findFirst()) {
+          loadFonts(skinId);
+          loadSkinXml(rf.filename());
+      }
+  }
 
-  XmlDocumentRef doc = open_xml(rf.filename());
+  xml_filename = "skins/" + skinId + "/theme.xml";
+  {
+      ResourceFinder rf;
+      rf.includeDataDir(xml_filename.c_str());
+      if (rf.findFirst()) {
+          loadThemeXml(rf.filename());
+      }
+  }
+}
+
+void SkinTheme::loadThemeXml(const std::string& filename) {
+  XmlDocumentRef doc = open_xml(filename);
+  TiXmlHandle handle(doc.get());
+
+  // Load fonts
+  {
+    Preferences& pref = Preferences::instance();
+    TiXmlElement* xmlDim = handle
+      .FirstChild("theme")
+      .FirstChild("fonts")
+      .FirstChild("font").ToElement();
+    for (;xmlDim; xmlDim = xmlDim->NextSiblingElement()) {
+      std::string id = xmlDim->Attribute("id");
+      std::string file = xmlDim->Attribute("file") ?: "";
+      std::string name = xmlDim->Attribute("name") ?: "";
+      std::string user = id == "default" ? pref.theme.font() : pref.theme.miniFont();
+      uint32_t size = strtol(xmlDim->Attribute("size"), NULL, 10);
+      std::vector<std::string> paths;
+
+      if (!user.empty()) paths.push_back(user);
+      if (!file.empty()) paths.push_back(file);
+      if (!name.empty()) paths.push_back(name);
+      paths.push_back("arial");
+      paths.push_back("sans");
+
+      auto font = loadFont(paths, size);
+
+      if (font) {
+        if (id == "default") {
+          if (m_defaultFont)
+            m_defaultFont->dispose();
+          m_defaultFont = font;
+        } else if (id == "mini") {
+          if (m_miniFont)
+            m_miniFont->dispose();
+          m_miniFont = font;
+        }
+      }
+    }
+  }
+
+  // Load dimension
+  {
+    TiXmlElement* xmlDim = handle
+      .FirstChild("theme")
+      .FirstChild("dimensions")
+      .FirstChild("dim").ToElement();
+    while (xmlDim) {
+      std::string id = xmlDim->Attribute("id");
+      uint32_t value = strtol(xmlDim->Attribute("value"), NULL, 10);
+
+      LOG("Loading dimension '%s'...\n", id.c_str());
+
+      m_dimensions_by_id[id] = value;
+      xmlDim = xmlDim->NextSiblingElement();
+    }
+  }
+
+  // Load colors
+  {
+    TiXmlElement* xmlColor = handle
+      .FirstChild("theme")
+      .FirstChild("colors")
+      .FirstChild("color").ToElement();
+    while (xmlColor) {
+      std::string id = xmlColor->Attribute("id");
+      uint32_t value = strtol(xmlColor->Attribute("value")+1, NULL, 16);
+      gfx::Color color = gfx::rgba(
+        (value & 0xff0000) >> 16,
+        (value & 0xff00) >> 8,
+        (value & 0xff));
+
+      LOG("Loading color '%s'...\n", id.c_str());
+
+      m_colors_by_id[id] = color;
+      xmlColor = xmlColor->NextSiblingElement();
+    }
+  }
+
+  // Load cursors
+  {
+    TiXmlElement* xmlPart = handle
+      .FirstChild("theme")
+      .FirstChild("parts")
+      .FirstChild("part").ToElement();
+
+    std::string cursor_prefix = "cursor_";
+    std::string tool_prefix = "tool_";
+
+    for (;xmlPart; xmlPart = xmlPart->NextSiblingElement()) {
+      std::string id = xmlPart->Attribute("id");
+      if (id.substr(0, cursor_prefix.size()) == cursor_prefix) {
+          id = id.substr(cursor_prefix.size());
+
+          int x = strtol(xmlPart->Attribute("x"), NULL, 10);
+          int y = strtol(xmlPart->Attribute("y"), NULL, 10);
+          int w = strtol(xmlPart->Attribute("w"), NULL, 10);
+          int h = strtol(xmlPart->Attribute("h"), NULL, 10);
+          int focusx = strtol(xmlPart->Attribute("focusx"), NULL, 10);
+          int focusy = strtol(xmlPart->Attribute("focusy"), NULL, 10);
+          int c;
+
+          LOG("Loading cursor '%s'...\n", id.c_str());
+
+          for (c=0; c<kCursorTypes; ++c) {
+              if (id != cursor_names[c])
+                  continue;
+
+              delete m_cursors[c];
+              m_cursors[c] = NULL;
+
+              she::Surface* slice = sliceSheet(NULL, gfx::Rect(x, y, w, h));
+
+              m_cursors[c] = new Cursor(slice,
+                                        gfx::Point(focusx*guiscale(), focusy*guiscale()));
+              break;
+          }
+
+      } else if (id.substr(0, tool_prefix.size()) == tool_prefix) {
+          id = id.substr(cursor_prefix.size());
+
+          int x = strtol(xmlPart->Attribute("x"), NULL, 10);
+          int y = strtol(xmlPart->Attribute("y"), NULL, 10);
+          int w = strtol(xmlPart->Attribute("w"), NULL, 10);
+          int h = strtol(xmlPart->Attribute("h"), NULL, 10);
+
+          LOG("Loading tool icon '%s'...\n", id.c_str());
+
+          // Crop the tool-icon from the sheet
+          m_toolicon[id] = sliceSheet(m_toolicon[id], gfx::Rect(x, y, w, h));
+      } else {
+          int x = strtol(xmlPart->Attribute("x"), NULL, 10);
+          int y = strtol(xmlPart->Attribute("y"), NULL, 10);
+          int w = xmlPart->Attribute("w") ? strtol(xmlPart->Attribute("w"), NULL, 10): 0;
+          int h = xmlPart->Attribute("h") ? strtol(xmlPart->Attribute("h"), NULL, 10): 0;
+
+          LOG("Loading part '%s'...\n", id.c_str());
+
+          SkinPartPtr part = m_parts_by_id[id];
+          if (!part)
+              part = m_parts_by_id[id] = SkinPartPtr(new SkinPart);
+
+          if (w > 0 && h > 0) {
+              part->setBitmap(0, sliceSheet(part->bitmap(0), gfx::Rect(x, y, w, h)));
+          }
+          else if (xmlPart->Attribute("w1")) { // 3x3-1 part (NW, N, NE, E, SE, S, SW, W)
+              int w1 = strtol(xmlPart->Attribute("w1"), NULL, 10);
+              int w2 = strtol(xmlPart->Attribute("w2"), NULL, 10);
+              int w3 = strtol(xmlPart->Attribute("w3"), NULL, 10);
+              int h1 = strtol(xmlPart->Attribute("h1"), NULL, 10);
+              int h2 = strtol(xmlPart->Attribute("h2"), NULL, 10);
+              int h3 = strtol(xmlPart->Attribute("h3"), NULL, 10);
+
+              part->setBitmap(0, sliceSheet(part->bitmap(0), gfx::Rect(x, y, w1, h1))); // NW
+              part->setBitmap(1, sliceSheet(part->bitmap(1), gfx::Rect(x+w1, y, w2, h1))); // N
+              part->setBitmap(2, sliceSheet(part->bitmap(2), gfx::Rect(x+w1+w2, y, w3, h1))); // NE
+              part->setBitmap(3, sliceSheet(part->bitmap(3), gfx::Rect(x+w1+w2, y+h1, w3, h2))); // E
+              part->setBitmap(4, sliceSheet(part->bitmap(4), gfx::Rect(x+w1+w2, y+h1+h2, w3, h3))); // SE
+              part->setBitmap(5, sliceSheet(part->bitmap(5), gfx::Rect(x+w1, y+h1+h2, w2, h3))); // S
+              part->setBitmap(6, sliceSheet(part->bitmap(6), gfx::Rect(x, y+h1+h2, w1, h3))); // SW
+              part->setBitmap(7, sliceSheet(part->bitmap(7), gfx::Rect(x, y+h1, w1, h2))); // W
+          }
+      }
+    }
+  }
+
+  // Load styles
+  {
+    TiXmlElement* xmlStyle = handle
+      .FirstChild("skin")
+      .FirstChild("styles")
+      .FirstChild("style").ToElement();
+    while (xmlStyle) {
+      const char* style_id = xmlStyle->Attribute("id");
+      const char* base_id = xmlStyle->Attribute("base");
+      const css::Style* base = NULL;
+
+      if (base_id)
+        base = m_stylesheet.getCssStyle(base_id);
+
+      css::Style* style = new css::Style(style_id, base);
+      m_stylesheet.addCssStyle(style);
+
+      TiXmlElement* xmlRule = xmlStyle->FirstChildElement();
+      while (xmlRule) {
+        const std::string ruleName = xmlRule->Value();
+
+        LOG("- Rule '%s' for '%s'\n", ruleName.c_str(), style_id);
+
+        // TODO This code design to read styles could be improved.
+
+        const char* part_id = xmlRule->Attribute("part");
+        const char* color_id = xmlRule->Attribute("color");
+
+        // Style align
+        int align = 0;
+        const char* halign = xmlRule->Attribute("align");
+        const char* valign = xmlRule->Attribute("valign");
+        const char* wordwrap = xmlRule->Attribute("wordwrap");
+        if (halign) {
+          if (strcmp(halign, "left") == 0) align |= LEFT;
+          else if (strcmp(halign, "right") == 0) align |= RIGHT;
+          else if (strcmp(halign, "center") == 0) align |= CENTER;
+        }
+        if (valign) {
+          if (strcmp(valign, "top") == 0) align |= TOP;
+          else if (strcmp(valign, "bottom") == 0) align |= BOTTOM;
+          else if (strcmp(valign, "middle") == 0) align |= MIDDLE;
+        }
+        if (wordwrap && strcmp(wordwrap, "true") == 0)
+          align |= WORDWRAP;
+
+        if (ruleName == "background") {
+          const char* repeat_id = xmlRule->Attribute("repeat");
+
+          if (color_id) (*style)[StyleSheet::backgroundColorRule()] = value_or_none(color_id);
+          if (part_id) (*style)[StyleSheet::backgroundPartRule()] = value_or_none(part_id);
+          if (repeat_id) (*style)[StyleSheet::backgroundRepeatRule()] = value_or_none(repeat_id);
+        }
+        else if (ruleName == "icon") {
+          if (align) (*style)[StyleSheet::iconAlignRule()] = css::Value(align);
+          if (part_id) (*style)[StyleSheet::iconPartRule()] = css::Value(part_id);
+
+          const char* x = xmlRule->Attribute("x");
+          const char* y = xmlRule->Attribute("y");
+
+          if (x) (*style)[StyleSheet::iconXRule()] = css::Value(strtol(x, NULL, 10));
+          if (y) (*style)[StyleSheet::iconYRule()] = css::Value(strtol(y, NULL, 10));
+        }
+        else if (ruleName == "text") {
+          if (color_id) (*style)[StyleSheet::textColorRule()] = css::Value(color_id);
+          if (align) (*style)[StyleSheet::textAlignRule()] = css::Value(align);
+
+          const char* l = xmlRule->Attribute("padding-left");
+          const char* t = xmlRule->Attribute("padding-top");
+          const char* r = xmlRule->Attribute("padding-right");
+          const char* b = xmlRule->Attribute("padding-bottom");
+
+          if (l) (*style)[StyleSheet::paddingLeftRule()] = css::Value(strtol(l, NULL, 10));
+          if (t) (*style)[StyleSheet::paddingTopRule()] = css::Value(strtol(t, NULL, 10));
+          if (r) (*style)[StyleSheet::paddingRightRule()] = css::Value(strtol(r, NULL, 10));
+          if (b) (*style)[StyleSheet::paddingBottomRule()] = css::Value(strtol(b, NULL, 10));
+        }
+
+        xmlRule = xmlRule->NextSiblingElement();
+      }
+
+      xmlStyle = xmlStyle->NextSiblingElement();
+    }
+  }
+
+  SkinFile<SkinTheme>::updateInternals();
+}
+
+void SkinTheme::loadSkinXml(const std::string& filename) {
+  XmlDocumentRef doc = open_xml(filename);
   TiXmlHandle handle(doc.get());
 
   // Load dimension
@@ -327,7 +618,7 @@ void SkinTheme::loadXml(const std::string& skinId)
 
       if (c == kCursorTypes) {
         throw base::Exception("Unknown cursor specified in '%s':\n"
-                              "<cursor id='%s' ... />\n", xml_filename.c_str(), id.c_str());
+                              "<cursor id='%s' ... />\n", filename.c_str(), id.c_str());
       }
 
       xmlCursor = xmlCursor->NextSiblingElement();
@@ -342,17 +633,16 @@ void SkinTheme::loadXml(const std::string& skinId)
       .FirstChild("tool").ToElement();
     while (xmlIcon) {
       // Get the tool-icon rectangle
-      const char* tool_id = xmlIcon->Attribute("id");
+      const char* id = xmlIcon->Attribute("id");
       int x = strtol(xmlIcon->Attribute("x"), NULL, 10);
       int y = strtol(xmlIcon->Attribute("y"), NULL, 10);
       int w = strtol(xmlIcon->Attribute("w"), NULL, 10);
       int h = strtol(xmlIcon->Attribute("h"), NULL, 10);
 
-      LOG("Loading tool icon '%s'...\n", tool_id);
+      LOG("Loading tool icon '%s'...\n", id);
 
       // Crop the tool-icon from the sheet
-      m_toolicon[tool_id] = sliceSheet(
-        m_toolicon[tool_id], gfx::Rect(x, y, w, h));
+      m_toolicon[id] = sliceSheet(m_toolicon[id], gfx::Rect(x, y, w, h));
 
       xmlIcon = xmlIcon->NextSiblingElement();
     }
@@ -2010,28 +2300,43 @@ void SkinTheme::paintIcon(Widget* widget, Graphics* g, IButtonIcon* iconInterfac
     g->drawRgbaSurface(icon_bmp, x, y);
 }
 
-she::Font* SkinTheme::loadFont(const std::string& userFont, const std::string& themeFont)
+she::Font* SkinTheme::loadFont(const std::vector<std::string>& fonts, std::size_t size)
 {
-  // Directories to find the font
-  ResourceFinder rf;
-  if (!userFont.empty())
-    rf.addPath(userFont.c_str());
-  rf.includeDataDir(themeFont.c_str());
-
-  // Try to load the font
-  while (rf.next()) {
-    try {
-      she::Font* f = she::instance()->loadSpriteSheetFont(rf.filename().c_str(), guiscale());
-      if (f->isScalable())
-        f->setSize(8);
-      return f;
-    }
-    catch (const std::exception&) {
-      // Do nothing
+  she::Font* fallback = nullptr;
+  for (auto& themeFont : fonts) {
+    bool isTrueType = base::get_file_extension(themeFont) != "png";
+    if (isTrueType) {
+        auto themeLower = base::string_to_lower(base::get_file_title(themeFont));
+        for (auto& dir : base::get_font_paths()) {
+            auto item = FileSystemModule::instance()->getFileItemFromPath(dir);
+            if (!item)
+                continue;
+            for (auto child : item->children()) {
+                if (child->isFolder())
+                    continue;
+                auto isMatch = base::string_to_lower(child->displayName()).find(themeLower) != std::string::npos;
+                if (!isMatch && fallback)
+                    continue;
+                auto fullName = child->fileName();
+                if (auto f = she::instance()->loadTrueTypeFont(fullName.c_str(), size)) {
+                    fallback = f;
+                    if (!isMatch)
+                        continue;
+                    return f;
+                }
+            }
+        }
+    } else {
+        try {
+            auto f = she::instance()->loadSpriteSheetFont(themeFont.c_str(), guiscale());
+            if (f->isScalable())
+                f->setSize(size);
+            return f;
+        } catch(const std::exception&) {} // do nothing
     }
   }
 
-  return nullptr;
+  return fallback;
 }
 
 } // namespace skin

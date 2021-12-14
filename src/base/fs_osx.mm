@@ -11,6 +11,7 @@
 #include <Foundation/Foundation.h>
 
 #include <string>
+#include <vector>
 
 namespace base {
 
