@@ -25,7 +25,7 @@ As LibreSprite has a newly budding community, we need help building the infrastr
 ## Compiling
 Don't worry, it isn't as hard as you might think! Just follow the instructions [here](INSTALL.md).
 
-##Theming
+## Theming
 Don't like the default look of Libresprite,don't panic, you can download from the Libresprite resources repo. 
 
 ## License
