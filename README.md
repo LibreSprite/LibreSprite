@@ -26,7 +26,7 @@ As LibreSprite has a newly budding community, we need help building the infrastr
 Don't worry, it isn't as hard as you might think! Just follow the instructions [here](INSTALL.md).
 
 ## Theming
-Don't like the default look of Libresprite? Don't panic, you can download from the Libresprite resources repo. 
+Don't like the default look of Libresprite? Don't panic, you can download from the Libresprite [resources](https://libresprite.github.io/#!/resources) repo. 
 
 ## License
 This program is distributed under the [GNU General Public License Version 2](LICENSE.txt).
