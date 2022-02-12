@@ -6,31 +6,26 @@ If you don't like the default look of LibreSprite, DON'T PANIC, there's plenty o
 
 ## Where can I find them?
 
-Well, most of the available themes can be found [here](https://libresprite.github.io/resources). These are all made by and for the community.
+Well, most of the available themes can be found [here](https://libresprite.github.io/#!/resources). These are all made by and for the community.
 
 ##### Examples:
 
+[Neutral Dark](https://github.com/maujin111/than_dark_theme_libresprite/archive/refs/heads/master.zip) - by Blackraven
+
 ![](https://libresprite.github.io/assets/neutralDarkPreview.png)
-
-[Neutral Dark](https://github.com/maujin111/neutral-dark-theme/archive/refs/heads/main.zip) - by Blackraven
-
-
-
-![](https://libresprite.github.io/assets/purpleTintPreview.png)
 
 [Purple Tint](https://github.com/maujin111/purpleTint-libreSprite-Theme/archive/refs/heads/main.zip) - by Maujin111
 
-
-
-![](https://libresprite.github.io/assets/unofficialDeadCellsPreview.png)
+![](https://libresprite.github.io/assets/purpleTintPreview.png)
 
 [Unofficial Dead Cells](https://github.com/maujin111/unofficialDeadCellsTheme/archive/refs/heads/main.zip) - by Maujin111
 
+![](https://libresprite.github.io/assets/unofficialDeadCellsPreview.png)
 
 
 ## How to Install?
 
-Simple, download the .zip archive, extract and copy to the /data/skins part of the directory where libresprite.exe is. 
+Simple, download the .zip archive, extract and copy to the /data/skins part of the directory where libresprite.exe is.
 
 Then open LibreSprite up, go to Edit, Preferences and go to the Theme tab.
 
@@ -46,7 +41,7 @@ Restart LibreSprite to see the changes.
 
 ## How to uninstall a theme?
 
-Well, just go back to the Themes tab in Preferences, and select a different theme and do the same process as before. 
+Well, just go back to the Themes tab in Preferences, and select a different theme and do the same process as before.
 
 
 
