@@ -6,7 +6,7 @@ If you don't like the default look of LibreSprite, DON'T PANIC, there's plenty o
 
 ## Where can I find them?
 
-Well, most of the available themes can be found [here](https://libresprite.github.io/resources). These are all made by and for the community.
+Well, most of the available themes can be found [here](https://libresprite.github.io/#!/resources). These are all made by and for the community.
 
 ##### Examples:
 
