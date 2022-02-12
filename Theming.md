@@ -10,22 +10,17 @@ Well, most of the available themes can be found [here](https://libresprite.githu
 
 ##### Examples:
 
+[Neutral Dark](https://github.com/maujin111/than_dark_theme_libresprite/archive/refs/heads/master.zip) - by Blackraven
+
 ![](https://libresprite.github.io/assets/neutralDarkPreview.png)
-
-[Neutral Dark](https://github.com/maujin111/neutral-dark-theme/archive/refs/heads/main.zip) - by Blackraven
-
-
-
-![](https://libresprite.github.io/assets/purpleTintPreview.png)
 
 [Purple Tint](https://github.com/maujin111/purpleTint-libreSprite-Theme/archive/refs/heads/main.zip) - by Maujin111
 
-
-
-![](https://libresprite.github.io/assets/unofficialDeadCellsPreview.png)
+![](https://libresprite.github.io/assets/purpleTintPreview.png)
 
 [Unofficial Dead Cells](https://github.com/maujin111/unofficialDeadCellsTheme/archive/refs/heads/main.zip) - by Maujin111
 
+![](https://libresprite.github.io/assets/unofficialDeadCellsPreview.png)
 
 
 ## How to Install?
