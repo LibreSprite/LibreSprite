@@ -45,7 +45,6 @@
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "base/convert_to.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/doc.h"
 #include "doc/document_event.h"
@@ -161,8 +160,6 @@ Editor::Editor(Document* document, EditorFlags flags)
   , m_toolLoopModifiers(tools::ToolLoopModifiers::kNone)
   , m_autoSelectLayer(false)
   , m_padding(0, 0)
-  , m_antsTimer(100, this)
-  , m_antsOffset(0)
   , m_customizationDelegate(NULL)
   , m_docView(NULL)
   , m_flags(flags)
@@ -220,7 +217,7 @@ Editor::~Editor()
 
   setCustomizationDelegate(NULL);
 
-  m_antsTimer.stop();
+  m_antsTimer->stop();
 }
 
 void Editor::destroyEditorSharedInternals()
@@ -441,7 +438,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
   if (!m_renderBuffer)
     m_renderBuffer.reset(new doc::ImageBuffer());
 
-  base::UniquePtr<Image> rendered(NULL);
+  std::unique_ptr<Image> rendered = nullptr;
   try {
     // Generate a "expose sprite pixels" notification. This is used by
     // tool managers that need to validate this region (copy pixels from
@@ -505,7 +502,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
         m_layer, m_frame);
     }
 
-    m_renderEngine.renderSprite(rendered, m_sprite, m_frame,
+    m_renderEngine.renderSprite(rendered.get(), m_sprite, m_frame,
       gfx::Clip(0, 0, rc), m_zoom);
 
     m_renderEngine.removeExtraImage();
@@ -517,7 +514,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
   if (rendered) {
     // Pre-render decorator.
     if ((m_flags & kShowDecorators) && m_decorator) {
-      EditorPreRenderImpl preRender(this, rendered,
+      EditorPreRenderImpl preRender(this, rendered.get(),
         Point(-rc.x, -rc.y), m_zoom);
       m_decorator->preRenderDecorator(&preRender);
     }
@@ -532,7 +529,7 @@ void Editor::drawOneSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& sprite
     }
 
     if (tmp->nativeHandle()) {
-      convert_image_to_surface(rendered, m_sprite->palette(m_frame),
+      convert_image_to_surface(rendered.get(), m_sprite->palette(m_frame),
         tmp, 0, 0, 0, 0, rc.w, rc.h);
 
       g->blit(tmp, 0, 0, dest_x, dest_y, rc.w, rc.h);
@@ -924,9 +921,9 @@ tools::Tool* Editor::getCurrentEditorTool()
   return App::instance()->activeTool();
 }
 
-tools::Ink* Editor::getCurrentEditorInk()
+std::shared_ptr<tools::Ink> Editor::getCurrentEditorInk()
 {
-  tools::Ink* ink = m_state->getStateInk();
+  std::shared_ptr<tools::Ink> ink = m_state->getStateInk();
   if (ink)
     return ink;
   else
@@ -1150,7 +1147,7 @@ bool Editor::onProcessMessage(Message* msg)
   switch (msg->type()) {
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == &m_antsTimer) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_antsTimer) {
         if (isVisible() && m_sprite) {
           drawMaskSafe();
 
@@ -1160,8 +1157,8 @@ bool Editor::onProcessMessage(Message* msg)
           else
             m_antsOffset = 0;
         }
-        else if (m_antsTimer.isRunning()) {
-          m_antsTimer.stop();
+        else if (m_antsTimer->isRunning()) {
+          m_antsTimer->stop();
         }
       }
       break;
@@ -1351,10 +1348,10 @@ void Editor::onPaint(ui::PaintEvent& ev)
       // Draw the mask boundaries
       if (m_document->getMaskBoundaries()) {
         drawMask(g);
-        m_antsTimer.start();
+        m_antsTimer->start();
       }
       else {
-        m_antsTimer.stop();
+        m_antsTimer->stop();
       }
     }
     catch (const LockedDocumentException&) {
@@ -1488,7 +1485,7 @@ void Editor::pasteImage(const Image* image, const Mask* mask)
 {
   ASSERT(image);
 
-  base::UniquePtr<Mask> temp_mask;
+  std::unique_ptr<Mask> temp_mask;
   if (!mask) {
     gfx::Rect visibleBounds = getVisibleSpriteBounds();
     gfx::Rect imageBounds = image->bounds();

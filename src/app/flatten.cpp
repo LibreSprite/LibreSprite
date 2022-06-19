@@ -9,13 +9,14 @@
 #include "config.h"
 #endif
 
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/layer.h"
 #include "doc/sprite.h"
 #include "gfx/rect.h"
 #include "render/render.h"
+
+#include <memory>
 
 namespace app {
 
@@ -27,26 +28,25 @@ LayerImage* create_flatten_layer_copy(Sprite* dstSprite, const Layer* srcLayer,
                                       const gfx::Rect& bounds,
                                       frame_t frmin, frame_t frmax)
 {
-  base::UniquePtr<LayerImage> flatLayer(new LayerImage(dstSprite));
+  std::unique_ptr<LayerImage> flatLayer(new LayerImage(dstSprite));
   render::Render render;
 
   for (frame_t frame=frmin; frame<=frmax; ++frame) {
     // Does this frame have cels to render?
     if (has_cels(srcLayer, frame)) {
       // Create a new image to render each frame.
-      ImageRef image(Image::create(flatLayer->sprite()->pixelFormat(), bounds.w, bounds.h));
+      std::shared_ptr<Image> image(Image::create(flatLayer->sprite()->pixelFormat(), bounds.w, bounds.h));
 
       // Create the new cel for the output layer.
-      base::UniquePtr<Cel> cel(new Cel(frame, image));
+      std::unique_ptr<Cel> cel(new Cel(frame, image));
       cel->setPosition(bounds.x, bounds.y);
 
       // Render this frame.
       render.renderLayer(image.get(), srcLayer, frame,
         gfx::Clip(0, 0, bounds));
 
-      // Add the cel (and release the base::UniquePtr).
-      flatLayer->addCel(cel);
-      cel.release();
+      // Add the cel (and release the std::unique_ptr).
+      flatLayer->addCel(cel.release());
     }
   }
 

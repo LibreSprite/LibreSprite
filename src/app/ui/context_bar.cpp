@@ -37,7 +37,6 @@
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "base/scoped_value.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
 #include "doc/palette.h"
@@ -58,6 +57,8 @@
 #include "ui/theme.h"
 #include "ui/tooltips.h"
 
+#include <memory>
+
 namespace app {
 
 using namespace app::skin;
@@ -69,14 +70,11 @@ static bool g_updatingFromCode = false;
 
 class ContextBar::BrushTypeField : public ButtonSet {
 public:
-  BrushTypeField(ContextBar* owner)
-    : ButtonSet(1)
-    , m_owner(owner)
-    , m_brushes(App::instance()->brushes()) {
-    SkinPartPtr part(new SkinPart);
-    part->setBitmap(
-      0, BrushPopup::createSurfaceForBrush(BrushRef(nullptr)));
+  BrushTypeField(ContextBar* owner) : m_owner(owner) {
+    setColumns(1);
 
+    auto part = std::make_shared<SkinPart>();
+    part->setBitmap(0, BrushPopup::createSurfaceForBrush(BrushRef(nullptr)));
     addItem(part);
   }
 
@@ -102,7 +100,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     if (!m_popupWindow.isVisible())
@@ -143,7 +141,7 @@ private:
   }
 
   ContextBar* m_owner;
-  AppBrushes& m_brushes;
+  AppBrushes& m_brushes = App::instance()->brushes();
   BrushPopup m_popupWindow;
 };
 
@@ -275,13 +273,13 @@ protected:
 
 class ContextBar::PaintBucketSettingsField : public ButtonSet {
 public:
-  PaintBucketSettingsField() : ButtonSet(1) {
-    SkinTheme* theme = SkinTheme::instance();
-    addItem(theme->parts.timelineGear());
+  PaintBucketSettingsField() {
+    setColumns(1);
+    addItem(SkinTheme::instance()->parts.timelineGear());
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
     const gfx::Rect bounds = this->bounds();
 
@@ -328,10 +326,9 @@ protected:
 
 class ContextBar::InkTypeField : public ButtonSet {
 public:
-  InkTypeField(ContextBar* owner) : ButtonSet(1)
-                                  , m_owner(owner) {
-    SkinTheme* theme = SkinTheme::instance();
-    addItem(theme->parts.inkSimple());
+  InkTypeField(ContextBar* owner) : m_owner(owner) {
+    setColumns(1);
+    addItem(SkinTheme::instance()->parts.inkSimple());
   }
 
   void setInkType(InkType inkType) {
@@ -365,7 +362,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     gfx::Rect bounds = this->bounds();
@@ -404,7 +401,7 @@ class ContextBar::InkShadesField : public HBox {
     }
 
     doc::Remap* createShadeRemap(bool left) {
-      base::UniquePtr<doc::Remap> remap;
+      std::unique_ptr<doc::Remap> remap;
       Shade colors = getShade();
 
       // We need two or more colors to create a shading remap. In
@@ -879,21 +876,19 @@ protected:
 
 class ContextBar::TransparentColorField : public HBox {
 public:
-  TransparentColorField(ContextBar* owner)
-    : m_icon(1)
-    , m_maskColor(app::Color::fromMask(), IMAGE_RGB)
-    , m_owner(owner) {
+  TransparentColorField(ContextBar* owner) : m_maskColor(app::Color::fromMask(), IMAGE_RGB), m_owner(owner) {
+    m_icon->setColumns(1);
     SkinTheme* theme = SkinTheme::instance();
 
-    addChild(&m_icon);
+    addChild(m_icon);
     addChild(&m_maskColor);
 
-    m_icon.addItem(theme->parts.selectionOpaque());
-    gfx::Size sz = m_icon.getItem(0)->sizeHint();
+    m_icon->addItem(theme->parts.selectionOpaque());
+    gfx::Size sz = m_icon->getItem(0)->sizeHint();
     sz.w += 2*guiscale();
-    m_icon.getItem(0)->setMinSize(sz);
+    m_icon->getItem(0)->setMinSize(sz);
 
-    m_icon.ItemChange.connect(base::Bind<void>(&TransparentColorField::onPopup, this));
+    m_icon->ItemChange.connect(base::Bind<void>(&TransparentColorField::onPopup, this));
     m_maskColor.Change.connect(base::Bind<void>(&TransparentColorField::onChangeColor, this));
 
     Preferences::instance().selection.opaque.AfterChange.connect(
@@ -946,7 +941,7 @@ private:
     SkinTheme* theme = SkinTheme::instance();
     SkinPartPtr part = (opaque ? theme->parts.selectionOpaque():
                                  theme->parts.selectionMasked());
-    m_icon.getItem(0)->setIcon(part);
+    m_icon->getItem(0)->setIcon(part);
 
     m_maskColor.setVisible(!opaque);
     if (!opaque) {
@@ -963,15 +958,15 @@ private:
       !Preferences::instance().selection.autoOpaque());
   }
 
-  ButtonSet m_icon;
+  std::shared_ptr<ButtonSet> m_icon = inject<Widget>{"ButtonSet"};
   ColorButton m_maskColor;
   ContextBar* m_owner;
 };
 
 class ContextBar::PivotField : public ButtonSet {
 public:
-  PivotField()
-    : ButtonSet(1) {
+  PivotField() {
+    setColumns(1);
     addItem(SkinTheme::instance()->parts.pivotCenter());
 
     Preferences::instance().selection.pivotPosition.AfterChange.connect(
@@ -982,7 +977,7 @@ public:
 
 private:
 
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
@@ -991,17 +986,18 @@ private:
     Menu menu;
     CheckBox visible("Display pivot by default");
     HBox box;
-    ButtonSet buttonset(3);
-    buttonset.addItem(theme->parts.pivotNorthwest());
-    buttonset.addItem(theme->parts.pivotNorth());
-    buttonset.addItem(theme->parts.pivotNortheast());
-    buttonset.addItem(theme->parts.pivotWest());
-    buttonset.addItem(theme->parts.pivotCenter());
-    buttonset.addItem(theme->parts.pivotEast());
-    buttonset.addItem(theme->parts.pivotSouthwest());
-    buttonset.addItem(theme->parts.pivotSouth());
-    buttonset.addItem(theme->parts.pivotSoutheast());
-    box.addChild(&buttonset);
+    std::shared_ptr<ButtonSet> buttonset = inject<Widget>{"ButtonSet"};
+    buttonset->setColumns(3);
+    buttonset->addItem(theme->parts.pivotNorthwest());
+    buttonset->addItem(theme->parts.pivotNorth());
+    buttonset->addItem(theme->parts.pivotNortheast());
+    buttonset->addItem(theme->parts.pivotWest());
+    buttonset->addItem(theme->parts.pivotCenter());
+    buttonset->addItem(theme->parts.pivotEast());
+    buttonset->addItem(theme->parts.pivotSouthwest());
+    buttonset->addItem(theme->parts.pivotSouth());
+    buttonset->addItem(theme->parts.pivotSoutheast());
+    box.addChild(buttonset);
 
     menu.addChild(&visible);
     menu.addChild(new MenuSeparator);
@@ -1010,7 +1006,7 @@ private:
     bool isVisible = Preferences::instance().selection.pivotVisibility();
     app::gen::PivotPosition pos = Preferences::instance().selection.pivotPosition();
     visible.setSelected(isVisible);
-    buttonset.setSelectedItem(int(pos));
+    buttonset->setSelectedItem(int(pos));
 
     visible.Click.connect(
       [&visible](Event&){
@@ -1018,10 +1014,10 @@ private:
           visible.isSelected());
       });
 
-    buttonset.ItemChange.connect(
+    buttonset->ItemChange.connect(
       [&buttonset](ButtonSet::Item* item){
         Preferences::instance().selection.pivotPosition(
-          app::gen::PivotPosition(buttonset.selectedItem()));
+          app::gen::PivotPosition(buttonset->selectedItem()));
       });
 
     menu.showPopup(gfx::Point(bounds.x, bounds.y+bounds.h));
@@ -1133,7 +1129,8 @@ protected:
 class ContextBar::SelectionModeField : public ButtonSet
 {
 public:
-  SelectionModeField() : ButtonSet(3) {
+  SelectionModeField() {
+    setColumns(3);
     SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 
     addItem(theme->parts.selectionReplace());
@@ -1155,7 +1152,7 @@ public:
   }
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     Preferences::instance().selection.mode(
@@ -1166,7 +1163,8 @@ protected:
 class ContextBar::DropPixelsField : public ButtonSet
 {
 public:
-  DropPixelsField() : ButtonSet(2) {
+  DropPixelsField() {
+    setColumns(2);
     SkinTheme* theme = static_cast<SkinTheme*>(this->theme());
 
     addItem(theme->parts.dropPixelsOk());
@@ -1182,7 +1180,7 @@ public:
   base::Signal1<void, ContextBarObserver::DropAction> DropPixels;
 
 protected:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     switch (selectedItem()) {
@@ -1258,7 +1256,8 @@ protected:
 
 class ContextBar::SymmetryField : public ButtonSet {
 public:
-  SymmetryField() : ButtonSet(2) {
+  SymmetryField() {
+    setColumns(2);
     setMultipleSelection(true);
 
     SkinTheme* theme = SkinTheme::instance();
@@ -1286,7 +1285,7 @@ public:
   }
 
 private:
-  void onItemChange(Item* item) override {
+  void onItemChange(std::shared_ptr<Item> item) override {
     ButtonSet::onItemChange(item);
 
     Document* doc = UIContext::instance()->activeDocument();

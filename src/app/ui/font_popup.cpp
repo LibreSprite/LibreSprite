@@ -21,10 +21,8 @@
 #include "base/fs.h"
 #include "base/path.h"
 #include "base/string.h"
-#include "base/unique_ptr.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
-#include "doc/image_ref.h"
 #include "she/surface.h"
 #include "she/system.h"
 #include "ui/box.h"
@@ -47,7 +45,7 @@ namespace app {
 
 using namespace ui;
 
-static std::map<std::string, doc::ImageRef> g_thumbnails;
+static std::map<std::string, std::shared_ptr<doc::Image>> g_thumbnails;
 
 class FontItem : public ListItem {
 public:
@@ -124,7 +122,7 @@ private:
   }
 
 private:
-  doc::ImageRef m_image;
+std::shared_ptr<doc::Image> m_image;
   std::string m_filename;
 };
 
@@ -147,29 +145,8 @@ FontPopup::FontPopup()
   m_popup->view()->attachToView(&m_listBox);
 
   std::queue<std::string> fontDirs;
-#if _WIN32
-  {
-    std::vector<wchar_t> buf(MAX_PATH);
-    HRESULT hr = SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
-                                 SHGFP_TYPE_DEFAULT, &buf[0]);
-    if (hr == S_OK) {
-      fontDirs.push(base::to_utf8(&buf[0]));
-    }
-  }
-#elif __APPLE__
-  {
-    fontDirs.push("/System/Library/Fonts/");
-    fontDirs.push("/Library/Fonts");
-    fontDirs.push("~/Library/Fonts");
-  }
-#else  // Unix-like
-  {
-    fontDirs.push("/usr/share/fonts");
-    fontDirs.push("/usr/local/share/fonts");
-    fontDirs.push("~/.local/share/fonts");
-    fontDirs.push("~/.fonts");
-  }
-#endif
+  for (auto& dir : base::get_font_paths())
+      fontDirs.push(dir);
 
   // Create a list of fullpaths to every font found in all font
   // directories (fontDirs)

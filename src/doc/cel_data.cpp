@@ -17,7 +17,7 @@
 
 namespace doc {
 
-CelData::CelData(const ImageRef& image)
+CelData::CelData(const std::shared_ptr<Image>& image)
   : WithUserData(ObjectType::CelData)
   , m_image(image)
   , m_position(0, 0)
@@ -33,7 +33,7 @@ CelData::CelData(const CelData& celData)
 {
 }
 
-void CelData::setImage(const ImageRef& image)
+void CelData::setImage(const std::shared_ptr<Image>& image)
 {
   ASSERT(image.get());
 

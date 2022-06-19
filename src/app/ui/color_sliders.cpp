@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -234,7 +235,7 @@ void ColorSliders::updateSlidersBgColor(const app::Color& color)
 
 void ColorSliders::updateSliderBgColor(Slider* slider, const app::Color& color)
 {
-  SkinSliderPropertyPtr sliderProperty(slider->getProperty(SkinSliderProperty::Name));
+  auto sliderProperty = std::static_pointer_cast<SkinSliderProperty>(slider->getProperty(SkinSliderProperty::Name));
 
   static_cast<ColorSliderBgPainter*>(sliderProperty->getBgPainter())->setColor(color);
 

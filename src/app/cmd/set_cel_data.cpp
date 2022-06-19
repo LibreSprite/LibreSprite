@@ -14,7 +14,6 @@
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/image_io.h"
-#include "doc/image_ref.h"
 #include "doc/sprite.h"
 #include "doc/subobjects_io.h"
 
@@ -82,7 +81,7 @@ void SetCelData::createCopy()
 
   ASSERT(!m_dataCopy);
   m_dataCopy.reset(new CelData(*cel->data()));
-  m_dataCopy->setImage(ImageRef(Image::createCopy(cel->image())));
+  m_dataCopy->setImage(std::shared_ptr<Image>{Image::createCopy(cel->image())});
 }
 
 } // namespace cmd

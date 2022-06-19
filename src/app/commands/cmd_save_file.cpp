@@ -29,9 +29,10 @@
 #include "base/fs.h"
 #include "base/path.h"
 #include "base/thread.h"
-#include "base/unique_ptr.h"
 #include "doc/sprite.h"
 #include "ui/ui.h"
+
+#include <memory>
 
 namespace app {
 
@@ -98,14 +99,14 @@ static void save_document_in_background(const Context* context,
                                         const Document* document, bool mark_as_saved,
                                         const std::string& fn_format)
 {
-  base::UniquePtr<FileOp> fop(
+  std::unique_ptr<FileOp> fop(
     FileOp::createSaveDocumentOperation(
       context, document,
       document->filename().c_str(), fn_format.c_str()));
   if (!fop)
     return;
 
-  SaveFileJob job(fop);
+  SaveFileJob job(fop.get());
   job.showProgressWindow();
 
   if (fop->hasError()) {

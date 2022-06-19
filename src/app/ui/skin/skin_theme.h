@@ -121,6 +121,8 @@ namespace app {
       void loadSheet(const std::string& skinId);
       void loadFonts(const std::string& skinId);
       void loadXml(const std::string& skinId);
+      void loadSkinXml(const std::string& filename);
+      void loadThemeXml(const std::string& filename);
 
       she::Surface* sliceSheet(she::Surface* sur, const gfx::Rect& bounds);
       gfx::Color getWidgetBgColor(ui::Widget* widget);
@@ -131,7 +133,7 @@ namespace app {
 
       void paintIcon(ui::Widget* widget, ui::Graphics* g, ui::IButtonIcon* iconInterface, int x, int y);
 
-      she::Font* loadFont(const std::string& userFont, const std::string& themeFont);
+      she::Font* loadFont(const std::vector<std::string>& fonts, std::size_t);
 
       she::Surface* m_sheet;
       std::map<std::string, SkinPartPtr> m_parts_by_id;

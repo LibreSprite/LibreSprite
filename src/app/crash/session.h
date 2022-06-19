@@ -10,9 +10,9 @@
 #include "app/crash/raw_images_as.h"
 #include "base/disable_copying.h"
 #include "base/process.h"
-#include "base/shared_ptr.h"
 
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -70,7 +70,7 @@ namespace crash {
     DISABLE_COPYING(Session);
   };
 
-  typedef base::SharedPtr<Session> SessionPtr;
+typedef std::shared_ptr<Session> SessionPtr;
 
 } // namespace crash
 } // namespace app

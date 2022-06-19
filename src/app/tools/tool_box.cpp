@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    - Copyright (C) 2001-2015  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -84,24 +84,24 @@ ToolBox::ToolBox()
 {
   LOG("Toolbox module: installing\n");
 
-  m_inks[WellKnownInks::Selection]       = new SelectionInk();
-  m_inks[WellKnownInks::Paint]           = new PaintInk(PaintInk::Simple);
-  m_inks[WellKnownInks::PaintFg]         = new PaintInk(PaintInk::WithFg);
-  m_inks[WellKnownInks::PaintBg]         = new PaintInk(PaintInk::WithBg);
-  m_inks[WellKnownInks::PaintCopy]       = new PaintInk(PaintInk::Copy);
-  m_inks[WellKnownInks::PaintLockAlpha]  = new PaintInk(PaintInk::LockAlpha);
-  m_inks[WellKnownInks::Shading]         = new ShadingInk();
-  m_inks[WellKnownInks::Eraser]          = new EraserInk(EraserInk::Eraser);
-  m_inks[WellKnownInks::ReplaceFgWithBg] = new EraserInk(EraserInk::ReplaceFgWithBg);
-  m_inks[WellKnownInks::ReplaceBgWithFg] = new EraserInk(EraserInk::ReplaceBgWithFg);
-  m_inks[WellKnownInks::PickFg]          = new PickInk(PickInk::Fg);
-  m_inks[WellKnownInks::PickBg]          = new PickInk(PickInk::Bg);
-  m_inks[WellKnownInks::Zoom]            = new ZoomInk();
-  m_inks[WellKnownInks::Scroll]          = new ScrollInk();
-  m_inks[WellKnownInks::Move]            = new MoveInk();
-  m_inks[WellKnownInks::Slice]           = new SliceInk();
-  m_inks[WellKnownInks::Blur]            = new BlurInk();
-  m_inks[WellKnownInks::Jumble]          = new JumbleInk();
+  m_inks[WellKnownInks::Selection]       = std::make_shared<SelectionInk>();
+  m_inks[WellKnownInks::Paint]           = std::make_shared<PaintInk>(PaintInk::Simple);
+  m_inks[WellKnownInks::PaintFg]         = std::make_shared<PaintInk>(PaintInk::WithFg);
+  m_inks[WellKnownInks::PaintBg]         = std::make_shared<PaintInk>(PaintInk::WithBg);
+  m_inks[WellKnownInks::PaintCopy]       = std::make_shared<PaintInk>(PaintInk::Copy);
+  m_inks[WellKnownInks::PaintLockAlpha]  = std::make_shared<PaintInk>(PaintInk::LockAlpha);
+  m_inks[WellKnownInks::Shading]         = std::make_shared<ShadingInk>();
+  m_inks[WellKnownInks::Eraser]          = std::make_shared<EraserInk>(EraserInk::Eraser);
+  m_inks[WellKnownInks::ReplaceFgWithBg] = std::make_shared<EraserInk>(EraserInk::ReplaceFgWithBg);
+  m_inks[WellKnownInks::ReplaceBgWithFg] = std::make_shared<EraserInk>(EraserInk::ReplaceBgWithFg);
+  m_inks[WellKnownInks::PickFg]          = std::make_shared<PickInk>(PickInk::Fg);
+  m_inks[WellKnownInks::PickBg]          = std::make_shared<PickInk>(PickInk::Bg);
+  m_inks[WellKnownInks::Zoom]            = std::make_shared<ZoomInk>();
+  m_inks[WellKnownInks::Scroll]          = std::make_shared<ScrollInk>();
+  m_inks[WellKnownInks::Move]            = std::make_shared<MoveInk>();
+  m_inks[WellKnownInks::Slice]           = std::make_shared<SliceInk>();
+  m_inks[WellKnownInks::Blur]            = std::make_shared<BlurInk>();
+  m_inks[WellKnownInks::Jumble]          = std::make_shared<JumbleInk>();
 
   m_controllers["freehand"]              = new FreehandController();
   m_controllers["point_by_point"]        = new PointByPointController();
@@ -144,7 +144,6 @@ ToolBox::~ToolBox()
   std::for_each(m_intertwiners.begin(), m_intertwiners.end(), deleter());
   std::for_each(m_pointshapers.begin(), m_pointshapers.end(), deleter());
   std::for_each(m_controllers.begin(), m_controllers.end(), deleter());
-  std::for_each(m_inks.begin(), m_inks.end(), deleter());
 
   LOG("Toolbox module: uninstalled\n");
 }
@@ -161,7 +160,7 @@ Tool* ToolBox::getToolById(const std::string& id)
   return NULL;
 }
 
-Ink* ToolBox::getInkById(const std::string& id)
+std::shared_ptr<Ink> ToolBox::getInkById(const std::string& id)
 {
   return m_inks[id];
 }
@@ -178,7 +177,7 @@ PointShape* ToolBox::getPointShapeById(const std::string& id)
 
 void ToolBox::loadTools()
 {
-  LOG("Loading Aseprite tools\n");
+  LOG("Loading LibreSprite tools\n");
 
   XmlDocumentRef doc(GuiXml::instance()->doc());
   TiXmlHandle handle(doc.get());
@@ -254,7 +253,7 @@ void ToolBox::loadToolProperties(TiXmlElement* xmlTool, Tool* tool, int button, 
   }
 
   // Find the ink
-  std::map<std::string, Ink*>::iterator it_ink
+  std::map<std::string, std::shared_ptr<Ink>>::iterator it_ink
     = m_inks.find(ink ? ink: "");
   if (it_ink == m_inks.end())
     throw base::Exception("Invalid ink '%s' specified in '%s' tool.\n", ink, tool_id);

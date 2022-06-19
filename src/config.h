@@ -24,7 +24,8 @@
 
 // General information
 #define PACKAGE "LibreSprite"
-#define VERSION "1.0"
+#define VERSION "1.1-dev"
+#define PACKAGE_AND_VERSION PACKAGE " " VERSION
 
 #define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
 #define WEBSITE_DOWNLOAD        WEBSITE "releases/"

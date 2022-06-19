@@ -9,7 +9,6 @@
 #include "config.h"
 #endif
 
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/layer.h"
@@ -17,6 +16,8 @@
 #include "doc/sprite.h"
 #include "render/quantization.h"
 #include "render/render.h"
+
+#include <memory>
 
 namespace app {
 
@@ -28,9 +29,9 @@ Cel* create_cel_copy(const Cel* srcCel,
 {
   const Image* celImage = srcCel->image();
 
-  base::UniquePtr<Cel> dstCel(
+  std::unique_ptr<Cel> dstCel(
     new Cel(dstFrame,
-            ImageRef(Image::create(dstSprite->pixelFormat(),
+            std::shared_ptr<Image>(Image::create(dstSprite->pixelFormat(),
                                    celImage->width(),
                                    celImage->height()))));
 
@@ -40,7 +41,7 @@ Cel* create_cel_copy(const Cel* srcCel,
       celImage->pixelFormat() == IMAGE_INDEXED &&
       srcCel->sprite()->palette(srcCel->frame())->countDiff(
         dstSprite->palette(dstFrame), nullptr, nullptr)) {
-    ImageRef tmpImage(Image::create(IMAGE_RGB, celImage->width(), celImage->height()));
+    std::shared_ptr<Image> tmpImage(Image::create(IMAGE_RGB, celImage->width(), celImage->height()));
     tmpImage->clear(0);
 
     render::convert_pixel_format(

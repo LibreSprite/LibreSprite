@@ -7,10 +7,10 @@
 #pragma once
 
 #include "base/signal.h"
-#include "base/unique_ptr.h"
 #include "ui/register_message.h"
 #include "ui/separator.h"
 #include "ui/widget.h"
+#include <memory>
 
 namespace ui {
 
@@ -61,7 +61,7 @@ namespace ui {
     void setMenu(Menu* menu);
 
     MenuBaseData* getBase() {
-      return m_base;
+      return m_base.get();
     }
 
     // Closes all menu-boxes and goes back to the normal state of the
@@ -77,7 +77,7 @@ namespace ui {
   private:
     void closePopup();
 
-    MenuBaseData* m_base;
+    std::unique_ptr<MenuBaseData> m_base;
 
     friend class Menu;
   };
@@ -139,7 +139,7 @@ namespace ui {
     bool m_highlighted;           // Is it highlighted?
     Menu* m_submenu;              // The sub-menu
     MenuBox* m_submenu_menubox;   // The opened menubox for this menu-item
-    base::UniquePtr<Timer> m_submenu_timer; // Timer to open the submenu
+    inject<Timer> m_submenu_timer; // Timer to open the submenu
 
     friend class Menu;
     friend class MenuBox;

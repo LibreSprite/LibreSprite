@@ -19,23 +19,7 @@ namespace ui {
   class Widget;
   class Window;
 
-  // intern.cpp
-
-  namespace details {
-
-    void initWidgets();
-    void exitWidgets();
-
-    void addWidget(Widget* widget);
-    void removeWidget(Widget* widget);
-
-    void resetFontAllWidgets();
-    void reinitThemeForAllWidgets();
-
-  } // namespace details
-
   // theme.cpp
-
   void drawTextBox(Graphics* g, Widget* textbox,
                    int* w, int* h, gfx::Color bg, gfx::Color fg);
 

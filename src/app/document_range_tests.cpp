@@ -14,9 +14,10 @@
 #include "app/document_range_ops.h"
 #include "app/document_undo.h"
 #include "app/transaction.h"
-#include "base/unique_ptr.h"
 #include "doc/doc.h"
 #include "doc/test_context.h"
+
+#include <memory>
 
 using namespace app;
 using namespace doc;
@@ -30,7 +31,7 @@ namespace app {
 
 }
 
-typedef base::UniquePtr<app::Document> DocumentPtr;
+typedef std::unique_ptr<app::Document> DocumentPtr;
 
 #define EXPECT_LAYER_ORDER(a, b, c, d) \
   EXPECT_TRUE(expect_layer(a, 0));     \
@@ -107,7 +108,7 @@ public:
 
       for (int j=0; j<4; j++) {
         Cel* cel = layer->cel(frame_t(j));
-        ImageRef image;
+        std::shared_ptr<Image> image;
         if (cel)
           image = cel->imageRef();
         else {

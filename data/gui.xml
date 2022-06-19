@@ -811,7 +811,7 @@
         <separator />
         <item command="Launch" text="&amp;Donate">
           <param name="type" value="url" />
-          <param name="path" value="/donate/" />
+          <param name="path" value="https://liberapay.com/LibreSprite" />
         </item>
         <item command="About" text="&amp;About" />
       </menu>

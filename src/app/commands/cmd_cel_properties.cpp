@@ -46,15 +46,10 @@ class CelPropertiesWindow : public app::gen::CelProperties
                           , public doc::ContextObserver
                           , public doc::DocumentObserver {
 public:
-  CelPropertiesWindow()
-    : m_timer(250, this)
-    , m_document(nullptr)
-    , m_cel(nullptr)
-    , m_selfUpdate(false)
-    , m_newUserData(false) {
+  CelPropertiesWindow() {
     opacity()->Change.connect(base::Bind<void>(&CelPropertiesWindow::onStartTimer, this));
     userData()->Click.connect(base::Bind<void>(&CelPropertiesWindow::onPopupUserData, this));
-    m_timer.Tick.connect(base::Bind<void>(&CelPropertiesWindow::onCommitChange, this));
+    m_timer->Tick.connect(base::Bind<void>(&CelPropertiesWindow::onCommitChange, this));
 
     remapWindow();
     centerWindow();
@@ -74,7 +69,7 @@ public:
       m_cel = nullptr;
     }
 
-    m_timer.stop();
+    m_timer->stop();
     m_document = doc;
     m_cel = cel;
     m_range = App::instance()->timeline()->range();
@@ -152,13 +147,13 @@ private:
     if (m_selfUpdate)
       return;
 
-    m_timer.start();
+    m_timer->start();
   }
 
   void onCommitChange() {
     base::ScopedValue<bool> switchSelf(m_selfUpdate, true, false);
 
-    m_timer.stop();
+    m_timer->stop();
 
     int newOpacity = opacityValue();
     int count = countCels();
@@ -249,7 +244,7 @@ private:
     if (m_selfUpdate)
       return;
 
-    m_timer.stop(); // Cancel current editions (just in case)
+    m_timer->stop(); // Cancel current editions (just in case)
 
     base::ScopedValue<bool> switchSelf(m_selfUpdate, true, false);
 
@@ -271,13 +266,13 @@ private:
     }
   }
 
-  Timer m_timer;
-  Document* m_document;
-  Cel* m_cel;
+  inject<Timer> m_timer = Timer::create(250, *this);
+  Document* m_document = nullptr;
+  Cel* m_cel = nullptr;
   DocumentRange m_range;
-  bool m_selfUpdate;
+  bool m_selfUpdate = false;
   UserData m_userData;
-  bool m_newUserData;
+  bool m_newUserData = false;
 };
 
 class CelPropertiesCommand : public Command {

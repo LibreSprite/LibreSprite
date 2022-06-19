@@ -9,22 +9,19 @@
 
 #include "base/connection.h"
 #include "ui/timer.h"
-
+#include "ui/manager.h"
 #include <cmath>
 
 namespace app {
 
   class MarchingAnts {
   public:
-    MarchingAnts()
-      : m_timer(100)
-      , m_offset(0)
-    {
-      m_scopedConn = m_timer.Tick.connect(&MarchingAnts::onTick, this);
+    MarchingAnts() {
+      m_scopedConn = m_timer->Tick.connect(&MarchingAnts::onTick, this);
     }
 
     ~MarchingAnts() {
-      m_timer.stop();
+      m_timer->stop();
     }
 
   protected:
@@ -35,15 +32,15 @@ namespace app {
     }
 
     bool isMarchingAntsRunning() const {
-      return m_timer.isRunning();
+      return m_timer->isRunning();
     }
 
     void startMarchingAnts() {
-      m_timer.start();
+      m_timer->start();
     }
 
     void stopMarchingAnts() {
-      m_timer.stop();
+      m_timer->stop();
     }
 
   private:
@@ -52,8 +49,8 @@ namespace app {
       onDrawMarchingAnts();
     }
 
-    ui::Timer m_timer;
-    int m_offset;
+    inject<ui::Timer> m_timer = ui::Timer::create(100);
+    int m_offset = 0;
     base::ScopedConnection m_scopedConn;
   };
 

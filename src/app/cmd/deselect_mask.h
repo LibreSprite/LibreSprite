@@ -9,7 +9,8 @@
 
 #include "app/cmd.h"
 #include "app/cmd/with_document.h"
-#include "base/unique_ptr.h"
+
+#include <memory>
 
 namespace doc {
   class Mask;
@@ -30,7 +31,7 @@ namespace cmd {
     size_t onMemSize() const override;
 
   private:
-    base::UniquePtr<Mask> m_oldMask;
+    std::unique_ptr<Mask> m_oldMask;
   };
 
 } // namespace cmd

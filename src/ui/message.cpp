@@ -38,31 +38,82 @@ Message::Message(MessageType type, KeyModifiers modifiers)
   }
 }
 
-Message::~Message()
-{
+void Message::report(Widget* widget) {
+#ifdef REPORT_EVENTS
+  static char *msg_name[] = {
+    "kOpenMessage",
+    "kCloseMessage",
+    "kCloseDisplayMessage",
+    "kResizeDisplayMessage",
+    "kPaintMessage",
+    "kTimerMessage",
+    "kDropFilesMessage",
+    "kWinMoveMessage",
+
+    "kKeyDownMessage",
+    "kKeyUpMessage",
+    "kFocusEnterMessage",
+    "kFocusLeaveMessage",
+
+    "kMouseDownMessage",
+    "kMouseUpMessage",
+    "kDoubleClickMessage",
+    "kMouseEnterMessage",
+    "kMouseLeaveMessage",
+    "kMouseMoveMessage",
+    "kSetCursorMessage",
+    "kMouseWheelMessage",
+    "kTouchMagnifyMessage",
+  };
+  const char* string =
+    (msg->type() >= kOpenMessage &&
+     msg->type() <= kMouseWheelMessage) ? msg_name[type()]:
+    "Unknown";
+
+  std::cout << "Event " << type() << " (" << string << ") "
+            << "for " << typeid(*widget).name();
+  if (!widget->id().empty())
+    std::cout << " (" << widget->id() << ")";
+  std::cout << std::endl;
+#endif
+}
+
+bool Message::send(){
+  for (auto widget : m_recipients) {
+    if (!widget)
+      continue;
+
+    report(widget);
+
+    if (sendToWidget(widget))
+      break;
+  }
+  return true;
+}
+
+bool Message::sendToWidget(Widget* widget) {
+  return widget->sendMessage(this);
 }
 
 void Message::addRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);
 
-  m_recipients.push_back(widget);
+  m_recipients.push_back(widget->safePtr);
 }
 
 void Message::prependRecipient(Widget* widget)
 {
   ASSERT_VALID_WIDGET(widget);
 
-  m_recipients.insert(m_recipients.begin(), widget);
+  m_recipients.insert(m_recipients.begin(), widget->safePtr);
 }
 
 void Message::removeRecipient(Widget* widget)
 {
-  for (WidgetsList::iterator
-         it = m_recipients.begin(),
-         end = m_recipients.end(); it != end; ++it) {
-    if (*it == widget)
-      *it = NULL;
+  for (auto& entry :  m_recipients) {
+    if (entry == widget)
+      entry = nullptr;
   }
 }
 

@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -36,7 +36,6 @@
 #include "app/util/clipboard.h"
 #include "base/bind.h"
 #include "base/pi.h"
-#include "base/unique_ptr.h"
 #include "doc/algorithm/flip_image.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
@@ -47,6 +46,7 @@
 #include "ui/view.h"
 
 #include <cstring>
+#include <memory>
 
 namespace app {
 
@@ -112,7 +112,7 @@ MovingPixelsState::~MovingPixelsState()
   contextBar->removeObserver(this);
   contextBar->updateForActiveTool();
 
-  m_pixelsMovement.reset(NULL);
+  m_pixelsMovement.reset();
 
   removeAsEditorObserver();
   m_editor->manager()->removeMessageFilter(kKeyDownMessage, m_editor);
@@ -177,7 +177,7 @@ EditorState::LeaveAction MovingPixelsState::onLeaveState(Editor* editor, EditorS
 
     editor->document()->resetTransformation();
 
-    m_pixelsMovement.reset(NULL);
+    m_pixelsMovement.reset();
 
     editor->releaseMouse();
 
@@ -227,7 +227,7 @@ bool MovingPixelsState::onMouseDown(Editor* editor, MouseMessage* msg)
     return true;
 
   // Call the eyedropper command
-  tools::Ink* clickedInk = editor->getCurrentEditorInk();
+  tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
   if (clickedInk->isEyedropper()) {
     callEyedropper(editor);
     return true;
@@ -491,8 +491,8 @@ void MovingPixelsState::onBeforeCommandExecution(CommandExecutionEvent& ev)
     // Copy the floating image to the clipboard on Cut/Copy.
     if (command->id() != CommandId::Clear) {
       Document* document = m_editor->document();
-      base::UniquePtr<Image> floatingImage;
-      base::UniquePtr<Mask> floatingMask;
+      std::unique_ptr<Image> floatingImage;
+      std::unique_ptr<Mask> floatingMask;
       m_pixelsMovement->getDraggedImageCopy(floatingImage, floatingMask);
 
       clipboard::copy_image(floatingImage.get(),

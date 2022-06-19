@@ -12,7 +12,7 @@
 #include "doc/color.h"
 #include "doc/frame.h"
 #include "doc/frame_tags.h"
-#include "doc/image_ref.h"
+#include "doc/image.h"
 #include "doc/layer_index.h"
 #include "doc/object.h"
 #include "doc/pixel_format.h"
@@ -131,13 +131,13 @@ namespace doc {
     ////////////////////////////////////////
     // Shared Images and CelData (for linked Cels)
 
-    ImageRef getImageRef(ObjectId imageId);
+    std::shared_ptr<Image> getImageRef(ObjectId imageId);
     CelDataRef getCelDataRef(ObjectId celDataId);
 
     ////////////////////////////////////////
     // Images
 
-    void replaceImage(ObjectId curImageId, const ImageRef& newImage);
+    void replaceImage(ObjectId curImageId, const std::shared_ptr<Image>& newImage);
     void getImages(std::vector<Image*>& images) const;
     void remapImages(frame_t frameFrom, frame_t frameTo, const Remap& remap);
     void pickCels(int x, int y, frame_t frame, int opacityThreshold, CelList& cels) const;

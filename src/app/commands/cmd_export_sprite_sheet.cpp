@@ -1041,7 +1041,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
     exporter.addDocument(document, layer, frameTag, isTemporalTag);
   }
 
-  base::UniquePtr<Document> newDocument(exporter.exportSheet());
+  std::unique_ptr<Document> newDocument(exporter.exportSheet());
   if (!newDocument)
     return;
 
@@ -1051,11 +1051,11 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
 
   // Copy background and grid preferences
   {
-    DocumentPreferences& newDocPref(Preferences::instance().document(newDocument));
+    DocumentPreferences& newDocPref(Preferences::instance().document(newDocument.get()));
     newDocPref.bg = docPref.bg;
     newDocPref.grid = docPref.grid;
     newDocPref.pixelGrid = docPref.pixelGrid;
-    Preferences::instance().removeDocument(newDocument);
+    Preferences::instance().removeDocument(newDocument.get());
   }
 
   if (docPref.spriteSheet.openGenerated()) {

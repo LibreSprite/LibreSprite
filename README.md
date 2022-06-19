@@ -1,4 +1,4 @@
-# LibreSprite [![CMake](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml)
+# LibreSprite [![Liberapay](https://i.imgur.com/UOLKpPA.png "Support our work")](https://liberapay.com/LibreSprite/) [![CMake](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmake.yml)
 
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
@@ -12,7 +12,7 @@ LibreSprite is a free and open source program for creating and animating your sp
 * Several file types supported for your sprites and animations.
 
 ## Download
-Grab an [AppImage](https://github.com/LibreSprite/LibreSprite/releases/tag/continuous) for Linux, macOS [App](https://github.com/LibreSprite/LibreSprite/releases) or get the [Windows installer](https://github.com/LibreSprite/LibreSprite/releases/tag/v1.2-973d0e3d).
+Grab an [AppImage](https://github.com/LibreSprite/LibreSprite/releases/latest) for Linux, or get the [Windows Portable](https://github.com/LibreSprite/LibreSprite/releases/latest).
 
 ## History
 LibreSprite originated as a fork of [Aseprite](https://www.aseprite.org), developed by [David Capello](https://github.com/dacap). Aseprite used to be distributed under the GNU General Public License version 2, but was moved to a proprietary license on [August 26th, 2016](https://github.com/aseprite/aseprite/commit/5ecc356a41c8e29977f8608d8826489d24f5fa6c).
@@ -24,6 +24,9 @@ As LibreSprite has a newly budding community, we need help building the infrastr
 
 ## Compiling
 Don't worry, it isn't as hard as you might think! Just follow the instructions [here](INSTALL.md).
+
+## Theming
+Don't like the default look of Libresprite? Don't panic, you can download from the Libresprite [resources](https://libresprite.github.io/#!/resources) repo. 
 
 ## License
 This program is distributed under the [GNU General Public License Version 2](LICENSE.txt).

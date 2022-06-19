@@ -27,18 +27,18 @@ SubObjectsFromSprite::SubObjectsFromSprite(Sprite* sprite)
 {
 }
 
-void SubObjectsFromSprite::addImageRef(const ImageRef& image)
+void SubObjectsFromSprite::addImageRef(const std::shared_ptr<Image>& image)
 {
   ASSERT(image);
   ASSERT(!getImageRef(image->id()));
   m_images.insert(std::make_pair(image->id(), image));
 }
 
-ImageRef SubObjectsFromSprite::getImageRef(ObjectId imageId)
+std::shared_ptr<Image> SubObjectsFromSprite::getImageRef(ObjectId imageId)
 {
   auto it = m_images.find(imageId);
   if (it != m_images.end()) {
-    ImageRef image = it->second;
+    std::shared_ptr<Image> image = it->second;
     ASSERT(image->id() == imageId);
     ASSERT(!m_sprite->getImageRef(imageId));
     return image;

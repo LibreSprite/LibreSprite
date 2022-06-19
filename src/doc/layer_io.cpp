@@ -11,7 +11,6 @@
 #include "doc/layer_io.h"
 
 #include "base/serialization.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cel_data.h"
 #include "doc/cel_data_io.h"
@@ -25,6 +24,7 @@
 #include "doc/user_data_io.h"
 
 #include <iostream>
+#include <memory>
 #include <vector>
 
 namespace doc {
@@ -110,7 +110,7 @@ Layer* read_layer(std::istream& is, SubObjectsFromSprite* subObjects)
   std::string name = read_string(is);
   uint32_t flags = read32(is);                     // Flags
   uint16_t layer_type = read16(is);                // Type
-  base::UniquePtr<Layer> layer;
+  std::unique_ptr<Layer> layer;
 
   switch (static_cast<ObjectType>(layer_type)) {
 
@@ -127,8 +127,7 @@ Layer* read_layer(std::istream& is, SubObjectsFromSprite* subObjects)
       // Read images
       int images = read16(is);  // Number of images
       for (int c=0; c<images; ++c) {
-        ImageRef image(read_image(is));
-        subObjects->addImageRef(image);
+        subObjects->addImageRef(std::shared_ptr<Image>(read_image(is)));
       }
 
       // Read celdatas

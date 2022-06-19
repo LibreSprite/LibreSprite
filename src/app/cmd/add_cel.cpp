@@ -68,8 +68,7 @@ void AddCel::onRedo()
   SubObjectsFromSprite io(layer->sprite());
   bool has_data = (read8(m_stream) != 0);
   if (has_data) {
-    ImageRef image(read_image(m_stream));
-    io.addImageRef(image);
+    io.addImageRef(std::shared_ptr<Image>(read_image(m_stream)));
 
     CelDataRef celdata(read_celdata(m_stream, &io));
     io.addCelDataRef(celdata);

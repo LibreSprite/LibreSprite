@@ -16,7 +16,6 @@
 #include "app/cmd/set_cel_opacity.h"
 #include "app/cmd/set_palette.h"
 #include "app/document.h"
-#include "base/unique_ptr.h"
 #include "doc/cel.h"
 #include "doc/cels_range.h"
 #include "doc/document.h"
@@ -25,6 +24,8 @@
 #include "doc/palette.h"
 #include "doc/sprite.h"
 #include "render/quantization.h"
+
+#include <memory>
 
 namespace app {
 namespace cmd {
@@ -42,8 +43,8 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
     return;
 
   for (Cel* cel : sprite->uniqueCels()) {
-    ImageRef old_image = cel->imageRef();
-    ImageRef new_image(
+    std::shared_ptr<Image> old_image = cel->imageRef();
+    std::shared_ptr<Image> new_image(
       render::convert_pixel_format
       (old_image.get(), NULL, newFormat, m_dithering,
        sprite->rgbMap(cel->frame()),
@@ -73,8 +74,8 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
       if (pal->frame() != 0)
         m_seq.add(new cmd::RemovePalette(sprite, pal));
 
-    base::UniquePtr<Palette> graypal(Palette::createGrayscale());
-    m_seq.add(new cmd::SetPalette(sprite, 0, graypal));
+    std::unique_ptr<Palette> graypal(Palette::createGrayscale());
+    m_seq.add(new cmd::SetPalette(sprite, 0, graypal.get()));
   }
 }
 

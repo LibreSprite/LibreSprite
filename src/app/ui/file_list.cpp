@@ -31,12 +31,7 @@ using namespace app::skin;
 using namespace gfx;
 using namespace ui;
 
-FileList::FileList()
-  : Widget(kGenericWidget)
-  , m_generateThumbnailTimer(200, this)
-  , m_monitoringTimer(50, this)
-  , m_thumbnail(nullptr)
-{
+FileList::FileList() : Widget(kGenericWidget) {
   setFocusStop(true);
   setDoubleBuffered(true);
 
@@ -47,9 +42,9 @@ FileList::FileList()
 
   m_itemToGenerateThumbnail = NULL;
 
-  m_generateThumbnailTimer.Tick.connect(&FileList::onGenerateThumbnailTick, this);
-  m_monitoringTimer.Tick.connect(&FileList::onMonitoringTick, this);
-  m_monitoringTimer.start();
+  m_generateThumbnailTimer->Tick.connect(&FileList::onGenerateThumbnailTick, this);
+  m_monitoringTimer->Tick.connect(&FileList::onMonitoringTick, this);
+  m_monitoringTimer->start();
 
   regenerateList();
 }
@@ -57,8 +52,8 @@ FileList::FileList()
 FileList::~FileList()
 {
   // Stop timers.
-  m_generateThumbnailTimer.stop();
-  m_monitoringTimer.stop();
+  m_generateThumbnailTimer->stop();
+  m_monitoringTimer->stop();
 
   // Stop workers creating thumbnails.
   ThumbnailGenerator::instance()->stopAllWorkers();
@@ -462,7 +457,7 @@ void FileList::onMonitoringTick()
 
 void FileList::onGenerateThumbnailTick()
 {
-  m_generateThumbnailTimer.stop();
+  m_generateThumbnailTimer->stop();
 
   IFileItem* fileitem = m_itemToGenerateThumbnail;
   if (fileitem)
@@ -571,7 +566,7 @@ void FileList::generatePreviewOfSelectedItem()
       !m_selected->getThumbnail())
     {
       m_itemToGenerateThumbnail = m_selected;
-      m_generateThumbnailTimer.start();
+      m_generateThumbnailTimer->start();
     }
 }
 

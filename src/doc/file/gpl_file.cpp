@@ -11,13 +11,13 @@
 #include "base/fstream_path.h"
 #include "base/split_string.h"
 #include "base/trim_string.h"
-#include "base/unique_ptr.h"
 #include "doc/image.h"
 #include "doc/palette.h"
 
 #include <cctype>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -35,7 +35,7 @@ Palette* load_gpl_file(const char *filename)
   base::trim_string(line, line);
   if (line != "GIMP Palette") return NULL;
 
-  base::UniquePtr<Palette> pal(new Palette(frame_t(0), 0));
+  std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
 
   while (std::getline(f, line)) {
     // Trim line.

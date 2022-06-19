@@ -148,10 +148,7 @@ Menu::~Menu()
 //////////////////////////////////////////////////////////////////////
 // MenuBox
 
-MenuBox::MenuBox(WidgetType type)
- : Widget(type)
- , m_base(NULL)
-{
+MenuBox::MenuBox(WidgetType type) : Widget(type) {
   this->setFocusStop(true);
   initTheme();
 }
@@ -162,8 +159,6 @@ MenuBox::~MenuBox()
     m_base->is_filtering = false;
     Manager::getDefault()->removeMessageFilter(kMouseDownMessage, this);
   }
-
-  delete m_base;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -216,11 +211,9 @@ Menu* MenuBox::getMenu()
     return static_cast<Menu*>(children().front());
 }
 
-MenuBaseData* MenuBox::createBase()
-{
-  delete m_base;
-  m_base = new MenuBaseData();
-  return m_base;
+MenuBaseData* MenuBox::createBase() {
+  m_base.reset(new MenuBaseData());
+  return m_base.get();
 }
 
 Menu* MenuItem::getSubmenu()
@@ -341,17 +334,17 @@ void Menu::onSizeHint(SizeHintEvent& ev)
   Size size(0, 0);
   Size reqSize;
 
-  UI_FOREACH_WIDGET_WITH_END(children(), it, end) {
-    reqSize = (*it)->sizeHint();
+  for(std::size_t i = 0, end = children().size(); i != end; ++i) {
+    reqSize = at(i)->sizeHint();
 
     if (parent() &&
         parent()->type() == kMenuBarWidget) {
-      size.w += reqSize.w + ((it+1 != end) ? childSpacing(): 0);
+      size.w += reqSize.w + ((i+1 != end) ? childSpacing(): 0);
       size.h = MAX(size.h, reqSize.h);
     }
     else {
       size.w = MAX(size.w, reqSize.w);
-      size.h += reqSize.h + ((it+1 != end) ? childSpacing(): 0);
+      size.h += reqSize.h + ((i+1 != end) ? childSpacing(): 0);
     }
   }
 
@@ -465,7 +458,7 @@ bool MenuBox::onProcessMessage(Message* msg)
         MenuItem* highlight = menu->getHighlightedItem();
         if (highlight &&
             !highlight->hasSubmenuOpened() &&
-            highlight->m_submenu_timer == NULL) {
+            !highlight->m_submenu_timer) {
           menu->closeAll();
           highlight->executeClick();
         }
@@ -851,7 +844,7 @@ bool MenuItem::onProcessMessage(Message* msg)
       break;
 
     case kTimerMessage:
-      if (static_cast<TimerMessage*>(msg)->timer() == m_submenu_timer.get()) {
+      if (static_cast<TimerMessage*>(msg)->timer().get() == m_submenu_timer) {
         MenuBaseData* base = get_base(this);
 
         ASSERT(hasSubmenu());
@@ -1006,14 +999,9 @@ bool MenuItem::inBar()
      parent()->parent()->type() == kMenuBarWidget);
 }
 
-void MenuItem::openSubmenu(bool select_first)
-{
-  Widget* menu;
-  Message* msg;
-
+void MenuItem::openSubmenu(bool select_first) {
   ASSERT(hasSubmenu());
-
-  menu = this->parent();
+  Widget* menu = this->parent();
 
   // The menu item is already opened?
   ASSERT(m_submenu_menubox == NULL);
@@ -1033,7 +1021,7 @@ void MenuItem::openSubmenu(bool select_first)
     }
   }
 
-  msg = new OpenMenuItemMessage(select_first);
+  auto msg = std::make_shared<OpenMenuItemMessage>(select_first);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 
@@ -1056,16 +1044,11 @@ void MenuItem::openSubmenu(bool select_first)
   }
 }
 
-void MenuItem::closeSubmenu(bool last_of_close_chain)
-{
-  Widget* menu;
-  Message* msg;
-  MenuBaseData* base;
-
+void MenuItem::closeSubmenu(bool last_of_close_chain) {
   ASSERT(m_submenu_menubox != NULL);
 
   // First: recursively close the children
-  menu = m_submenu_menubox->getMenu();
+  auto menu = m_submenu_menubox->getMenu();
   ASSERT(menu != NULL);
 
   for (auto child : menu->children()) {
@@ -1077,7 +1060,7 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
   }
 
   // Second: now we can close the 'menuitem'
-  msg = new CloseMenuItemMessage(last_of_close_chain);
+  auto msg = std::make_shared<CloseMenuItemMessage>(last_of_close_chain);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 
@@ -1085,7 +1068,7 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
   // responsibility to set is_processing flag to true.
   if (last_of_close_chain) {
     // Get the 'base'
-    base = get_base(this);
+    auto base = get_base(this);
     ASSERT(base != NULL);
     ASSERT(base->is_processing == false);
 
@@ -1096,8 +1079,8 @@ void MenuItem::closeSubmenu(bool last_of_close_chain)
 
 void MenuItem::startTimer()
 {
-  if (m_submenu_timer == NULL)
-    m_submenu_timer.reset(new Timer(kTimeoutToOpenSubmenu, this));
+  if (!m_submenu_timer)
+    m_submenu_timer = ui::Timer::create(kTimeoutToOpenSubmenu, *this);
 
   m_submenu_timer->start();
 }
@@ -1105,8 +1088,7 @@ void MenuItem::startTimer()
 void MenuItem::stopTimer()
 {
   // Stop timer to open the popup
-  if (m_submenu_timer)
-    m_submenu_timer.reset();
+  m_submenu_timer.reset();
 }
 
 void Menu::closeAll()
@@ -1157,9 +1139,8 @@ void Menu::closeAll()
     base_menubox->closePopup();
 }
 
-void MenuBox::closePopup()
-{
-  Message* msg = new Message(kClosePopupMessage);
+void MenuBox::closePopup() {
+  auto msg = std::make_shared<Message>(kClosePopupMessage);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 }
@@ -1180,10 +1161,9 @@ void MenuBox::cancelMenuLoop()
   }
 }
 
-void MenuItem::executeClick()
-{
+void MenuItem::executeClick() {
   // Send the message
-  Message* msg = new Message(kExecuteMenuItemMessage);
+  auto msg = std::make_shared<Message>(kExecuteMenuItemMessage);
   msg->addRecipient(this);
   Manager::getDefault()->enqueueMessage(msg);
 }

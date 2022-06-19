@@ -8,8 +8,9 @@
 #pragma once
 
 #include "app/ui/skin/skin_property.h"
-#include "base/shared_ptr.h"
 #include "gfx/rect.h"
+
+#include <memory>
 
 namespace ui {
   class Slider;
@@ -40,7 +41,7 @@ namespace app {
       ISliderBgPainter* m_painter;
     };
 
-    typedef base::SharedPtr<SkinSliderProperty> SkinSliderPropertyPtr;
+    typedef std::shared_ptr<SkinSliderProperty> SkinSliderPropertyPtr;
 
   } // namespace skin
 } // namespace app

@@ -105,7 +105,7 @@ namespace app {
   };
 
   class TaskManager {
-    ui::Timer m_timer{10};
+    inject<ui::Timer> m_timer = ui::Timer::create(10);
     std::atomic_bool isAlive{true};
     std::array<std::thread, 8> threads;
 
@@ -119,7 +119,7 @@ namespace app {
     std::mutex processingMutex;
 
     TaskManager() {
-      m_timer.Tick.connect(&TaskManager::onTick, this);
+      m_timer->Tick.connect(&TaskManager::onTick, this);
       for (std::size_t i = 0; i < threads.size(); ++i) {
         threads[i] = std::thread([this, i]{this->thread(i);});
       }
@@ -127,7 +127,7 @@ namespace app {
 
     ~TaskManager() {
       isAlive = false;
-      m_timer.stop();
+      m_timer->stop();
 
       {
         std::lock_guard<std::mutex> guard(processingMutex);
@@ -223,8 +223,8 @@ namespace app {
 
   public:
     void delayed(std::function<void()>&& func) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::recursive_mutex> guard(readyMutex);
       ready.emplace_back(new detail::Task{
           nullptr,
@@ -236,8 +236,8 @@ namespace app {
 
     template<typename Data>
     TaskHandle addTask(std::function<Data(std::atomic_bool& isAlive)>&& worker, std::function<void(Data&&)>&& consumer) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
       pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
@@ -253,8 +253,8 @@ namespace app {
 
     template<typename Data>
     TaskHandle addTask(std::function<Data()>&& worker, std::function<void(Data&&)>&& consumer, std::function<void()>&& aborter) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (!m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
       pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
