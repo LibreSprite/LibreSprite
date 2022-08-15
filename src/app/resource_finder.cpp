@@ -102,6 +102,10 @@ void ResourceFinder::includeDataDir(const char* filename)
   sprintf(buf, "../Resources/data/%s", filename);
   includeBinDir(buf);  // $BINDIR/../Resources/data/filename (inside a bundle)
 
+  // $BINDIR/../share/libresprite/data/filename (installed in /usr/ or /usr/local/)
+  sprintf(buf, "../share/libresprite/data/%s", filename);
+  includeBinDir(buf);
+  
 #else
 
 
