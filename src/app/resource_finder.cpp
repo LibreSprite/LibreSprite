@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2018-2020  LibreSprite contributors
+// LibreSprite | Copyright (C) 2018-2022  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -102,6 +102,10 @@ void ResourceFinder::includeDataDir(const char* filename)
   sprintf(buf, "../Resources/data/%s", filename);
   includeBinDir(buf);  // $BINDIR/../Resources/data/filename (inside a bundle)
 
+  // $BINDIR/../share/libresprite/data/filename (installed in /usr/ or /usr/local/)
+  sprintf(buf, "../share/libresprite/data/%s", filename);
+  includeBinDir(buf);
+  
 #else
 
 
