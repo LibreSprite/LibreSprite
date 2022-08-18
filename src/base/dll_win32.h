@@ -11,7 +11,7 @@ namespace base {
 
 dll load_dll(const std::string& filename)
 {
-  return LoadLibrary(base::from_utf8(filename).c_str());
+  return LoadLibraryW(base::from_utf8(filename).c_str());
 }
 
 void unload_dll(dll lib)
