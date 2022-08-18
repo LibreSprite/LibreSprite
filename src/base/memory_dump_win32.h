@@ -40,7 +40,7 @@ private:
   class MemoryDumpFile {
   public:
     MemoryDumpFile() {
-      m_handle = ::CreateFile(memoryDumpFile.c_str(),
+      m_handle = ::CreateFileW(memoryDumpFile.c_str(),
                               GENERIC_WRITE, 0, NULL,
                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     }
