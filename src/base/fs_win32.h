@@ -18,7 +18,7 @@ namespace base {
 
 bool is_file(const std::string& path)
 {
-  DWORD attr = ::GetFileAttributes(from_utf8(path).c_str());
+  DWORD attr = ::GetFileAttributesW(from_utf8(path).c_str());
 
   // GetFileAttributes returns INVALID_FILE_ATTRIBUTES in case of
   // fail.
@@ -28,7 +28,7 @@ bool is_file(const std::string& path)
 
 bool is_directory(const std::string& path)
 {
-  DWORD attr = ::GetFileAttributes(from_utf8(path).c_str());
+  DWORD attr = ::GetFileAttributesW(from_utf8(path).c_str());
 
   return ((attr != INVALID_FILE_ATTRIBUTES) &&
           ((attr & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY));
@@ -42,14 +42,14 @@ size_t file_size(const std::string& path)
 
 void move_file(const std::string& src, const std::string& dst)
 {
-  BOOL result = ::MoveFile(from_utf8(src).c_str(), from_utf8(dst).c_str());
+  BOOL result = ::MoveFileW(from_utf8(src).c_str(), from_utf8(dst).c_str());
   if (result == 0)
     throw Win32Exception("Error moving file");
 }
 
 void delete_file(const std::string& path)
 {
-  BOOL result = ::DeleteFile(from_utf8(path).c_str());
+  BOOL result = ::DeleteFileW(from_utf8(path).c_str());
   if (result == 0)
     throw Win32Exception("Error deleting file");
 }
@@ -57,16 +57,16 @@ void delete_file(const std::string& path)
 bool has_readonly_attr(const std::string& path)
 {
   std::wstring fn = from_utf8(path);
-  DWORD attr = ::GetFileAttributes(fn.c_str());
+  DWORD attr = ::GetFileAttributesW(fn.c_str());
   return ((attr & FILE_ATTRIBUTE_READONLY) == FILE_ATTRIBUTE_READONLY);
 }
 
 void remove_readonly_attr(const std::string& path)
 {
   std::wstring fn = from_utf8(path);
-  DWORD attr = ::GetFileAttributes(fn.c_str());
+  DWORD attr = ::GetFileAttributesW(fn.c_str());
   if ((attr & FILE_ATTRIBUTE_READONLY) == FILE_ATTRIBUTE_READONLY)
-    ::SetFileAttributes(fn.c_str(), attr & ~FILE_ATTRIBUTE_READONLY);
+    ::SetFileAttributesW(fn.c_str(), attr & ~FILE_ATTRIBUTE_READONLY);
 }
 
 Time get_modification_time(const std::string& path)
@@ -75,7 +75,7 @@ Time get_modification_time(const std::string& path)
   ZeroMemory(&data, sizeof(data));
 
   std::wstring fn = from_utf8(path);
-  if (!GetFileAttributesEx(fn.c_str(), GetFileExInfoStandard, (LPVOID)&data))
+  if (!GetFileAttributesExW(fn.c_str(), GetFileExInfoStandard, (LPVOID)&data))
     return Time();
 
   SYSTEMTIME utc, local;
@@ -89,22 +89,22 @@ Time get_modification_time(const std::string& path)
 
 void make_directory(const std::string& path)
 {
-  BOOL result = ::CreateDirectory(from_utf8(path).c_str(), NULL);
+  BOOL result = ::CreateDirectoryW(from_utf8(path).c_str(), NULL);
   if (result == 0)
     throw Win32Exception("Error creating directory");
 }
 
 void remove_directory(const std::string& path)
 {
-  BOOL result = ::RemoveDirectory(from_utf8(path).c_str());
+  BOOL result = ::RemoveDirectoryW(from_utf8(path).c_str());
   if (result == 0)
     throw Win32Exception("Error removing directory");
 }
 
 std::string get_current_path()
 {
-  TCHAR buffer[MAX_PATH+1];
-  if (::GetCurrentDirectory(sizeof(buffer)/sizeof(TCHAR), buffer))
+  WCHAR buffer[MAX_PATH+1];
+  if (::GetCurrentDirectoryW(sizeof(buffer)/sizeof(WCHAR), buffer))
     return to_utf8(buffer);
   else
     return "";
@@ -112,8 +112,8 @@ std::string get_current_path()
 
 std::string get_app_path()
 {
-  TCHAR buffer[MAX_PATH+1];
-  if (::GetModuleFileName(NULL, buffer, sizeof(buffer)/sizeof(TCHAR)))
+  WCHAR buffer[MAX_PATH+1];
+  if (::GetModuleFileNameW(NULL, buffer, sizeof(buffer)/sizeof(WCHAR)))
     return to_utf8(buffer);
   else
     return "";
@@ -121,15 +121,15 @@ std::string get_app_path()
 
 std::string get_temp_path()
 {
-  TCHAR buffer[MAX_PATH+1];
-  DWORD result = ::GetTempPath(sizeof(buffer)/sizeof(TCHAR), buffer);
+  WCHAR buffer[MAX_PATH+1];
+  DWORD result = ::GetTempPathW(sizeof(buffer)/sizeof(WCHAR), buffer);
   return to_utf8(buffer);
 }
 
 std::string get_user_docs_folder()
 {
-  TCHAR buffer[MAX_PATH+1];
-  HRESULT hr = SHGetFolderPath(
+  WCHAR buffer[MAX_PATH+1];
+  HRESULT hr = SHGetFolderPathW(
     NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT,
     buffer);
   if (hr == S_OK)
@@ -140,10 +140,10 @@ std::string get_user_docs_folder()
 
 std::string get_canonical_path(const std::string& path)
 {
-  TCHAR buffer[MAX_PATH+1];
-  GetFullPathName(
+  WCHAR buffer[MAX_PATH+1];
+  GetFullPathNameW(
     from_utf8(path).c_str(),
-    sizeof(buffer)/sizeof(TCHAR),
+    sizeof(buffer)/sizeof(WCHAR),
     buffer,
     nullptr);
   return to_utf8(buffer);
@@ -151,15 +151,15 @@ std::string get_canonical_path(const std::string& path)
 
 std::vector<std::string> list_files(const std::string& path)
 {
-  WIN32_FIND_DATA fd;
+  WIN32_FIND_DATAW fd;
   std::vector<std::string> files;
-  HANDLE handle = FindFirstFile(base::from_utf8(base::join_path(path, "*")).c_str(), &fd);
+  HANDLE handle = FindFirstFileW(base::from_utf8(base::join_path(path, "*")).c_str(), &fd);
   if (handle) {
     do {
       std::string filename = base::to_utf8(fd.cFileName);
       if (filename != "." && filename != "..")
         files.push_back(filename);
-    } while (FindNextFile(handle, &fd));
+    } while (FindNextFileW(handle, &fd));
     FindClose(handle);
   }
   return files;
@@ -168,10 +168,10 @@ std::vector<std::string> list_files(const std::string& path)
 std::vector<std::string> get_font_paths()
 {
     std::vector<wchar_t> buf(MAX_PATH);
-    HRESULT hr = SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
+    HRESULT hr = SHGetFolderPathW(NULL, CSIDL_FONTS, NULL,
                                  SHGFP_TYPE_DEFAULT, &buf[0]);
     if (hr == S_OK) {
-        return {base::to_utf8(&buf[0]))};
+        return {base::to_utf8(&buf[0])};
     }
     return {};
 }
