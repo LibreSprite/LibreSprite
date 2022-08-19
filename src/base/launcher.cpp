@@ -1,5 +1,5 @@
-// Aseprite Base Library
-// Copyright (c) 2001-2016 David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2018-2022  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -24,7 +24,7 @@
 
 static int win32_shell_execute(const wchar_t* verb, const wchar_t* file, const wchar_t* params)
 {
-  SHELLEXECUTEINFO sh;
+  SHELLEXECUTEINFOW sh;
   ZeroMemory((LPVOID)&sh, sizeof(sh));
   sh.cbSize = sizeof(sh);
   sh.fMask = SEE_MASK_DEFAULT;
@@ -33,7 +33,7 @@ static int win32_shell_execute(const wchar_t* verb, const wchar_t* file, const w
   sh.lpParameters = params;
   sh.nShow = SW_SHOWNORMAL;
 
-  if (!ShellExecuteEx(&sh)) {
+  if (!ShellExecuteExW(&sh)) {
     int ret = GetLastError();
 #if 0
     if (ret != 0) {

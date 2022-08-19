@@ -1,5 +1,5 @@
-// Aseprite Base Library
-// Copyright (c) 2016 David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2018-2022  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -11,7 +11,7 @@ namespace base {
 
 dll load_dll(const std::string& filename)
 {
-  return LoadLibrary(base::from_utf8(filename).c_str());
+  return LoadLibraryW(base::from_utf8(filename).c_str());
 }
 
 void unload_dll(dll lib)
