@@ -1,8 +1,9 @@
-// Aseprite Base Library
-// Copyright (c) 2001-2013, 2015 David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2018-2022  LibreSprite contributors
 //
-// This file is released under the terms of the MIT license.
-// Read LICENSE.txt for more information.
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License version 2 as
+// published by the Free Software Foundation.
 
 #pragma once
 
@@ -40,7 +41,7 @@ private:
   class MemoryDumpFile {
   public:
     MemoryDumpFile() {
-      m_handle = ::CreateFile(memoryDumpFile.c_str(),
+      m_handle = ::CreateFileW(memoryDumpFile.c_str(),
                               GENERIC_WRITE, 0, NULL,
                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     }
