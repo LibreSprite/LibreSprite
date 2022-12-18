@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C)      2022  LibreSprite contributors
 
 cmake_minimum_required(VERSION 3.4)
 
@@ -192,9 +192,33 @@ if(V8_FOUND)
   include_directories(${V8_INCLUDE_DIR})
   add_definitions(-DSCRIPT_ENGINE_V8=1)
 
+  include(CheckCXXSourceRuns)
+  set(CMAKE_REQUIRED_LIBRARIES ${V8_LIBRARY} ${V8_LIBBASE_LIBRARY} ${V8_LIBPLATFORM_LIBRARY})
+  set(CMAKE_REQUIRED_INCLUDES ${V8_INCLUDE_DIR})
+  message(STATUS ${V8_POINTER_COMPRESSION_OUTPUT})
+  # Since V8_COMPRESS_POINTERS is not defined here, the resulting program would
+  # die if the system v8 library had enabled pointer compression.
+  check_cxx_source_runs("
+    #include <v8.h>
+    #include <libplatform/libplatform.h>
+    int main(void) {
+      v8::V8::InitializeICU();
+      static std::unique_ptr<v8::Platform> m_platform;
+      m_platform = v8::platform::NewDefaultPlatform();
+      v8::V8::InitializePlatform(m_platform.get());
+      v8::V8::Initialize();
+      return 0;
+    }
+	" DISABLE_POINTER_COMPRESSION)
+
   # pointers compression doesn't work on 32bit machines
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    add_definitions(-DV8_COMPRESS_POINTERS)
+    if(DISABLE_POINTER_COMPRESSION EQUAL 1)
+      message(STATUS "Disabling V8 pointer compression")
+    else()
+      message(STATUS "Enabling V8 pointer compression")
+      add_definitions(-DV8_COMPRESS_POINTERS)
+    endif()
   endif()
 
   message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
