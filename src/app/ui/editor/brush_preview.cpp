@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -108,7 +108,7 @@ void BrushPreview::show(const gfx::Point& screenPos)
   gfx::Point spritePos = m_editor->screenToEditor(screenPos);
 
   // Get the current tool
-  tools::Ink* ink = m_editor->getCurrentEditorInk();
+  tools::Ink* ink = m_editor->getCurrentEditorInk().get();
 
   bool isFloodfill = m_editor->getCurrentEditorTool()->getPointShape(0)->isFloodFill();
 

@@ -93,7 +93,7 @@ public:
   ToolLoopBase(Editor* editor,
                Layer* layer,
                tools::Tool* tool,
-               tools::Ink* ink,
+               std::shared_ptr<tools::Ink> ink,
                Document* document,
                tools::ToolLoop::Button button,
                const app::Color& fgColor,
@@ -281,7 +281,7 @@ public:
                Layer* layer,
                Context* context,
                tools::Tool* tool,
-               tools::Ink* ink,
+               std::shared_ptr<tools::Ink> ink,
                Document* document,
                tools::ToolLoop::Button button,
                const app::Color& fgColor,
@@ -477,9 +477,9 @@ public:
 tools::ToolLoop* create_tool_loop(Editor* editor, Context* context)
 {
   tools::Tool* current_tool = editor->getCurrentEditorTool();
-  tools::Ink* current_ink = editor->getCurrentEditorInk();
+  std::shared_ptr<tools::Ink> current_ink = editor->getCurrentEditorInk();
   if (!current_tool || !current_ink)
-    return NULL;
+    return nullptr;
 
   Layer* layer;
 
@@ -562,7 +562,7 @@ public:
   PreviewToolLoopImpl(
     Editor* editor,
     tools::Tool* tool,
-    tools::Ink* ink,
+    std::shared_ptr<tools::Ink> ink,
     Document* document,
     const app::Color& fgColor,
     const app::Color& bgColor,
@@ -615,9 +615,9 @@ tools::ToolLoop* create_tool_loop_preview(
   const gfx::Point& celOrigin)
 {
   tools::Tool* current_tool = editor->getCurrentEditorTool();
-  tools::Ink* current_ink = editor->getCurrentEditorInk();
+  std::shared_ptr<tools::Ink> current_ink = editor->getCurrentEditorInk();
   if (!current_tool || !current_ink)
-    return NULL;
+    return nullptr;
 
   Layer* layer = editor->layer();
   if (!layer ||

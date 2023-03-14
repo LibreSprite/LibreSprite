@@ -24,7 +24,7 @@ EditorStatesHistory::~EditorStatesHistory()
 
 EditorStatePtr EditorStatesHistory::top()
 {
-  return (!m_states.empty() ? m_states.back(): EditorStatePtr(NULL));
+  return !m_states.empty() ? m_states.back(): nullptr;
 }
 
 void EditorStatesHistory::push(const EditorStatePtr& state)

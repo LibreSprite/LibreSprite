@@ -83,8 +83,7 @@ Grid::~Grid()
  * - BOTTOM: Sets vertical alignment to the end of the cell.
  * - None: Uses the whole vertical space of the cell.
  */
-void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
-{
+void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align) {
   ASSERT(hspan > 0);
   ASSERT(vspan > 0);
 
@@ -96,8 +95,7 @@ void Grid::addChildInCell(Widget* child, int hspan, int vspan, int align)
   }
 }
 
-Grid::Info Grid::getChildInfo(Widget* child)
-{
+Grid::Info Grid::getChildInfo(Widget* child) {
   Info info;
   for (int row=0; row<(int)m_rowstrip.size(); ++row) {
     for (int col=0; col<(int)m_colstrip.size(); ++col) {

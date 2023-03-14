@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    - Copyright (C) 2001-2016  David Capello
+// LibreSprite - Copyright (C) 2021       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -172,7 +172,7 @@ namespace app {
     gfx::Point autoScroll(ui::MouseMessage* msg, AutoScroll dir);
 
     tools::Tool* getCurrentEditorTool();
-    tools::Ink* getCurrentEditorInk();
+    std::shared_ptr<tools::Ink> getCurrentEditorInk();
 
     tools::ToolLoopModifiers getToolLoopModifiers() const { return m_toolLoopModifiers; }
     bool isAutoSelectLayer() const { return m_autoSelectLayer; }
