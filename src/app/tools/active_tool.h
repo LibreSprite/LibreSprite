@@ -9,6 +9,8 @@
 
 #include "base/observable.h"
 
+#include <memory>
+
 namespace app {
 namespace tools {
 
