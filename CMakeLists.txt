@@ -173,8 +173,8 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 find_package(GIF REQUIRED)
 include_directories(${GIF_INCLUDE_DIRS})
 
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
+##find_package(GTest REQUIRED)
+#include_directories(${GTEST_INCLUDE_DIRS})
 
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
