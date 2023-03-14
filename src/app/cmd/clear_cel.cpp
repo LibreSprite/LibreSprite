@@ -22,7 +22,7 @@ namespace cmd {
 
 using namespace doc;
 
-ClearCel::ClearCel(Cel* cel)
+ClearCel::ClearCel(std::shared_ptr<Cel> cel)
   : WithCel(cel)
 {
   app::Document* doc = static_cast<app::Document*>(cel->document());

@@ -21,7 +21,7 @@
 namespace app {
 namespace cmd {
 
-ShiftMaskedCel::ShiftMaskedCel(Cel* cel, int dx, int dy)
+ShiftMaskedCel::ShiftMaskedCel(std::shared_ptr<Cel> cel, int dx, int dy)
   : WithCel(cel)
   , m_dx(dx)
   , m_dy(dy)
@@ -40,7 +40,7 @@ void ShiftMaskedCel::onUndo()
 
 void ShiftMaskedCel::shift(int dx, int dy)
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   Image* image = cel->image();
   Mask* mask = static_cast<app::Document*>(cel->document())->mask();
   ASSERT(mask->bitmap());

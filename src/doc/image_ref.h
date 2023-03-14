@@ -11,6 +11,6 @@
 
 namespace doc {
 
-  typedef base::SharedPtr<Image> ImageRef;
+  typedef std::shared_ptr<Image> ImageRef;
 
 } // namespace doc

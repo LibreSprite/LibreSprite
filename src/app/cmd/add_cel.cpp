@@ -28,7 +28,7 @@ using namespace base::serialization;
 using namespace base::serialization::little_endian;
 using namespace doc;
 
-AddCel::AddCel(Layer* layer, Cel* cel)
+AddCel::AddCel(Layer* layer, std::shared_ptr<Cel> cel)
   : WithLayer(layer)
   , WithCel(cel)
   , m_size(0)
@@ -38,7 +38,7 @@ AddCel::AddCel(Layer* layer, Cel* cel)
 void AddCel::onExecute()
 {
   Layer* layer = this->layer();
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   addCel(layer, cel);
 }
@@ -46,7 +46,7 @@ void AddCel::onExecute()
 void AddCel::onUndo()
 {
   Layer* layer = this->layer();
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   // Save the CelData only if the cel isn't linked
   bool has_data = (cel->links() == 0);
@@ -55,7 +55,7 @@ void AddCel::onUndo()
     write_image(m_stream, cel->image());
     write_celdata(m_stream, cel->data());
   }
-  write_cel(m_stream, cel);
+  write_cel(m_stream, cel.get());
   m_size = size_t(m_stream.tellp());
 
   removeCel(layer, cel);
@@ -74,8 +74,8 @@ void AddCel::onRedo()
     CelDataRef celdata(read_celdata(m_stream, &io));
     io.addCelDataRef(celdata);
   }
-  Cel* cel = read_cel(m_stream, &io);
 
+  std::shared_ptr<Cel> cel{read_cel(m_stream, &io)};
   addCel(layer, cel);
 
   m_stream.str(std::string());
@@ -83,7 +83,7 @@ void AddCel::onRedo()
   m_size = 0;
 }
 
-void AddCel::addCel(Layer* layer, Cel* cel)
+void AddCel::addCel(Layer* layer, std::shared_ptr<Cel> cel)
 {
   static_cast<LayerImage*>(layer)->addCel(cel);
   layer->incrementVersion();
@@ -96,7 +96,7 @@ void AddCel::addCel(Layer* layer, Cel* cel)
   doc->notifyObservers<DocumentEvent&>(&DocumentObserver::onAddCel, ev);
 }
 
-void AddCel::removeCel(Layer* layer, Cel* cel)
+void AddCel::removeCel(Layer* layer, std::shared_ptr<Cel> cel)
 {
   Document* doc = cel->document();
   DocumentEvent ev(doc);
@@ -107,7 +107,6 @@ void AddCel::removeCel(Layer* layer, Cel* cel)
 
   static_cast<LayerImage*>(layer)->removeCel(cel);
   layer->incrementVersion();
-  delete cel;
 }
 
 } // namespace cmd

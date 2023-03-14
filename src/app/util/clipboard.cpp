@@ -402,8 +402,8 @@ void paste()
                    dstFrame = dstFrameBegin;
                  frame <= srcRange.frameEnd();
                  ++frame, ++dstFrame) {
-              Cel* srcCel = srcLayers[i]->cel(frame);
-              Cel* srcLink = nullptr;
+              auto srcCel = srcLayers[i]->cel(frame);
+              std::shared_ptr<Cel> srcLink;
 
               if (srcCel && srcCel->image()) {
                 bool createCopy = true;
@@ -415,7 +415,7 @@ void paste()
                     srcLink = srcCel;
 
                   if (srcLink) {
-                    Cel* dstRelated = relatedCels[srcLink];
+                    Cel* dstRelated = relatedCels[srcLink.get()];
                     if (dstRelated) {
                       createCopy = false;
 
@@ -433,11 +433,11 @@ void paste()
                     static_cast<LayerImage*>(dstLayers[j]), dstFrame);
 
                   if (srcLink)
-                    relatedCels[srcLink] = dstLayers[j]->cel(dstFrame);
+                    relatedCels[srcLink.get()] = dstLayers[j]->cel(dstFrame).get();
                 }
               }
               else {
-                Cel* dstCel = dstLayers[j]->cel(dstFrame);
+                auto dstCel = dstLayers[j]->cel(dstFrame);
                 if (dstCel)
                   api.clearCel(dstCel);
               }
@@ -478,7 +478,7 @@ void paste()
                    j = LayerIndex(dstLayers.size()-1);
                    i >= LayerIndex(0) &&
                    j >= LayerIndex(0); --i, --j) {
-              Cel* cel = static_cast<LayerImage*>(srcLayers[i])->cel(srcFrame);
+              auto cel = static_cast<LayerImage*>(srcLayers[i])->cel(srcFrame);
               if (cel && cel->image()) {
                 api.copyCel(
                   static_cast<LayerImage*>(srcLayers[i]), srcFrame,
@@ -507,7 +507,7 @@ void paste()
           for (LayerIndex i = srcRange.layerBegin();
                i <= srcRange.layerEnd() &&
                i < LayerIndex(srcLayers.size()); ++i) {
-            Cel* lastCel = static_cast<LayerImage*>(srcLayers[i])->getLastCel();
+            auto lastCel = static_cast<LayerImage*>(srcLayers[i])->getLastCel();
             if (lastCel && maxFrame < lastCel->frame())
               maxFrame = lastCel->frame();
           }

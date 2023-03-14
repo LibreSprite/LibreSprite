@@ -19,7 +19,7 @@ namespace cmd {
 
 using namespace doc;
 
-CropCel::CropCel(Cel* cel, const gfx::Rect& newBounds)
+CropCel::CropCel(std::shared_ptr<Cel> cel, const gfx::Rect& newBounds)
   : WithCel(cel)
   , m_oldOrigin(cel->position())
   , m_newOrigin(newBounds.origin())
@@ -44,7 +44,7 @@ void CropCel::onUndo()
 void CropCel::cropImage(const gfx::Point& origin,
                         const gfx::Rect& bounds)
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   if (bounds != cel->image()->bounds()) {
     ImageRef image(crop_image(cel->image(),

@@ -97,8 +97,7 @@ void ContextFlags::updateFlagsFromSite(const Site& site)
   if (layer->isImage()) {
     m_flags |= ActiveLayerIsImage;
 
-    Cel* cel = layer->cel(frame);
-    if (cel) {
+    if (auto cel = layer->cel(frame)) {
       m_flags |= HasActiveCel;
 
       if (cel->image())

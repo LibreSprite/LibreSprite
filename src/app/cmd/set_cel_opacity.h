@@ -17,7 +17,7 @@ namespace cmd {
   class SetCelOpacity : public Cmd
                       , public WithCel {
   public:
-    SetCelOpacity(Cel* cel, int opacity);
+    SetCelOpacity(std::shared_ptr<Cel> cel, int opacity);
 
   protected:
     void onExecute() override;

@@ -65,7 +65,7 @@ protected:
     DocumentApi api = m_document->getApi(transaction);
 
     // 1) Rotate cel positions
-    for (Cel* cel : m_cels) {
+    for (auto cel : m_cels) {
       Image* image = cel->image();
       if (!image)
         continue;
@@ -91,7 +91,7 @@ protected:
 
     // 2) Rotate images
     int i = 0;
-    for (Cel* cel : m_cels) {
+    for (auto cel : m_cels) {
       Image* image = cel->image();
       if (image) {
         ImageRef new_image(Image::create(image->pixelFormat(),
@@ -213,7 +213,7 @@ void RotateCommand::onExecute(Context* context)
     }
     // Flip the whole sprite
     else if (site.sprite()) {
-      for (Cel* cel : site.sprite()->uniqueCels())
+      for (auto cel : site.sprite()->uniqueCels())
         cels.push_back(cel);
 
       rotateSprite = true;

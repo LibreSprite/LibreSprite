@@ -38,14 +38,14 @@ namespace doc {
         return !operator==(other);
       }
 
-      Cel* operator*() const {
+      std::shared_ptr<Cel> operator*() const {
         return m_cel;
       }
 
       iterator& operator++();
 
     private:
-      Cel* m_cel;
+      std::shared_ptr<Cel> m_cel;
       frame_t m_first, m_last;
       Flags m_flags;
       std::set<ObjectId> m_visited;

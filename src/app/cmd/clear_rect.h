@@ -25,7 +25,7 @@ namespace cmd {
 
   class ClearRect : public Cmd {
   public:
-    ClearRect(Cel* cel, const gfx::Rect& bounds);
+    ClearRect(std::shared_ptr<Cel> cel, const gfx::Rect& bounds);
 
   protected:
     void onExecute() override;

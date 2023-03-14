@@ -57,7 +57,7 @@ void write_layer(std::ostream& os, const Layer* layer)
       int images = 0;
       int celdatas = 0;
       for (it=begin; it != end; ++it) {
-        Cel* cel = *it;
+        auto cel = *it;
         if (!cel->link()) {
           ++images;
           ++celdatas;
@@ -66,14 +66,14 @@ void write_layer(std::ostream& os, const Layer* layer)
 
       write16(os, images);
       for (it=begin; it != end; ++it) {
-        Cel* cel = *it;
+        auto cel = *it;
         if (!cel->link())
           write_image(os, cel->image());
       }
 
       write16(os, celdatas);
       for (it=begin; it != end; ++it) {
-        Cel* cel = *it;
+        auto cel = *it;
         if (!cel->link())
           write_celdata(os, cel->dataRef().get());
       }
@@ -81,8 +81,7 @@ void write_layer(std::ostream& os, const Layer* layer)
       // Cels
       write16(os, imgLayer->getCelsCount());
       for (it=begin; it != end; ++it) {
-        const Cel* cel = *it;
-        write_cel(os, cel);
+        write_cel(os, it->get());
       }
       break;
     }
@@ -142,7 +141,7 @@ Layer* read_layer(std::istream& is, SubObjectsFromSprite* subObjects)
       int cels = read16(is);                      // Number of cels
       for (int c=0; c<cels; ++c) {
         // Read the cel
-        Cel* cel = read_cel(is, subObjects);
+        auto cel = std::shared_ptr<Cel>(read_cel(is, subObjects));
 
         // Add the cel in the layer
         imgLayer->addCel(cel);

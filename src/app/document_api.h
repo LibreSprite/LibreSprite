@@ -59,12 +59,12 @@ namespace app {
     void moveFrame(Sprite* sprite, frame_t frame, frame_t beforeFrame);
 
     // Cels API
-    void addCel(LayerImage* layer, Cel* cel);
-    Cel* addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image);
+    void addCel(LayerImage* layer, std::shared_ptr<Cel> cel);
+    std::shared_ptr<Cel> addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image);
     void clearCel(LayerImage* layer, frame_t frame);
-    void clearCel(Cel* cel);
-    void setCelPosition(Sprite* sprite, Cel* cel, int x, int y);
-    void setCelOpacity(Sprite* sprite, Cel* cel, int newOpacity);
+    void clearCel(std::shared_ptr<Cel> cel);
+    void setCelPosition(Sprite* sprite, std::shared_ptr<Cel> cel, int x, int y);
+    void setCelOpacity(Sprite* sprite, std::shared_ptr<Cel> cel, int newOpacity);
     void moveCel(
       LayerImage* srcLayer, frame_t srcFrame,
       LayerImage* dstLayer, frame_t dstFrame);
@@ -105,7 +105,7 @@ namespace app {
     void setPalette(Sprite* sprite, frame_t frame, const Palette* newPalette);
 
   private:
-    void setCelFramePosition(Cel* cel, frame_t frame);
+    void setCelFramePosition(std::shared_ptr<Cel> cel, frame_t frame);
     void moveFrameLayer(Layer* layer, frame_t frame, frame_t beforeFrame);
     void adjustFrameTags(Sprite* sprite, frame_t frame, frame_t delta, bool between);
 

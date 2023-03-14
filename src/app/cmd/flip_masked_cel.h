@@ -21,7 +21,7 @@ namespace cmd {
 
   class FlipMaskedCel : public CmdSequence {
   public:
-    FlipMaskedCel(Cel* cel, doc::algorithm::FlipType flipType);
+    FlipMaskedCel(std::shared_ptr<Cel> cel, doc::algorithm::FlipType flipType);
   };
 
 } // namespace cmd

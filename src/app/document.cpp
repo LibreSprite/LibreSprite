@@ -299,25 +299,24 @@ void Document::copyLayerContent(const Layer* sourceLayer0, Document* destDoc, La
     std::map<ObjectId, Cel*> linked;
 
     for (; it != end; ++it) {
-      const Cel* sourceCel = *it;
+      auto sourceCel = *it;
       if (sourceCel->frame() > destLayer->sprite()->lastFrame())
         break;
 
-      std::unique_ptr<Cel> newCel;
+      std::shared_ptr<Cel> newCel;
 
       auto it = linked.find(sourceCel->data()->id());
       if (it != linked.end()) {
-        newCel.reset(Cel::createLink(it->second));
+        newCel = Cel::createLink(it->second->shared_from_this());
         newCel->setFrame(sourceCel->frame());
-      }
-      else {
-        newCel.reset(create_cel_copy(sourceCel,
-                                     destLayer->sprite(),
-                                     sourceCel->frame()));
+      } else {
+        newCel = create_cel_copy(sourceCel,
+                                 destLayer->sprite(),
+                                 sourceCel->frame());
         linked.insert(std::make_pair(sourceCel->data()->id(), newCel.get()));
       }
 
-      destLayer->addCel(newCel.release());
+      destLayer->addCel(newCel);
     }
   }
   else if (sourceLayer0->isFolder() && destLayer0->isFolder()) {

@@ -74,7 +74,7 @@ Layer* Layer::getNext() const
   return NULL;
 }
 
-Cel* Layer::cel(frame_t frame) const
+std::shared_ptr<Cel> Layer::cel(frame_t frame) const
 {
   return NULL;
 }
@@ -101,7 +101,7 @@ int LayerImage::getMemSize() const
   CelConstIterator end = getCelEnd();
 
   for (; it != end; ++it) {
-    const Cel* cel = *it;
+    auto cel = *it;
     size += cel->getMemSize();
 
     const Image* image = cel->image();
@@ -113,17 +113,10 @@ int LayerImage::getMemSize() const
 
 void LayerImage::destroyAllCels()
 {
-  CelIterator it = getCelBegin();
-  CelIterator end = getCelEnd();
-
-  for (; it != end; ++it) {
-    Cel* cel = *it;
-    delete cel;
-  }
   m_cels.clear();
 }
 
-Cel* LayerImage::cel(frame_t frame) const
+std::shared_ptr<Cel> LayerImage::cel(frame_t frame) const
 {
   CelConstIterator it = findCelIterator(frame);
   if (it != getCelEnd())
@@ -141,7 +134,7 @@ void LayerImage::getCels(CelList& cels) const
     cels.push_back(*it);
 }
 
-Cel* LayerImage::getLastCel() const
+std::shared_ptr<Cel> LayerImage::getLastCel() const
 {
   if (!m_cels.empty())
     return m_cels.back();
@@ -163,7 +156,7 @@ CelIterator LayerImage::findCelIterator(frame_t frame)
   // Here we use a binary search to find the first cel equal to "frame" (or after frame)
   first = std::lower_bound(
     first, end, nullptr,
-    [frame](Cel* cel, Cel*) -> bool {
+    [frame](auto cel, auto) -> bool {
       return cel->frame() < frame;
     });
 
@@ -182,14 +175,14 @@ CelIterator LayerImage::findFirstCelIteratorAfter(frame_t firstAfterFrame)
   // Here we use a binary search to find the first cel after the given frame
   first = std::lower_bound(
     first, end, nullptr,
-    [firstAfterFrame](Cel* cel, Cel*) -> bool {
+    [firstAfterFrame](auto cel, auto) -> bool {
       return cel->frame() <= firstAfterFrame;
     });
 
   return first;
 }
 
-void LayerImage::addCel(Cel* cel)
+void LayerImage::addCel(std::shared_ptr<Cel> cel)
 {
   ASSERT(cel);
   ASSERT(cel->data() && "The cel doesn't contain CelData");
@@ -205,11 +198,8 @@ void LayerImage::addCel(Cel* cel)
 
 /**
  * Removes the cel from the layer.
- *
- * It doesn't destroy the cel, you have to delete it after calling
- * this routine.
  */
-void LayerImage::removeCel(Cel* cel)
+void LayerImage::removeCel(std::shared_ptr<Cel> cel)
 {
   ASSERT(cel);
   CelIterator it = findCelIterator(cel->frame());
@@ -220,7 +210,7 @@ void LayerImage::removeCel(Cel* cel)
   cel->setParentLayer(NULL);
 }
 
-void LayerImage::moveCel(Cel* cel, frame_t frame)
+void LayerImage::moveCel(std::shared_ptr<Cel> cel, frame_t frame)
 {
   removeCel(cel);
   cel->setFrame(frame);
@@ -251,13 +241,13 @@ void LayerImage::displaceFrames(frame_t fromThis, frame_t delta)
 
   if (delta > 0) {
     for (frame_t c=sprite->lastFrame(); c>=fromThis; --c) {
-      if (Cel* cel = this->cel(c))
+      if (auto cel = this->cel(c))
         moveCel(cel, c+delta);
     }
   }
   else {
     for (frame_t c=fromThis; c<=sprite->lastFrame(); ++c) {
-      if (Cel* cel = this->cel(c))
+      if (auto cel = this->cel(c))
         moveCel(cel, c+delta);
     }
   }

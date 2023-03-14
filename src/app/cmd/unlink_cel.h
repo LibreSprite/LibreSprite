@@ -17,7 +17,7 @@ namespace cmd {
   class UnlinkCel : public Cmd
                   , public WithCel {
   public:
-    UnlinkCel(Cel* cel);
+    UnlinkCel(std::shared_ptr<Cel> cel);
 
   protected:
     void onExecute() override;

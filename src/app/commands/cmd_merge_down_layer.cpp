@@ -77,8 +77,8 @@ void MergeDownLayerCommand::onExecute(Context* context)
 
   for (frame_t frpos = 0; frpos<sprite->totalFrames(); ++frpos) {
     // Get frames
-    Cel* src_cel = src_layer->cel(frpos);
-    Cel* dst_cel = dst_layer->cel(frpos);
+    auto src_cel = src_layer->cel(frpos);
+    auto dst_cel = dst_layer->cel(frpos);
 
     // Get images
     Image* src_image;
@@ -105,7 +105,7 @@ void MergeDownLayerCommand::onExecute(Context* context)
         dst_image.reset(Image::createCopy(src_image));
 
         // Creating a copy of the cell
-        dst_cel = new Cel(frpos, dst_image);
+        dst_cel = std::make_shared<Cel>(frpos, dst_image);
         dst_cel->setPosition(src_cel->x(), src_cel->y());
         dst_cel->setOpacity(opacity);
 

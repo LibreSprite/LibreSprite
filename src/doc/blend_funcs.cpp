@@ -65,12 +65,13 @@ inline uint32_t blend_soft_light(uint32_t _b, uint32_t _s)
 {
   double b = _b / 255.0;
   double s = _s / 255.0;
-  double r, d;
+  double r;
+  // double d;
 
-  if (b <= 0.25)
-    d = ((16*b-12)*b+4)*b;
-  else
-    d = std::sqrt(b);
+  // if (b <= 0.25)
+  //   d = ((16*b-12)*b+4)*b;
+  // else
+  //   d = std::sqrt(b);
 
   if (s <= 0.5)
     r = b - (1.0 - 2.0*s) * b * (1.0 - b);

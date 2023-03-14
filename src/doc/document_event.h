@@ -40,7 +40,7 @@ namespace doc {
     Document* document() const { return m_document; }
     Sprite* sprite() const { return m_sprite; }
     Layer* layer() const { return m_layer; }
-    Cel* cel() const { return m_cel; }
+    std::shared_ptr<Cel> cel() const { return m_cel; }
     Image* image() const { return m_image; }
     int imageIndex() const { return m_imageIndex; }
     frame_t frame() const { return m_frame; }
@@ -48,7 +48,7 @@ namespace doc {
 
     void sprite(Sprite* sprite) { m_sprite = sprite; }
     void layer(Layer* layer) { m_layer = layer; }
-    void cel(Cel* cel) { m_cel = cel; }
+    void cel(std::shared_ptr<Cel> cel) { m_cel = cel; }
     void image(Image* image) { m_image = image; }
     void imageIndex(int imageIndex) { m_imageIndex = imageIndex; }
     void frame(frame_t frame) { m_frame = frame; }
@@ -65,7 +65,7 @@ namespace doc {
     Document* m_document;
     Sprite* m_sprite;
     Layer* m_layer;
-    Cel* m_cel;
+    std::shared_ptr<Cel> m_cel;
     Image* m_image;
     int m_imageIndex;
     frame_t m_frame;

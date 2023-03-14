@@ -34,20 +34,18 @@ Cel::Cel(frame_t frame, const CelDataRef& celData)
 }
 
 // static
-Cel* Cel::createCopy(const Cel* other)
+std::shared_ptr<Cel> Cel::createCopy(std::shared_ptr<const Cel> other)
 {
-  Cel* cel = new Cel(other->frame(),
-    ImageRef(Image::createCopy(other->image())));
-
+  auto cel = std::make_shared<Cel>(other->frame(), ImageRef(Image::createCopy(other->image())));
   cel->setPosition(other->position());
   cel->setOpacity(other->opacity());
   return cel;
 }
 
 // static
-Cel* Cel::createLink(const Cel* other)
+std::shared_ptr<Cel> Cel::createLink(std::shared_ptr<const Cel> other)
 {
-  return new Cel(other->frame(), other->dataRef());
+  return std::make_shared<Cel>(other->frame(), other->dataRef());
 }
 
 void Cel::setFrame(frame_t frame)
@@ -95,7 +93,7 @@ Sprite* Cel::sprite() const
     return NULL;
 }
 
-Cel* Cel::link() const
+std::shared_ptr<Cel> Cel::link() const
 {
   ASSERT(m_data);
   if (m_data.get() == NULL)
@@ -103,7 +101,7 @@ Cel* Cel::link() const
 
   if (!m_data.unique()) {
     for (frame_t fr=0; fr<m_frame; ++fr) {
-      Cel* possible = m_layer->cel(fr);
+      auto possible = m_layer->cel(fr);
       if (possible && possible->dataRef().get() == m_data.get())
         return possible;
     }
@@ -118,8 +116,8 @@ std::size_t Cel::links() const
 
   Sprite* sprite = this->sprite();
   for (frame_t fr=0; fr<sprite->totalFrames(); ++fr) {
-    Cel* cel = m_layer->cel(fr);
-    if (cel && cel != this && cel->dataRef().get() == m_data.get())
+    auto cel = m_layer->cel(fr);
+    if (cel && cel.get() != this && cel->dataRef().get() == m_data.get())
       ++links;
   }
 
@@ -128,7 +126,7 @@ std::size_t Cel::links() const
 
 gfx::Rect Cel::bounds() const
 {
-  Image* image = this->image();
+  auto image = this->image();
   ASSERT(image);
   if (image)
     return gfx::Rect(

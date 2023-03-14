@@ -19,7 +19,7 @@ namespace cmd {
 
 using namespace doc;
 
-RemoveCel::RemoveCel(Cel* cel)
+RemoveCel::RemoveCel(std::shared_ptr<Cel> cel)
   : AddCel(cel->layer(), cel)
 {
 }

@@ -44,7 +44,7 @@ CelList get_unique_cels(Sprite* sprite, const DocumentRange& inrange)
            begin = range.frameBegin()-1;
          frame != begin;
          --frame) {
-      Cel* cel = layerImage->cel(frame);
+      auto cel = layerImage->cel(frame);
       if (!cel)
         continue;
 

@@ -572,7 +572,7 @@ void ColorBar::onRemapButtonClick()
       if (remap.isFor8bit()) {
         PalettePicks usedEntries(256);
 
-        for (const Cel* cel : sprite->uniqueCels()) {
+        for (auto cel : sprite->uniqueCels()) {
           for (const auto& i : LockImageBits<IndexedTraits>(cel->image()))
             usedEntries[i] = true;
         }
@@ -585,7 +585,7 @@ void ColorBar::onRemapButtonClick()
 
       // Special remap saving original images in undo history
       if (remapPixels) {
-        for (Cel* cel : sprite->uniqueCels()) {
+        for (auto cel : sprite->uniqueCels()) {
           ImageRef celImage = cel->imageRef();
           ImageRef newImage(Image::createCopy(celImage.get()));
           doc::remap_image(newImage.get(), remap);

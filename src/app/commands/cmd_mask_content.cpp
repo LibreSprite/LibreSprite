@@ -58,7 +58,7 @@ void MaskContentCommand::onExecute(Context* context)
     ContextWriter writer(context);
     document = writer.document();
 
-    Cel* cel = writer.cel(); // Get current cel (can be NULL)
+    auto cel = writer.cel(); // Get current cel (can be NULL)
     if (!cel)
       return;
 

@@ -17,7 +17,7 @@ namespace cmd {
   class SetCelFrame : public Cmd
                     , public WithCel {
   public:
-    SetCelFrame(Cel* cel, frame_t frame);
+    SetCelFrame(std::shared_ptr<Cel> cel, frame_t frame);
 
   protected:
     void onExecute() override;

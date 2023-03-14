@@ -68,10 +68,10 @@ public:
     auto cel = m_layer->cel(i);
     if (!cel)
       return nullptr;
-    auto it = m_cels.find(cel);
+    auto it = m_cels.find(cel.get());
     if (it == m_cels.end()) {
-      it = m_cels.emplace(cel, "CelScriptObject").first;
-      it->second->setWrapped(cel);
+      it = m_cels.emplace(cel.get(), "CelScriptObject").first;
+      it->second->setWrapped(cel.get());
     }
     return it->second.get();
   }

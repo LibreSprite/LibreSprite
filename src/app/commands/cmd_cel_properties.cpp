@@ -67,7 +67,7 @@ public:
     UIContext::instance()->removeObserver(this);
   }
 
-  void setCel(Document* doc, Cel* cel) {
+  void setCel(Document* doc, std::shared_ptr<Cel> cel) {
     if (m_document) {
       m_document->removeObserver(this);
       m_document = nullptr;
@@ -108,7 +108,7 @@ private:
     else if (m_range.enabled()) {
       Sprite* sprite = m_document->sprite();
       int count = 0;
-      for (Cel* cel : sprite->uniqueCels(m_range.frameBegin(),
+      for (auto cel : sprite->uniqueCels(m_range.frameBegin(),
                                          m_range.frameEnd())) {
         if (m_range.inRange(sprite->layerToIndex(cel->layer()))) {
           if (backgroundCount && cel->layer()->isBackground())
@@ -186,7 +186,7 @@ private:
         }
         else if (m_range.enabled()) {
           Sprite* sprite = m_document->sprite();
-          for (Cel* cel : sprite->uniqueCels(m_range.frameBegin(),
+          for (auto cel : sprite->uniqueCels(m_range.frameBegin(),
                                              m_range.frameEnd())) {
             if (m_range.inRange(sprite->layerToIndex(cel->layer()))) {
               if (!cel->layer()->isBackground() && newOpacity != cel->opacity()) {
@@ -234,7 +234,7 @@ private:
   void onActiveSiteChange(const Site& site) override {
     if (isVisible())
       setCel(static_cast<app::Document*>(const_cast<doc::Document*>(site.document())),
-             const_cast<Cel*>(site.cel()));
+             const_cast<Site*>(&site)->cel());
     else if (m_document)
       setCel(nullptr, nullptr);
   }
@@ -273,7 +273,7 @@ private:
 
   Timer m_timer;
   Document* m_document;
-  Cel* m_cel;
+  std::shared_ptr<Cel> m_cel;
   DocumentRange m_range;
   bool m_selfUpdate;
   UserData m_userData;

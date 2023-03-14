@@ -321,7 +321,7 @@ public:
           render::Zoom(1, 1));
       }
       else {
-        Cel* cel = m_layer->cel(m_frame);
+        auto cel = m_layer->cel(m_frame);
         if (cel && (cel->x() != 0 || cel->y() != 0)) {
           m_floodfillSrcImage = Image::create(m_sprite->pixelFormat(),
                                               m_sprite->width(),

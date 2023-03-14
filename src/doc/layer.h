@@ -92,7 +92,7 @@ namespace doc {
         m_flags = LayerFlags(int(m_flags) & ~int(flags));
     }
 
-    virtual Cel* cel(frame_t frame) const;
+    virtual std::shared_ptr<Cel> cel(frame_t frame) const;
     virtual void getCels(CelList& cels) const = 0;
     virtual void displaceFrames(frame_t fromThis, frame_t delta) = 0;
 
@@ -122,15 +122,15 @@ namespace doc {
     int opacity() const { return m_opacity; }
     void setOpacity(int opacity) { m_opacity = opacity; }
 
-    void addCel(Cel *cel);
-    void removeCel(Cel *cel);
-    void moveCel(Cel *cel, frame_t frame);
+    void addCel(std::shared_ptr<Cel> cel);
+    void removeCel(std::shared_ptr<Cel> cel);
+    void moveCel(std::shared_ptr<Cel> cel, frame_t frame);
 
-    Cel* cel(frame_t frame) const override;
+    std::shared_ptr<Cel> cel(frame_t frame) const override;
     void getCels(CelList& cels) const override;
     void displaceFrames(frame_t fromThis, frame_t delta) override;
 
-    Cel* getLastCel() const;
+    std::shared_ptr<Cel> getLastCel() const;
     CelConstIterator findCelIterator(frame_t frame) const;
     CelIterator findCelIterator(frame_t frame);
     CelIterator findFirstCelIteratorAfter(frame_t firstAfterFrame);

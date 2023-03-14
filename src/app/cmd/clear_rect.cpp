@@ -22,7 +22,7 @@ namespace cmd {
 
 using namespace doc;
 
-ClearRect::ClearRect(Cel* cel, const gfx::Rect& bounds)
+ClearRect::ClearRect(std::shared_ptr<Cel> cel, const gfx::Rect& bounds)
 {
   app::Document* doc = static_cast<app::Document*>(cel->document());
 

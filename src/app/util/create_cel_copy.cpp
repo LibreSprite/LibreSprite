@@ -23,7 +23,7 @@ namespace app {
 
 using namespace doc;
 
-Cel* create_cel_copy(const Cel* srcCel,
+std::shared_ptr<Cel> create_cel_copy(std::shared_ptr<const Cel> srcCel,
                      const Sprite* dstSprite,
                      const frame_t dstFrame)
 {
@@ -76,7 +76,7 @@ Cel* create_cel_copy(const Cel* srcCel,
   dstCel->setOpacity(srcCel->opacity());
   dstCel->data()->setUserData(srcCel->data()->userData());
 
-  return dstCel.release();
+  return dstCel;
 }
 
 } // namespace app

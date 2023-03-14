@@ -38,7 +38,7 @@ LayerImage* create_flatten_layer_copy(Sprite* dstSprite, const Layer* srcLayer,
       ImageRef image(Image::create(flatLayer->sprite()->pixelFormat(), bounds.w, bounds.h));
 
       // Create the new cel for the output layer.
-      std::unique_ptr<Cel> cel(new Cel(frame, image));
+      auto cel = std::make_shared<Cel>(frame, image);
       cel->setPosition(bounds.x, bounds.y);
 
       // Render this frame.
@@ -46,7 +46,7 @@ LayerImage* create_flatten_layer_copy(Sprite* dstSprite, const Layer* srcLayer,
         gfx::Clip(0, 0, bounds));
 
       // Add the cel (and release the std::unique_ptr).
-      flatLayer->addCel(cel.release());
+      flatLayer->addCel(cel);
     }
   }
 

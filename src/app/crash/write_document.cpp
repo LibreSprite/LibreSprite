@@ -67,13 +67,13 @@ public:
     for (FrameTag* frtag : spr->frameTags())
       saveObject("frtag", frtag, &Writer::writeFrameTag);
 
-    for (Cel* cel : spr->uniqueCels()) {
+    for (auto cel : spr->uniqueCels()) {
       saveObject("img", cel->image(), &Writer::writeImage);
       saveObject("celdata", cel->data(), &Writer::writeCelData);
     }
 
-    for (Cel* cel : spr->cels())
-      saveObject("cel", cel, &Writer::writeCel);
+    for (auto cel : spr->cels())
+      saveObject("cel", cel.get(), &Writer::writeCel);
 
     std::vector<Layer*> layers;
     spr->getLayersList(layers);
@@ -132,8 +132,7 @@ private:
       // Cels
       write32(s, static_cast<const LayerImage*>(lay)->getCelsCount());
       for (it=begin; it != end; ++it) {
-        const Cel* cel = *it;
-        write32(s, cel->id());
+        write32(s, (*it)->id());
       }
     }
   }

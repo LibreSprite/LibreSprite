@@ -7,12 +7,13 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 namespace doc {
 
   class Cel;
 
-  typedef std::vector<Cel*> CelList;
+  typedef std::vector<std::shared_ptr<Cel>> CelList;
   typedef CelList::iterator CelIterator;
   typedef CelList::const_iterator CelConstIterator;
 

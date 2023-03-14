@@ -66,7 +66,7 @@ namespace app {
     void invalidateDestCanvas(const gfx::Region& rgn);
     void copyValidDestToSourceCanvas(const gfx::Region& rgn);
 
-    const Cel* getCel() const { return m_cel; }
+    const Cel* getCel() const { return m_cel.get(); }
 
   private:
     gfx::Rect getTrimDstImageBounds() const;
@@ -76,7 +76,7 @@ namespace app {
     Sprite* m_sprite;
     Layer* m_layer;
     frame_t m_frame;
-    Cel* m_cel;
+    std::shared_ptr<Cel> m_cel;
     ImageRef m_celImage;
     bool m_celCreated;
     gfx::Point m_origCelPos;

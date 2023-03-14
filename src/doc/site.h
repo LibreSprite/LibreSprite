@@ -8,6 +8,7 @@
 
 #include "doc/frame.h"
 #include "doc/layer_index.h"
+#include <memory>
 
 namespace doc {
 
@@ -33,12 +34,12 @@ namespace doc {
     const Sprite* sprite() const { return m_sprite; }
     const Layer* layer() const { return m_layer; }
     frame_t frame() const { return m_frame; }
-    const Cel* cel() const;
+    std::shared_ptr<const Cel> cel() const;
 
     Document* document() { return m_document; }
     Sprite* sprite() { return m_sprite; }
     Layer* layer() { return m_layer; }
-    Cel* cel();
+    std::shared_ptr<Cel> cel();
 
     void document(Document* document) { m_document = document; }
     void sprite(Sprite* sprite) { m_sprite = sprite; }

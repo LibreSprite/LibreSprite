@@ -23,7 +23,7 @@ namespace cmd {
   class PatchCel : public CmdSequence
                  , public WithCel {
   public:
-    PatchCel(doc::Cel* dstCel,
+    PatchCel(std::shared_ptr<doc::Cel> dstCel,
              const doc::Image* patch,
              const gfx::Region& patchedRegion,
              const gfx::Point& patchPos);

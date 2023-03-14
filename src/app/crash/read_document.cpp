@@ -292,7 +292,7 @@ private:
       int ncels = read32(s);
       for (int i=0; i<ncels; ++i) {
         ObjectId celId = read32(s);
-        Cel* cel = loadObject<Cel*>("cel", celId, &Reader::readCel);
+        std::shared_ptr<Cel> cel{loadObject<Cel*>("cel", celId, &Reader::readCel)};
         if (cel) {
           // Expand sprite size
           if (cel->frame() > m_sprite->lastFrame())
@@ -340,13 +340,13 @@ private:
     // Fill the background layer with empty cels if they are missing
     if (LayerImage* bg = spr->backgroundLayer()) {
       for (frame_t fr=0; fr<spr->totalFrames(); ++fr) {
-        Cel* cel = bg->cel(fr);
+        auto cel = bg->cel(fr);
         if (!cel) {
           ImageRef image(Image::create(spr->pixelFormat(),
                                        spr->width(),
                                        spr->height()));
           image->clear(spr->transparentColor());
-          cel = new Cel(fr, image);
+          cel = std::make_shared<Cel>(fr, image);
           bg->addCel(cel);
         }
       }
@@ -412,7 +412,7 @@ app::Document* read_document_with_raw_images(const std::string& dir,
       img.reset(read_image(s, false));
 
     if (img) {
-      lay->addCel(new Cel(frame, img));
+        lay->addCel(std::make_shared<Cel>(frame, img));
     }
 
     switch (as) {

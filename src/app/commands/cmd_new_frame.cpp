@@ -133,7 +133,7 @@ void NewFrameCommand::onExecute(Context* context)
                 if (m_content == Content::DUPLICATE_CELS_BLOCK) {
                   continuous = false;
 
-                  Cel* srcCel = static_cast<LayerImage*>(layerPtr)->cel(srcFrame);
+                  auto srcCel = static_cast<LayerImage*>(layerPtr)->cel(srcFrame);
                   if (srcCel) {
                     srcCelData = srcCel->data();
 
@@ -152,7 +152,7 @@ void NewFrameCommand::onExecute(Context* context)
                   static_cast<LayerImage*>(layerPtr), dstFrame, continuous);
 
                 if (srcCelData && !relatedCels[srcCelData])
-                  relatedCels[srcCelData] = layerPtr->cel(dstFrame);
+                  relatedCels[srcCelData] = layerPtr->cel(dstFrame).get();
               }
             }
           }

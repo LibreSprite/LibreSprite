@@ -13,6 +13,7 @@
 #include "doc/object.h"
 #include "gfx/fwd.h"
 #include "gfx/point.h"
+#include <memory>
 
 namespace doc {
 
@@ -20,13 +21,13 @@ namespace doc {
   class LayerImage;
   class Sprite;
 
-  class Cel : public Object {
+  class Cel : public Object, public std::enable_shared_from_this<Cel> {
   public:
     Cel(frame_t frame, const ImageRef& image);
     Cel(frame_t frame, const CelDataRef& celData);
 
-    static Cel* createCopy(const Cel* other);
-    static Cel* createLink(const Cel* other);
+    static std::shared_ptr<Cel> createCopy(std::shared_ptr<const Cel> other);
+    static std::shared_ptr<Cel> createLink(std::shared_ptr<const Cel> other);
 
     frame_t frame() const { return m_frame; }
     int x() const { return m_data->position().x; }
@@ -41,7 +42,7 @@ namespace doc {
     CelDataRef dataRef() const { return m_data; }
     Document* document() const;
     Sprite* sprite() const;
-    Cel* link() const;
+    std::shared_ptr<Cel> link() const;
     std::size_t links() const;
     gfx::Rect bounds() const;
 

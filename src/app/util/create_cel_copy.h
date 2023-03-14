@@ -16,8 +16,8 @@ namespace doc {
 
 namespace app {
 
-  Cel* create_cel_copy(const Cel* srcCel,
-                       const Sprite* dstSprite,
-                       const frame_t dstFrame);
+    std::shared_ptr<Cel> create_cel_copy(std::shared_ptr<const Cel> srcCel,
+                                         const Sprite* dstSprite,
+                                         const frame_t dstFrame);
 
 } // namespace app

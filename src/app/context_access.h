@@ -32,7 +32,7 @@ namespace app {
     DocumentAccessT& document() { return m_document; }
     Sprite* sprite() { return m_site.sprite(); }
     Layer* layer() { return m_site.layer(); }
-    Cel* cel() { return m_site.cel(); }
+    std::shared_ptr<Cel> cel() { return m_site.cel(); }
 
     Image* image(int* x = NULL, int* y = NULL, int* opacity = NULL) const {
       return m_site.image(x, y, opacity);

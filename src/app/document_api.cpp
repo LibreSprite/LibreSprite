@@ -92,7 +92,7 @@ void DocumentApi::cropSprite(Sprite* sprite, const gfx::Rect& bounds)
     CelIterator it = ((LayerImage*)layer)->getCelBegin();
     CelIterator end = ((LayerImage*)layer)->getCelEnd();
     for (; it != end; ++it) {
-      Cel* cel = *it;
+      auto cel = *it;
       if (visited.find(cel->data()->id()) != visited.end())
         continue;
       visited.insert(cel->data()->id());
@@ -258,7 +258,7 @@ void DocumentApi::moveFrameLayer(Layer* layer, frame_t frame, frame_t beforeFram
       CelIterator end = cels.end();
 
       for (; it != end; ++it) {
-        Cel* cel = *it;
+        auto cel = *it;
         frame_t celFrame = cel->frame();
         frame_t newFrame = celFrame;
 
@@ -301,7 +301,7 @@ void DocumentApi::moveFrameLayer(Layer* layer, frame_t frame, frame_t beforeFram
   }
 }
 
-void DocumentApi::addCel(LayerImage* layer, Cel* cel)
+void DocumentApi::addCel(LayerImage* layer, std::shared_ptr<Cel> cel)
 {
   ASSERT(layer);
   ASSERT(cel);
@@ -309,7 +309,7 @@ void DocumentApi::addCel(LayerImage* layer, Cel* cel)
   m_transaction.execute(new cmd::AddCel(layer, cel));
 }
 
-void DocumentApi::setCelFramePosition(Cel* cel, frame_t frame)
+void DocumentApi::setCelFramePosition(std::shared_ptr<Cel> cel, frame_t frame)
 {
   ASSERT(cel);
   ASSERT(frame >= 0);
@@ -317,14 +317,14 @@ void DocumentApi::setCelFramePosition(Cel* cel, frame_t frame)
   m_transaction.execute(new cmd::SetCelFrame(cel, frame));
 }
 
-void DocumentApi::setCelPosition(Sprite* sprite, Cel* cel, int x, int y)
+void DocumentApi::setCelPosition(Sprite* sprite, std::shared_ptr<Cel> cel, int x, int y)
 {
   ASSERT(cel);
 
   m_transaction.execute(new cmd::SetCelPosition(cel, x, y));
 }
 
-void DocumentApi::setCelOpacity(Sprite* sprite, Cel* cel, int newOpacity)
+void DocumentApi::setCelOpacity(Sprite* sprite, std::shared_ptr<Cel> cel, int newOpacity)
 {
   ASSERT(cel);
   ASSERT(sprite->supportAlpha());
@@ -334,11 +334,11 @@ void DocumentApi::setCelOpacity(Sprite* sprite, Cel* cel, int newOpacity)
 
 void DocumentApi::clearCel(LayerImage* layer, frame_t frame)
 {
-  if (Cel* cel = layer->cel(frame))
+  if (auto cel = layer->cel(frame))
     clearCel(cel);
 }
 
-void DocumentApi::clearCel(Cel* cel)
+void DocumentApi::clearCel(std::shared_ptr<Cel> cel)
 {
   ASSERT(cel);
   m_transaction.execute(new cmd::ClearCel(cel));
@@ -389,8 +389,8 @@ void DocumentApi::swapCel(
   ASSERT(frame2 >= 0 && frame2 < sprite->totalFrames());
   (void)sprite;              // To avoid unused variable warning on Release mode
 
-  Cel* cel1 = layer->cel(frame1);
-  Cel* cel2 = layer->cel(frame2);
+  auto cel1 = layer->cel(frame1);
+  auto cel2 = layer->cel(frame2);
 
   if (cel1) setCelFramePosition(cel1, frame2);
   if (cel2) setCelFramePosition(cel2, frame1);
@@ -479,16 +479,13 @@ void DocumentApi::duplicateLayerBefore(Layer* sourceLayer, Layer* beforeLayer)
   duplicateLayerAfter(sourceLayer, sourceLayer->sprite()->indexToLayer(afterThisIdx));
 }
 
-Cel* DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image)
+std::shared_ptr<Cel> DocumentApi::addCel(LayerImage* layer, frame_t frameNumber, const ImageRef& image)
 {
   ASSERT(layer->cel(frameNumber) == NULL);
 
-  std::unique_ptr<Cel> cel(new Cel(frameNumber, image));
-
-  addCel(layer, cel.get());
-  cel.release();
-
-  return cel.release();
+  auto cel = std::make_shared<Cel>(frameNumber, image);
+  addCel(layer, cel);
+  return cel;
 }
 
 void DocumentApi::replaceImage(Sprite* sprite, const ImageRef& oldImage, const ImageRef& newImage)

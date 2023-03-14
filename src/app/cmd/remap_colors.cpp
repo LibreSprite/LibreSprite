@@ -48,7 +48,7 @@ void RemapColors::onUndo()
 
 void RemapColors::incrementVersions(Sprite* spr)
 {
-  for (const Cel* cel : spr->uniqueCels())
+  for (auto cel : spr->uniqueCels())
     cel->image()->incrementVersion();
 }
 

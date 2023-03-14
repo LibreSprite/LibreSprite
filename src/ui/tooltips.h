@@ -43,8 +43,8 @@ namespace ui {
 
     typedef std::map<Widget*, TipInfo> Tips;
     Tips m_tips;                      // All tips.
-    base::UniquePtr<TipWindow> m_tipWindow; // Frame to show tooltips.
-    base::UniquePtr<Timer> m_timer;         // Timer to control the tooltip delay.
+    std::unique_ptr<TipWindow> m_tipWindow; // Frame to show tooltips.
+    std::unique_ptr<Timer> m_timer;         // Timer to control the tooltip delay.
     struct {
       Widget* widget;
       TipInfo tipInfo;

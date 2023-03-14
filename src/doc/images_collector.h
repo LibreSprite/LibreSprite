@@ -22,19 +22,19 @@ namespace doc {
   public:
     class Item {
     public:
-      Item(Layer* layer, Cel* cel, Image* image)
+      Item(Layer* layer, std::shared_ptr<Cel> cel, Image* image)
         : m_layer(layer)
         , m_cel(cel)
         , m_image(image)
       { }
 
       Layer* layer() const { return m_layer; }
-      Cel*   cel()   const { return m_cel; }
+      std::shared_ptr<Cel>   cel()   const { return m_cel; }
       Image* image() const { return m_image; }
 
     private:
       Layer* m_layer;
-      Cel*   m_cel;
+      std::shared_ptr<Cel>   m_cel;
       Image* m_image;
     };
 
@@ -60,7 +60,7 @@ namespace doc {
 
   private:
     void collectFromLayer(Layer* layer, frame_t frame);
-    void collectImage(Layer* layer, Cel* cel);
+    void collectImage(Layer* layer, std::shared_ptr<Cel> cel);
 
     Items m_items;
     bool m_allFrames;

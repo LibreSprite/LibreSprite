@@ -20,7 +20,7 @@ namespace cmd {
   class SetCelData : public Cmd
                    , public WithCel {
   public:
-    SetCelData(Cel* cel, const CelDataRef& newData);
+    SetCelData(std::shared_ptr<Cel> cel, const CelDataRef& newData);
 
   protected:
     void onExecute() override;

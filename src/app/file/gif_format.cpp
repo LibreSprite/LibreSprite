@@ -614,21 +614,10 @@ private:
   }
 
   void createCel() {
-    Cel* cel = new Cel(m_frameNum, ImageRef(0));
-    try {
-      ImageRef celImage(Image::createCopy(m_currentImage.get()));
-      try {
-        cel->data()->setImage(celImage);
-      }
-      catch (...) {
-        throw;
-      }
-      m_layer->addCel(cel);
-    }
-    catch (...) {
-      delete cel;
-      throw;
-    }
+    auto cel = std::make_shared<Cel>(m_frameNum, ImageRef(0));
+    ImageRef celImage(Image::createCopy(m_currentImage.get()));
+    cel->data()->setImage(celImage);
+    m_layer->addCel(cel);
   }
 
   void readExtensionRecord() {
@@ -689,7 +678,7 @@ private:
   // Converts the whole sprite read so far because it contains more
   // than 256 colors at the same time.
   void convertIndexedSpriteToRgb() {
-    for (Cel* cel : m_sprite->uniqueCels()) {
+    for (auto cel : m_sprite->uniqueCels()) {
       Image* oldImage = cel->image();
       ImageRef newImage(
         render::convert_pixel_format
@@ -735,7 +724,7 @@ private:
                  // sprite isn't opaque, because we
                  // cannot write the header again
 
-    for (Cel* cel : m_sprite->uniqueCels())
+    for (auto cel : m_sprite->uniqueCels())
       doc::remap_image(cel->image(), remap);
 
     m_sprite->setPalette(&newPalette, false);

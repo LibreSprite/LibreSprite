@@ -18,14 +18,14 @@ namespace cmd {
 
 using namespace doc;
 
-WithCel::WithCel(Cel* cel)
+WithCel::WithCel(std::shared_ptr<Cel> cel)
   : m_celId(cel->id())
 {
 }
 
-Cel* WithCel::cel()
+std::shared_ptr<Cel> WithCel::cel()
 {
-  return get<Cel>(m_celId);
+  return get<Cel>(m_celId)->shared_from_this();
 }
 
 } // namespace cmd

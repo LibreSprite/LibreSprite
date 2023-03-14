@@ -26,7 +26,7 @@ namespace cmd {
                , public WithLayer
                , public WithCel {
   public:
-    AddCel(Layer* layer, Cel* cel);
+    AddCel(Layer* layer, std::shared_ptr<Cel> cel);
 
   protected:
     void onExecute() override;
@@ -37,8 +37,8 @@ namespace cmd {
     }
 
   private:
-    void addCel(Layer* layer, Cel* cel);
-    void removeCel(Layer* layer, Cel* cel);
+    void addCel(Layer* layer, std::shared_ptr<Cel> cel);
+    void removeCel(Layer* layer, std::shared_ptr<Cel> cel);
 
     size_t m_size;
     std::stringstream m_stream;

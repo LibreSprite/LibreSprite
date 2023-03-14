@@ -14,7 +14,7 @@ namespace she {
   class OSXLogger : public Logger {
   public:
     void logError(const char* error) override {
-      NSLog([NSString stringWithUTF8String:error]);
+      NSLog(@"%@", [NSString stringWithUTF8String:error]);
     }
   };
 

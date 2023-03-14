@@ -163,7 +163,7 @@ void composite_image_without_scale(
   const LockImageBits<SrcTraits> srcBits(src, srcBounds);
   LockImageBits<DstTraits> dstBits(dst, dstBounds);
   typename LockImageBits<SrcTraits>::const_iterator src_it = srcBits.begin();
-  typename LockImageBits<SrcTraits>::const_iterator src_end = srcBits.end();
+  // typename LockImageBits<SrcTraits>::const_iterator src_end = srcBits.end();
   typename LockImageBits<DstTraits>::iterator dst_it, dst_end;
 
   // For each line to draw of the source image...
@@ -845,7 +845,7 @@ void Render::renderLayer(
           (!render_transparent && !layer->isBackground()))
         break;
 
-      const Cel* cel = layer->cel(frame);
+      auto cel = layer->cel(frame);
       if (cel) {
         Palette* pal = m_sprite->palette(frame);
         const Image* celImage;

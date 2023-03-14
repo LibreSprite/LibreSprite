@@ -69,7 +69,7 @@ void UnlinkCelCommand::onExecute(Context* context)
                begin = range.frameBegin()-1;
              frame != begin;
              --frame) {
-          Cel* cel = layerImage->cel(frame);
+          auto cel = layerImage->cel(frame);
           if (cel && cel->links()) {
             if (layerImage->isEditable())
               transaction.execute(new cmd::UnlinkCel(cel));
@@ -78,9 +78,8 @@ void UnlinkCelCommand::onExecute(Context* context)
           }
         }
       }
-    }
-    else {
-      Cel* cel = writer.cel();
+    } else {
+      auto cel = writer.cel();
       if (cel && cel->links()) {
         if (cel->layer()->isEditable())
           transaction.execute(new cmd::UnlinkCel(writer.cel()));

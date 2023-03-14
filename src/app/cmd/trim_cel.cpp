@@ -21,7 +21,7 @@ namespace cmd {
 
 using namespace doc;
 
-TrimCel::TrimCel(Cel* cel)
+TrimCel::TrimCel(std::shared_ptr<Cel> cel)
 {
   gfx::Rect newBounds;
   if (algorithm::shrink_bounds(cel->image(), newBounds,

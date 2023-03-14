@@ -89,7 +89,7 @@ ExpandCelCanvas::ExpandCelCanvas(
   // Create a new cel
   if (!m_cel) {
     m_celCreated = true;
-    m_cel = new Cel(site.frame(), ImageRef(NULL));
+    m_cel = std::make_shared<Cel>(site.frame(), ImageRef(nullptr));
   }
 
   m_origCelPos = m_cel->position();
@@ -234,8 +234,7 @@ void ExpandCelCanvas::rollback()
     if (m_layer && m_layer->isImage())
       static_cast<LayerImage*>(m_layer)->removeCel(m_cel);
 
-    delete m_cel;
-    m_celImage.reset(NULL);
+    m_celImage.reset();
   }
 
   m_closed = true;

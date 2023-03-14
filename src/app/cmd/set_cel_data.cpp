@@ -23,7 +23,7 @@ namespace cmd {
 
 using namespace doc;
 
-SetCelData::SetCelData(Cel* cel, const CelDataRef& newData)
+SetCelData::SetCelData(std::shared_ptr<Cel> cel, const CelDataRef& newData)
   : WithCel(cel)
   , m_oldDataId(cel->data()->id())
   , m_oldImageId(cel->image()->id())
@@ -34,7 +34,7 @@ SetCelData::SetCelData(Cel* cel, const CelDataRef& newData)
 
 void SetCelData::onExecute()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   if (!cel->links())
     createCopy();
 
@@ -45,7 +45,7 @@ void SetCelData::onExecute()
 
 void SetCelData::onUndo()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   if (m_dataCopy) {
     ASSERT(!cel->sprite()->getCelDataRef(m_oldDataId));
@@ -66,7 +66,7 @@ void SetCelData::onUndo()
 
 void SetCelData::onRedo()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   if (!cel->links())
     createCopy();
 
@@ -78,7 +78,7 @@ void SetCelData::onRedo()
 
 void SetCelData::createCopy()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   ASSERT(!m_dataCopy);
   m_dataCopy.reset(new CelData(*cel->data()));

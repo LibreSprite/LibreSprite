@@ -20,7 +20,7 @@ namespace cmd {
 
 using namespace doc;
 
-SetCelPosition::SetCelPosition(Cel* cel, int x, int y)
+SetCelPosition::SetCelPosition(std::shared_ptr<Cel> cel, int x, int y)
   : WithCel(cel)
   , m_oldX(cel->x())
   , m_oldY(cel->y())
@@ -43,7 +43,7 @@ void SetCelPosition::onUndo()
 
 void SetCelPosition::onFireNotifications()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   DocumentEvent ev(cel->document());
   ev.sprite(cel->sprite());
   ev.cel(cel);

@@ -17,7 +17,7 @@ namespace cmd {
   class ShiftMaskedCel : public Cmd
                        , public WithCel {
   public:
-    ShiftMaskedCel(Cel* cel, int dx, int dy);
+    ShiftMaskedCel(std::shared_ptr<Cel> cel, int dx, int dy);
 
   protected:
     void onExecute() override;

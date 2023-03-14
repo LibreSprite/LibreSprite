@@ -21,7 +21,7 @@ namespace cmd {
 
 using namespace doc;
 
-PatchCel::PatchCel(doc::Cel* dstCel,
+  PatchCel::PatchCel(std::shared_ptr<doc::Cel> dstCel,
                    const doc::Image* patch,
                    const gfx::Region& patchedRegion,
                    const gfx::Point& patchPos)
@@ -34,7 +34,7 @@ PatchCel::PatchCel(doc::Cel* dstCel,
 
 void PatchCel::onExecute()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
 
   executeAndAdd(
     new CropCel(cel,

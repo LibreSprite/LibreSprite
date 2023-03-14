@@ -15,7 +15,7 @@ namespace cmd {
 
   class RemoveCel : public AddCel {
   public:
-    RemoveCel(Cel* cel);
+    RemoveCel(std::shared_ptr<Cel> cel);
 
   protected:
     void onExecute() override;

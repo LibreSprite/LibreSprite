@@ -77,14 +77,14 @@ protected:
     DocumentApi api = m_writer.document()->getApi(transaction);
 
     int cels_count = 0;
-    for (Cel* cel : m_sprite->uniqueCels()) { // TODO add size() member function to CelsRange
+    for (auto cel : m_sprite->uniqueCels()) { // TODO add size() member function to CelsRange
       (void)cel;
       ++cels_count;
     }
 
     // For each cel...
     int progress = 0;
-    for (Cel* cel : m_sprite->uniqueCels()) {
+    for (auto cel : m_sprite->uniqueCels()) {
       // Change its location
       api.setCelPosition(m_sprite, cel, scale_x(cel->x()), scale_y(cel->y()));
 

@@ -67,7 +67,7 @@ bool FliFormat::onLoad(FileOp* fop)
   // Create a temporal bitmap
   ImageRef bmp(Image::create(IMAGE_INDEXED, w, h));
   Palette pal(0, 1);
-  Cel* prevCel = nullptr;
+  std::shared_ptr<Cel> prevCel;
 
   // Create the sprite
   Sprite* sprite = new Sprite(IMAGE_INDEXED, w, h, 256);
@@ -116,14 +116,14 @@ bool FliFormat::onLoad(FileOp* fop)
         (count_diff_between_images(prevCel->image(), bmp.get()))) {
       // Add the new frame
       ImageRef image(Image::createCopy(bmp.get()));
-      Cel* cel = new Cel(frame_out, image);
+      auto cel = std::make_shared<Cel>(frame_out, image);
       layer->addCel(cel);
 
       prevCel = cel;
       ++frame_out;
     }
     else if (palChange) {
-      Cel* cel = Cel::createLink(prevCel);
+      auto cel = Cel::createLink(prevCel);
       cel->setFrame(frame_out);
       layer->addCel(cel);
 

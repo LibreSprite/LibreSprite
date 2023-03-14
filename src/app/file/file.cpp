@@ -516,7 +516,7 @@ void FileOp::operate(IFileOpProgress* progress)
         }
 
         old_image = m_seq.image.get();
-        m_seq.image.reset(NULL);
+        m_seq.image.reset();
         m_seq.last_cel = NULL;
       };
 
@@ -541,7 +541,6 @@ void FileOp::operate(IFileOpProgress* progress)
           // Error reading the first frame
           if (!loadres || !m_document || !m_seq.last_cel) {
             m_seq.image.reset();
-            delete m_seq.last_cel;
             delete m_document;
             m_document = nullptr;
             break;
@@ -557,7 +556,6 @@ void FileOp::operate(IFileOpProgress* progress)
           // All done (or maybe not enough memory)
           if (!loadres || !m_seq.last_cel) {
             m_seq.image.reset();
-            delete m_seq.last_cel;
             break;
           }
 
@@ -653,7 +651,7 @@ void FileOp::operate(IFileOpProgress* progress)
       m_document->setFilename(m_filename);
 
       // Destroy the image
-      m_seq.image.reset(NULL);
+      m_seq.image.reset();
     }
     // Direct save to a file.
     else {
@@ -835,7 +833,7 @@ Image* FileOp::sequenceImage(PixelFormat pixelFormat, int w, int h)
 
   // Create a bitmap
   m_seq.image.reset(Image::create(pixelFormat, w, h));
-  m_seq.last_cel = new Cel(m_seq.frame++, ImageRef(nullptr));
+  m_seq.last_cel = std::make_shared<Cel>(m_seq.frame++, ImageRef(nullptr));
 
   return m_seq.image.get();
 }
@@ -916,7 +914,7 @@ FileOp::FileOp(FileOpType type, Context* context)
   , m_oneframe(false)
 {
   m_seq.palette = nullptr;
-  m_seq.image.reset(nullptr);
+  m_seq.image.reset();
   m_seq.progress_offset = 0.0f;
   m_seq.progress_fraction = 0.0f;
   m_seq.frame = frame_t(0);

@@ -42,12 +42,12 @@ void ImagesCollector::collectFromLayer(Layer* layer, frame_t frame)
     case ObjectType::LayerImage: {
       if (m_allFrames) {
         for (frame_t frame(0); frame<sprite->totalFrames(); ++frame) {
-          if (Cel* cel = layer->cel(frame))
+          if (auto cel = layer->cel(frame))
             collectImage(layer, cel);
         }
       }
       else {
-        if (Cel* cel = layer->cel(frame))
+        if (auto cel = layer->cel(frame))
           collectImage(layer, cel);
       }
       break;
@@ -66,7 +66,7 @@ void ImagesCollector::collectFromLayer(Layer* layer, frame_t frame)
   }
 }
 
-void ImagesCollector::collectImage(Layer* layer, Cel* cel)
+void ImagesCollector::collectImage(Layer* layer, std::shared_ptr<Cel> cel)
 {
   m_items.push_back(Item(layer, cel, cel->image()));
 }

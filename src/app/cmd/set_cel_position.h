@@ -17,7 +17,7 @@ namespace cmd {
   class SetCelPosition : public Cmd
                        , public WithCel {
   public:
-    SetCelPosition(Cel* cel, int x, int y);
+    SetCelPosition(std::shared_ptr<Cel> cel, int x, int y);
 
   protected:
     void onExecute() override;

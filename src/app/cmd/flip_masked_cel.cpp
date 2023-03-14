@@ -23,7 +23,7 @@
 namespace app {
 namespace cmd {
 
-FlipMaskedCel::FlipMaskedCel(Cel* cel, doc::algorithm::FlipType flipType)
+FlipMaskedCel::FlipMaskedCel(std::shared_ptr<Cel> cel, doc::algorithm::FlipType flipType)
 {
   app::Document* doc = static_cast<app::Document*>(cel->document());
   color_t bgcolor = doc->bgColor(cel->layer());

@@ -20,7 +20,7 @@ namespace cmd {
 
 using namespace doc;
 
-UnlinkCel::UnlinkCel(Cel* cel)
+UnlinkCel::UnlinkCel(std::shared_ptr<Cel> cel)
   : WithCel(cel)
   , m_newImageId(0)
   , m_oldCelDataId(cel->dataRef()->id())
@@ -31,7 +31,7 @@ UnlinkCel::UnlinkCel(Cel* cel)
 
 void UnlinkCel::onExecute()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   CelDataRef oldCelData = cel->sprite()->getCelDataRef(m_oldCelDataId);
   ASSERT(oldCelData);
 
@@ -55,7 +55,7 @@ void UnlinkCel::onExecute()
 
 void UnlinkCel::onUndo()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   CelDataRef oldCelData = cel->sprite()->getCelDataRef(m_oldCelDataId);
   ASSERT(oldCelData);
 

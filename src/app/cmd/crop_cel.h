@@ -18,7 +18,7 @@ namespace cmd {
   class CropCel : public Cmd
                 , public WithCel {
   public:
-    CropCel(doc::Cel* cel, const gfx::Rect& newBounds);
+    CropCel(std::shared_ptr<doc::Cel> cel, const gfx::Rect& newBounds);
 
   protected:
     void onExecute() override;

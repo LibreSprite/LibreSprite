@@ -18,7 +18,7 @@ namespace cmd {
   class ClearCel : public Cmd
                  , public WithCel {
   public:
-    ClearCel(Cel* cel);
+    ClearCel(std::shared_ptr<Cel> cel);
 
   protected:
     void onExecute() override;

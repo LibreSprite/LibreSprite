@@ -79,8 +79,7 @@ void LinkCelsCommand::onExecute(Context* context)
 
       LayerImage* layerImage = static_cast<LayerImage*>(layer);
       for (frame_t frame=begin; frame < end+1; ++frame) {
-        Cel* cel = layerImage->cel(frame);
-        if (cel) {
+        if (auto cel = layerImage->cel(frame)) {
           for (frame = cel->frame()+1;
                frame < end+1; ++frame) {
             transaction.execute(

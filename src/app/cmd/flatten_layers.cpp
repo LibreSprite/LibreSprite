@@ -73,7 +73,7 @@ void FlattenLayers::onExecute()
     // TODO Keep cel links when possible
 
     ImageRef cel_image;
-    Cel* cel = flatLayer->cel(frame);
+    auto cel = flatLayer->cel(frame);
     if (cel) {
       if (cel->links())
         executeAndAdd(new cmd::UnlinkCel(cel));
@@ -86,7 +86,7 @@ void FlattenLayers::onExecute()
     }
     else {
       cel_image.reset(Image::createCopy(image.get()));
-      cel = new Cel(frame, cel_image);
+      cel = std::make_shared<Cel>(frame, cel_image);
       flatLayer->addCel(cel);
     }
   }

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "doc/object_id.h"
+#include <memory>
 
 namespace doc {
   class Cel;
@@ -19,8 +20,8 @@ namespace cmd {
 
   class WithCel {
   public:
-    WithCel(Cel* cel);
-    Cel* cel();
+      WithCel(std::shared_ptr<Cel> cel);
+      std::shared_ptr<Cel> cel();
 
   private:
     ObjectId m_celId;

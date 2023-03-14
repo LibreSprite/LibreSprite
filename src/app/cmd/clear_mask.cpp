@@ -24,7 +24,7 @@ namespace cmd {
 
 using namespace doc;
 
-ClearMask::ClearMask(Cel* cel)
+ClearMask::ClearMask(std::shared_ptr<Cel> cel)
   : WithCel(cel)
 {
   app::Document* doc = static_cast<app::Document*>(cel->document());
@@ -84,7 +84,7 @@ void ClearMask::onRedo()
 
 void ClearMask::clear()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   Image* image = m_dstImage->image();
   app::Document* doc = static_cast<app::Document*>(cel->document());
   Mask* mask = doc->mask();

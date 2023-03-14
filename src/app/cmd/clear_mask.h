@@ -21,7 +21,7 @@ namespace cmd {
   class ClearMask : public Cmd
                   , public WithCel {
   public:
-    ClearMask(Cel* cel);
+    ClearMask(std::shared_ptr<Cel> cel);
 
   protected:
     void onExecute() override;

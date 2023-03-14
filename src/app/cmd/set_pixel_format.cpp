@@ -42,7 +42,7 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
   if (sprite->pixelFormat() == newFormat)
     return;
 
-  for (Cel* cel : sprite->uniqueCels()) {
+  for (auto cel : sprite->uniqueCels()) {
     ImageRef old_image = cel->imageRef();
     ImageRef new_image(
       render::convert_pixel_format
@@ -58,7 +58,7 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
   // Set all cels opacity to 100% if we are converting to indexed.
   // TODO remove this
   if (newFormat == IMAGE_INDEXED) {
-    for (Cel* cel : sprite->uniqueCels()) {
+    for (auto cel : sprite->uniqueCels()) {
       if (cel->opacity() < 255)
         m_seq.add(new cmd::SetCelOpacity(cel, 255));
     }

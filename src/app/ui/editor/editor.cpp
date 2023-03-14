@@ -686,7 +686,7 @@ void Editor::drawSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& _rc)
       // preview is shown (e.g. with this we avoid to showing the
       // edges in states like DrawingState, etc.).
       m_state->requireBrushPreview()) {
-    Cel* cel = (m_layer ? m_layer->cel(m_frame): nullptr);
+    auto cel = (m_layer ? m_layer->cel(m_frame): nullptr);
     if (cel) {
       g->drawRect(theme->colors.editorLayerEdges(),
                   editorToScreen(cel->bounds()).offset(-bounds().origin()));

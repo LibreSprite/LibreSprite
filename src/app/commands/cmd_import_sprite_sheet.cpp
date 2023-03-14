@@ -399,10 +399,10 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
     // Add all frames+cels to the new layer
     for (size_t i=0; i<animation.size(); ++i) {
       // Create the cel.
-      std::unique_ptr<Cel> resultCel(new Cel(frame_t(i), animation[i]));
+      auto resultCel = std::make_shared<Cel>(frame_t(i), animation[i]);
 
       // Add the cel in the layer.
-      api.addCel(resultLayer, resultCel.release());
+      api.addCel(resultLayer, resultCel);
     }
 
     // Copy the list of layers (because we will modify it in the iteration).

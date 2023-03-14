@@ -59,8 +59,8 @@ void MoveCel::onExecute()
   ASSERT(m_srcFrame >= 0 && m_srcFrame < srcSprite->totalFrames());
   ASSERT(m_dstFrame >= 0);
 
-  Cel* srcCel = srcLayer->cel(m_srcFrame);
-  Cel* dstCel = dstLayer->cel(m_dstFrame);
+  auto srcCel = srcLayer->cel(m_srcFrame);
+  auto dstCel = dstLayer->cel(m_dstFrame);
 
   // Clear destination cel if it does exist. It'll be overriden by the
   // copy of srcCel.

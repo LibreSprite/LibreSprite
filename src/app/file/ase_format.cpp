@@ -585,12 +585,11 @@ static void ase_file_write_layers(FILE* f, ASE_FrameHeader* frame_header, const 
 static void ase_file_write_cels(FILE* f, ASE_FrameHeader* frame_header, const Sprite* sprite, const Layer* layer, frame_t frame)
 {
   if (layer->isImage()) {
-    const Cel* cel = layer->cel(frame);
-    if (cel) {
+    if (auto cel = layer->cel(frame)) {
 /*       fop->setError("New cel in frame %d, in layer %d\n", */
 /*                   frame, sprite_layer2index(sprite, layer)); */
 
-      ase_file_write_cel_chunk(f, frame_header, cel, static_cast<const LayerImage*>(layer), sprite);
+      ase_file_write_cel_chunk(f, frame_header, cel.get(), static_cast<const LayerImage*>(layer), sprite);
 
       if (!cel->link() &&
           !cel->data()->userData().isEmpty()) {
@@ -1170,7 +1169,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
   }
 
   // Create the new frame.
-  std::unique_ptr<Cel> cel;
+  std::shared_ptr<Cel> cel;
 
   switch (cel_type) {
 
@@ -1198,7 +1197,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
             break;
         }
 
-        cel.reset(new Cel(frame, image));
+        cel = std::make_shared<Cel>(frame, image);
         cel->setPosition(x, y);
         cel->setOpacity(opacity);
       }
@@ -1208,26 +1207,23 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
     case ASE_FILE_LINK_CEL: {
       // Read link position
       frame_t link_frame = frame_t(fgetw(f));
-      Cel* link = layer->cel(link_frame);
-
-      if (link) {
+      if (auto link = layer->cel(link_frame)) {
         // There were a beta version that allow to the user specify
         // different X, Y, or opacity per link, in that case we must
         // create a copy.
         if (link->x() == x && link->y() == y && link->opacity() == opacity) {
-          cel.reset(Cel::createLink(link));
+          cel = Cel::createLink(link);
           cel->setFrame(frame);
         }
         else {
-          cel.reset(Cel::createCopy(link));
+          cel = Cel::createCopy(link);
           cel->setFrame(frame);
           cel->setPosition(x, y);
           cel->setOpacity(opacity);
         }
-      }
-      else {
-        // Linked cel doesn't found
-        return NULL;
+      } else {
+        // Linked cel not found
+        return nullptr;
       }
       break;
     }
@@ -1263,7 +1259,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
           fop->setError(e.what());
         }
 
-        cel.reset(new Cel(frame, image));
+        cel = std::make_shared<Cel>(frame, image);
         cel->setPosition(x, y);
         cel->setOpacity(opacity);
       }
@@ -1272,11 +1268,10 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
 
   }
 
-  if (!cel)
-    return nullptr;
+  if (cel)
+    static_cast<LayerImage*>(layer)->addCel(cel);
 
-  static_cast<LayerImage*>(layer)->addCel(cel.get());
-  return cel.release();
+  return cel.get();
 }
 
 static void ase_file_write_cel_chunk(FILE* f, ASE_FrameHeader* frame_header,
@@ -1285,7 +1280,7 @@ static void ase_file_write_cel_chunk(FILE* f, ASE_FrameHeader* frame_header,
   ChunkWriter chunk(f, frame_header, ASE_FILE_CHUNK_CEL);
 
   int layer_index = sprite->layerToIndex(layer);
-  const Cel* link = cel->link();
+  auto link = cel->link();
   int cel_type = (link ? ASE_FILE_LINK_CEL: ASE_FILE_COMPRESSED_CEL);
 
   fputw(layer_index, f);

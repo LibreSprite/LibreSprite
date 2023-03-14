@@ -22,7 +22,7 @@ namespace cmd {
 
 using namespace doc;
 
-SetCelFrame::SetCelFrame(Cel* cel, frame_t frame)
+SetCelFrame::SetCelFrame(std::shared_ptr<Cel> cel, frame_t frame)
   : WithCel(cel)
   , m_oldFrame(cel->frame())
   , m_newFrame(frame)
@@ -31,21 +31,21 @@ SetCelFrame::SetCelFrame(Cel* cel, frame_t frame)
 
 void SetCelFrame::onExecute()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   cel->layer()->moveCel(cel, m_newFrame);
   cel->incrementVersion();
 }
 
 void SetCelFrame::onUndo()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   cel->layer()->moveCel(cel, m_oldFrame);
   cel->incrementVersion();
 }
 
 void SetCelFrame::onFireNotifications()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   doc::Document* doc = cel->sprite()->document();
   DocumentEvent ev(doc);
   ev.sprite(cel->layer()->sprite());

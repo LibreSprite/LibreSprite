@@ -34,7 +34,7 @@ Palette* Site::palette()
   return (m_sprite ? m_sprite->palette(m_frame): NULL);
 }
 
-const Cel* Site::cel() const
+std::shared_ptr<const Cel> Site::cel() const
 {
   if (m_layer)
     return m_layer->cel(m_frame);
@@ -42,7 +42,7 @@ const Cel* Site::cel() const
     return NULL;
 }
 
-Cel* Site::cel()
+std::shared_ptr<Cel> Site::cel()
 {
   if (m_layer)
     return m_layer->cel(m_frame);
@@ -55,7 +55,7 @@ Image* Site::image(int* x, int* y, int* opacity) const
   Image* image = NULL;
 
   if (m_sprite) {
-    if (const Cel* cel = this->cel()) {
+    if (auto cel = this->cel()) {
       image = cel->image();
       if (x) *x = cel->x();
       if (y) *y = cel->y();

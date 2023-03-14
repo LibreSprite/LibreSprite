@@ -71,7 +71,7 @@ void ReplaceImage::replaceImage(ObjectId oldId, const ImageRef& newImage)
 {
   Sprite* spr = sprite();
 
-  for (Cel* cel : spr->uniqueCels()) {
+  for (auto cel : spr->uniqueCels()) {
     if (cel->image()->id() == oldId)
       cel->data()->incrementVersion();
   }

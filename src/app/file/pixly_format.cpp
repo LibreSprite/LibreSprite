@@ -188,10 +188,10 @@ bool PixlyFormat::onLoad(FileOp* fop)
                                   image->maskColor()));
 
 
-        Cel* cel = NULL;
+        std::shared_ptr<Cel> cel;
         if ((int)frame > 0) {
           // link identical neighbors
-          Cel *prev_cel = static_cast<LayerImage*>(layer)->cel(frame-1);
+          auto prev_cel = static_cast<LayerImage*>(layer)->cel(frame-1);
           if (prev_cel && prev_cel->x() == bounds.x && prev_cel->y() == bounds.y) {
             Image *prev_image = prev_cel->image();
             if (prev_image && doc::count_diff_between_images(prev_image, trim_image.get()) == 0) {
@@ -201,8 +201,8 @@ bool PixlyFormat::onLoad(FileOp* fop)
           } // prev_cel
         } // frame > 0
 
-        if (cel == NULL) {
-          cel = new Cel(frame, trim_image);
+        if (!cel) {
+          cel = std::make_shared<Cel>(frame, trim_image);
           cel->setPosition(bounds.x, bounds.y);
         }
 
@@ -265,7 +265,7 @@ bool PixlyFormat::onSave(FileOp* fop)
   std::unique_ptr<Document> sheet_doc(new Document(sheet_sprite));
   std::shared_ptr<Image> sheet_image(Image::create(IMAGE_RGB, sheetWidth, sheetHeight));
   Image* sheet = sheet_image.get();
-  sheet_layer->addCel(new Cel(0, sheet_image));
+  sheet_layer->addCel(std::make_shared<Cel>(frame_t(0), sheet_image));
 
   // save XML header
   FileHandle handle(open_file_with_exception(fop->filename(), "wb"));
@@ -313,7 +313,7 @@ bool PixlyFormat::onSave(FileOp* fop)
         index, col, row
       );
 
-      const Cel* cel = layer->cel(frame);
+      auto cel = layer->cel(frame);
       if (cel) {
         const Image* image = cel->image();
         if (image) {

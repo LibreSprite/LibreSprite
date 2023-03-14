@@ -1016,11 +1016,11 @@ void Timeline::onPaint(ui::PaintEvent& ev)
 
       // Draw every visible cel for each layer.
       for (frame=first_frame; frame<=last_frame; ++frame) {
-        Cel* cel =
-          (data.it != data.end &&
-           (*data.it)->frame() == frame ? *data.it: nullptr);
+        std::shared_ptr<Cel> cel;
+        if (data.it != data.end && (*data.it)->frame() == frame)
+          cel = *data.it;
 
-        drawCel(g, layer, frame, cel, &data);
+        drawCel(g, layer, frame, cel.get(), &data);
 
         if (cel) {
           data.prevIt = data.it;
@@ -1497,8 +1497,8 @@ void Timeline::drawCel(ui::Graphics* g, LayerIndex layerIndex, frame_t frame, Ce
   else {
     // Calculate which cel is next to this one (in previous and next
     // frame).
-    Cel* left = (data->prevIt != data->end ? *data->prevIt: nullptr);
-    Cel* right = (data->nextIt != data->end ? *data->nextIt: nullptr);
+    auto left = (data->prevIt != data->end ? data->prevIt->get(): nullptr);
+    auto right = (data->nextIt != data->end ? data->nextIt->get(): nullptr);
     if (left && left->frame() != frame-1) left = nullptr;
     if (right && right->frame() != frame+1) right = nullptr;
 
@@ -1536,12 +1536,12 @@ void Timeline::drawCelLinkDecorators(ui::Graphics* g, const gfx::Rect& bounds,
 
   if (cel && cel->image()->id() == imageId) {
     if (left) {
-      Cel* prevCel = m_layer->cel(cel->frame()-1);
+      auto prevCel = m_layer->cel(cel->frame()-1);
       if (!prevCel || prevCel->image()->id() != imageId)
         drawPart(g, bounds, NULL, styles.timelineLeftLink(), is_active, is_hover);
     }
     if (right) {
-      Cel* nextCel = m_layer->cel(cel->frame()+1);
+      auto nextCel = m_layer->cel(cel->frame()+1);
       if (!nextCel || nextCel->image()->id() != imageId)
         drawPart(g, bounds, NULL, styles.timelineRightLink(), is_active, is_hover);
     }
@@ -2244,7 +2244,7 @@ void Timeline::updateStatusBar(ui::Message* msg)
 
       case PART_CEL:
         if (layer) {
-          Cel* cel = (layer->isImage() ? layer->cel(m_hot.frame): NULL);
+          auto cel = layer->isImage() ? layer->cel(m_hot.frame).get() : nullptr;
           StatusBar::instance()->setStatusText(0,
             "%s at frame %d"
 #ifdef _DEBUG

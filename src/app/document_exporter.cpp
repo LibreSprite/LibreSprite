@@ -189,8 +189,6 @@ private:
   Layer* m_layer;
   frame_t m_frame;
   std::string m_filename;
-  int m_borderPadding;
-  int m_shapePadding;
   int m_innerPadding;
   SampleBoundsPtr m_bounds;
   bool m_isDuplicated;
@@ -570,8 +568,8 @@ void DocumentExporter::captureSamples(Samples& samples)
       std::string filename = filename_formatter(format, fnInfo);
 
       Sample sample(doc, sprite, layer, frame, filename, m_innerPadding);
-      Cel* cel = nullptr;
-      Cel* link = nullptr;
+      std::shared_ptr<Cel> cel;
+      std::shared_ptr<Cel> link;
       bool done = false;
 
       if (layer && layer->isImage())
@@ -859,7 +857,7 @@ void DocumentExporter::createDataFile(const Samples& samples, std::ostream& os, 
         CelList cels;
         layer->getCels(cels);
         bool someCelWithData = false;
-        for (const Cel* cel : cels) {
+        for (auto cel : cels) {
           if (!cel->data()->userData().isEmpty()) {
             someCelWithData = true;
             break;
@@ -870,7 +868,7 @@ void DocumentExporter::createDataFile(const Samples& samples, std::ostream& os, 
           bool firstCel = true;
 
           os << ", \"cels\": [";
-          for (const Cel* cel : cels) {
+          for (auto cel : cels) {
             if (!cel->data()->userData().isEmpty()) {
               if (firstCel)
                 firstCel = false;

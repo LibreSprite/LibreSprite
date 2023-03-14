@@ -148,7 +148,7 @@ namespace app {
       frame_t frame;
       bool has_alpha;
       LayerImage* layer;
-      Cel* last_cel;
+      std::shared_ptr<Cel> last_cel;
       base::SharedPtr<FormatOptions> format_options;
     } m_seq;
 

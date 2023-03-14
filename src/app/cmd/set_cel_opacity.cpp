@@ -20,7 +20,7 @@ namespace cmd {
 
 using namespace doc;
 
-SetCelOpacity::SetCelOpacity(Cel* cel, int opacity)
+SetCelOpacity::SetCelOpacity(std::shared_ptr<Cel> cel, int opacity)
   : WithCel(cel)
   , m_oldOpacity(cel->opacity())
   , m_newOpacity(opacity)
@@ -41,7 +41,7 @@ void SetCelOpacity::onUndo()
 
 void SetCelOpacity::onFireNotifications()
 {
-  Cel* cel = this->cel();
+  auto cel = this->cel();
   DocumentEvent ev(cel->document());
   ev.sprite(cel->sprite());
   ev.cel(cel);

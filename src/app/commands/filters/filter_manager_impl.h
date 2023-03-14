@@ -107,15 +107,15 @@ namespace app {
     doc::RgbMap* getRgbMap() override;
 
   private:
-    void init(doc::Cel* cel);
+    void init(std::shared_ptr<doc::Cel> cel);
     void apply(Transaction& transaction);
-    void applyToCel(Transaction& transaction, doc::Cel* cel);
+    void applyToCel(Transaction& transaction, std::shared_ptr<doc::Cel> cel);
     bool updateBounds(doc::Mask* mask);
 
     Context* m_context;
     doc::Site m_site;
     Filter* m_filter;
-    doc::Cel* m_cel;
+    std::shared_ptr<doc::Cel> m_cel;
     doc::ImageRef m_src;
     doc::ImageRef m_dst;
     int m_row;

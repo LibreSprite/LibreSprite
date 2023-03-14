@@ -43,14 +43,14 @@ MovingCelState::MovingCelState(Editor* editor, MouseMessage* msg)
   LayerImage* layer = static_cast<LayerImage*>(editor->layer());
   ASSERT(layer->isImage());
 
-  Cel* currentCel = layer->cel(editor->frame());
+  auto currentCel = layer->cel(editor->frame());
   ASSERT(currentCel); // The cel cannot be null
 
   if (!range.enabled())
-    range = DocumentRange(currentCel);
+    range = DocumentRange(currentCel.get());
 
   // Record start positions of all cels in selected range
-  for (Cel* cel : get_unique_cels(writer.sprite(), range)) {
+  for (auto cel : get_unique_cels(writer.sprite(), range)) {
     Layer* layer = cel->layer();
     ASSERT(layer);
 
@@ -85,7 +85,7 @@ bool MovingCelState::onMouseUp(Editor* editor, MouseMessage* msg)
   if (m_celOffset != gfx::Point(0, 0)) {
     // Put the cels in the original position.
     for (size_t i=0; i<m_celList.size(); ++i) {
-      Cel* cel = m_celList[i];
+      auto cel = m_celList[i];
       const gfx::Point& celStart = m_celStarts[i];
 
       cel->setPosition(celStart);
@@ -98,7 +98,7 @@ bool MovingCelState::onMouseUp(Editor* editor, MouseMessage* msg)
       DocumentApi api = document->getApi(transaction);
 
       // And now we move the cel (or all selected range) to the new position.
-      for (Cel* cel : m_celList) {
+      for (auto cel : m_celList) {
         api.setCelPosition(writer.sprite(), cel,
                            cel->x() + m_celOffset.x,
                            cel->y() + m_celOffset.y);
@@ -147,7 +147,7 @@ bool MovingCelState::onMouseMove(Editor* editor, MouseMessage* msg)
   }
 
   for (size_t i=0; i<m_celList.size(); ++i) {
-    Cel* cel = m_celList[i];
+    auto cel = m_celList[i];
     const gfx::Point& celStart = m_celStarts[i];
 
     cel->setPosition(celStart + m_celOffset);

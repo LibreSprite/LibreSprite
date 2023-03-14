@@ -53,7 +53,7 @@ void BackgroundFromLayer::onExecute()
 
   CelList cels;
   layer->getCels(cels);
-  for (Cel* cel : cels) {
+  for (auto cel : cels) {
     // get the image from the sprite's stock of images
     Image* cel_image = cel->image();
     ASSERT(cel_image);
@@ -87,14 +87,14 @@ void BackgroundFromLayer::onExecute()
 
   // Fill all empty cels with a flat-image filled with bgcolor
   for (frame_t frame(0); frame<sprite->totalFrames(); ++frame) {
-    Cel* cel = layer->cel(frame);
+    auto cel = layer->cel(frame);
     if (!cel) {
       ImageRef cel_image(Image::create(sprite->pixelFormat(),
           sprite->width(), sprite->height()));
       clear_image(cel_image.get(), bgcolor);
 
       // Create the new cel and add it to the new background layer
-      cel = new Cel(frame, cel_image);
+      cel = std::make_shared<Cel>(frame, cel_image);
       executeAndAdd(new cmd::AddCel(layer, cel));
     }
   }

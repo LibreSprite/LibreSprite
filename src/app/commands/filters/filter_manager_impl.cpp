@@ -303,7 +303,7 @@ RgbMap* FilterManagerImpl::getRgbMap()
   return m_site.sprite()->rgbMap(m_site.frame());
 }
 
-void FilterManagerImpl::init(Cel* cel)
+void FilterManagerImpl::init(std::shared_ptr<Cel> cel)
 {
   ASSERT(cel);
   if (!updateBounds(static_cast<app::Document*>(m_site.document())->mask()))
@@ -327,7 +327,7 @@ void FilterManagerImpl::init(Cel* cel)
     m_target &= ~TARGET_ALPHA_CHANNEL;
 }
 
-void FilterManagerImpl::applyToCel(Transaction& transaction, Cel* cel)
+void FilterManagerImpl::applyToCel(Transaction& transaction, std::shared_ptr<Cel> cel)
 {
   init(cel);
   apply(transaction);

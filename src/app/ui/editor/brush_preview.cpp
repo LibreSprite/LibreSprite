@@ -168,7 +168,7 @@ void BrushPreview::show(const gfx::Point& screenPos)
 
     // Create the extra cel to show the brush preview
     Site site = m_editor->getSite();
-    Cel* cel = site.cel();
+    auto cel = site.cel();
 
     int t, opacity = 255;
     if (cel) opacity = MUL_UN8(opacity, cel->opacity(), t);

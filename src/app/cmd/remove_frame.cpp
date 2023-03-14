@@ -28,7 +28,7 @@ RemoveFrame::RemoveFrame(Sprite* sprite, frame_t frame)
   , m_firstTime(true)
 {
   m_frameDuration = sprite->frameDuration(frame);
-  for (Cel* cel : sprite->cels(m_frame))
+  for (auto cel : sprite->cels(m_frame))
     m_seq.add(new cmd::RemoveCel(cel));
 }
 

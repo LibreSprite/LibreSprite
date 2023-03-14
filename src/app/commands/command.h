@@ -44,7 +44,6 @@ namespace app {
   private:
     std::string m_id;
     std::string m_friendlyName;
-    CommandFlags m_flags;
   };
 
 } // namespace app

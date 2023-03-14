@@ -625,8 +625,9 @@ void PixelsMovement::setMaskColor(bool opaque, color_t mask_color)
 void PixelsMovement::redrawExtraImage()
 {
   int t, opacity = static_cast<LayerImage*>(m_layer)->opacity();
-  Cel* cel = m_site.cel();
-  if (cel) opacity = MUL_UN8(opacity, cel->opacity(), t);
+  auto cel = m_site.cel();
+  if (cel)
+      opacity = MUL_UN8(opacity, cel->opacity(), t);
 
   gfx::Rect bounds = m_currentData.transformedBounds();
 

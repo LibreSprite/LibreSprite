@@ -86,7 +86,7 @@ void FlipCommand::onExecute(Context* context)
         cels.push_back(writer.cel());
     }
     else {
-      for (Cel* cel : sprite->uniqueCels())
+      for (auto cel : sprite->uniqueCels())
         cels.push_back(cel);
     }
 
@@ -94,7 +94,7 @@ void FlipCommand::onExecute(Context* context)
     if (m_flipMask && document->isMaskVisible()) {
       Site site = *writer.site();
 
-      for (Cel* cel : cels) {
+      for (auto cel : cels) {
         site.frame(cel->frame());
         site.layer(cel->layer());
 
@@ -148,7 +148,7 @@ void FlipCommand::onExecute(Context* context)
       }
     }
     else {
-      for (Cel* cel : cels) {
+      for (auto cel : cels) {
         Image* image = cel->image();
 
         api.setCelPosition

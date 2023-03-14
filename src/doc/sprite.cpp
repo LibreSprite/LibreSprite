@@ -115,11 +115,11 @@ Sprite* Sprite::createBasicSprite(doc::PixelFormat format, int width, int height
 
     // Create the cel.
     {
-      std::unique_ptr<doc::Cel> cel(new doc::Cel(doc::frame_t(0), image));
+      auto cel = std::make_shared<doc::Cel>(doc::frame_t(0), image);
       cel->setPosition(0, 0);
 
       // Add the cel in the layer.
-      layer->addCel(cel.release()); // Release the cel because it's in the layer
+      layer->addCel(cel);
     }
 
     // Add the layer in the sprite.
@@ -434,7 +434,7 @@ void Sprite::setDurationForAllFrames(int msecs)
 
 ImageRef Sprite::getImageRef(ObjectId imageId)
 {
-  for (Cel* cel : cels()) {
+  for (auto cel : cels()) {
     if (cel->image()->id() == imageId)
       return cel->imageRef();
   }
@@ -443,7 +443,7 @@ ImageRef Sprite::getImageRef(ObjectId imageId)
 
 CelDataRef Sprite::getCelDataRef(ObjectId celDataId)
 {
-  for (Cel* cel : cels()) {
+  for (auto cel : cels()) {
     if (cel->dataRef()->id() == celDataId)
       return cel->dataRef();
   }
@@ -455,7 +455,7 @@ CelDataRef Sprite::getCelDataRef(ObjectId celDataId)
 
 void Sprite::replaceImage(ObjectId curImageId, const ImageRef& newImage)
 {
-  for (Cel* cel : cels()) {
+  for (auto cel : cels()) {
     if (cel->image()->id() == curImageId)
       cel->data()->setImage(newImage);
   }
@@ -473,7 +473,7 @@ void Sprite::remapImages(frame_t frameFrom, frame_t frameTo, const Remap& remap)
   ASSERT(m_format == IMAGE_INDEXED);
   //ASSERT(remap.size() == 256);
 
-  for (const Cel* cel : uniqueCels()) {
+  for (auto cel : uniqueCels()) {
     // Remap this Cel because is inside the specified range
     if (cel->frame() >= frameFrom &&
         cel->frame() <= frameTo) {
@@ -495,7 +495,7 @@ void Sprite::pickCels(int x, int y, frame_t frame, int opacityThreshold, CelList
     if (!layer->isImage() || !layer->isVisible())
       continue;
 
-    Cel* cel = layer->cel(frame);
+    auto cel = layer->cel(frame);
     if (!cel)
       continue;
 

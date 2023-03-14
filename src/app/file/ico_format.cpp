@@ -131,7 +131,7 @@ bool IcoFormat::onLoad(FileOp* fop)
 
   // Create the first image/cel
   ImageRef image(Image::create(pixelFormat, width, height));
-  Cel* cel = new Cel(frame_t(0), image);
+  auto cel = std::make_shared<Cel>(frame_t(0), image);
   layer->addCel(cel);
   clear_image(image.get(), 0);
 
