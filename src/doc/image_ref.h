@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "base/shared_ptr.h"
+#include <memory>
 #include "doc/image.h"
 
 namespace doc {

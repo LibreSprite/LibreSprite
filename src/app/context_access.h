@@ -23,7 +23,7 @@ namespace app {
     const Sprite* sprite() const { return m_site.sprite(); }
     const Layer* layer() const { return m_site.layer(); }
     frame_t frame() const { return m_site.frame(); }
-    const Cel* cel() const { return m_site.cel(); }
+    std::shared_ptr<const Cel> cel() const { return m_site.cel(); }
 
     // You cannot change the site directly from a writable ContextAccess anyway.
     const Site* site() { return &m_site; }

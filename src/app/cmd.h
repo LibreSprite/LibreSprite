@@ -11,6 +11,7 @@
 #include "doc/sprite_position.h"
 #include "undo/undo_command.h"
 
+#include <memory>
 #include <string>
 
 namespace app {

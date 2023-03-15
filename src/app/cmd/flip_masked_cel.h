@@ -10,6 +10,7 @@
 #include "app/cmd_sequence.h"
 #include "doc/algorithm/flip_type.h"
 #include "doc/color.h"
+#include <memory>
 
 namespace doc {
   class Cel;

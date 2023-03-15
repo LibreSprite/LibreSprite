@@ -9,6 +9,7 @@
 #include "doc/frame.h"
 
 #include <list>
+#include <memory>
 
 namespace doc {
 

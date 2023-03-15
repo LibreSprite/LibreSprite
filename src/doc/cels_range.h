@@ -10,6 +10,7 @@
 #include "doc/object_id.h"
 
 #include <set>
+#include <memory>
 
 namespace doc {
   class Cel;
