@@ -1,0 +1,110 @@
+name: CMake
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-x86_64:
+    runs-on: macos-11
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: 'stable-1.x'
+
+    - name: install deps
+      run: |
+        brew install gnutls freetype jpeg googletest lua pixman sdl2 sdl2_image tinyxml ninja zlib xmlto dylibbundler
+
+    - name: git
+      run: |
+        git submodule update --init --recursive
+
+    - name: Build & Install GifLib 4.2.3
+      run: |
+        brew install autoconf automake libtool
+        export CFLAGS="-Wno-implicit-function-declaration"
+        curl -L https://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.gz/download --output giflib.tar.gz
+        tar -xvf giflib.tar.gz
+        cd giflib-4.2.3/
+        ./configure
+        make install -j4
+
+    - name: Build & Install libpng v1.4.12
+      run: |
+        git clone https://github.com/glennrp/libpng -b v1.4.12 --recursive
+        cd libpng/
+        ./configure
+        make all -j4
+        sudo make install
+
+    - name: Download & Lint Info.plist
+      run: |
+        curl -L https://raw.githubusercontent.com/pegvin/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
+        plutil desktop/Info.plist
+
+    - name: Generate Makefiles
+      run: |
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+          -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+
+    - name: Build
+      run: |
+        cmake --build build/ --parallel 3
+        rm -f build/bin/clip_image_tests build/bin/clip_text_tests build/bin/clip_user_format_tests build/bin/gen
+
+    - name: Generate .icns
+      run: |
+        mkdir libresprite.iconset
+        sips -z 16 16     data/icons/ase64.png --out libresprite.iconset/icon_16x16.png
+        sips -z 32 32     data/icons/ase64.png --out libresprite.iconset/icon_16x16@2x.png
+        sips -z 32 32     data/icons/ase64.png --out libresprite.iconset/icon_32x32.png
+        sips -z 64 64     data/icons/ase64.png --out libresprite.iconset/icon_32x32@2x.png
+        sips -z 128 128   data/icons/ase64.png --out libresprite.iconset/icon_128x128.png
+        sips -z 256 256   data/icons/ase64.png --out libresprite.iconset/icon_128x128@2x.png
+        sips -z 256 256   data/icons/ase64.png --out libresprite.iconset/icon_256x256.png
+        sips -z 512 512   data/icons/ase64.png --out libresprite.iconset/icon_256x256@2x.png
+        sips -z 512 512   data/icons/ase64.png --out libresprite.iconset/icon_512x512.png
+        sips -z 1024 1024 data/icons/ase64.png --out libresprite.iconset/icon_512x512@2x.png
+        iconutil -c icns -o libresprite.icns libresprite.iconset
+        rm -R libresprite.iconset
+
+    - name: Build Apple Bundle
+      run: |
+        mkdir bundle/
+        mkdir bundle/libresprite.app
+        mkdir bundle/libresprite.app/Contents
+        mkdir bundle/libresprite.app/Contents/libs
+        mkdir bundle/libresprite.app/Contents/MacOS
+        mkdir bundle/libresprite.app/Contents/Resources
+        cp ./build/bin/libresprite ./bundle/libresprite.app/Contents/MacOS/
+        cp -r ./build/bin/data/ ./bundle/libresprite.app/Contents/MacOS/data/
+        cp ./libresprite.icns ./bundle/libresprite.app/Contents/Resources/
+        cp ./desktop/Info.plist ./bundle/libresprite.app/Contents/
+
+    - name: Put Dylibs
+      run: |
+        dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite -d ./bundle/libresprite.app/Contents/libs/
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos-x86_64
+        path: ./build/bin/
+        if-no-files-found: error
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos-x86_64-bundle
+        path: ./bundle/
+        if-no-files-found: error
+
