@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>LibreSprite</string>
+
+	<key>CFBundleVersion</key>
+	<string>1.0.0</string>
+
+	<key>CFBundleLongVersionString</key>
+	<string>1.0.0</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>libresprite.libresprite.github</string>
+
+ 	<key>CFBundleIconFile</key>
+	<string>libresprite.icns</string>
+
+  <key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<!-- Supported Document Types For Drag & Drop To Work Properly -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeIconFile</key>
+			<string>libresprite.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>JPEG image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<!-- https://developer.apple.com/documentation/uniformtypeidentifiers/uttype/3551523-jpeg -->
+				<string>public.jpeg</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeIconFile</key>
+			<string>libresprite.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>PNG image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<!-- https://developer.apple.com/documentation/uniformtypeidentifiers/uttype/3551551-png -->
+				<string>public.png</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
