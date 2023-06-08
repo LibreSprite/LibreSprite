@@ -14,6 +14,7 @@
 #include "doc/image.h"
 #include "doc/palette.h"
 
+#include <memory>
 #include <cctype>
 #include <fstream>
 #include <iomanip>
