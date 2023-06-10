@@ -11,7 +11,6 @@
 #include "base/convert_to.h"
 #include "base/sha1.h"
 #include <cstdio>
-#include <cstdint>
 #include <cstdlib>
 
 namespace base {

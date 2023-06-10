@@ -20,8 +20,6 @@
 extern "C" {
 #endif
 
-#include "base/ints.h"
-
 /*
  * If you do not have the ISO standard stdint.h header file, then you
  * must typdef the following:
@@ -62,7 +60,6 @@ typedef struct SHA1Context
     int Computed;               /* Is the digest computed?         */
     int Corrupted;             /* Is the message digest corrupted? */
 } SHA1Context;
-
 
 /*
  *  Function Prototypes
