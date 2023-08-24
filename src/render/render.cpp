@@ -173,8 +173,8 @@ void composite_image_without_scale(
     dst_end = dstBits.end_area(dstBounds);
 
     for (int x=0; x<srcBounds.w; ++x) {
-      ASSERT(src_it >= srcBits.begin() && src_it < src_end);
-      ASSERT(dst_it >= dstBits.begin() && dst_it < dst_end);
+      ASSERT(src_it >= srcBits.begin() && src_it < srcBits.end());
+      ASSERT(dst_it >= dstBits.begin() && dst_it < dstBits.end());
       *dst_it = blender(*dst_it, *src_it, opacity);
       ++src_it;
       ++dst_it;
