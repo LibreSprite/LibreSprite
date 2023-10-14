@@ -46,7 +46,7 @@ jobs:
 
     - name: Download & Lint Info.plist
       run: |
-        curl -L https://raw.githubusercontent.com/pegvin/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
+        curl -L https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
         plutil desktop/Info.plist
 
     - name: Generate Makefiles
