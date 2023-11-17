@@ -35,7 +35,7 @@ namespace doc {
     // Returns true if the mask is completely empty (i.e. nothing
     // selected)
     bool isEmpty() const {
-      return (!m_bitmap ? true: false);
+      return m_bitmap == nullptr;
     }
 
     // Returns true if the point is inside the mask
