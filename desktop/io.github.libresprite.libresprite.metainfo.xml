@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+	<id>io.github.libresprite.libresprite</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-2.0</project_license>
+	<name>LibreSprite</name>
+	<summary>Animated sprite editor and pixel art tool</summary>
+	<description>
+		<p>LibreSprite lets you create 2D animations for videogames. From sprites, to pixel-art, retro style graphics, and whatever you like about the 8-bit (and 16-bit) era.</p>
+		<p>It offers the following features:</p>
+		<ul>
+		<li>Real-time animation previews</li>
+		<li>Onion skinning</li>
+		<li>Multiple sprites can be edited at once</li>
+		<li>Ready to use palettes, or make your own</li>
+		<li>Sprites are composed of both layers &amp; frames</li>
+		<li>Tiled drawing mode, useful to draw patterns and textures</li>
+		<li>Pixel precise tools like filled contour, polygon, shading mode, etc.</li>
+		<li>Several file types supported for your sprites and animations</li>
+		</ul>
+	</description>
+	<url type="homepage">https://libresprite.github.io</url>
+	<url type="bugtracker">https://github.com/LibreSprite/LibreSprite/issues/</url>
+	<url type="vcs-browser">https://github.com/LibreSprite/LibreSprite/</url>
+	<url type="contribute">https://github.com/LibreSprite/LibreSprite/blob/master/CONTRIBUTING.md</url>
+	<launchable type="desktop-id">libresprite.desktop</launchable>
+	<releases>
+		<release date="2021-11-17" version="1.1-dev" />
+	</releases>
+	<provides>
+		<binary>libresprite</binary>
+	</provides>
+	<keywords>
+		<keyword>drawing</keyword>
+		<keyword translate="no">sprite</keyword>
+		<keyword translate="no">sprites</keyword>
+		<keyword translate="no">spriting</keyword>
+		<keyword>pixel-art</keyword>
+		<keyword>animation</keyword>
+		<keyword>graphics</keyword>
+		<keyword>pixel-editor</keyword>
+	</keywords>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/screenshot.png</image>
+			<caption>The canvas</caption>
+		</screenshot>
+	</screenshots>
+	<content_rating type="oars-1.1" />
+</component>
