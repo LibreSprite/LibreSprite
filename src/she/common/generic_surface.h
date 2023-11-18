@@ -17,7 +17,7 @@ namespace {
 #define MUL_UN8(a, b, t)                               \
   ((t) = (a) * (b) + 0x80, ((((t) >> 8) + (t)) >> 8))
 
-gfx::Color blend(const gfx::Color backdrop, gfx::Color src)
+inline gfx::Color blend(const gfx::Color backdrop, gfx::Color src)
 {
   if (gfx::geta(backdrop) == 0)
     return src;
