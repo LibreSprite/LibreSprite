@@ -11,6 +11,8 @@ namespace doc {
   class Palette;
 }
 
+#include <memory>
+
 namespace app {
 
   std::string get_readable_palette_extensions();
