@@ -61,8 +61,8 @@ public:
     // Save from objects without children (e.g. images), to aggregated
     // objects (e.g. cels, layers, etc.)
 
-    for (Palette* pal : spr->getPalettes())
-      saveObject("pal", pal, &Writer::writePalette);
+    for (auto pal : spr->getPalettes())
+      saveObject("pal", pal.get(), &Writer::writePalette);
 
     for (FrameTag* frtag : spr->frameTags())
       saveObject("frtag", frtag, &Writer::writeFrameTag);
@@ -111,7 +111,7 @@ private:
 
     // IDs of all palettes
     write32(s, spr->getPalettes().size());
-    for (Palette* pal : spr->getPalettes())
+    for (auto pal : spr->getPalettes())
       write32(s, pal->id());
 
     // IDs of all frame tags
@@ -150,7 +150,7 @@ private:
   }
 
   void writePalette(std::ofstream& s, Palette* pal) {
-    write_palette(s, pal);
+    write_palette(s, *pal);
   }
 
   void writeFrameTag(std::ofstream& s, FrameTag* frameTag) {

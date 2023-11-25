@@ -45,7 +45,7 @@ protected:
 class ColorQuantizationJob : public Job,
                              public render::PaletteOptimizerDelegate {
 public:
-  ColorQuantizationJob(Sprite* sprite, bool withAlpha, Palette* palette)
+  ColorQuantizationJob(Sprite* sprite, bool withAlpha, Palette& palette)
     : Job("Creating Palette")
     , m_sprite(sprite)
     , m_withAlpha(withAlpha)
@@ -57,7 +57,7 @@ private:
   void onJob() override {
     render::create_palette_from_sprite(
       m_sprite, 0, m_sprite->lastFrame(),
-      m_withAlpha, m_palette, this);
+      m_withAlpha, &m_palette, this);
   }
 
   bool onPaletteOptimizerContinue() override {
@@ -70,7 +70,7 @@ private:
 
   Sprite* m_sprite;
   bool m_withAlpha;
-  Palette* m_palette;
+  Palette& m_palette;
 };
 
 ColorQuantizationCommand::ColorQuantizationCommand()
@@ -143,16 +143,15 @@ void ColorQuantizationCommand::onExecute(Context* context)
     if (entries.picks() == 0)
       return;
 
-    Palette tmpPalette(frame, entries.picks());
-    ColorQuantizationJob job(sprite, withAlpha, &tmpPalette);
+    auto tmpPalette = Palette::create(entries.picks());
+    tmpPalette->setFrame(frame);
+    ColorQuantizationJob job(sprite, withAlpha, *tmpPalette);
     job.startJob();
     job.waitJob();
     if (job.isCanceled())
       return;
 
-    std::unique_ptr<Palette> newPalette(
-      new Palette(createPal ? tmpPalette:
-                              *get_current_palette()));
+    auto newPalette = createPal ? tmpPalette.get() : get_current_palette();
 
     if (createPal) {
       entries = PalettePicks(newPalette->size());
@@ -162,17 +161,17 @@ void ColorQuantizationCommand::onExecute(Context* context)
     int i = 0, j = 0;
     for (bool state : entries) {
       if (state)
-        newPalette->setEntry(i, tmpPalette.getEntry(j++));
+        newPalette->setEntry(i, tmpPalette->getEntry(j++));
       ++i;
     }
 
     if (*curPalette != *newPalette) {
       ContextWriter writer(UIContext::instance(), 500);
       Transaction transaction(writer.context(), "Color Quantization", ModifyDocument);
-      transaction.execute(new cmd::SetPalette(sprite, frame, newPalette.get()));
+      transaction.execute(new cmd::SetPalette(sprite, frame, *newPalette));
       transaction.commit();
 
-      set_current_palette(newPalette.get(), false);
+      set_current_palette(newPalette, false);
       ui::Manager::getDefault()->invalidate();
     }
   }

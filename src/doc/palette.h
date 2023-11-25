@@ -13,19 +13,28 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace doc {
 
   class Remap;
 
   class Palette : public Object {
-  public:
-    Palette(frame_t frame, int ncolors);
+    Palette(int ncolors);
     Palette(const Palette& palette);
-    Palette(const Palette& palette, const Remap& remap);
-    ~Palette();
 
-    static Palette* createGrayscale();
+  public:
+    static std::shared_ptr<Palette> create(int ncolors) {
+      return std::shared_ptr<Palette>(new Palette(ncolors));
+    }
+
+    std::shared_ptr<Palette> clone() const {
+      return std::shared_ptr<Palette>(new Palette(*this));
+    }
+
+    std::shared_ptr<Palette> remap(const Remap& remap);
+
+    static std::shared_ptr<Palette> createGrayscale();
 
     int size() const { return (int)m_colors.size(); }
     void resize(int ncolors);
@@ -61,12 +70,12 @@ namespace doc {
     void setEntry(int i, color_t color);
     void addEntry(color_t color);
 
-    void copyColorsTo(Palette* dst) const;
+    void copyColorsTo(Palette& dst) const;
 
-    int countDiff(const Palette* other, int* from, int* to) const;
+    int countDiff(const Palette& other, int* from, int* to) const;
 
     bool operator==(const Palette& other) const {
-      return (countDiff(&other, nullptr, nullptr) == 0);
+      return (countDiff(other, nullptr, nullptr) == 0);
     }
 
     bool operator!=(const Palette& other) const {
@@ -85,9 +94,9 @@ namespace doc {
     void applyRemap(const Remap& remap);
 
   private:
-    frame_t m_frame;
+    frame_t m_frame{};
     std::vector<color_t> m_colors;
-    int m_modifications;
+    int m_modifications{};
     std::string m_filename; // If the palette is associated with a file.
   };
 

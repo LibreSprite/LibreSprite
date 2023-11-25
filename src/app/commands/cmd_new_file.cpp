@@ -145,7 +145,7 @@ void NewFileCommand::onExecute(Context* context)
       std::unique_ptr<Sprite> sprite(Sprite::createBasicSprite(format, w, h, ncolors));
 
       if (sprite->pixelFormat() != IMAGE_GRAYSCALE)
-        get_default_palette()->copyColorsTo(sprite->palette(frame_t(0)));
+        get_default_palette()->copyColorsTo(*sprite->palette(frame_t(0)));
 
       // If the background color isn't transparent, we have to
       // convert the `Layer 1' in a `Background'
@@ -159,7 +159,7 @@ void NewFileCommand::onExecute(Context* context)
           Image* image = layerImage->cel(frame_t(0))->image();
 
           // TODO Replace this adding a new parameter to color utils
-          Palette oldPal = *get_current_palette();
+          auto oldPal = get_current_palette()->clone();
           set_current_palette(get_default_palette(), false);
 
           doc::clear_image(image,
@@ -169,7 +169,7 @@ void NewFileCommand::onExecute(Context* context)
                 sprite->pixelFormat(),
                 sprite->transparentColor())));
 
-          set_current_palette(&oldPal, false);
+          set_current_palette(oldPal.get(), false);
         }
       }
 

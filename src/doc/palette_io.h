@@ -7,12 +7,13 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 
 namespace doc {
 
   class Palette;
 
-  void write_palette(std::ostream& os, const Palette* palette);
-  Palette* read_palette(std::istream& is);
+  void write_palette(std::ostream& os, const Palette& palette);
+  std::shared_ptr<Palette> read_palette(std::istream& is);
 
 } // namespace doc

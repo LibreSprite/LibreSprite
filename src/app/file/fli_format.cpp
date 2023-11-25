@@ -66,7 +66,7 @@ bool FliFormat::onLoad(FileOp* fop)
 
   // Create a temporal bitmap
   ImageRef bmp(Image::create(IMAGE_INDEXED, w, h));
-  Palette pal(0, 1);
+  auto pal = Palette::create(1);
   std::shared_ptr<Cel> prevCel;
 
   // Create the sprite
@@ -99,14 +99,14 @@ bool FliFormat::onLoad(FileOp* fop)
     if (frame_out == 0 || oldFliColormap != fliFrame.colormap) {
       oldFliColormap = fliFrame.colormap;
 
-      pal.resize(fliFrame.colormap.size());
+      pal->resize(fliFrame.colormap.size());
       for (int c=0; c<int(fliFrame.colormap.size()); c++) {
-        pal.setEntry(c, rgba(fliFrame.colormap[c].r,
+        pal->setEntry(c, rgba(fliFrame.colormap[c].r,
                              fliFrame.colormap[c].g,
                              fliFrame.colormap[c].b, 255));
       }
-      pal.setFrame(frame_out);
-      sprite->setPalette(&pal, true);
+      pal->setFrame(frame_out);
+      sprite->setPalette(*pal, true);
 
       palChange = true;
     }

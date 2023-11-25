@@ -28,30 +28,31 @@ using namespace base::serialization::little_endian;
 //   for each color     ("ncolors" times)
 //     DWORD            _rgba color
 
-void write_palette(std::ostream& os, const Palette* palette)
+void write_palette(std::ostream& os, const Palette& palette)
 {
-  write16(os, palette->frame()); // Frame
-  write16(os, palette->size());  // Number of colors
+  write16(os, palette.frame()); // Frame
+  write16(os, palette.size());  // Number of colors
 
-  for (int c=0; c<palette->size(); c++) {
-    uint32_t color = palette->getEntry(c);
+  for (int c=0; c<palette.size(); c++) {
+    uint32_t color = palette.getEntry(c);
     write32(os, color);
   }
 }
 
-Palette* read_palette(std::istream& is)
+std::shared_ptr<Palette> read_palette(std::istream& is)
 {
   frame_t frame(read16(is)); // Frame
   int ncolors = read16(is);      // Number of colors
 
-  std::unique_ptr<Palette> palette(new Palette(frame, ncolors));
+  auto palette = Palette::create(ncolors);
+  palette->setFrame(frame);
 
   for (int c=0; c<ncolors; ++c) {
     uint32_t color = read32(is);
     palette->setEntry(c, color);
   }
 
-  return palette.release();
+  return palette;
 }
 
 }

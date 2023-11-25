@@ -449,19 +449,14 @@ she::Surface* BrushPopup::createSurfaceForBrush(const BrushRef& origBrush)
     std::min(10, image ? image->height(): 4));
 
   if (image) {
-    Palette* palette = get_current_palette();
+    auto palette = std::static_pointer_cast<Palette>(get_current_palette()->shared_from_this());
     if (image->pixelFormat() == IMAGE_BITMAP) {
-      palette = new Palette(frame_t(0), 2);
+      palette = Palette::create(2);
       palette->setEntry(0, rgba(0, 0, 0, 0));
       palette->setEntry(1, rgba(0, 0, 0, 255));
     }
 
-    convert_image_to_surface(
-      image, palette, surface,
-      0, 0, 0, 0, image->width(), image->height());
-
-    if (image->pixelFormat() == IMAGE_BITMAP)
-      delete palette;
+    convert_image_to_surface(image, palette.get(), surface, 0, 0, 0, 0, image->width(), image->height());
   }
   else {
     surface->clear();

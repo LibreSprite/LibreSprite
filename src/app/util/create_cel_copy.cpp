@@ -39,8 +39,7 @@ std::shared_ptr<Cel> create_cel_copy(std::shared_ptr<const Cel> srcCel,
   // convert the source cel to RGB first.
   if (dstSprite->pixelFormat() == IMAGE_INDEXED &&
       celImage->pixelFormat() == IMAGE_INDEXED &&
-      srcCel->sprite()->palette(srcCel->frame())->countDiff(
-        dstSprite->palette(dstFrame), nullptr, nullptr)) {
+      srcCel->sprite()->palette(srcCel->frame())->countDiff(*dstSprite->palette(dstFrame), nullptr, nullptr)) {
     ImageRef tmpImage(Image::create(IMAGE_RGB, celImage->width(), celImage->height()));
     tmpImage->clear(0);
 

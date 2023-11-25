@@ -122,7 +122,7 @@ void AddColorCommand::onExecute(Context* ctx)
       frame_t frame = writer.frame();
 
       Transaction transaction(writer.context(), "Add Color", ModifyDocument);
-      transaction.execute(new cmd::SetPalette(sprite, frame, newPalette));
+      transaction.execute(new cmd::SetPalette(sprite, frame, *newPalette));
       transaction.commit();
     }
 

@@ -34,7 +34,7 @@ namespace app {
   public:
     virtual ~PaletteViewDelegate() { }
     virtual void onPaletteViewIndexChange(int index, ui::MouseButtons buttons) { }
-    virtual void onPaletteViewModification(const doc::Palette* newPalette, PaletteViewModification mod) { }
+    virtual void onPaletteViewModification(const doc::Palette& newPalette, PaletteViewModification mod) { }
     virtual void onPaletteViewChangeSize(int boxsize) { }
     virtual void onPaletteViewPasteColors(
       const doc::Palette* fromPal, const doc::PalettePicks& from, const doc::PalettePicks& to) { }
@@ -136,8 +136,7 @@ namespace app {
     void setStatusBar();
     doc::Palette* currentPalette() const;
     int findExactIndex(const app::Color& color) const;
-    void setNewPalette(doc::Palette* oldPalette, doc::Palette* newPalette,
-                       PaletteViewModification mod);
+    void setNewPalette(const doc::Palette& oldPalette, const doc::Palette& newPalette, PaletteViewModification mod);
     gfx::Color drawEntry(ui::Graphics* g, const gfx::Rect& box, int palIdx);
 
     State m_state;

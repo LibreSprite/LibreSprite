@@ -20,10 +20,10 @@ namespace cmd {
 
 using namespace doc;
 
-AddPalette::AddPalette(Sprite* sprite, Palette* pal)
+AddPalette::AddPalette(Sprite* sprite, Palette& pal)
   : WithSprite(sprite)
   , m_size(0)
-  , m_frame(pal->frame())
+  , m_frame(pal.frame())
 {
   write_palette(m_stream, pal);
   m_size = size_t(m_stream.tellp());
@@ -34,9 +34,9 @@ void AddPalette::onExecute()
   m_stream.seekp(0);
 
   Sprite* sprite = this->sprite();
-  Palette* pal = read_palette(m_stream);
+  auto pal = read_palette(m_stream);
 
-  sprite->setPalette(pal, true);
+  sprite->setPalette(*pal, true);
   sprite->incrementVersion();
 }
 

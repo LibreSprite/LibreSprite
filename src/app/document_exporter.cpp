@@ -665,7 +665,7 @@ Document* DocumentExporter::createEmptyTexture(const Samples& samples)
         pixelFormat = IMAGE_RGB;
       }
       else if (palette != NULL
-        && palette->countDiff(it->sprite()->palette(frame_t(0)), NULL, NULL) > 0) {
+        && palette->countDiff(*it->sprite()->palette(frame_t(0)), NULL, NULL) > 0) {
         pixelFormat = IMAGE_RGB;
       }
       else
@@ -697,7 +697,7 @@ Document* DocumentExporter::createEmptyTexture(const Samples& samples)
       fullTextureBounds.y+fullTextureBounds.h, maxColors));
 
   if (palette != NULL)
-    sprite->setPalette(palette, false);
+    sprite->setPalette(*palette, false);
 
   return new Document(sprite.release());
 }

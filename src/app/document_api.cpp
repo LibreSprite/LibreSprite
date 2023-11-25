@@ -526,11 +526,10 @@ void DocumentApi::setPalette(Sprite* sprite, frame_t frame, const Palette* newPa
 
   // Check differences between current sprite palette and current system palette
   from = to = -1;
-  currentSpritePalette->countDiff(newPalette, &from, &to);
+  currentSpritePalette->countDiff(*newPalette, &from, &to);
 
   if (from >= 0 && to >= from) {
-    m_transaction.execute(new cmd::SetPalette(
-        sprite, frame, newPalette));
+    m_transaction.execute(new cmd::SetPalette(sprite, frame, *newPalette));
   }
 }
 

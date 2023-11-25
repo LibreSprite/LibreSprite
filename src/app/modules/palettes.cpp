@@ -25,32 +25,30 @@
 namespace app {
 
 // The default color palette.
-static Palette* ase_default_palette = NULL;
+  static std::shared_ptr<Palette> ase_default_palette;
 
 // Palette in current sprite frame.
-static Palette* ase_current_palette = NULL;
+  static std::shared_ptr<Palette> ase_current_palette;
 
 int init_module_palette()
 {
-  ase_default_palette = new Palette(frame_t(0), 256);
-  ase_current_palette = new Palette(frame_t(0), 256);
+  ase_default_palette = Palette::create(256);
+  ase_current_palette = Palette::create(256);
   return 0;
 }
 
 void exit_module_palette()
 {
-  delete ase_default_palette;
-  delete ase_current_palette;
 }
 
 void load_default_palette(const std::string& userDefined)
 {
-  std::unique_ptr<Palette> pal;
+  std::shared_ptr<Palette> pal;
 
   // Load specific palette file defined by the user in the command line.
   std::string palFile = userDefined;
   if (!palFile.empty())
-    pal.reset(load_palette(palFile.c_str()));
+    pal = load_palette(palFile.c_str());
   // Load default palette file
   else {
     std::string defaultPalName = get_preset_palette_filename(
@@ -59,7 +57,7 @@ void load_default_palette(const std::string& userDefined)
     // If there is no palette in command line, we use the default one.
     palFile = defaultPalName;
     if (base::is_file(palFile)) {
-      pal.reset(load_palette(palFile.c_str()));
+      pal = load_palette(palFile.c_str());
     }
     else {
       // Migrate old default.gpl to default.ase format
@@ -67,7 +65,7 @@ void load_default_palette(const std::string& userDefined)
         get_default_palette_preset_name(), ".gpl");
 
       if (base::is_file(palFile)) {
-        pal.reset(load_palette(palFile.c_str()));
+        pal = load_palette(palFile.c_str());
 
         // Remove duplicate black entries at the end (as old palettes
         // contains 256 colors)
@@ -110,14 +108,14 @@ void load_default_palette(const std::string& userDefined)
         ResourceFinder rf;
         rf.includeDataDir("palettes/db32.gpl");
         if (rf.findFirst()) {
-          pal.reset(load_palette(rf.filename().c_str()));
+          pal = load_palette(rf.filename().c_str());
         }
       }
 
       // Save default.ase file
       if (pal) {
         palFile = defaultPalName;
-        save_palette(palFile.c_str(), pal.get(), 0);
+        save_palette(palFile.c_str(), *pal, 0);
       }
     }
   }
@@ -130,17 +128,17 @@ void load_default_palette(const std::string& userDefined)
 
 Palette* get_current_palette()
 {
-  return ase_current_palette;
+  return ase_current_palette.get();
 }
 
 Palette* get_default_palette()
 {
-  return ase_default_palette;
+  return ase_default_palette.get();
 }
 
 void set_default_palette(const Palette* palette)
 {
-  palette->copyColorsTo(ase_default_palette);
+  palette->copyColorsTo(*ase_default_palette);
 }
 
 // Changes the current system palette and triggers the
@@ -149,14 +147,13 @@ void set_default_palette(const Palette* palette)
 // If "_palette" is nullptr the default palette is set.
 bool set_current_palette(const Palette *_palette, bool forced)
 {
-  const Palette* palette = (_palette ? _palette: ase_default_palette);
+  const Palette* palette = (_palette ? _palette: ase_default_palette.get());
   bool ret = false;
 
   // Have changes
-  if (forced ||
-      palette->countDiff(ase_current_palette, NULL, NULL) > 0) {
+  if (forced || palette->countDiff(*ase_current_palette, NULL, NULL) > 0) {
     // Copy current palette
-    palette->copyColorsTo(ase_current_palette);
+    palette->copyColorsTo(*ase_current_palette);
 
     // Call slots in signals
     App::instance()->PaletteChange();

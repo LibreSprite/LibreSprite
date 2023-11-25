@@ -56,19 +56,15 @@ Sprite::Sprite(PixelFormat format, int width, int height, int ncolors)
     case IMAGE_BITMAP: ncolors = 2; break;
   }
 
-  Palette pal(frame_t(0), ncolors);
+  auto pal = Palette::create(ncolors);
 
-  switch (format) {
-
-    // For black and white images
-    case IMAGE_GRAYSCALE:
-    case IMAGE_BITMAP:
+  // For black and white images
+  if (format == IMAGE_GRAYSCALE || format == IMAGE_BITMAP) {
       for (int c=0; c<ncolors; c++) {
         int g = 255 * c / (ncolors-1);
         g = MID(0, g, 255);
-        pal.setEntry(c, rgba(g, g, g, 255));
+        pal->setEntry(c, rgba(g, g, g, 255));
       }
-      break;
   }
 
   // Initial RGB map
@@ -77,21 +73,13 @@ Sprite::Sprite(PixelFormat format, int width, int height, int ncolors)
   // The transparent color for indexed images is 0 by default
   m_transparentColor = 0;
 
-  setPalette(&pal, true);
+  setPalette(*pal, true);
 }
 
 Sprite::~Sprite()
 {
   // Destroy layers
   delete m_folder;
-
-  // Destroy palettes
-  {
-    PalettesList::iterator end = m_palettes.end();
-    PalettesList::iterator it = m_palettes.begin();
-    for (; it != end; ++it)
-      delete *it;               // palette
-  }
 
   // Destroy RGB map
   delete m_rgbMap;
@@ -265,21 +253,18 @@ Palette* Sprite::palette(frame_t frame) const
 {
   ASSERT(frame >= 0);
 
-  Palette* found = NULL;
+  Palette* found{};
 
-  PalettesList::const_iterator end = m_palettes.end();
-  PalettesList::const_iterator it = m_palettes.begin();
-  for (; it != end; ++it) {
-    Palette* pal = *it;
+  for (auto& pal : m_palettes) {
     if (frame < pal->frame())
       break;
 
-    found = pal;
+    found = pal.get();
     if (frame == pal->frame())
       break;
   }
 
-  ASSERT(found != NULL);
+  ASSERT(found);
   return found;
 }
 
@@ -288,46 +273,33 @@ const PalettesList& Sprite::getPalettes() const
   return m_palettes;
 }
 
-void Sprite::setPalette(const Palette* pal, bool truncate)
+void Sprite::setPalette(const Palette& pal, bool truncate)
 {
-  ASSERT(pal != NULL);
-
   if (!truncate) {
-    Palette* sprite_pal = palette(pal->frame());
-    pal->copyColorsTo(sprite_pal);
+    if (auto sprite_pal = palette(pal.frame()))
+      pal.copyColorsTo(*sprite_pal);
+    return;
   }
-  else {
-    Palette* other;
 
-    PalettesList::iterator end = m_palettes.end();
-    PalettesList::iterator it = m_palettes.begin();
-    for (; it != end; ++it) {
-      other = *it;
-
-      if (pal->frame() == other->frame()) {
-        pal->copyColorsTo(other);
+  auto end = m_palettes.end();
+  auto it = m_palettes.begin();
+  for (; it != end; ++it) {
+    auto other = *it;
+    if (pal.frame() == other->frame()) {
+        pal.copyColorsTo(*other);
         return;
-      }
-      else if (pal->frame() < other->frame())
-        break;
     }
-
-    m_palettes.insert(it, new Palette(*pal));
+    if (pal.frame() < other->frame())
+        break;
   }
+
+  m_palettes.insert(it, pal.clone());
 }
 
 void Sprite::resetPalettes()
 {
-  PalettesList::iterator end = m_palettes.end();
-  PalettesList::iterator it = m_palettes.begin();
-
-  if (it != end) {
-    ++it;                       // Leave the first palette only.
-    while (it != end) {
-      delete *it;               // palette
-      it = m_palettes.erase(it);
-      end = m_palettes.end();
-    }
+  while (m_palettes.size() > 1) {
+    m_palettes.pop_back();
   }
 }
 
@@ -335,10 +307,8 @@ void Sprite::deletePalette(frame_t frame)
 {
   auto it = m_palettes.begin(), end = m_palettes.end();
   for (; it != end; ++it) {
-    Palette* pal = *it;
-
+    auto pal = *it;
     if (pal->frame() == frame) {
-      delete pal;                   // delete palette
       m_palettes.erase(it);
       break;
     }

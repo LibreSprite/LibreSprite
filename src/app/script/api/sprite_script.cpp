@@ -186,7 +186,7 @@ public:
   }
 
   void loadPalette(const std::string& fileName){
-    std::unique_ptr<doc::Palette> palette(app::load_palette(fileName.c_str()));
+    auto palette = app::load_palette(fileName.c_str());
     if (palette) {
       // TODO Merge this with the code in LoadPaletteCommand
       doc()->getApi(transaction()).setPalette(m_sprite, 0, palette.get());

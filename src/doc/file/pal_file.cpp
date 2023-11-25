@@ -24,7 +24,7 @@
 namespace doc {
 namespace file {
 
-Palette* load_pal_file(const char *filename)
+std::shared_ptr<Palette> load_pal_file(const char *filename)
 {
   std::ifstream f(FSTREAM_PATH(filename));
   if (f.bad())
@@ -49,7 +49,7 @@ Palette* load_pal_file(const char *filename)
   if (!std::getline(f, line))
     return nullptr;
 
-  std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
+  auto pal = Palette::create(0);
 
   while (std::getline(f, line)) {
     // Trim line
@@ -65,20 +65,20 @@ Palette* load_pal_file(const char *filename)
     pal->addEntry(rgba(r, g, b, 255));
   }
 
-  return pal.release();
+  return pal;
 }
 
-bool save_pal_file(const Palette *pal, const char *filename)
+bool save_pal_file(const Palette& pal, const char *filename)
 {
   std::ofstream f(FSTREAM_PATH(filename));
   if (f.bad()) return false;
 
   f << "JASC-PAL\n"
     << "0100\n"
-    << pal->size() << "\n";
+    << pal.size() << "\n";
 
-  for (int i=0; i<pal->size(); ++i) {
-    uint32_t col = pal->getEntry(i);
+  for (int i=0; i<pal.size(); ++i) {
+    uint32_t col = pal.getEntry(i);
     f << ((int)rgba_getr(col)) << " "
       << ((int)rgba_getg(col)) << " "
       << ((int)rgba_getb(col)) << "\n";

@@ -35,14 +35,14 @@ namespace render {
   public:
     void feedWithImage(Image* image, bool withAlpha);
     void feedWithRgbaColor(color_t color);
-    void calculate(Palette* palette, int maskIndex, PaletteOptimizerDelegate* delegate);
+    void calculate(Palette& palette, int maskIndex, PaletteOptimizerDelegate* delegate);
 
   private:
     ColorHistogram<5, 6, 5, 5> m_histogram;
   };
 
   // Creates a new palette suitable to quantize the given RGB sprite to Indexed color.
-  Palette* create_palette_from_sprite(
+  std::shared_ptr<Palette> create_palette_from_sprite(
     const Sprite* sprite,
     frame_t fromFrame,
     frame_t toFrame,

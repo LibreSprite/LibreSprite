@@ -91,7 +91,7 @@ namespace clipboard {
 
 using namespace doc;
 
-static base::SharedPtr<Palette> clipboard_palette;
+static std::shared_ptr<Palette> clipboard_palette;
 static PalettePicks clipboard_picks;
 static ImageRef clipboard_image;
 static base::SharedPtr<Mask> clipboard_mask;
@@ -130,11 +130,11 @@ ClipboardManager* ClipboardManager::instance()
 
 static void set_clipboard_image(Image* image,
                                 Mask* mask,
-                                Palette* palette,
+                                std::shared_ptr<Palette> palette,
                                 bool set_system_clipboard,
                                 bool image_source_is_transparent)
 {
-  clipboard_palette.reset(palette);
+  clipboard_palette = palette;
   clipboard_picks.clear();
   clipboard_image.reset(image);
   clipboard_mask.reset(mask);
@@ -148,7 +148,7 @@ static void set_clipboard_image(Image* image,
         image->setMaskColor(-1);
     }
 
-    set_native_clipboard_bitmap(image, mask, palette);
+    set_native_clipboard_bitmap(image, mask, palette.get());
 
     if (image && !image_source_is_transparent)
       image->setMaskColor(oldMask);
@@ -171,7 +171,7 @@ static bool copy_from_document(const Site& site, bool merged = false)
   set_clipboard_image(
     image,
     (mask ? new Mask(*mask): nullptr),
-    (pal ? new Palette(*pal): nullptr),
+    (pal ? pal->clone(): nullptr),
     true,
     site.layer() && !site.layer()->isBackground());
 
@@ -274,7 +274,7 @@ void copy_image(const Image* image, const Mask* mask, const Palette* pal)
   set_clipboard_image(
     Image::createCopy(image),
     (mask ? new Mask(*mask): nullptr),
-    (pal ? new Palette(*pal): nullptr),
+    (pal ? pal->clone(): nullptr),
     true, false);
 }
 
@@ -285,7 +285,7 @@ void copy_palette(const Palette* palette, const doc::PalettePicks& picks)
 
   set_clipboard_image(nullptr,
                       nullptr,
-                      new Palette(*palette),
+                      palette->clone(),
                       true, false);
   clipboard_picks = picks;
 }
@@ -306,11 +306,10 @@ void paste()
       {
         Image* native_image = nullptr;
         Mask* native_mask = nullptr;
-        Palette* native_palette = nullptr;
-        get_native_clipboard_bitmap(&native_image, &native_mask, &native_palette);
+        std::shared_ptr<Palette> native_palette;
+        get_native_clipboard_bitmap(&native_image, &native_mask, native_palette);
         if (native_image)
-          set_clipboard_image(native_image, native_mask, native_palette,
-                              false, false);
+          set_clipboard_image(native_image, native_mask, native_palette, false, false);
       }
 
       if (!clipboard_image)
@@ -324,7 +323,7 @@ void paste()
         // Indexed images can be copied directly only if both images
         // have the same palette.
         (clipboard_image->pixelFormat() != IMAGE_INDEXED ||
-          clipboard_palette->countDiff(dst_palette, NULL, NULL) == 0)) {
+          clipboard_palette->countDiff(*dst_palette, NULL, NULL) == 0)) {
         src_image = clipboard_image;
       }
       else {

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "gfx/fwd.h"
+#include <memory>
 
 namespace doc {
   class Image;
@@ -25,7 +26,7 @@ bool set_native_clipboard_bitmap(const doc::Image* image,
                                  const doc::Palette* palette);
 bool get_native_clipboard_bitmap(doc::Image** image,
                                  doc::Mask** mask,
-                                 doc::Palette** palette);
+                                 std::shared_ptr<doc::Palette>& palette);
 bool get_native_clipboard_bitmap_size(gfx::Size* size);
 
 } // namespace clipboard

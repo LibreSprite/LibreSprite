@@ -70,12 +70,12 @@ SetPixelFormat::SetPixelFormat(Sprite* sprite,
   if (newFormat == IMAGE_GRAYSCALE) {
     // Add cmds to revert all palette changes.
     PalettesList palettes = sprite->getPalettes();
-    for (Palette* pal : palettes)
+    for (auto& pal : palettes)
       if (pal->frame() != 0)
-        m_seq.add(new cmd::RemovePalette(sprite, pal));
+        m_seq.add(new cmd::RemovePalette(sprite, *pal));
 
-    std::unique_ptr<Palette> graypal(Palette::createGrayscale());
-    m_seq.add(new cmd::SetPalette(sprite, 0, graypal.get()));
+    auto graypal = Palette::createGrayscale();
+    m_seq.add(new cmd::SetPalette(sprite, 0, *graypal));
   }
 }
 

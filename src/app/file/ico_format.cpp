@@ -154,7 +154,7 @@ bool IcoFormat::onLoad(FileOp* fop)
 
   // Read the palette
   if (entry.bpp <= 8) {
-    Palette* pal = new Palette(frame_t(0), numcolors);
+    auto pal = Palette::create(numcolors);
 
     for (int i=0; i<numcolors; ++i) {
       int b = fgetc(f);
@@ -165,8 +165,7 @@ bool IcoFormat::onLoad(FileOp* fop)
       pal->setEntry(i, rgba(r, g, b, 255));
     }
 
-    sprite->setPalette(pal, true);
-    delete pal;
+    sprite->setPalette(*pal, true);
   }
 
   // Read XOR MASK

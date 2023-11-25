@@ -39,7 +39,7 @@ public:
   script::ScriptObject* addPalette(const std::string& name) {
     m_listItems.emplace_back("PaletteScriptObject");
     auto& palSO = m_listItems.back();
-    auto pal = std::make_shared<doc::Palette>(doc::frame_t(0), 1);
+    auto pal = doc::Palette::create(1);
     palSO->setWrapped(pal.get());
     getWrapped<CustomPaletteListBox>()->addPalette(pal, name);
     return palSO;

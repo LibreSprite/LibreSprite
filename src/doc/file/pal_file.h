@@ -12,8 +12,8 @@ namespace doc {
 
   namespace file {
 
-    Palette* load_pal_file(const char* filename);
-    bool save_pal_file(const Palette* pal, const char* filename);
+    std::shared_ptr<Palette> load_pal_file(const char* filename);
+    bool save_pal_file(const Palette& pal, const char* filename);
 
   } // namespace file
 } // namespace doc

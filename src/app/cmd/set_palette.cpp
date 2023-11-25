@@ -20,14 +20,14 @@ namespace cmd {
 
 using namespace doc;
 
-SetPalette::SetPalette(Sprite* sprite, frame_t frame, const Palette* newPalette)
+SetPalette::SetPalette(Sprite* sprite, frame_t frame, const Palette& newPalette)
   : WithSprite(sprite)
   , m_frame(frame)
 {
   const Palette* curPalette = sprite->palette(frame);
 
   m_oldNColors = curPalette->size();
-  m_newNColors = newPalette->size();
+  m_newNColors = newPalette.size();
 
   // Check differences between current sprite palette and the new one
   m_from = m_to = -1;
@@ -49,7 +49,7 @@ SetPalette::SetPalette(Sprite* sprite, frame_t frame, const Palette* newPalette)
         m_oldColors[i] = curPalette->getEntry(m_from+i);
 
       if (i < m_newColors.size())
-        m_newColors[i] = newPalette->getEntry(m_from+i);
+        m_newColors[i] = newPalette.getEntry(m_from+i);
     }
   }
 }

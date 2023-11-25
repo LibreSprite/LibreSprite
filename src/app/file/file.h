@@ -139,7 +139,7 @@ namespace app {
     // Data for sequences.
     struct {
       std::vector<std::string> filename_list; // All file names to load/save.
-      Palette* palette;           // Palette of the sequence.
+      std::shared_ptr<Palette> palette;           // Palette of the sequence.
       ImageRef image;             // Image to be saved/loaded.
       // For the progress bar.
       double progress_offset;      // Progress offset from the current frame.

@@ -21,14 +21,11 @@ namespace doc {
 
 using namespace gfx;
 
-Palette::Palette(frame_t frame, int ncolors)
+Palette::Palette(int ncolors)
   : Object(ObjectType::Palette)
 {
   ASSERT(ncolors >= 0);
-
-  m_frame = frame;
   m_colors.resize(ncolors, doc::rgba(0, 0, 0, 255));
-  m_modifications = 0;
 }
 
 Palette::Palette(const Palette& palette)
@@ -36,28 +33,20 @@ Palette::Palette(const Palette& palette)
 {
   m_frame = palette.m_frame;
   m_colors = palette.m_colors;
-  m_modifications = 0;
 }
 
-Palette::Palette(const Palette& palette, const Remap& remap)
-  : Object(palette)
+std::shared_ptr<Palette> Palette::remap(const Remap& remap)
 {
-  m_frame = palette.m_frame;
-
-  resize(palette.size());
+  auto palette = create(size());
+  palette->setFrame(m_frame);
   for (int i=0; i<size(); ++i)
-    setEntry(remap[i], palette.getEntry(i));
-
-  m_modifications = 0;
+    palette->setEntry(remap[i], getEntry(i));
+  return palette;
 }
 
-Palette::~Palette()
+std::shared_ptr<Palette> Palette::createGrayscale()
 {
-}
-
-Palette* Palette::createGrayscale()
-{
-  Palette* graypal = new Palette(frame_t(0), 256);
+  auto graypal = Palette::create(256);
   for (int c=0; c<256; c++)
     graypal->setEntry(c, rgba(c, c, c, 255));
   return graypal;
@@ -100,24 +89,24 @@ void Palette::setEntry(int i, color_t color)
   ++m_modifications;
 }
 
-void Palette::copyColorsTo(Palette* dst) const
+void Palette::copyColorsTo(Palette& dst) const
 {
-  dst->m_colors = m_colors;
-  ++dst->m_modifications;
+  dst.m_colors = m_colors;
+  ++dst.m_modifications;
 }
 
-int Palette::countDiff(const Palette* other, int* from, int* to) const
+int Palette::countDiff(const Palette& other, int* from, int* to) const
 {
   int c, diff = 0;
-  int min = MIN(this->m_colors.size(), other->m_colors.size());
-  int max = MAX(this->m_colors.size(), other->m_colors.size());
+  int min = MIN(this->m_colors.size(), other.m_colors.size());
+  int max = MAX(this->m_colors.size(), other.m_colors.size());
 
   if (from) *from = -1;
   if (to) *to = -1;
 
   // Compare palettes
   for (c=0; c<min; ++c) {
-    if (this->m_colors[c] != other->m_colors[c]) {
+    if (this->m_colors[c] != other.m_colors[c]) {
       if (from && *from < 0) *from = c;
       if (to) *to = c;
       ++diff;

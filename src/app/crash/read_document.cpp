@@ -256,9 +256,9 @@ private:
     if (npalettes >= 1 && npalettes < 0xfffff) {
       for (int i = 0; i < npalettes; ++i) {
         ObjectId palId = read32(s);
-        Palette* pal = loadObject<Palette*>("pal", palId, &Reader::readPalette);
+        auto pal = loadObject<std::shared_ptr<Palette>>("pal", palId, &Reader::readPalette);
         if (pal)
-          spr->setPalette(pal, true);
+          spr->setPalette(*pal, true);
       }
     }
 
@@ -322,7 +322,7 @@ private:
     return read_image(s, false);
   }
 
-  Palette* readPalette(std::ifstream& s) {
+  std::shared_ptr<Palette> readPalette(std::ifstream& s) {
     return read_palette(s);
   }
 

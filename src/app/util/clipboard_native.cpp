@@ -87,7 +87,7 @@ bool set_native_clipboard_bitmap(const doc::Image* image,
             (palette ? 4: 0));
     if (image) doc::write_image(os, image);
     if (mask) doc::write_mask(os, mask);
-    if (palette) doc::write_palette(os, palette);
+    if (palette) doc::write_palette(os, *palette);
 
     if (os.good()) {
       size_t size = (size_t)os.tellp();
@@ -166,11 +166,11 @@ bool set_native_clipboard_bitmap(const doc::Image* image,
 
 bool get_native_clipboard_bitmap(doc::Image** image,
                                  doc::Mask** mask,
-                                 doc::Palette** palette)
+                                 std::shared_ptr<doc::Palette>& palette)
 {
   *image = nullptr;
   *mask = nullptr;
-  *palette = nullptr;
+  palette.reset();
 
   clip::lock l(native_display_handle());
   if (!l.locked())
@@ -189,7 +189,7 @@ bool get_native_clipboard_bitmap(doc::Image** image,
         int bits = read32(is);
         if (bits & 1) *image   = doc::read_image(is, false);
         if (bits & 2) *mask    = doc::read_mask(is);
-        if (bits & 4) *palette = doc::read_palette(is);
+        if (bits & 4) palette = doc::read_palette(is);
         if (image)
           return true;
       }

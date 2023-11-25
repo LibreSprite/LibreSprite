@@ -55,23 +55,23 @@ void PaletteSizeCommand::onExecute(Context* context)
   ContextWriter writer(context);
   Sprite* sprite = writer.sprite();
   frame_t frame = writer.frame();
-  Palette palette(*sprite->palette(frame));
+  auto palette = sprite->palette(frame)->clone();
 
   app::gen::PaletteSize window;
-  window.colors()->setTextf("%d", palette.size());
+  window.colors()->setTextf("%d", palette->size());
   window.openWindowInForeground();
   if (window.closer() == window.ok()) {
     int ncolors = window.colors()->textInt();
-    if (ncolors == palette.size())
+    if (ncolors == palette->size())
       return;
 
-    palette.resize(MID(1, ncolors, INT_MAX));
+    palette->resize(MID(1, ncolors, INT_MAX));
 
     Transaction transaction(context, "Palette Size", ModifyDocument);
-    transaction.execute(new cmd::SetPalette(sprite, frame, &palette));
+    transaction.execute(new cmd::SetPalette(sprite, frame, *palette));
     transaction.commit();
 
-    set_current_palette(&palette, false);
+    set_current_palette(palette.get(), false);
     ui::Manager::getDefault()->invalidate();
   }
 }

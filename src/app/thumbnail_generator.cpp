@@ -66,7 +66,7 @@ private:
 
       if (!m_fop->isStop() && sprite) {
         // The palette to convert the Image
-        m_palette.reset(new Palette(*sprite->palette(frame_t(0))));
+        m_palette = sprite->palette(frame_t(0))->clone();
 
         // Render first frame of the sprite in 'image'
         std::unique_ptr<Image> image(Image::create(
@@ -119,7 +119,7 @@ private:
   std::unique_ptr<FileOp> m_fop;
   IFileItem* m_fileitem;
   std::unique_ptr<Image> m_thumbnail;
-  std::unique_ptr<Palette> m_palette;
+  std::shared_ptr<Palette> m_palette;
   base::thread m_thread;
 };
 

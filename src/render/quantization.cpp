@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,22 +35,27 @@ namespace render {
 using namespace doc;
 using namespace gfx;
 
-Palette* create_palette_from_sprite(
+std::shared_ptr<Palette> create_palette_from_sprite(
   const Sprite* sprite,
   frame_t fromFrame,
   frame_t toFrame,
   bool withAlpha,
-  Palette* palette,
+  Palette* oldPalette,
   PaletteOptimizerDelegate* delegate)
 {
   PaletteOptimizer optimizer;
 
-  if (!palette)
-    palette = new Palette(fromFrame, 256);
+  std::shared_ptr<Palette> palette;
+
+  if (oldPalette) {
+    palette = std::static_pointer_cast<Palette>(oldPalette->shared_from_this());
+  } else {
+    palette = Palette::create(256);
+    palette->setFrame(fromFrame);
+  }
 
   // Add a flat image with the current sprite's frame rendered
-  ImageRef flat_image(Image::create(IMAGE_RGB,
-      sprite->width(), sprite->height()));
+  std::shared_ptr<Image> flat_image {Image::create(IMAGE_RGB, sprite->width(), sprite->height())};
 
   // Feed the optimizer with all rendered frames
   render::Render render;
@@ -68,7 +74,7 @@ Palette* create_palette_from_sprite(
 
   // Generate an optimized palette
   optimizer.calculate(
-    palette,
+    *palette,
     // Transparent color is needed if we have transparent layers
     (sprite->backgroundLayer() &&
      sprite->countLayers() == 1 ? -1: sprite->transparentColor()),
@@ -377,14 +383,14 @@ void PaletteOptimizer::feedWithRgbaColor(color_t color)
   m_histogram.addSamples(color, 1);
 }
 
-void PaletteOptimizer::calculate(Palette* palette, int maskIndex,
+void PaletteOptimizer::calculate(Palette& palette, int maskIndex,
                                  PaletteOptimizerDelegate* delegate)
 {
   bool addMask;
 
-  if ((palette->size() > 1) &&
-      (maskIndex >= 0 && maskIndex < palette->size())) {
-    palette->resize(palette->size()-1);
+  if ((palette.size() > 1) &&
+      (maskIndex >= 0 && maskIndex < palette.size())) {
+    palette.resize(palette.size()-1);
     addMask = true;
   }
   else
@@ -397,19 +403,19 @@ void PaletteOptimizer::calculate(Palette* palette, int maskIndex,
   int usedColors = m_histogram.createOptimizedPalette(palette);
 
   if (addMask) {
-    palette->resize(usedColors+1);
+    palette.resize(usedColors+1);
 
-    Remap remap(palette->size());
+    Remap remap(palette.size());
     for (int i=0; i<usedColors; ++i)
       remap.map(i, i + (i >= maskIndex ? 1: 0));
 
-    palette->applyRemap(remap);
+    palette.applyRemap(remap);
 
-    if (maskIndex < palette->size())
-      palette->setEntry(maskIndex, rgba(0, 0, 0, 255));
+    if (maskIndex < palette.size())
+      palette.setEntry(maskIndex, rgba(0, 0, 0, 255));
   }
   else
-    palette->resize(MAX(1, usedColors));
+    palette.resize(MAX(1, usedColors));
 }
 
 } // namespace render

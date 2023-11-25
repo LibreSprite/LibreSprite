@@ -46,10 +46,10 @@ std::string get_writable_palette_extensions()
   return buf;
 }
 
-Palette* load_palette(const char *filename)
+std::shared_ptr<Palette> load_palette(const char *filename)
 {
   std::string ext = base::string_to_lower(base::get_file_extension(filename));
-  Palette* pal = NULL;
+  std::shared_ptr<Palette> pal;
 
   if (ext == "col") {
     pal = doc::file::load_col_file(filename);
@@ -76,8 +76,7 @@ Palette* load_palette(const char *filename)
         if (fop->document() &&
             fop->document()->sprite() &&
             fop->document()->sprite()->palette(frame_t(0))) {
-          pal = new Palette(
-            *fop->document()->sprite()->palette(frame_t(0)));
+            pal = fop->document()->sprite()->palette(frame_t(0))->clone();
         }
 
         delete fop->releaseDocument();
@@ -92,7 +91,7 @@ Palette* load_palette(const char *filename)
   return pal;
 }
 
-bool save_palette(const char *filename, const Palette* pal, int columns)
+bool save_palette(const char *filename, const Palette& pal, int columns)
 {
   std::string ext = base::string_to_lower(base::get_file_extension(filename));
   bool success = false;
@@ -109,13 +108,13 @@ bool save_palette(const char *filename, const Palette* pal, int columns)
   else {
     FileFormat* ff = FileFormatsManager::instance()->getFileFormatByExtension(ext.c_str());
     if (ff && ff->support(FILE_SUPPORT_SAVE)) {
-      int w = (columns > 0 ? columns: pal->size());
-      int h = (pal->size() / w) + (pal->size() % w > 0 ? 1: 0);
+      int w = (columns > 0 ? columns: pal.size());
+      int h = (pal.size() / w) + (pal.size() % w > 0 ? 1: 0);
 
       app::Context tmpContext;
       doc::Document* doc = tmpContext.documents().add(
-        w, h, (pal->size() <= 256 ? doc::ColorMode::INDEXED:
-                                    doc::ColorMode::RGB), pal->size());
+        w, h, (pal.size() <= 256 ? doc::ColorMode::INDEXED:
+                                    doc::ColorMode::RGB), pal.size());
 
       Sprite* sprite = doc->sprite();
       doc->sprite()->setPalette(pal, false);
@@ -129,7 +128,7 @@ bool save_palette(const char *filename, const Palette* pal, int columns)
           if (doc->colorMode() == doc::ColorMode::INDEXED)
             image->putPixel(x, y, c);
           else
-            image->putPixel(x, y, pal->entry(c));
+            image->putPixel(x, y, pal.entry(c));
         }
       }
 

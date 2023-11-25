@@ -24,18 +24,21 @@
 namespace doc {
 namespace file {
 
-Palette* load_gpl_file(const char *filename)
+std::shared_ptr<Palette> load_gpl_file(const char *filename)
 {
   std::ifstream f(FSTREAM_PATH(filename));
-  if (f.bad()) return NULL;
+  if (f.bad())
+    return {};
 
   // Read first line, it must be "GIMP Palette"
   std::string line;
-  if (!std::getline(f, line)) return NULL;
+  if (!std::getline(f, line))
+    return {};
   base::trim_string(line, line);
-  if (line != "GIMP Palette") return NULL;
+  if (line != "GIMP Palette")
+    return {};
 
-  std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
+  auto pal = Palette::create(0);
 
   while (std::getline(f, line)) {
     // Trim line.
@@ -60,10 +63,10 @@ Palette* load_gpl_file(const char *filename)
     pal->addEntry(rgba(r, g, b, 255));
   }
 
-  return pal.release();
+  return pal;
 }
 
-bool save_gpl_file(const Palette *pal, const char *filename)
+bool save_gpl_file(const Palette& pal, const char *filename)
 {
   std::ofstream f(FSTREAM_PATH(filename));
   if (f.bad()) return false;
@@ -71,8 +74,8 @@ bool save_gpl_file(const Palette *pal, const char *filename)
   f << "GIMP Palette\n"
     << "#\n";
 
-  for (int i=0; i<pal->size(); ++i) {
-    uint32_t col = pal->getEntry(i);
+  for (int i=0; i<pal.size(); ++i) {
+    uint32_t col = pal.getEntry(i);
     f << std::setfill(' ') << std::setw(3) << ((int)rgba_getr(col)) << " "
       << std::setfill(' ') << std::setw(3) << ((int)rgba_getg(col)) << " "
       << std::setfill(' ') << std::setw(3) << ((int)rgba_getb(col)) << "\tUntitled\n";

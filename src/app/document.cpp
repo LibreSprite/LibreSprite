@@ -385,8 +385,7 @@ Document* Document::duplicate(DuplicateType type) const
     PalettesList::const_iterator it = sourceSprite->getPalettes().begin();
     PalettesList::const_iterator end = sourceSprite->getPalettes().end();
     for (; it != end; ++it) {
-      const Palette* pal = *it;
-      spriteCopy->setPalette(pal, true);
+      spriteCopy->setPalette(**it, true);
     }
   }
 

@@ -67,13 +67,12 @@ void LoadPaletteCommand::onExecute(Context* context)
   }
 
   if (!filename.empty()) {
-    std::unique_ptr<doc::Palette> palette(load_palette(filename.c_str()));
+    auto palette = load_palette(filename.c_str());
     if (!palette) {
       Alert::show("Error<<Loading palette file||&Close");
     }
     else {
-      SetPaletteCommand* cmd = static_cast<SetPaletteCommand*>(
-        CommandsModule::instance()->getCommandByName(CommandId::SetPalette));
+      auto cmd = static_cast<SetPaletteCommand*>(CommandsModule::instance()->getCommandByName(CommandId::SetPalette));
       cmd->setPalette(palette.get());
       context->executeCommand(cmd);
     }

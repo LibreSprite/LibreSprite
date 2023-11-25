@@ -42,7 +42,8 @@ Mask* load_msk_file(const char* filename)
 
     // Just load an Animator Pro PIC file
     int x, y;
-    std::unique_ptr<Image> image(load_pic_file(filename, &x, &y, NULL));
+    std::shared_ptr<Palette> picPalette;
+    std::unique_ptr<Image> image(load_pic_file(filename, &x, &y, picPalette));
 
     if (image != NULL && (image->pixelFormat() == IMAGE_BITMAP)) {
       mask = new Mask();

@@ -35,7 +35,7 @@ namespace doc {
   class Remap;
   class RgbMap;
 
-  typedef std::vector<Palette*> PalettesList;
+  typedef std::vector<std::shared_ptr<Palette>> PalettesList;
 
   // The main structure used in the whole program to handle a sprite.
   class Sprite : public Object {
@@ -100,7 +100,7 @@ namespace doc {
     Palette* palette(frame_t frame) const;
     const PalettesList& getPalettes() const;
 
-    void setPalette(const Palette* pal, bool truncate);
+    void setPalette(const Palette& pal, bool truncate);
 
     // Removes all palettes from the sprites except the first one.
     void resetPalettes();

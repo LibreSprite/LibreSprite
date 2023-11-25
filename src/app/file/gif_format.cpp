@@ -483,12 +483,12 @@ private:
       }
     }
 
-    std::unique_ptr<Palette> palette;
-    if (m_frameNum == 0)
-      palette.reset(new Palette(m_frameNum, usedNColors + (needsExtraBgColor ? 1: 0)));
-    else {
-      palette.reset(new Palette(*m_sprite->palette(m_frameNum-1)));
-      palette->setFrame(m_frameNum);
+    std::shared_ptr<Palette> palette;
+    if (m_frameNum == 0) {
+        palette = Palette::create(usedNColors + (needsExtraBgColor ? 1: 0));
+    } else {
+        palette = m_sprite->palette(m_frameNum-1)->clone();
+        palette->setFrame(m_frameNum);
     }
     resetRemap(MAX(ncolors, palette->size()));
 
@@ -537,7 +537,7 @@ private:
           found, usedNColors, base, missing,
           base + missing + (needsExtraBgColor ? 1: 0));
 
-    Palette oldPalette(*palette);
+    auto oldPalette = palette->clone();
     palette->resize(base + missing + (needsExtraBgColor ? 1: 0));
     resetRemap(MAX(ncolors, palette->size()));
 
@@ -548,7 +548,7 @@ private:
       int j = -1;
 
       if (m_frameNum > 0) {
-        j = oldPalette.findExactMatch(
+        j = oldPalette->findExactMatch(
           colormap->Colors[i].Red,
           colormap->Colors[i].Green,
           colormap->Colors[i].Blue, 255,
@@ -570,7 +570,7 @@ private:
     }
 
     ASSERT(base == palette->size());
-    m_sprite->setPalette(palette.get(), false);
+    m_sprite->setPalette(*palette, false);
   }
 
   void compositeIndexedImageToIndexed(const gfx::Rect& frameBounds,
@@ -712,14 +712,14 @@ private:
 
   void remapToGlobalColormap(ColorMapObject* colormap) {
     Palette* oldPalette = m_sprite->palette(0);
-    Palette newPalette(0, colormap->ColorCount);
+    auto newPalette = Palette::create(colormap->ColorCount);
 
     for (int i=0; i<colormap->ColorCount; ++i) {
-      newPalette.setEntry(i, colormap2rgba(colormap, i));;
+      newPalette->setEntry(i, colormap2rgba(colormap, i));;
     }
 
     Remap remap = create_remap_to_change_palette(
-      oldPalette, &newPalette, m_bgIndex,
+      oldPalette, newPalette.get(), m_bgIndex,
       m_opaque); // We cannot remap the transparent color if the
                  // sprite isn't opaque, because we
                  // cannot write the header again
@@ -727,7 +727,7 @@ private:
     for (auto cel : m_sprite->uniqueCels())
       doc::remap_image(cel->image(), remap);
 
-    m_sprite->setPalette(&newPalette, false);
+    m_sprite->setPalette(*newPalette, false);
   }
 
   void reduceToAnOptimizedPalette() {
@@ -739,9 +739,9 @@ private:
       optimizer.feedWithRgbaColor(palette->getEntry(i));
     }
 
-    Palette newPalette(0, 256);
-    optimizer.calculate(&newPalette, m_bgIndex, nullptr);
-    m_sprite->setPalette(&newPalette, false);
+    auto newPalette = Palette::create(256);
+    optimizer.calculate(*newPalette, m_bgIndex, nullptr);
+    m_sprite->setPalette(*newPalette, false);
   }
 
   FileOp* m_fop;
@@ -810,7 +810,7 @@ public:
     , m_globalColormap(nullptr)
     , m_quantizeColormaps(false) {
     if (m_sprite->pixelFormat() == IMAGE_INDEXED) {
-      for (Palette* palette : m_sprite->getPalettes()) {
+      for (auto& palette : m_sprite->getPalettes()) {
         int bpp = GifBitSizeLimited(palette->size());
         m_bitsPerPixel = MAX(m_bitsPerPixel, bpp);
       }
@@ -837,7 +837,7 @@ public:
       }
 
       if (!m_quantizeColormaps) {
-        m_globalColormap = createColorMap(m_sprite->palette(0));
+        m_globalColormap = createColorMap(*m_sprite->palette(0));
         m_bgIndex = m_sprite->transparentColor();
       }
       else
@@ -1039,14 +1039,14 @@ private:
   }
 
   void writeImage(int frameNum, const gfx::Rect& frameBounds, DisposalMethod disposal) {
-    std::unique_ptr<Palette> framePaletteRef;
+    std::shared_ptr<Palette> framePaletteRef;
     std::unique_ptr<RgbMap> rgbmapRef;
     Palette* framePalette = m_sprite->palette(frameNum);
     RgbMap* rgbmap = m_sprite->rgbMap(frameNum);
 
     // Create optimized palette for RGB/Grayscale images
     if (m_quantizeColormaps) {
-      framePaletteRef.reset(createOptimizedPalette(frameBounds));
+      framePaletteRef = createOptimizedPalette(frameBounds);
       framePalette = framePaletteRef.get();
 
       rgbmapRef.reset(new RgbMap);
@@ -1134,17 +1134,18 @@ private:
     int localTransparent = m_transparentIndex;
     ColorMapObject* colormap = m_globalColormap;
     if (!colormap) {
-      Palette reducedPalette(frameNum, usedNColors);
+      auto reducedPalette = Palette::create(usedNColors);
+      reducedPalette->setFrame(frameNum);
 
       for (int i=0, j=0; i<framePalette->size(); ++i) {
         if (usedColors[i]) {
-          reducedPalette.setEntry(j, framePalette->getEntry(i));
+          reducedPalette->setEntry(j, framePalette->getEntry(i));
           remap.map(i, j);
           ++j;
         }
       }
 
-      colormap = createColorMap(&reducedPalette);
+      colormap = createColorMap(*reducedPalette);
       if (localTransparent >= 0)
         localTransparent = remap[localTransparent];
     }
@@ -1199,7 +1200,7 @@ private:
       GifFreeMapObject(colormap);
   }
 
-  Palette* createOptimizedPalette(const gfx::Rect& frameBounds) {
+  std::shared_ptr<Palette> createOptimizedPalette(const gfx::Rect& frameBounds) {
     render::PaletteOptimizer optimizer;
 
     // Feed the palette optimizer with pixels inside frameBounds
@@ -1211,8 +1212,8 @@ private:
                rgba_getb(color), 255));
     }
 
-    Palette* palette = new Palette(0, 256);
-    optimizer.calculate(palette, m_transparentIndex, nullptr);
+    auto palette = Palette::create(256);
+    optimizer.calculate(*palette, m_transparentIndex, nullptr);
     return palette;
   }
 
@@ -1225,14 +1226,14 @@ private:
 
 private:
 
-  static ColorMapObject* createColorMap(const Palette* palette) {
-    int n = 1 << GifBitSizeLimited(palette->size());
+  static ColorMapObject* createColorMap(const Palette& palette) {
+    int n = 1 << GifBitSizeLimited(palette.size());
     ColorMapObject* colormap = GifMakeMapObject(n, nullptr);
 
     for (int i=0; i<n; ++i) {
       color_t color;
-      if (i < palette->size())
-        color = palette->getEntry(i);
+      if (i < palette.size())
+        color = palette.getEntry(i);
       else
         color = rgba(0, 0, 0, 255);
 

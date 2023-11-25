@@ -71,7 +71,7 @@ void NewSpriteFromSelectionCommand::onExecute(Context* context)
                               image->height(),
                               palette->size()));
 
-  palette->copyColorsTo(dstSprite->palette(frame_t(0)));
+  palette->copyColorsTo(*dstSprite->palette(frame_t(0)));
 
   LayerImage* dstLayer = static_cast<LayerImage*>(dstSprite->folder()->getFirstLayer());
   if (site.layer()->isBackground())

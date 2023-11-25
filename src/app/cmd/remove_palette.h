@@ -15,7 +15,7 @@ namespace cmd {
 
   class RemovePalette : public AddPalette {
   public:
-    RemovePalette(Sprite* sprite, Palette* pal);
+    RemovePalette(Sprite* sprite, Palette& pal);
 
   protected:
     void onExecute() override;

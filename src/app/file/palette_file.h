@@ -16,8 +16,7 @@ namespace app {
   std::string get_readable_palette_extensions();
   std::string get_writable_palette_extensions();
 
-  doc::Palette* load_palette(const char *filename);
-  bool save_palette(const char *filename, const doc::Palette* pal,
-                    int columns);
+  std::shared_ptr<doc::Palette> load_palette(const char *filename);
+  bool save_palette(const char *filename, const doc::Palette& pal, int columns);
 
 } // namespace app

@@ -16,7 +16,7 @@ namespace cmd {
 
 using namespace doc;
 
-RemovePalette::RemovePalette(Sprite* sprite, Palette* pal)
+RemovePalette::RemovePalette(Sprite* sprite, Palette& pal)
   : AddPalette(sprite, pal)
 {
 }

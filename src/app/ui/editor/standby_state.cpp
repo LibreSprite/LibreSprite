@@ -454,7 +454,7 @@ bool StandbyState::onUpdateStatusBar(Editor* editor)
     cmd.pickSample(editor->getSite(), spritePos, color);
 
     char buf[256];
-    sprintf(buf, " :pos: %d %d", spritePos.x, spritePos.y);
+    snprintf(buf, sizeof(buf), " :pos: %d %d", spritePos.x, spritePos.y);
 
     StatusBar::instance()->showColor(0, buf, color);
   }
@@ -464,16 +464,17 @@ bool StandbyState::onUpdateStatusBar(Editor* editor)
        editor->document()->mask(): NULL);
 
     char buf[1024];
-    sprintf(
-      buf, ":pos: %d %d :%s: %d %d",
+    snprintf(
+      buf, sizeof(buf), ":pos: %d %d :%s: %d %d",
       spritePos.x, spritePos.y,
       (mask ? "selsize": "size"),
       (mask ? mask->bounds().w: sprite->width()),
       (mask ? mask->bounds().h: sprite->height()));
 
     if (sprite->totalFrames() > 1) {
-      sprintf(
-        buf+std::strlen(buf), " :frame: %d :clock: %d",
+      auto offset = std::strlen(buf);
+      snprintf(
+        buf+offset, sizeof(buf) - offset, " :frame: %d :clock: %d",
         editor->frame()+1,
         sprite->frameDuration(editor->frame()));
     }

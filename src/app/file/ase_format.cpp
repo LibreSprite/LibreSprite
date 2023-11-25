@@ -109,9 +109,9 @@ static void ase_file_write_string(FILE* f, const std::string& string);
 static void ase_file_write_start_chunk(FILE* f, ASE_FrameHeader* frame_header, int type, ASE_Chunk* chunk);
 static void ase_file_write_close_chunk(FILE* f, ASE_Chunk* chunk);
 
-static Palette* ase_file_read_color_chunk(FILE* f, Palette* prevPal, frame_t frame);
-static Palette* ase_file_read_color2_chunk(FILE* f, Palette* prevPal, frame_t frame);
-static Palette* ase_file_read_palette_chunk(FILE* f, Palette* prevPal, frame_t frame);
+static std::shared_ptr<Palette> ase_file_read_color_chunk(FILE* f, const Palette& prevPal, frame_t frame);
+static std::shared_ptr<Palette> ase_file_read_color2_chunk(FILE* f, const Palette& prevPal, frame_t frame);
+static std::shared_ptr<Palette> ase_file_read_palette_chunk(FILE* f, const Palette& prevPal, frame_t frame);
 static void ase_file_write_color2_chunk(FILE* f, ASE_FrameHeader* frame_header, const Palette* pal);
 static void ase_file_write_palette_chunk(FILE* f, ASE_FrameHeader* frame_header, const Palette* pal, int from, int to);
 static Layer* ase_file_read_layer_chunk(FILE* f, ASE_Header* header, Sprite* sprite, Layer** previous_layer, int* current_level);
@@ -235,21 +235,20 @@ bool AseFormat::onLoad(FileOp* fop)
           case ASE_FILE_CHUNK_FLI_COLOR2:
             if (!ignore_old_color_chunks) {
               Palette* prevPal = sprite->palette(frame);
-              std::unique_ptr<Palette> pal(chunk_type == ASE_FILE_CHUNK_FLI_COLOR ?
-                                     ase_file_read_color_chunk(f, prevPal, frame):
-                                     ase_file_read_color2_chunk(f, prevPal, frame));
-
-              if (prevPal->countDiff(pal.get(), NULL, NULL) > 0)
-                sprite->setPalette(pal.get(), true);
+              auto pal = chunk_type == ASE_FILE_CHUNK_FLI_COLOR
+                ? ase_file_read_color_chunk(f, *prevPal, frame)
+                : ase_file_read_color2_chunk(f, *prevPal, frame);
+              if (prevPal->countDiff(*pal, NULL, NULL) > 0)
+                sprite->setPalette(*pal, true);
             }
             break;
 
           case ASE_FILE_CHUNK_PALETTE: {
             Palette* prevPal = sprite->palette(frame);
-            std::unique_ptr<Palette> pal(ase_file_read_palette_chunk(f, prevPal, frame));
+            auto pal = ase_file_read_palette_chunk(f, *prevPal, frame);
 
-            if (prevPal->countDiff(pal.get(), NULL, NULL) > 0)
-              sprite->setPalette(pal.get(), true);
+            if (prevPal->countDiff(*pal, NULL, NULL) > 0)
+              sprite->setPalette(*pal, true);
 
             ignore_old_color_chunks = true;
             break;
@@ -372,7 +371,7 @@ bool AseFormat::onSave(FileOp* fop)
   ase_file_write_header(f, &header);
 
   bool require_new_palette_chunk = false;
-  for (Palette* pal : sprite->getPalettes()) {
+  for (auto& pal : sprite->getPalettes()) {
     if (pal->size() != 256 || pal->hasAlpha()) {
       require_new_palette_chunk = true;
       break;
@@ -389,10 +388,10 @@ bool AseFormat::onSave(FileOp* fop)
     frame_header.duration = sprite->frameDuration(frame);
 
     // is the first frame or did the palette change?
-    Palette* pal = sprite->palette(frame);
+    auto pal = sprite->palette(frame);
     int palFrom = 0, palTo = pal->size()-1;
     if ((frame == 0 ||
-         sprite->palette(frame-1)->countDiff(pal, &palFrom, &palTo) > 0)) {
+         sprite->palette(frame-1)->countDiff(*pal, &palFrom, &palTo) > 0)) {
       // Write new palette chunk
       if (require_new_palette_chunk) {
         ase_file_write_palette_chunk(f, &frame_header,
@@ -664,10 +663,10 @@ static void ase_file_write_close_chunk(FILE* f, ASE_Chunk* chunk)
   fseek(f, chunk_end, SEEK_SET);
 }
 
-static Palette* ase_file_read_color_chunk(FILE* f, Palette* prevPal, frame_t frame)
+static std::shared_ptr<Palette> ase_file_read_color_chunk(FILE* f, const Palette& prevPal, frame_t frame)
 {
   int i, c, r, g, b, packets, skip, size;
-  Palette* pal = new Palette(*prevPal);
+  auto pal = prevPal.clone();
   pal->setFrame(frame);
 
   packets = fgetw(f);   // Number of packets
@@ -692,10 +691,10 @@ static Palette* ase_file_read_color_chunk(FILE* f, Palette* prevPal, frame_t fra
   return pal;
 }
 
-static Palette* ase_file_read_color2_chunk(FILE* f, Palette* prevPal, frame_t frame)
+static std::shared_ptr<Palette> ase_file_read_color2_chunk(FILE* f, const Palette& prevPal, frame_t frame)
 {
   int i, c, r, g, b, packets, skip, size;
-  Palette* pal = new Palette(*prevPal);
+  auto pal = prevPal.clone();
   pal->setFrame(frame);
 
   packets = fgetw(f);   // Number of packets
@@ -718,9 +717,9 @@ static Palette* ase_file_read_color2_chunk(FILE* f, Palette* prevPal, frame_t fr
   return pal;
 }
 
-static Palette* ase_file_read_palette_chunk(FILE* f, Palette* prevPal, frame_t frame)
+static std::shared_ptr<Palette> ase_file_read_palette_chunk(FILE* f, const Palette& prevPal, frame_t frame)
 {
-  Palette* pal = new Palette(*prevPal);
+  auto pal = prevPal.clone();
   pal->setFrame(frame);
 
   int newSize = fgetl(f);

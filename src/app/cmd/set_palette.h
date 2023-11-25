@@ -26,7 +26,7 @@ namespace cmd {
   class SetPalette : public Cmd
                    , public WithSprite {
   public:
-    SetPalette(Sprite* sprite, frame_t frame, const Palette* newPalette);
+    SetPalette(Sprite* sprite, frame_t frame, const Palette& newPalette);
 
   protected:
     void onExecute() override;

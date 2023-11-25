@@ -26,9 +26,9 @@ namespace file {
 using namespace base;
 
 // Loads a COL file (Animator and Animator Pro format)
-Palette* load_col_file(const char* filename)
+std::shared_ptr<Palette> load_col_file(const char* filename)
 {
-  Palette *pal = NULL;
+  std::shared_ptr<Palette> pal;
   int c, r, g, b;
   FILE* f;
 
@@ -50,7 +50,7 @@ Palette* load_col_file(const char* filename)
 
   // Animator format
   if (!pro) {
-    pal = new Palette(frame_t(0), 256);
+    pal = Palette::create(256);
 
     for (c=0; c<256; c++) {
       r = fgetc(f);
@@ -78,7 +78,7 @@ Palette* load_col_file(const char* filename)
       return NULL;
     }
 
-    pal = new Palette(frame_t(0), MIN(d.quot, 256));
+    pal = Palette::create(MIN(d.quot, 256));
 
     for (c=0; c<pal->size(); c++) {
       r = fgetc(f);
@@ -98,7 +98,7 @@ Palette* load_col_file(const char* filename)
 }
 
 // Saves an Animator Pro COL file
-bool save_col_file(const Palette* pal, const char* filename)
+bool save_col_file(const Palette& pal, const char* filename)
 {
   FILE *f = fopen(filename, "wb");
   if (!f)
@@ -109,9 +109,8 @@ bool save_col_file(const Palette* pal, const char* filename)
   fputw(0, f);                     // Version file
 
   uint32_t c;
-  for (int i=0; i<256; i++) {
-    c = pal->getEntry(i);
-
+  for (int i=0, max = pal.size(); i < 256; i++) {
+    c = i < max ? pal.getEntry(i) : 0;
     fputc(rgba_getr(c), f);
     fputc(rgba_getg(c), f);
     fputc(rgba_getb(c), f);

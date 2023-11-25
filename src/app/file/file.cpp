@@ -172,7 +172,7 @@ FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filena
         // Try to get more file names
         for (c=start_from+1; ; c++) {
           // Get the next file name
-          sprintf(buf, "%s%0*d%s", left.c_str(), width, c, right.c_str());
+          snprintf(buf, sizeof(buf), "%s%0*d%s", left.c_str(), width, c, right.c_str());
 
           // If the file doesn't exist, we doesn't need more files to load
           if (!base::is_file(buf))
@@ -316,7 +316,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
   // Big palettes
   if (!fop->m_format->support(FILE_SUPPORT_BIG_PALETTES)) {
-    for (const Palette* pal : fop->m_document->sprite()->getPalettes()) {
+    for (auto& pal : fop->m_document->sprite()->getPalettes()) {
       if (pal->size() > 256) {
         warnings += "<<- Palettes with more than 256 colors";
         break;
@@ -327,7 +327,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
   // Palette with alpha
   if (!fop->m_format->support(FILE_SUPPORT_PALETTE_WITH_ALPHA)) {
     bool done = false;
-    for (const Palette* pal : fop->m_document->sprite()->getPalettes()) {
+    for (auto& pal : fop->m_document->sprite()->getPalettes()) {
       for (int c=0; c<pal->size(); ++c) {
         if (rgba_geta(pal->getEntry(c)) < 255) {
           warnings += "<<- Palette with alpha channel";
@@ -422,7 +422,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
       Sprite* spr = fop->m_document->sprite();
       std::vector<char> buf(32);
-      std::sprintf(&buf[0], "{frame%0*d}", width, 0);
+      std::snprintf(buf.data(), sizeof(buf), "{frame%0*d}", width, 0);
       if (default_format)
         fn_format = set_frame_format(fn_format, &buf[0]);
       else if (spr->totalFrames() > 1)
@@ -510,9 +510,9 @@ void FileOp::operate(IFileOpProgress* progress)
         m_seq.layer->addCel(m_seq.last_cel);
 
         if (m_document->sprite()->palette(frame)
-            ->countDiff(m_seq.palette, NULL, NULL) > 0) {
+            ->countDiff(*m_seq.palette, NULL, NULL) > 0) {
           m_seq.palette->setFrame(frame);
-          m_document->sprite()->setPalette(m_seq.palette, true);
+          m_document->sprite()->setPalette(*m_seq.palette, true);
         }
 
         old_image = m_seq.image.get();
@@ -632,7 +632,7 @@ void FileOp::operate(IFileOpProgress* progress)
         render.renderSprite(m_seq.image.get(), sprite, frame);
 
         // Setup the palette.
-        sprite->palette(frame)->copyColorsTo(m_seq.palette);
+        sprite->palette(frame)->copyColorsTo(*m_seq.palette);
 
         // Setup the filename to be used.
         m_filename = m_seq.filename_list[frame];
@@ -685,8 +685,6 @@ FileOp::~FileOp()
 {
   if (m_format)
     m_format->destroyData(this);
-
-  delete m_seq.palette;
 }
 
 void FileOp::createDocument(Sprite* spr)
@@ -724,13 +722,9 @@ void FileOp::postLoad()
     if (sprite->pixelFormat() == IMAGE_RGB &&
         sprite->getPalettes().size() <= 1 &&
         sprite->palette(frame_t(0))->isBlack()) {
-      base::SharedPtr<Palette> palette(
-        render::create_palette_from_sprite(
-          sprite, frame_t(0), sprite->lastFrame(), true,
-          nullptr, nullptr));
-
+      auto palette = render::create_palette_from_sprite(sprite, frame_t(0), sprite->lastFrame(), true, nullptr, nullptr);
       sprite->resetPalettes();
-      sprite->setPalette(palette.get(), false);
+      sprite->setPalette(*palette, false);
     }
   }
 
@@ -924,7 +918,7 @@ FileOp::FileOp(FileOpType type, Context* context)
 
 void FileOp::prepareForSequence()
 {
-  m_seq.palette = new Palette(frame_t(0), 256);
+  m_seq.palette = Palette::create(256);
   m_seq.format_options.reset();
 }
 

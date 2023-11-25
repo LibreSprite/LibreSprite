@@ -25,7 +25,7 @@ namespace cmd {
   class AddPalette : public Cmd
                    , public WithSprite {
   public:
-    AddPalette(Sprite* sprite, Palette* pal);
+    AddPalette(Sprite* sprite, Palette& pal);
 
   protected:
     void onExecute() override;

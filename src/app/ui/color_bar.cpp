@@ -627,7 +627,7 @@ void ColorBar::onPaletteViewIndexChange(int index, ui::MouseButtons buttons)
   m_lock = false;
 }
 
-void ColorBar::onPaletteViewModification(const Palette* newPalette,
+void ColorBar::onPaletteViewModification(const doc::Palette& newPalette,
                                          PaletteViewModification mod)
 {
   const char* text = "Palette Change";
@@ -639,7 +639,7 @@ void ColorBar::onPaletteViewModification(const Palette* newPalette,
   setPalette(newPalette, text);
 }
 
-void ColorBar::setPalette(const doc::Palette* newPalette, const std::string& actionText)
+void ColorBar::setPalette(const doc::Palette& newPalette, const std::string& actionText)
 {
   showRemap();
 
@@ -648,7 +648,7 @@ void ColorBar::setPalette(const doc::Palette* newPalette, const std::string& act
     Sprite* sprite = writer.sprite();
     frame_t frame = writer.frame();
     if (sprite &&
-        newPalette->countDiff(sprite->palette(frame), nullptr, nullptr)) {
+        newPalette.countDiff(*sprite->palette(frame), nullptr, nullptr)) {
       Transaction transaction(writer.context(), actionText, ModifyDocument);
       transaction.execute(new cmd::SetPalette(sprite, frame, newPalette));
       transaction.commit();
@@ -658,7 +658,7 @@ void ColorBar::setPalette(const doc::Palette* newPalette, const std::string& act
     Console::showException(e);
   }
 
-  set_current_palette(newPalette, false);
+  set_current_palette(&newPalette, false);
   manager()->invalidate();
 }
 
@@ -709,17 +709,17 @@ void ColorBar::onPaletteViewPasteColors(
     }
   }
 
-  Palette newPalette(*get_current_palette());
+  auto newPalette = get_current_palette()->clone();
 
   int i = 0;
   int j = to_first;
 
   for (auto state : from) {
     if (state) {
-      if (j < newPalette.size())
-        newPalette.setEntry(j, fromPal->getEntry(i));
+      if (j < newPalette->size())
+        newPalette->setEntry(j, fromPal->getEntry(i));
       else
-        newPalette.addEntry(fromPal->getEntry(i));
+        newPalette->addEntry(fromPal->getEntry(i));
 
       for (++j; j<to.size(); ++j)
         if (to[j])
@@ -728,7 +728,7 @@ void ColorBar::onPaletteViewPasteColors(
     ++i;
   }
 
-  setPalette(&newPalette, "Paste Colors");
+  setPalette(*newPalette, "Paste Colors");
 }
 
 app::Color ColorBar::onPaletteViewGetForegroundIndex()
@@ -853,8 +853,7 @@ void ColorBar::onReverseColors()
     ++i;
   }
 
-  Palette newPalette(*get_current_palette(), remap);
-  setPalette(&newPalette, "Reverse Colors");
+  setPalette(*get_current_palette()->remap(remap), "Reverse Colors");
 }
 
 void ColorBar::onSortBy(SortPaletteBy channel)
@@ -866,13 +865,13 @@ void ColorBar::onSortBy(SortPaletteBy channel)
   int n = entries.picks();
 
   // Create a "subpalette" with selected entries only.
-  Palette palette(*get_current_palette());
-  Palette selectedPalette(0, n);
+  auto palette = get_current_palette()->clone();
+  auto selectedPalette = Palette::create(n);
   std::vector<int> mapToOriginal(n); // Maps index from selectedPalette -> palette
   int i = 0, j = 0;
   for (bool state : entries) {
     if (state) {
-      selectedPalette.setEntry(j, palette.getEntry(i));
+      selectedPalette->setEntry(j, palette->getEntry(i));
       mapToOriginal[j] = i;
       ++j;
     }
@@ -881,11 +880,11 @@ void ColorBar::onSortBy(SortPaletteBy channel)
 
   // Create a remap to sort the selected entries with the given color
   // component/channel.
-  Remap remap = doc::sort_palette(&selectedPalette, channel, m_ascending);
+  Remap remap = doc::sort_palette(selectedPalette.get(), channel, m_ascending);
 
   // Create a bigger new remap for the original palette (with all
   // entries, selected and deselected).
-  Remap remapOrig(palette.size());
+  Remap remapOrig(palette->size());
   i = j = 0;
   for (bool state : entries) {
     if (state)
@@ -897,8 +896,7 @@ void ColorBar::onSortBy(SortPaletteBy channel)
 
   // Create a new palette and apply the remap. This is the final new
   // palette for the sprite.
-  Palette newPalette(palette, remapOrig);
-  setPalette(&newPalette, "Sort Colors");
+  setPalette(*palette->remap(remapOrig), "Sort Colors");
 }
 
 void ColorBar::onGradient()
@@ -907,10 +905,10 @@ void ColorBar::onGradient()
   if (!m_paletteView.getSelectedRange(index1, index2))
     return;
 
-  Palette newPalette(*get_current_palette());
-  newPalette.makeGradient(index1, index2);
+  auto newPalette = get_current_palette()->clone();
+  newPalette->makeGradient(index1, index2);
 
-  setPalette(&newPalette, "Gradient");
+  setPalette(*newPalette, "Gradient");
 }
 
 void ColorBar::setAscending(bool ascending)
@@ -924,7 +922,7 @@ void ColorBar::showRemap()
   if (site.sprite() &&
       site.sprite()->pixelFormat() == IMAGE_INDEXED) {
     if (!m_oldPalette) {
-      m_oldPalette.reset(new Palette(*get_current_palette()));
+      m_oldPalette = get_current_palette()->clone();
       m_remapButton.setVisible(true);
       layout();
     }

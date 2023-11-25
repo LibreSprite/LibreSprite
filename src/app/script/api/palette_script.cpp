@@ -76,7 +76,11 @@ public:
 
   void* getWrapped() override {return m_pal.lock().get();}
   void setWrapped(void* pal) override {
-    m_pal = std::static_pointer_cast<doc::Palette>(static_cast<doc::Object*>(pal)->shared_from_this());
+    if (pal) {
+      m_pal = std::static_pointer_cast<doc::Palette>(static_cast<doc::Object*>(pal)->shared_from_this());
+    } else {
+      m_pal.reset();
+    }
   }
 
   bool needIncrement = false;

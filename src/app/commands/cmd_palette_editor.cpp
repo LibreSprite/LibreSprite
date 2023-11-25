@@ -121,7 +121,7 @@ private:
   base::ScopedConnection m_palChangeConn;
 
   // Palette used for relative changes.
-  Palette m_fromPalette;
+  std::shared_ptr<Palette> m_fromPalette = Palette::create(0);
   std::map<ColorSliders::Channel, int> m_relDeltas;
 };
 
@@ -251,7 +251,6 @@ PaletteEntryEditor::PaletteEntryEditor()
   , m_redrawAll(false)
   , m_implantChange(false)
   , m_selfPalChange(false)
-  , m_fromPalette(0, 0)
 {
   m_colorType.addItem("RGB");
   m_colorType.addItem("HSB");
@@ -606,7 +605,7 @@ void PaletteEntryEditor::setRelativePaletteEntryChannel(ColorSliders::Channel ch
       continue;
 
     // Get the current RGB values of the palette entry
-    src_color = m_fromPalette.getEntry(c);
+    src_color = m_fromPalette->getEntry(c);
     r = rgba_getr(src_color);
     g = rgba_getg(src_color);
     b = rgba_getb(src_color);
@@ -683,11 +682,11 @@ void PaletteEntryEditor::updateCurrentSpritePalette(const char* operationName)
 
       // Check differences between current sprite palette and current system palette
       from = to = -1;
-      currentSpritePalette->countDiff(newPalette, &from, &to);
+      currentSpritePalette->countDiff(*newPalette, &from, &to);
 
       if (from >= 0 && to >= from) {
         DocumentUndo* undo = document->undoHistory();
-        Cmd* cmd = new cmd::SetPalette(sprite, frame, newPalette);
+        Cmd* cmd = new cmd::SetPalette(sprite, frame, *newPalette);
 
         // Add undo information to save the range of pal entries that will be modified.
         if (m_implantChange &&
@@ -749,7 +748,7 @@ void PaletteEntryEditor::resetRelativeInfo()
 {
   m_rgbSliders.resetRelativeSliders();
   m_hsvSliders.resetRelativeSliders();
-  get_current_palette()->copyColorsTo(&m_fromPalette);
+  get_current_palette()->copyColorsTo(*m_fromPalette);
   m_relDeltas.clear();
 }
 

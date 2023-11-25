@@ -205,21 +205,21 @@ void PaletteView::clearSelection()
   if (!m_selectedEntries.picks())
     return;
 
-  Palette palette(*currentPalette());
-  Palette newPalette(palette);
-  newPalette.resize(MAX(1, newPalette.size() - m_selectedEntries.picks()));
+  auto palette = currentPalette()->clone();
+  auto newPalette = palette->clone();
+  newPalette->resize(MAX(1, newPalette->size() - m_selectedEntries.picks()));
 
-  Remap remap = create_remap_to_move_picks(m_selectedEntries, palette.size());
-  for (int i=0; i<palette.size(); ++i) {
+  Remap remap = create_remap_to_move_picks(m_selectedEntries, palette->size());
+  for (int i=0; i<palette->size(); ++i) {
     if (!m_selectedEntries[i])
-      newPalette.setEntry(remap[i], palette.getEntry(i));
+      newPalette->setEntry(remap[i], palette->getEntry(i));
   }
 
   m_currentEntry = m_selectedEntries.firstPick();
   m_selectedEntries.clear();
   stopMarchingAnts();
 
-  setNewPalette(&palette, &newPalette, PaletteViewModification::CLEAR);
+  setNewPalette(*palette, *newPalette, PaletteViewModification::CLEAR);
 }
 
 void PaletteView::cutToClipboard()
@@ -361,10 +361,9 @@ bool PaletteView::onProcessMessage(Message* msg)
             if (m_hot.part == Hit::COLOR ||
                 m_hot.part == Hit::POSSIBLE_COLOR) {
               int newPalSize = MAX(1, m_hot.color);
-              Palette newPalette(*currentPalette());
-              newPalette.resize(newPalSize);
-              setNewPalette(currentPalette(), &newPalette,
-                            PaletteViewModification::RESIZE);
+              auto newPalette = currentPalette()->clone();
+              newPalette->resize(newPalSize);
+              setNewPalette(*currentPalette(), *newPalette, PaletteViewModification::RESIZE);
             }
             break;
         }
@@ -555,7 +554,7 @@ void PaletteView::onPaint(ui::PaintEvent& ev)
     const PalettePicks& clipboardPicks = clipboard::get_palette_picks();
 
     if (clipboardPalette &&
-        clipboardPalette->countDiff(palette, nullptr, nullptr) == 0) {
+        clipboardPalette->countDiff(*palette, nullptr, nullptr) == 0) {
       for (int i=0; i<clipboardPicks.size(); ++i) {
         if (!clipboardPicks[i])
           continue;
@@ -727,34 +726,34 @@ PaletteView::Hit PaletteView::hitTest(const gfx::Point& pos)
 
 void PaletteView::dropColors(int beforeIndex)
 {
-  Palette palette(*currentPalette());
-  if (beforeIndex >= palette.size()) {
-    palette.resize(beforeIndex);
-    m_selectedEntries.resize(palette.size());
+  auto palette = currentPalette()->clone();
+  if (beforeIndex >= palette->size()) {
+    palette->resize(beforeIndex);
+    m_selectedEntries.resize(palette->size());
   }
 
-  Palette newPalette(palette);
-  Remap remap(palette.size());
+  auto newPalette = palette->clone();
+  Remap remap(palette->size());
 
   // Copy colors
   if (m_copy) {
     int picks = m_selectedEntries.picks();
     ASSERT(picks >= 1);
 
-    remap = create_remap_to_expand_palette(palette.size()+picks,
+    remap = create_remap_to_expand_palette(palette->size()+picks,
                                            picks,
                                            beforeIndex);
 
-    newPalette.resize(palette.size()+picks);
-    for (int i=0; i<palette.size(); ++i)
-      newPalette.setEntry(remap[i], palette.getEntry(i));
+    newPalette->resize(palette->size()+picks);
+    for (int i=0; i<palette->size(); ++i)
+      newPalette->setEntry(remap[i], palette->getEntry(i));
 
-    for (int i=0, j=0; i<palette.size(); ++i) {
+    for (int i=0, j=0; i<palette->size(); ++i) {
       if (m_selectedEntries[i])
-        newPalette.setEntry(beforeIndex + (j++), palette.getEntry(i));
+        newPalette->setEntry(beforeIndex + (j++), palette->getEntry(i));
     }
 
-    for (int i=0, j=0; i<palette.size(); ++i) {
+    for (int i=0, j=0; i<palette->size(); ++i) {
       if (m_selectedEntries[i]) {
         if (m_currentEntry == i) {
           m_currentEntry = beforeIndex + j;
@@ -764,7 +763,7 @@ void PaletteView::dropColors(int beforeIndex)
       }
     }
 
-    for (int i=0; i<palette.size(); ++i)
+    for (int i=0; i<palette->size(); ++i)
       m_selectedEntries[i] = (i >= beforeIndex && i < beforeIndex + picks);
   }
   // Move colors
@@ -772,16 +771,15 @@ void PaletteView::dropColors(int beforeIndex)
     remap = create_remap_to_move_picks(m_selectedEntries, beforeIndex);
 
     auto oldSelectedCopies = m_selectedEntries;
-    for (int i=0; i<palette.size(); ++i) {
-      newPalette.setEntry(remap[i], palette.getEntry(i));
+    for (int i=0; i<palette->size(); ++i) {
+      newPalette->setEntry(remap[i], palette->getEntry(i));
       m_selectedEntries[remap[i]] = oldSelectedCopies[i];
     }
 
     m_currentEntry = remap[m_currentEntry];
   }
 
-  setNewPalette(&palette, &newPalette,
-                PaletteViewModification::DRAGANDDROP);
+  setNewPalette(*palette, *newPalette, PaletteViewModification::DRAGANDDROP);
 }
 
 void PaletteView::getEntryBoundsAndClip(int i, const PalettePicks& entries,
@@ -949,12 +947,12 @@ int PaletteView::findExactIndex(const app::Color& color) const
   return -1;
 }
 
-void PaletteView::setNewPalette(doc::Palette* oldPalette,
-                                doc::Palette* newPalette,
+void PaletteView::setNewPalette(const doc::Palette& oldPalette,
+                                const doc::Palette& newPalette,
                                 PaletteViewModification mod)
 {
   // No differences
-  if (!newPalette->countDiff(oldPalette, nullptr, nullptr))
+  if (!newPalette.countDiff(oldPalette, nullptr, nullptr))
     return;
 
   if (m_delegate) {
@@ -962,7 +960,7 @@ void PaletteView::setNewPalette(doc::Palette* oldPalette,
     m_delegate->onPaletteViewIndexChange(m_currentEntry, ui::kButtonLeft);
   }
 
-  set_current_palette(newPalette, false);
+  set_current_palette(&newPalette, false);
   manager()->invalidate();
 }
 
