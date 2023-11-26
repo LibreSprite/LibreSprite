@@ -1344,23 +1344,21 @@ bool Widget::onProcessMessage(Message* msg)
           parent()) {
         return parent()->sendMessage(msg);
       }
-      else
-        break;
-
-    case kDoubleClickMessage:
-      // Convert double clicks into mouse down
-      if (kMouseDownMessage) {
-        MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
-        MouseMessage mouseMsg2(kMouseDownMessage,
-                               mouseMsg->pointerType(),
-                               mouseMsg->buttons(),
-                               mouseMsg->modifiers(),
-                               mouseMsg->position(),
-                               mouseMsg->wheelDelta());
-
-        sendMessage(&mouseMsg2);
-      }
       break;
+
+    case kDoubleClickMessage: {
+      // Convert double clicks into mouse down
+      MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
+      MouseMessage mouseMsg2(kMouseDownMessage,
+                             mouseMsg->pointerType(),
+                             mouseMsg->buttons(),
+                             mouseMsg->modifiers(),
+                             mouseMsg->position(),
+                             mouseMsg->wheelDelta());
+
+      sendMessage(&mouseMsg2);
+      break;
+    }
 
     case kMouseDownMessage:
     case kMouseUpMessage:

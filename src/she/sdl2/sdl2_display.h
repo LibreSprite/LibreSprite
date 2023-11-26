@@ -22,6 +22,7 @@ namespace she {
         ~SDL2Display();
 
         void dispose() override;
+        void toggleFullscreen() override;
         bool setIcon(Surface*) override;
         int width() const override;
         int height() const override;
@@ -61,6 +62,7 @@ namespace she {
         NativeCursor m_nativeCursor;
         int m_restoredWidth;
         int m_restoredHeight;
+        bool m_isFullscreen = false;
         bool m_dirty = true;
     };
 

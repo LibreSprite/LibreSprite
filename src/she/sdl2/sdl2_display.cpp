@@ -83,6 +83,12 @@ namespace she {
     delete this;
   }
 
+  void SDL2Display::toggleFullscreen()
+  {
+    m_isFullscreen = !m_isFullscreen;
+    SDL_SetWindowFullscreen(m_window, m_isFullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+  }
+
   bool SDL2Display::setIcon(Surface* surface) {
     SDL_SetWindowIcon(m_window, static_cast<SDL_Surface*>(static_cast<SDL2Surface*>(surface)->nativeHandle()));
     return true;

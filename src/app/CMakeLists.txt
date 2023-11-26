@@ -280,6 +280,7 @@ add_library(app-lib
   commands/cmd_symmetry_mode.cpp
   commands/cmd_tiled_mode.cpp
   commands/cmd_timeline.cpp
+  commands/cmd_toggle_fullscreen.cpp
   commands/cmd_toggle_preview.cpp
   commands/cmd_undo.cpp
   commands/cmd_undo_history.cpp

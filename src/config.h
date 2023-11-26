@@ -30,7 +30,7 @@
 #define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
 #define WEBSITE_DOWNLOAD        WEBSITE "releases/"
 #define WEBSITE_CONTRIBUTORS    WEBSITE "graphs/contributors/"
-#define COPYRIGHT               "Copyright (C) 2001-2016 David Capello, 2016-2021 LibreSprite contributors"
+#define COPYRIGHT               "Copyright (C) 2001-2016 David Capello, 2016-2023 LibreSprite contributors"
 
 #include "base/base.h"
 #include "base/debug.h"
