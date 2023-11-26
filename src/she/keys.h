@@ -157,6 +157,7 @@ namespace she {
   };
 
   bool is_key_pressed(KeyScancode scancode);
+  int scancode_to_ascii(KeyScancode scancode);
   void clear_keyboard_buffer();
   void set_input_rect(const gfx::Rect& rect);
 } // namespace she

@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#include "she/keys.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -102,7 +103,7 @@ bool ButtonBase::onProcessMessage(Message* msg)
         bool mnemonicPressed =
           (msg->altPressed() &&
            mnemonicChar() &&
-           mnemonicChar() == tolower(keymsg->unicodeChar()));
+           mnemonicChar() == she::scancode_to_ascii(scancode));
 
         // For kButtonWidget
         if (m_behaviorType == kButtonWidget) {

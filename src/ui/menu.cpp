@@ -8,13 +8,14 @@
 #include "config.h"
 #endif
 
-#include "ui/menu.h"
-
 #include "gfx/size.h"
 #include "she/font.h"
 #include "ui/intern.h"
+#include "ui/keys.h"
+#include "ui/menu.h"
 #include "ui/ui.h"
 
+#include <iostream>
 #include <cctype>
 
 static const int kTimeoutToOpenSubmenu = 250;
@@ -485,9 +486,7 @@ bool MenuBox::onProcessMessage(Message* msg)
         if (((this->type() == kMenuBoxWidget) && (msg->modifiers() == kKeyNoneModifier || // <-- Inside menu-boxes we can use letters without Alt modifier pressed
                                                   msg->modifiers() == kKeyAltModifier)) ||
             ((this->type() == kMenuBarWidget) && (msg->modifiers() == kKeyAltModifier))) {
-          // TODO use scancode instead of unicodeChar
-          selected = check_for_letter(menu,
-            static_cast<KeyMessage*>(msg)->unicodeChar());
+          selected = check_for_letter(menu, scancode_to_ascii(static_cast<KeyMessage*>(msg)->scancode()));
 
           if (selected) {
             menu->highlightItem(selected, true, true, true);
