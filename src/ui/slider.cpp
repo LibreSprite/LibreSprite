@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#include <string>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -72,9 +73,7 @@ std::string Slider::convertValueToText(int value) const
   if (m_delegate)
     return m_delegate->onGetTextFromValue(value);
   else {
-    char buf[128];
-    std::sprintf(buf, "%d", value);
-    return buf;
+    return std::to_string(value);
   }
 }
 

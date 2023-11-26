@@ -12,6 +12,7 @@
 #include "ft/freetype_headers.h"
 #include "gfx/rect.h"
 
+#include <iostream>
 #include <map>
 
 namespace ft {
@@ -106,19 +107,17 @@ namespace ft {
 
       auto it = base::utf8_const_iterator(str.begin());
       auto end = base::utf8_const_iterator(str.end());
+
       for (; it != end; ++it) {
-        FT_UInt glyph_index = this->m_cache.getGlyphIndex(
-          this->m_face, *it);
+        FT_UInt glyph_index = m_cache.getGlyphIndex(m_face, *it);
 
         if (use_kerning && prev_glyph && glyph_index) {
           FT_Vector kerning;
-          FT_Get_Kerning(this->m_face, prev_glyph, glyph_index,
-                         FT_KERNING_DEFAULT, &kerning);
+          FT_Get_Kerning(m_face, prev_glyph, glyph_index, FT_KERNING_DEFAULT, &kerning);
           x += kerning.x / 64.0;
         }
 
-        Glyph* glyph = this->m_cache.loadGlyph(
-          this->m_face, glyph_index, this->m_antialias);
+        Glyph* glyph = m_cache.loadGlyph(m_face, glyph_index, this->m_antialias);
         if (glyph) {
           glyph->bitmap = &FT_BitmapGlyph(glyph->ft_glyph)->bitmap;
           glyph->x = x + glyph->bearingX;
@@ -132,7 +131,7 @@ namespace ft {
           x += glyph->ft_glyph->advance.x / double(1 << 16);
           y += glyph->ft_glyph->advance.y / double(1 << 16);
 
-          this->m_cache.doneGlyph(glyph);
+          m_cache.doneGlyph(glyph);
         }
 
         prev_glyph = glyph_index;
@@ -246,7 +245,7 @@ namespace ft {
     }
 
   private:
-    std::map<FT_UInt, Glyph*> m_glyphMap;
+    std::unordered_map<FT_UInt, Glyph*> m_glyphMap;
   };
 
   typedef FaceFT<SimpleCache> Face;

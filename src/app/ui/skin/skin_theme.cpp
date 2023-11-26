@@ -9,6 +9,10 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+#include <memory>
+#include <unordered_map>
+
 #include "app/file_system.h"
 #include "app/modules/gui.h"
 #include "app/pref/preferences.h"
@@ -174,13 +178,29 @@ SkinTheme::~SkinTheme()
     m_sheet->dispose();
 
   m_parts_by_id.clear();
+}
 
-  // Destroy fonts
-  if (m_defaultFont)
-    m_defaultFont->dispose();
-
-  if (m_miniFont)
-    m_miniFont->dispose();
+gfx::Color SkinTheme::getColorById(const std::string& id) {
+  auto it = m_colors_by_id.find(id);
+  auto end = m_colors_by_id.end();
+  if (it != end)
+    return it->second;
+  std::string found;
+  if (it == end && id.rfind("_face") != std::string::npos) {
+    found = "face";
+    it = m_colors_by_id.find(found);
+  }
+  if (it == end && id.rfind("_text") != std::string::npos) {
+    found = "text";
+    it = m_colors_by_id.find(found);
+  }
+  if (it != end) {
+    m_colors_by_id[id] = it->second;
+    std::cout << "assigning color " << found << " to " << id << std::endl;
+    return it->second;
+  }
+  std::cout << "Could not find color " << id << std::endl;
+  return 0xFF00FFFF;
 }
 
 void SkinTheme::onRegenerate()
@@ -231,9 +251,6 @@ void SkinTheme::loadFonts(const std::string& skinId)
 {
   TRACE("SkinTheme::loadFonts(%s)\n", skinId.c_str());
 
-  if (m_defaultFont) m_defaultFont->dispose();
-  if (m_miniFont) m_miniFont->dispose();
-
   Preferences& pref = Preferences::instance();
   std::vector<std::string> paths;
 
@@ -273,6 +290,7 @@ void SkinTheme::loadXml(const std::string& skinId)
       if (rf.findFirst()) {
           loadFonts(skinId);
           loadSkinXml(rf.filename());
+          return;
       }
   }
 
@@ -297,30 +315,40 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
       .FirstChild("theme")
       .FirstChild("fonts")
       .FirstChild("font").ToElement();
+
+    std::unordered_map<std::string, std::shared_ptr<she::Font>> known;
+    if (!m_defaultFont)
+      loadFonts(pref.theme.selected.defaultValue());
+    if (m_defaultFont)
+      known["Aseprite"] = m_defaultFont;
+    if (m_miniFont)
+      known["Aseprite Mini"] = m_miniFont;
+
     for (;xmlDim; xmlDim = xmlDim->NextSiblingElement()) {
       std::string id = xmlDim->Attribute("id");
       std::string file = xmlDim->Attribute("file") ?: "";
       std::string name = xmlDim->Attribute("name") ?: "";
-      std::string user = id == "default" ? pref.theme.font() : pref.theme.miniFont();
-      uint32_t size = strtol(xmlDim->Attribute("size"), NULL, 10);
-      std::vector<std::string> paths;
-
-      if (!user.empty()) paths.push_back(user);
-      if (!file.empty()) paths.push_back(file);
-      if (!name.empty()) paths.push_back(name);
-      paths.push_back("arial");
-      paths.push_back("sans");
-
-      auto font = loadFont(paths, size);
+      std::string fontattr = xmlDim->Attribute("font") ?: "";
+      std::string user;
+      std::shared_ptr<she::Font> font{};
+      auto it = known.find(fontattr);
+      if (it != known.end()) {
+        font = it->second;
+      } else if (!file.empty()) {
+        uint32_t size = strtol(xmlDim->Attribute("size") ?: "", NULL, 10) ?: 8;
+        font = loadFont({file}, size);
+        if (!font) {
+          std::cerr << "Could not load font " << file << std::endl;
+        }
+      }
 
       if (font) {
+        if (!name.empty()) {
+          known[name] = font;
+        }
         if (id == "default") {
-          if (m_defaultFont)
-            m_defaultFont->dispose();
           m_defaultFont = font;
         } else if (id == "mini") {
-          if (m_miniFont)
-            m_miniFont->dispose();
           m_miniFont = font;
         }
       }
@@ -346,6 +374,8 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
   // Load colors
   {
+    m_colors_by_id.clear();
+
     TiXmlElement* xmlColor = handle
       .FirstChild("theme")
       .FirstChild("colors")
@@ -462,7 +492,8 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
       const char* style_id = xmlStyle->Attribute("id");
       const char* base_id = xmlStyle->Attribute("base");
       const css::Style* base = NULL;
-
+      if (!base_id)
+        base_id = xmlStyle->Attribute("extends");
       if (base_id)
         base = m_stylesheet.getCssStyle(base_id);
 
@@ -801,7 +832,7 @@ she::Surface* SkinTheme::sliceSheet(she::Surface* sur, const gfx::Rect& bounds)
   return sur;
 }
 
-she::Font* SkinTheme::getWidgetFont(const Widget* widget) const
+std::shared_ptr<she::Font> SkinTheme::getWidgetFont(const Widget* widget) const
 {
   SkinPropertyPtr skinPropery = widget->getProperty(SkinProperty::Name);
   if (skinPropery && skinPropery->hasMiniFont())
@@ -2299,38 +2330,42 @@ void SkinTheme::paintIcon(Widget* widget, Graphics* g, IButtonIcon* iconInterfac
     g->drawRgbaSurface(icon_bmp, x, y);
 }
 
-she::Font* SkinTheme::loadFont(const std::vector<std::string>& fonts, std::size_t size)
+std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& fonts, std::size_t size)
 {
-  she::Font* fallback = nullptr;
+  std::shared_ptr<she::Font> fallback;
+
   for (auto& themeFont : fonts) {
     bool isTrueType = base::get_file_extension(themeFont) != "png";
     if (isTrueType) {
-        auto themeLower = base::string_to_lower(base::get_file_title(themeFont));
-        for (auto& dir : base::get_font_paths()) {
-            auto item = FileSystemModule::instance()->getFileItemFromPath(dir);
-            if (!item)
-                continue;
-            for (auto child : item->children()) {
-                if (child->isFolder())
-                    continue;
-                auto isMatch = base::string_to_lower(child->displayName()).find(themeLower) != std::string::npos;
-                if (!isMatch && fallback)
-                    continue;
-                auto fullName = child->fileName();
-                if (auto f = she::instance()->loadTrueTypeFont(fullName.c_str(), size)) {
-                    fallback = f;
-                    if (!isMatch)
-                        continue;
-                    return f;
-                }
-            }
+      std::vector<std::pair<std::string, std::string>> candidates;
+      auto themeLower = base::string_to_lower(base::get_file_title(themeFont));
+      for (auto& dir : base::get_font_paths()) {
+        auto item = FileSystemModule::instance()->getFileItemFromPath(dir);
+        if (!item)
+          continue;
+        for (auto child : item->children()) {
+          if (child->isFolder())
+            continue;
+          auto shortName = base::string_to_lower(child->displayName());
+          if (shortName.find(themeLower) != std::string::npos)
+            candidates.emplace_back(shortName, child->fileName());
         }
+      }
+      std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b){
+        return a.first.size() > b.first.size();
+      });
+      do {
+        if (auto f = she::instance()->loadTrueTypeFont(candidates.back().second.c_str(), size)) {
+          return std::shared_ptr<she::Font>(f);
+        }
+        candidates.pop_back();
+      } while (!candidates.empty());
     } else {
         try {
             auto f = she::instance()->loadSpriteSheetFont(themeFont.c_str(), guiscale());
             if (f->isScalable())
                 f->setSize(size);
-            return f;
+            return std::shared_ptr<she::Font>(f);
         } catch(const std::exception&) {} // do nothing
     }
   }

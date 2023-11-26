@@ -13,6 +13,7 @@
 #include "gfx/rect.h"
 #include "gfx/size.h"
 
+#include <memory>
 #include <string>
 
 namespace gfx {
@@ -74,8 +75,8 @@ namespace ui {
     // FONT & TEXT
     // ======================================================================
 
-    she::Font* font() { return m_font; }
-    void setFont(she::Font* font);
+    std::shared_ptr<she::Font> font() { return m_font; }
+    void setFont(std::shared_ptr<she::Font> font);
 
     void drawChar(int chr, gfx::Color fg, gfx::Color bg, int x, int y);
     void drawString(const std::string& str, gfx::Color fg, gfx::Color bg, const gfx::Point& pt);
@@ -98,7 +99,7 @@ namespace ui {
     int m_dx;
     int m_dy;
     gfx::Rect m_clipBounds;
-    she::Font* m_font;
+    std::shared_ptr<she::Font> m_font;
     gfx::Rect m_dirtyBounds;
   };
 

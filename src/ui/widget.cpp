@@ -166,7 +166,7 @@ void Widget::setTextf(const char *format, ...)
     va_list ap;
     va_start(ap, format);
     char buf[4096];
-    vsprintf(buf, format, ap);
+    vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 
     setText(buf);
@@ -183,7 +183,7 @@ void Widget::setTextQuiet(const std::string& text)
   enableFlags(HAS_TEXT);
 }
 
-she::Font* Widget::font() const
+std::shared_ptr<she::Font> Widget::font() const
 {
   if (!m_font) {
     ASSERT(m_theme);
@@ -192,7 +192,7 @@ she::Font* Widget::font() const
   return m_font;
 }
 
-void Widget::resetFont(she::Font* font)
+void Widget::resetFont(std::shared_ptr<she::Font> font)
 {
   m_font = font;
 }
@@ -777,7 +777,7 @@ void Widget::getDrawableRegion(gfx::Region& region, DrawableRegionFlags flags)
 
 int Widget::textWidth() const
 {
-  return Graphics::measureUIStringLength(text().c_str(), font());
+  return Graphics::measureUIStringLength(text().c_str(), font().get());
 }
 
 int Widget::textHeight() const

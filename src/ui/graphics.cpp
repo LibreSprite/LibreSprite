@@ -195,7 +195,7 @@ void Graphics::blit(she::Surface* srcSurface, int srcx, int srcy, int dstx, int 
   srcSurface->blitTo(m_surface, srcx, srcy, m_dx+dstx, m_dy+dsty, w, h);
 }
 
-void Graphics::setFont(she::Font* font)
+void Graphics::setFont(std::shared_ptr<she::Font> font)
 {
   m_font = font;
 }
@@ -205,7 +205,7 @@ void Graphics::drawChar(int chr, gfx::Color fg, gfx::Color bg, int x, int y)
   dirty(gfx::Rect(gfx::Point(m_dx+x, m_dy+y), measureChar(chr)));
 
   she::SurfaceLock lock(m_surface);
-  m_surface->drawChar(m_font, fg, bg, m_dx+x, m_dy+y, chr);
+  m_surface->drawChar(m_font.get(), fg, bg, m_dx+x, m_dy+y, chr);
 }
 
 void Graphics::drawString(const std::string& str, gfx::Color fg, gfx::Color bg, const gfx::Point& ptOrig)
@@ -214,7 +214,7 @@ void Graphics::drawString(const std::string& str, gfx::Color fg, gfx::Color bg, 
   dirty(gfx::Rect(pt.x, pt.y, m_font->textLength(str), m_font->height()));
 
   she::SurfaceLock lock(m_surface);
-  m_surface->drawString(m_font, fg, bg, pt.x, pt.y, str);
+  m_surface->drawString(m_font.get(), fg, bg, pt.x, pt.y, str);
 }
 
 void Graphics::drawUIString(const std::string& str, gfx::Color fg, gfx::Color bg, const gfx::Point& pt,
@@ -235,7 +235,7 @@ void Graphics::drawUIString(const std::string& str, gfx::Color fg, gfx::Color bg
         underscored_w = m_font->charWidth(*it);
       }
     }
-    m_surface->drawChar(m_font, fg, bg, x, y, *it);
+    m_surface->drawChar(m_font.get(), fg, bg, x, y, *it);
     x += m_font->charWidth(*it);
     ++it;
   }
@@ -265,7 +265,7 @@ gfx::Size Graphics::measureChar(int chr)
 gfx::Size Graphics::measureUIString(const std::string& str)
 {
   return gfx::Size(
-    Graphics::measureUIStringLength(str, m_font),
+    Graphics::measureUIStringLength(str, m_font.get()),
     m_font->height());
 }
 

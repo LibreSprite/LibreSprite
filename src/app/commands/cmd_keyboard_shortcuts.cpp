@@ -254,7 +254,7 @@ private:
         for (int i=0; i<maxi; ++i, y += dh) {
           int w = Graphics::measureUIStringLength(
             (accels && i < (int)accels->size() ? (*accels)[i].toString().c_str(): ""),
-            font());
+            font().get());
           gfx::Rect itemBounds(bounds.x + g_sep, y, w, dh);
           itemBounds = itemBounds.enlarge(
             gfx::Border(
@@ -290,7 +290,7 @@ private:
                                           itemBounds.x + itemBounds.w + 2*guiscale(),
                                           itemBounds.y,
                                           Graphics::measureUIStringLength(
-                                            label, font()) + 4*guiscale(),
+                                            label, font().get()) + 4*guiscale(),
                                           itemBounds.h));
               m_deleteButton->setText(label);
 
@@ -306,7 +306,7 @@ private:
             setup_mini_look(m_addButton.get());
             addChild(m_addButton.get());
 
-            itemBounds.w = 8*guiscale() + Graphics::measureUIStringLength("Add", font());
+            itemBounds.w = 8*guiscale() + Graphics::measureUIStringLength("Add", font().get());
             itemBounds.x -= itemBounds.w + 2*guiscale();
 
             m_addButton->setBgColor(gfx::ColorNone);

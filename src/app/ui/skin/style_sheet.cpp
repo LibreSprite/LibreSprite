@@ -79,14 +79,16 @@ const css::Style* StyleSheet::getCssStyle(const std::string& id)
   return m_sheet->getStyle(id);
 }
 
+Style* StyleSheet::findStyle(const std::string& id)
+{
+  StyleMap::iterator it = m_styles.find(id);
+  return (it != m_styles.end()) ? it->second : nullptr;
+}
+
 Style* StyleSheet::getStyle(const std::string& id)
 {
-  Style* style = NULL;
-
-  StyleMap::iterator it = m_styles.find(id);
-  if (it != m_styles.end())
-    style = it->second;
-  else {
+  Style* style = findStyle(id);
+  if (!style) {
     style = new Style(*m_sheet, id);
     m_styles[id] = style;
   }

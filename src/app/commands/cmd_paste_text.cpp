@@ -119,7 +119,7 @@ private:
     if (m_font)
       m_font->setAntialias(antialias()->isSelected());
 
-    userText()->resetFont(m_font.get());
+    userText()->resetFont(m_font);
     userText()->invalidate();
   }
 

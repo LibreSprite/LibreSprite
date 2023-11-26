@@ -73,12 +73,12 @@ void Alert::setProgress(double progress)
 
 AlertPtr Alert::create(const char* format, ...)
 {
-  char buf[4096];               // TODO warning buffer overflow
+  char buf[4096];
   va_list ap;
 
   // Process arguments
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, sizeof(buf), format, ap);
   va_end(ap);
 
   // Create the alert window
@@ -94,12 +94,12 @@ AlertPtr Alert::create(const char* format, ...)
 // static
 int Alert::show(const char* format, ...)
 {
-  char buf[4096];               // TODO warning buffer overflow
+  char buf[4096];
   va_list ap;
 
   // Process arguments
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, sizeof(buf), format, ap);
   va_end(ap);
 
   // Create the alert window
@@ -171,7 +171,7 @@ void Alert::processString(char* buf, std::vector<Widget*>& labels, std::vector<W
           button_widget->setMinSize(gfx::Size(60*guiscale(), 0));
           buttons.push_back(button_widget);
 
-          sprintf(buttonId, "button-%lu", buttons.size());
+          snprintf(buttonId, sizeof(buttonId), "button-%lu", buttons.size());
           button_widget->setId(buttonId);
           button_widget->Click.connect(base::Bind<void>(&Window::closeWindow, this, button_widget));
         }

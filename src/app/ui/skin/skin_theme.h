@@ -18,6 +18,7 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 namespace ui {
   class Entry;
@@ -44,9 +45,9 @@ namespace app {
       SkinTheme();
       ~SkinTheme();
 
-      she::Font* getDefaultFont() const override { return m_defaultFont; }
-      she::Font* getWidgetFont(const ui::Widget* widget) const override;
-      she::Font* getMiniFont() const { return m_miniFont; }
+      std::shared_ptr<she::Font> getDefaultFont() const override { return m_defaultFont; }
+      std::shared_ptr<she::Font> getWidgetFont(const ui::Widget* widget) const override;
+      std::shared_ptr<she::Font> getMiniFont() const { return m_miniFont; }
 
       ui::Cursor* getCursor(ui::CursorType type) override;
       void initWidget(ui::Widget* widget) override;
@@ -108,10 +109,7 @@ namespace app {
         return m_dimensions_by_id[id] * ui::guiscale();
       }
 
-      gfx::Color getColorById(const std::string& id) {
-        ASSERT(m_colors_by_id.find(id) != m_colors_by_id.end());
-        return m_colors_by_id[id];
-      }
+      gfx::Color getColorById(const std::string& id);
 
     protected:
       void onRegenerate() override;
@@ -133,7 +131,7 @@ namespace app {
 
       void paintIcon(ui::Widget* widget, ui::Graphics* g, ui::IButtonIcon* iconInterface, int x, int y);
 
-      she::Font* loadFont(const std::vector<std::string>& fonts, std::size_t);
+      std::shared_ptr<she::Font> loadFont(const std::vector<std::string>& fonts, std::size_t);
 
       she::Surface* m_sheet;
       std::map<std::string, SkinPartPtr> m_parts_by_id;
@@ -142,8 +140,8 @@ namespace app {
       std::map<std::string, int> m_dimensions_by_id;
       std::vector<ui::Cursor*> m_cursors;
       StyleSheet m_stylesheet;
-      she::Font* m_defaultFont;
-      she::Font* m_miniFont;
+      std::shared_ptr<she::Font> m_defaultFont;
+      std::shared_ptr<she::Font> m_miniFont;
     };
 
     inline SkinPartPtr get_part_by_id(const std::string& id) {

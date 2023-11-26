@@ -145,7 +145,7 @@ public:
 
         ttFont->face().forEachGlyph(
           str,
-          [this, x, y, fg, fg_alpha, bg, antialias, &clipBounds, &fd](const ft::Glyph& glyph) {
+          [&](const ft::Glyph& glyph) {
             gfx::Rect origDstBounds(x + int(glyph.x),
                                     y + int(glyph.y),
                                     int(glyph.bitmap->width),

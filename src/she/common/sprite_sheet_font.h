@@ -25,11 +25,8 @@ public:
 
   ~SpriteSheetFont() {
     ASSERT(m_sheet);
-    m_sheet->dispose();
-  }
-
-  void dispose() override {
-    delete this;
+    if (m_sheet)
+        m_sheet->dispose();
   }
 
   FontType type() override {

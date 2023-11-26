@@ -85,7 +85,7 @@ void drawTextBox(Graphics* g, Widget* widget,
   gfx::Point scroll;
   int viewport_w, viewport_h;
   int textheight = widget->textHeight();
-  she::Font* font = widget->font();
+  auto font = widget->font();
   char *beg_end, *old_end;
   int width;
 

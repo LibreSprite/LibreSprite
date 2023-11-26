@@ -25,18 +25,9 @@ FreeTypeFont::FreeTypeFont(const char* filename, int height)
     m_face.setSize(height);
 }
 
-FreeTypeFont::~FreeTypeFont()
-{
-}
-
 bool FreeTypeFont::isValid() const
 {
   return m_face.isValid();
-}
-
-void FreeTypeFont::dispose()
-{
-  delete this;
 }
 
 FontType FreeTypeFont::type()

@@ -530,7 +530,7 @@ void PaletteView::onPaint(ui::PaintEvent& ev)
         gfx::Color gfxColor = drawEntry(g, box2, i); // Draw color entry
 
         gfx::Color neg = color_utils::blackandwhite_neg(gfxColor);
-        she::Font* minifont = theme->getMiniFont();
+        auto minifont = theme->getMiniFont();
         std::string text = base::convert_to<std::string>(k);
         g->setFont(minifont);
         g->drawString(text, neg, gfx::ColorNone,

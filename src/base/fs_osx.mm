@@ -30,7 +30,8 @@ std::string get_lib_app_support_path()
 std::vector<std::string> get_font_paths()
 {
     return {
-        "/System/Library/Fonts/",
+        "/System/Library/Fonts/Supplemental",
+        "/System/Library/Fonts",
         "/Library/Fonts",
         "~/Library/Fonts"
     };

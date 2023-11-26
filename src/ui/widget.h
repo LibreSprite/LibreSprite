@@ -20,6 +20,7 @@
 #include "ui/widgets_list.h"
 
 #include <map>
+#include <memory>
 #include <string>
 
 #define ASSERT_VALID_WIDGET(widget) ASSERT((widget) != NULL)
@@ -147,8 +148,8 @@ namespace ui {
     // LOOK & FEEL
     // ===============================================================
 
-    she::Font* font() const;
-    void resetFont(she::Font* font = nullptr);
+    std::shared_ptr<she::Font> font() const;
+    void resetFont(std::shared_ptr<she::Font> font = nullptr);
 
     // Gets the background color of the widget.
     gfx::Color bgColor() const {
@@ -397,7 +398,7 @@ namespace ui {
     int m_flags;                 // Special boolean properties (see flags in ui/base.h)
     Theme* m_theme;              // Widget's theme
     std::string m_text;          // Widget text
-    mutable she::Font* m_font;   // Cached font returned by the theme
+    mutable std::shared_ptr<she::Font> m_font;   // Cached font returned by the theme
     gfx::Color m_bgColor;        // Background color
     gfx::Rect m_bounds;
     gfx::Region m_updateRegion;   // Region to be redrawed.

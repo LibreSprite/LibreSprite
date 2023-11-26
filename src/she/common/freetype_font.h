@@ -17,10 +17,8 @@ namespace she {
   class FreeTypeFont : public Font {
   public:
     FreeTypeFont(const char* filename, int height);
-    ~FreeTypeFont();
 
     bool isValid() const;
-    void dispose() override;
     FontType type() override;
     int height() const override;
     gfx::Rect charBounds(int chr) const override;

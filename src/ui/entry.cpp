@@ -52,7 +52,7 @@ Entry::Entry(std::size_t maxsize, const char* format, ...)
   if (format) {
     va_list ap;
     va_start(ap, format);
-    vsprintf(buf, format, ap);
+    vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
   }
   // empty string

@@ -21,7 +21,6 @@ namespace she {
   class Font {
   public:
     virtual ~Font() { }
-    virtual void dispose() = 0;
     virtual FontType type() = 0;
     virtual int height() const = 0;
     virtual gfx::Rect charBounds(int chr) const = 0;

@@ -483,8 +483,8 @@ bool StandbyState::onUpdateStatusBar(Editor* editor)
       auto gb = editor->docPref().grid.bounds();
       int col = (spritePos.x - (gb.x % gb.w)) / gb.w;
       int row = (spritePos.y - (gb.y % gb.h)) / gb.h;
-      sprintf(
-        buf+std::strlen(buf), " :grid: %d %d", col, row);
+      auto offset = std::strlen(buf);
+      snprintf(buf+offset, sizeof(buf) - offset, " :grid: %d %d", col, row);
     }
 
     StatusBar::instance()->setStatusText(0, buf);

@@ -52,6 +52,7 @@ namespace app {
       const css::Style* getCssStyle(const std::string& id);
 
       Style* getStyle(const std::string& id);
+      Style* findStyle(const std::string& id);
 
       static SkinPartPtr convertPart(const css::Value& value);
       static gfx::Color convertColor(const css::Value& value);
