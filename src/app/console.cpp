@@ -26,10 +26,9 @@ namespace app {
 
 using namespace ui;
 
-static Window* wid_console = NULL;
-static Widget* wid_view = NULL;
-static Widget* wid_textbox = NULL;
-static Widget* wid_cancel = NULL;
+static Window* wid_console{};
+static Widget* wid_view{};
+static Widget* wid_textbox{};
 static int console_counter = 0;
 static bool console_locked;
 static bool want_close_flag = false;
@@ -56,30 +55,35 @@ Console::Console(Context* ctx)
   Grid* grid = new Grid(1, false);
   View* view = new View();
   TextBox* textbox = new TextBox("", WORDWRAP);
-  Button* button = new Button("&Cancel");
+  Button* close = new Button("&Close");
+  Button* clear = new Button("C&lear");
 
-  if (!grid || !textbox || !button)
+  if (!grid || !textbox || !close)
     return;
 
-  // The "button" closes the console
-  button->Click.connect(base::Bind<void>(&Window::closeWindow, window, button));
+  // The "close" closes the console
+  close->Click.connect([=](Event&){window->closeWindow(close);}); // base::Bind<void>(&Window::closeWindow, window, close));
+  clear->Click.connect([=](Event&){textbox->setText("");});
 
   view->attachToView(textbox);
 
-  button->setMinSize(gfx::Size(60, 0));
+  close->setMinSize(gfx::Size(60, 0));
+  clear->setMinSize(gfx::Size(60, 0));
 
   grid->addChildInCell(view, 1, 1, HORIZONTAL | VERTICAL);
-  grid->addChildInCell(button, 1, 1, CENTER);
+  auto row = new Grid(2, false);
+  row->addChildInCell(clear, 1, 1, CENTER);
+  row->addChildInCell(close, 1, 1, CENTER);
+  grid->addChildInCell(row, 1, 1, CENTER);
   window->addChild(grid);
 
   view->setVisible(false);
-  button->setFocusMagnet(true);
+  close->setFocusMagnet(true);
   view->setExpansive(true);
 
   wid_console = window;
   wid_view = view;
   wid_textbox = textbox;
-  wid_cancel = button;
   console_locked = false;
   want_close_flag = false;
 }
@@ -138,14 +142,7 @@ void Console::printf(const char* format, ...)
     wid_console->invalidate();
   }
 
-  const std::string& text = wid_textbox->text();
-
-  std::string final;
-  if (!text.empty())
-    final += text;
-  final += buf;
-
-  wid_textbox->setText(final.c_str());
+  wid_textbox->setText(wid_textbox->text() + buf);
 }
 
 // static
