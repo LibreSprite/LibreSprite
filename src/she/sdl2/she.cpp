@@ -200,7 +200,7 @@ she::KeyModifiers getSheModifiers() {
 }
 
 static std::deque<she::Event> keybuffer;
-
+static bool display_has_mouse = false;
 namespace she {
   namespace sdl {
     bool isMaximized;
@@ -270,6 +270,16 @@ namespace she {
             return;
           }
 
+          case SDL_WINDOWEVENT_LEAVE: {
+            if (display_has_mouse) {
+              display_has_mouse = false;
+
+              Event ev;
+              ev.setType(Event::MouseLeave);
+              queue_event(ev);
+            }
+          }
+
           default:
             std::cout << "Unknown windowevent: " << (int) sdlEvent.window.event << std::endl;
             continue;
@@ -277,6 +287,13 @@ namespace she {
           continue;
 
         case SDL_MOUSEMOTION:
+          if (!display_has_mouse) {
+            display_has_mouse = true;
+            Event ev;
+            ev.setType(Event::MouseEnter);
+            queue_event(ev);
+          }
+
           event.setType(Event::MouseMove);
           event.setModifiers(getSheModifiers());
           event.setPosition({
