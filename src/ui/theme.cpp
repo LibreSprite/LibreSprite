@@ -104,7 +104,6 @@ void drawTextBox(Graphics* g, Widget* widget,
     y1 = widget->clientBounds().y + widget->border().top();
     viewport_w = widget->clientBounds().w - widget->border().width();
     viewport_h = widget->clientBounds().h - widget->border().height();
-    scroll.x = scroll.y = 0;
   }
   x2 = x1 + viewport_w;
   y2 = y1 + viewport_h;
@@ -140,9 +139,9 @@ void drawTextBox(Graphics* g, Widget* widget,
   }
 
   // Draw line-by-line
-  y = y1 - scroll.y;
+  y = y1;
   for (beg=end=text; end; ) {
-    x = x1 - scroll.x;
+    x = x1;
 
     // Without word-wrap
     if (!(widget->align() & WORDWRAP)) {
