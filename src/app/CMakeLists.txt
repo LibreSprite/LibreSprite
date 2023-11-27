@@ -88,6 +88,7 @@ set(data_recovery_files
 set(file_formats
   file/ase_format.cpp
   file/bmp_format.cpp
+  file/extension_format.cpp
   file/fli_format.cpp
   file/gif_format.cpp
   file/ico_format.cpp
@@ -488,6 +489,7 @@ target_link_libraries(app-lib
   ui-lib
   undo
   ${KEEP_INJECTIONS_END}
+  ${LibArchive_LIBRARY}
   ${TINYXML_LIBRARY}
   ${JPEG_LIBRARIES}
   ${GIF_LIBRARIES}
