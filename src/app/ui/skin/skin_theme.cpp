@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_map>
+#include <optional>
 
 #include "app/file_system.h"
 #include "app/modules/gui.h"
@@ -278,29 +279,30 @@ void SkinTheme::loadFonts(const std::string& skinId)
   }
 }
 
+static std::optional<std::string> findFile(const std::string& name) {
+  {
+      ResourceFinder rf;
+      rf.includeDataDir(name.c_str());
+      if (rf.findFirst()) {
+        return {rf.filename()};
+      }
+  }
+  return {};
+}
+
 void SkinTheme::loadXml(const std::string& skinId)
 {
   TRACE("SkinTheme::loadXml(%s)\n", skinId.c_str());
-
   // Load the skin XML
-  std::string xml_filename = "skins/" + skinId + "/skin.xml";
-  {
-      ResourceFinder rf;
-      rf.includeDataDir(xml_filename.c_str());
-      if (rf.findFirst()) {
-          loadFonts(skinId);
-          loadSkinXml(rf.filename());
-          return;
-      }
+  if (auto filename = findFile("skins/" + skinId + "/skin.xml")) {
+    loadFonts(skinId);
+    loadSkinXml(*filename);
+    return;
   }
 
-  xml_filename = "skins/" + skinId + "/theme.xml";
-  {
-      ResourceFinder rf;
-      rf.includeDataDir(xml_filename.c_str());
-      if (rf.findFirst()) {
-          loadThemeXml(rf.filename());
-      }
+  if (auto filename = findFile("skins/" + skinId + "/theme.xml")) {
+    loadThemeXml(*filename);
+    return;
   }
 }
 
@@ -2354,12 +2356,12 @@ std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& f
       std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b){
         return a.first.size() > b.first.size();
       });
-      do {
+      while (!candidates.empty()) {
         if (auto f = she::instance()->loadTrueTypeFont(candidates.back().second.c_str(), size)) {
           return std::shared_ptr<she::Font>(f);
         }
         candidates.pop_back();
-      } while (!candidates.empty());
+      }
     } else {
         try {
             auto f = she::instance()->loadSpriteSheetFont(themeFont.c_str(), guiscale());
