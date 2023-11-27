@@ -69,6 +69,7 @@ namespace app {
     bool getTimelineVisibility() const;
     void setTimelineVisibility(bool visible);
     void popTimeline();
+    void alternateTimeline();
 
     void showDataRecovery(crash::DataRecovery* dataRecovery);
 

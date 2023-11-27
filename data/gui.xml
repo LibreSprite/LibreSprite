@@ -772,6 +772,7 @@
         <item command="Timeline" text="&amp;Timeline">
           <param name="switch" value="true" />
         </item>
+        <item command="AlternateTimeline" text="Alternate Timeline" />
         <item command="TogglePreview" text="Previe&amp;w" />
         <item command="FullscreenPreview" text="&amp;Fullscreen Preview" />
         <item command="ToggleFullScreen" text="Toggle Fullscreen"/>

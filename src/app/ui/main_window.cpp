@@ -96,11 +96,19 @@ MainWindow::MainWindow()
   // Default splitter positions
   colorBarSplitter()->setPosition(m_colorBar->sizeHint().w);
   timelineSplitter()->setPosition(75);
+  timelineSplitter()->setAlign(Preferences::instance().general.verticalTimeline() ? HORIZONTAL : VERTICAL);
 
   // Prepare the window
   remapWindow();
 
   AppMenus::instance()->rebuildRecentList();
+}
+
+void MainWindow::alternateTimeline() {
+  auto old = Preferences::instance().general.verticalTimeline();
+  Preferences::instance().general.verticalTimeline(!old);
+  timelineSplitter()->setAlign(Preferences::instance().general.verticalTimeline() ? HORIZONTAL : VERTICAL);
+  configureWorkspaceLayout();
 }
 
 MainWindow::~MainWindow()
