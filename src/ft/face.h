@@ -141,14 +141,12 @@ namespace ft {
     gfx::Rect calcTextBounds(const std::string& str) {
       gfx::Rect bounds(0, 0, 0, 0);
 
-      forEachGlyph(
-        str,
-        [&bounds, this](Glyph& glyph) {
-          bounds |= gfx::Rect(int(glyph.x),
-                              int(glyph.y),
-                              glyph.ft_glyph->advance.x / double(1 << 16),
-                              glyph.bitmap->rows);
-        });
+      forEachGlyph(str, [&](Glyph& glyph) {
+        bounds |= gfx::Rect(int(glyph.x),
+                            int(glyph.y),
+                            glyph.ft_glyph->advance.x / double(1 << 16),
+                            glyph.bitmap->rows);
+      });
 
       return bounds;
     }

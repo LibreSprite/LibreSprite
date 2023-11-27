@@ -33,7 +33,7 @@ Exception::Exception(const char* format, ...) throw()
       va_start(ap, format);
 
       char buf[1024];           // TODO warning buffer overflow
-      std::vsprintf(buf, format, ap);
+      std::vsnprintf(buf, sizeof(buf), format, ap);
       m_msg = buf;
 
       va_end(ap);
