@@ -194,7 +194,17 @@ std::vector<std::string> list_files(const std::string& path)
   return files;
 }
 
-#if !__APPLE__
+#if defined(ANDROID)
+std::vector<std::string> get_font_paths()
+{
+    return {
+        "/system/fonts",
+        _AndroidDataDir + "/data/fonts",
+        _AndroidStorageDir + "/fonts"
+    };
+}
+
+#elif !__APPLE__
 
 std::vector<std::string> get_font_paths()
 {
