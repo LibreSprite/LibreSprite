@@ -20,6 +20,11 @@
 #include <iostream>
 #include <string>
 
+
+namespace she {
+void log(const std::string&);
+}
+
 namespace {
 
 class nullbuf : public std::streambuf {
@@ -98,6 +103,8 @@ void LOG(const char* format, ...)
   va_list ap;
   va_start(ap, format);
   std::vsnprintf(buf, sizeof(buf)-1, format, ap);
+  she::log(buf);
+
   log_text(buf);
 
 #ifdef _DEBUG

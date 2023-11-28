@@ -18,6 +18,7 @@
 #include "she/common/system.h"
 #include "she/logger.h"
 
+#undef HAVE_STDINT_H
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -208,6 +209,12 @@ she::KeyModifiers getSheModifiers() {
 static std::deque<she::Event> keybuffer;
 static bool display_has_mouse = false;
 namespace she {
+  void log(const std::string& text) {
+#if defined(ANDROID)
+    SDL_Log("%s", text.c_str());
+#endif
+  }
+
   namespace sdl {
     bool isMaximized;
     bool isMinimized;
