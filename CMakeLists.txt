@@ -171,6 +171,11 @@ if(WITH_WEBP_SUPPORT)
 endif()
 
 # tinyxml
+find_library(TINYXML_LIBRARY NAMES tinyxml)
+find_path(TINYXML_INCLUDE_DIR NAMES tinyxml.h)
+include_directories(${TINYXML_INCLUDE_DIR})
+
+# tinyxml2
 find_library(TINYXML2_LIBRARY NAMES tinyxml2)
 find_path(TINYXML2_INCLUDE_DIR NAMES tinyxml2.h)
 include_directories(${TINYXML2_INCLUDE_DIR})
