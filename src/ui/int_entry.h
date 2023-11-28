@@ -30,6 +30,7 @@ namespace ui {
     bool onProcessMessage(Message* msg) override;
     void onSizeHint(SizeHintEvent& ev) override;
     void onChange() override;
+    bool showsKeyboard() const override {return false;}
 
     // New events
     virtual void onValueChange();

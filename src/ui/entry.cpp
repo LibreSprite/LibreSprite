@@ -211,7 +211,8 @@ bool Entry::onProcessMessage(Message* msg)
       rect.y *= scale;
       rect.h *= scale;
       rect.w *= scale;
-      she::set_input_rect(rect);
+      if (showsKeyboard())
+          she::set_input_rect(rect);
 
       m_timer.start();
 

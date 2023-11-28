@@ -21,6 +21,7 @@ namespace ui {
 
     bool isPassword() const;
     bool isReadOnly() const;
+    virtual bool showsKeyboard() const {return true;}
     void setReadOnly(bool state);
     void setPassword(bool state);
 
