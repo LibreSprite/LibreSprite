@@ -16,8 +16,6 @@
 #include <map>
 #include <string>
 
-class TiXmlElement;
-
 namespace css {
   class Sheet;
   class Style;

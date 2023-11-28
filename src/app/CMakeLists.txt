@@ -469,7 +469,6 @@ add_library(app-lib
   util/range_utils.cpp
   widget_loader.cpp
   xml_document.cpp
-  xml_exception.cpp
   ${data_recovery_files}
   ${generated_files})
 
@@ -491,7 +490,7 @@ target_link_libraries(app-lib
   undo
   ${KEEP_INJECTIONS_END}
   ${LibArchive_LIBRARY}
-  ${TINYXML_LIBRARY}
+  ${TINYXML2_LIBRARY}
   ${JPEG_LIBRARIES}
   ${GIF_LIBRARIES}
   ${PNG_LIBRARIES}

@@ -31,7 +31,7 @@
 #include "base/path.h"
 #include "ui/ui.h"
 
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 #include <cstdio>
 #include <cstring>
@@ -59,7 +59,7 @@ AppMenus* AppMenus::instance()
 void AppMenus::reload()
 {
   XmlDocumentRef doc(GuiXml::instance()->doc());
-  TiXmlHandle handle(doc.get());
+  tinyxml2::XMLHandle handle(doc.get());
   const char* path = GuiXml::instance()->filename();
 
   ////////////////////////////////////////
@@ -85,9 +85,9 @@ void AppMenus::reload()
 
   LOG(" - Loading commands keyboard shortcuts from \"%s\"...\n", path);
 
-  TiXmlElement* xmlKey = handle
-    .FirstChild("gui")
-    .FirstChild("keyboard").ToElement();
+  tinyxml2::XMLElement* xmlKey = handle
+    .FirstChildElement("gui")
+    .FirstChildElement("keyboard").ToElement();
 
   KeyboardShortcuts::instance()->clear();
   KeyboardShortcuts::instance()->importFile(xmlKey, KeySource::Original);
@@ -122,15 +122,15 @@ void AppMenus::rebuildScriptsList() {
   m_scriptMenu.rebuildScriptsList(getById("script_list"));
 }
 
-void AppMenus::loadMenus(TiXmlHandle& handle)
+void AppMenus::loadMenus(tinyxml2::XMLHandle& handle)
 {
     clearIdentifiedWidgets();
 
     // <gui><menus><menu>
-    TiXmlElement* xmlMenu = handle
-        .FirstChild("gui")
-        .FirstChild("menus")
-        .FirstChild("menu").ToElement();
+    tinyxml2::XMLElement* xmlMenu = handle
+        .FirstChildElement("gui")
+        .FirstChildElement("menus")
+        .FirstChildElement("menu").ToElement();
     for (; xmlMenu; xmlMenu = xmlMenu->NextSiblingElement()) {
         auto menu = convertXmlelemToMenu(xmlMenu);
         if ( menu->id().empty()) {
@@ -139,7 +139,7 @@ void AppMenus::loadMenus(TiXmlHandle& handle)
     }
 }
 
-Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
+Menu* AppMenus::convertXmlelemToMenu(tinyxml2::XMLElement* elem)
 {
   Menu* menu = new Menu();
 
@@ -151,7 +151,7 @@ Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
       m_identifiedWidgets[id] = menu;
   }
 
-  TiXmlElement* child = elem->FirstChildElement();
+  tinyxml2::XMLElement* child = elem->FirstChildElement();
   while (child) {
     Widget* menuitem = convertXmlelemToMenuitem(child);
     if (menuitem)
@@ -166,7 +166,7 @@ Menu* AppMenus::convertXmlelemToMenu(TiXmlElement* elem)
   return menu;
 }
 
-Widget* AppMenus::convertXmlelemToMenuitem(TiXmlElement* elem)
+Widget* AppMenus::convertXmlelemToMenuitem(tinyxml2::XMLElement* elem)
 {
   // is it a <separator>?
   if (strcmp(elem->Value(), "separator") == 0)
@@ -180,7 +180,7 @@ Widget* AppMenus::convertXmlelemToMenuitem(TiXmlElement* elem)
   // load params
   Params params;
   if (command) {
-    TiXmlElement* xmlParam = elem->FirstChildElement("param");
+    tinyxml2::XMLElement* xmlParam = elem->FirstChildElement("param");
     while (xmlParam) {
       const char* param_name = xmlParam->Attribute("name");
       const char* param_value = xmlParam->Attribute("value");

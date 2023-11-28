@@ -23,14 +23,13 @@
 #include "app/ui/skin/skin_theme.h"
 #include "app/widget_not_found.h"
 #include "app/xml_document.h"
-#include "app/xml_exception.h"
 #include "base/bind.h"
 #include "base/fs.h"
 #include "base/memory.h"
 #include "she/system.h"
 #include "ui/ui.h"
 
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 #include <climits>
 #include <cstdio>
@@ -43,7 +42,7 @@ using namespace ui;
 using namespace app::skin;
 
 static int convert_align_value_to_flags(const char *value);
-static int int_attr(const TiXmlElement* elem, const char* attribute_name, int default_value);
+static int int_attr(const tinyxml2::XMLElement* elem, const char* attribute_name, int default_value);
 
 WidgetLoader::WidgetLoader()
   : m_tooltipManager(NULL)
@@ -91,11 +90,11 @@ Widget* WidgetLoader::loadWidgetFromXmlFile(
   m_tooltipManager = NULL;
 
   XmlDocumentRef doc(open_xml(xmlFilename));
-  TiXmlHandle handle(doc.get());
+  tinyxml2::XMLHandle handle(doc.get());
 
   // Search the requested widget.
-  TiXmlElement* xmlElement = handle
-    .FirstChild("gui")
+  tinyxml2::XMLElement* xmlElement = handle
+    .FirstChildElement("gui")
     .FirstChildElement().ToElement();
 
   while (xmlElement) {
@@ -112,7 +111,7 @@ Widget* WidgetLoader::loadWidgetFromXmlFile(
   return widget;
 }
 
-Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget* root, Widget* parent, Widget* widget)
+Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem, Widget* root, Widget* parent, Widget* widget)
 {
   const std::string elem_name = elem->Value();
 
@@ -499,7 +498,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const TiXmlElement* elem, Widget
   return widget;
 }
 
-void WidgetLoader::fillWidgetWithXmlElementAttributes(const TiXmlElement* elem, Widget* root, Widget* widget)
+void WidgetLoader::fillWidgetWithXmlElementAttributes(const tinyxml2::XMLElement* elem, Widget* root, Widget* widget)
 {
   const char* id        = elem->Attribute("id");
   const char* text      = elem->Attribute("text");
@@ -600,7 +599,7 @@ void WidgetLoader::fillWidgetWithXmlElementAttributes(const TiXmlElement* elem, 
   }
 }
 
-void WidgetLoader::fillWidgetWithXmlElementAttributesWithChildren(const TiXmlElement* elem, ui::Widget* root, ui::Widget* widget)
+void WidgetLoader::fillWidgetWithXmlElementAttributesWithChildren(const tinyxml2::XMLElement* elem, ui::Widget* root, ui::Widget* widget)
 {
   fillWidgetWithXmlElementAttributes(elem, root, widget);
 
@@ -608,7 +607,7 @@ void WidgetLoader::fillWidgetWithXmlElementAttributesWithChildren(const TiXmlEle
     root = widget;
 
   // Children
-  const TiXmlElement* childElem = elem->FirstChildElement();
+  const tinyxml2::XMLElement* childElem = elem->FirstChildElement();
   while (childElem) {
     Widget* child = convertXmlElementToWidget(childElem, root, widget, NULL);
     if (child) {
@@ -693,7 +692,7 @@ static int convert_align_value_to_flags(const char *value)
   return flags;
 }
 
-static int int_attr(const TiXmlElement* elem, const char* attribute_name, int default_value)
+static int int_attr(const tinyxml2::XMLElement* elem, const char* attribute_name, int default_value)
 {
   const char* value = elem->Attribute(attribute_name);
 

@@ -13,7 +13,6 @@
 #include "app/resource_finder.h"
 #include "app/tools/ink_type.h"
 #include "app/xml_document.h"
-#include "app/xml_exception.h"
 #include "base/base64.h"
 #include "base/convert_to.h"
 #include "base/fs.h"
@@ -34,12 +33,12 @@ using namespace base::serialization::little_endian;
 
 namespace {
 
-ImageRef load_xml_image(const TiXmlElement* imageElem)
+ImageRef load_xml_image(const tinyxml2::XMLElement* imageElem)
 {
   ImageRef image;
   int w, h;
-  if (imageElem->QueryIntAttribute("width", &w) != TIXML_SUCCESS ||
-      imageElem->QueryIntAttribute("height", &h) != TIXML_SUCCESS ||
+  if (imageElem->QueryIntAttribute("width", &w) != tinyxml2::XML_SUCCESS ||
+      imageElem->QueryIntAttribute("height", &h) != tinyxml2::XML_SUCCESS ||
       w < 0 || w > 9999 ||
       h < 0 || h > 9999)
     return image;
@@ -99,7 +98,7 @@ ImageRef load_xml_image(const TiXmlElement* imageElem)
   return image;
 }
 
-void save_xml_image(TiXmlElement* imageElem, const Image* image)
+void save_xml_image(tinyxml2::XMLElement* imageElem, const Image* image)
 {
   int w = image->width();
   int h = image->height();
@@ -157,7 +156,7 @@ void save_xml_image(TiXmlElement* imageElem, const Image* image)
 
   std::string data_base64;
   base::encode_base64(data, data_base64);
-  TiXmlText textElem(data_base64.c_str());
+  auto textElem = imageElem->GetDocument()->NewText(data_base64.c_str());
   imageElem->InsertEndChild(textElem);
 }
 
@@ -284,10 +283,10 @@ static const int kBrushFlags =
 void AppBrushes::load(const std::string& filename)
 {
   XmlDocumentRef doc = app::open_xml(filename);
-  TiXmlHandle handle(doc.get());
-  TiXmlElement* brushElem = handle
-    .FirstChild("brushes")
-    .FirstChild("brush").ToElement();
+  tinyxml2::XMLHandle handle(doc.get());
+  tinyxml2::XMLElement* brushElem = handle
+    .FirstChildElement("brushes")
+    .FirstChildElement("brush").ToElement();
 
   while (brushElem) {
     // flags
@@ -316,7 +315,7 @@ void AppBrushes::load(const std::string& filename)
     }
 
     // Brush image
-    if (TiXmlElement* imageElem = brushElem->FirstChildElement("image")) {
+    if (tinyxml2::XMLElement* imageElem = brushElem->FirstChildElement("image")) {
       ImageRef image = load_xml_image(imageElem);
       if (image) {
         if (!brush)
@@ -326,14 +325,14 @@ void AppBrushes::load(const std::string& filename)
     }
 
     // Colors
-    if (TiXmlElement* fgcolorElem = brushElem->FirstChildElement("fgcolor")) {
+    if (tinyxml2::XMLElement* fgcolorElem = brushElem->FirstChildElement("fgcolor")) {
       if (auto value = fgcolorElem->Attribute("value")) {
         fgColor = app::Color::fromString(value);
         flags |= int(BrushSlot::Flags::FgColor);
       }
     }
 
-    if (TiXmlElement* bgcolorElem = brushElem->FirstChildElement("bgcolor")) {
+    if (tinyxml2::XMLElement* bgcolorElem = brushElem->FirstChildElement("bgcolor")) {
       if (auto value = bgcolorElem->Attribute("value")) {
         bgColor = app::Color::fromString(value);
         flags |= int(BrushSlot::Flags::BgColor);
@@ -341,14 +340,14 @@ void AppBrushes::load(const std::string& filename)
     }
 
     // Ink
-    if (TiXmlElement* inkTypeElem = brushElem->FirstChildElement("inktype")) {
+    if (tinyxml2::XMLElement* inkTypeElem = brushElem->FirstChildElement("inktype")) {
       if (auto value = inkTypeElem->Attribute("value")) {
         inkType = app::tools::string_id_to_ink_type(value);
         flags |= int(BrushSlot::Flags::InkType);
       }
     }
 
-    if (TiXmlElement* inkOpacityElem = brushElem->FirstChildElement("inkopacity")) {
+    if (tinyxml2::XMLElement* inkOpacityElem = brushElem->FirstChildElement("inkopacity")) {
       if (auto value = inkOpacityElem->Attribute("value")) {
         inkOpacity = base::convert_to<int>(std::string(value));
         flags |= int(BrushSlot::Flags::InkOpacity);
@@ -356,7 +355,7 @@ void AppBrushes::load(const std::string& filename)
     }
 
     // Shade
-    if (TiXmlElement* shadeElem = brushElem->FirstChildElement("shade")) {
+    if (tinyxml2::XMLElement* shadeElem = brushElem->FirstChildElement("shade")) {
       if (auto value = shadeElem->Attribute("value")) {
         shade = shade_from_string(value);
         flags |= int(BrushSlot::Flags::Shade);
@@ -364,7 +363,7 @@ void AppBrushes::load(const std::string& filename)
     }
 
     // Pixel-perfect
-    if (TiXmlElement* pixelPerfectElem = brushElem->FirstChildElement("pixelperfect")) {
+    if (tinyxml2::XMLElement* pixelPerfectElem = brushElem->FirstChildElement("pixelperfect")) {
       pixelPerfect = bool_attr_is_true(pixelPerfectElem, "value");
       flags |= int(BrushSlot::Flags::PixelPerfect);
     }
@@ -384,13 +383,13 @@ void AppBrushes::load(const std::string& filename)
 
 void AppBrushes::save(const std::string& filename) const
 {
-  XmlDocumentRef doc(new TiXmlDocument());
-  TiXmlElement brushesElem("brushes");
+  XmlDocumentRef doc(new tinyxml2::XMLDocument());
+  auto brushesElem = doc->NewElement("brushes");
 
   //<?xml version="1.0" encoding="utf-8"?>
 
   for (const auto& slot : m_slots) {
-    TiXmlElement brushElem("brush");
+    auto brushElem = doc->NewElement("brush");
     if (slot.locked()) {
       // Flags
       int flags = int(slot.flags());
@@ -405,72 +404,72 @@ void AppBrushes::save(const std::string& filename) const
         ASSERT(slot.brush());
 
         if (flags & int(BrushSlot::Flags::BrushType)) {
-          brushElem.SetAttribute(
+          brushElem->SetAttribute(
             "type", brush_type_to_string_id(slot.brush()->type()).c_str());
         }
 
         if (flags & int(BrushSlot::Flags::BrushSize)) {
-          brushElem.SetAttribute("size", slot.brush()->size());
+          brushElem->SetAttribute("size", slot.brush()->size());
         }
 
         if (flags & int(BrushSlot::Flags::BrushAngle)) {
-          brushElem.SetAttribute("angle", slot.brush()->angle());
+          brushElem->SetAttribute("angle", slot.brush()->angle());
         }
 
         if (slot.brush()->type() == kImageBrushType &&
             slot.brush()->image()) {
-          TiXmlElement elem("image");
-          save_xml_image(&elem, slot.brush()->image());
-          brushElem.InsertEndChild(elem);
+          auto elem = doc->NewElement("image");
+          save_xml_image(elem, slot.brush()->image());
+          brushElem->InsertEndChild(elem);
         }
       }
 
       // Colors
       if (flags & int(BrushSlot::Flags::FgColor)) {
-        TiXmlElement elem("fgcolor");
-        elem.SetAttribute("value", slot.fgColor().toString().c_str());
-        brushElem.InsertEndChild(elem);
+        auto elem = doc->NewElement("fgcolor");
+        elem->SetAttribute("value", slot.fgColor().toString().c_str());
+        brushElem->InsertEndChild(elem);
       }
 
       if (flags & int(BrushSlot::Flags::BgColor)) {
-        TiXmlElement elem("bgcolor");
-        elem.SetAttribute("value", slot.bgColor().toString().c_str());
-        brushElem.InsertEndChild(elem);
+        auto elem = doc->NewElement("bgcolor");
+        elem->SetAttribute("value", slot.bgColor().toString().c_str());
+        brushElem->InsertEndChild(elem);
       }
 
       // Ink
       if (flags & int(BrushSlot::Flags::InkType)) {
-        TiXmlElement elem("inktype");
-        elem.SetAttribute(
+        auto elem = doc->NewElement("inktype");
+        elem->SetAttribute(
           "value", app::tools::ink_type_to_string_id(slot.inkType()).c_str());
-        brushElem.InsertEndChild(elem);
+        brushElem->InsertEndChild(elem);
       }
 
       if (flags & int(BrushSlot::Flags::InkOpacity)) {
-        TiXmlElement elem("inkopacity");
-        elem.SetAttribute("value", slot.inkOpacity());
-        brushElem.InsertEndChild(elem);
+        auto elem = doc->NewElement("inkopacity");
+        elem->SetAttribute("value", slot.inkOpacity());
+        brushElem->InsertEndChild(elem);
       }
 
       // Shade
       if (flags & int(BrushSlot::Flags::Shade)) {
-        TiXmlElement elem("shade");
-        elem.SetAttribute("value", shade_to_string(slot.shade()).c_str());
-        brushElem.InsertEndChild(elem);
+        auto elem = doc->NewElement("shade");
+        elem->SetAttribute("value", shade_to_string(slot.shade()).c_str());
+        brushElem->InsertEndChild(elem);
       }
 
       // Pixel-perfect
       if (flags & int(BrushSlot::Flags::PixelPerfect)) {
-        TiXmlElement elem("pixelperfect");
-        elem.SetAttribute("value", slot.pixelPerfect() ? "true": "false");
-        brushElem.InsertEndChild(elem);
+        auto elem = doc->NewElement("pixelperfect");
+        elem->SetAttribute("value", slot.pixelPerfect() ? "true": "false");
+        brushElem->InsertEndChild(elem);
       }
     }
 
-    brushesElem.InsertEndChild(brushElem);
+    brushesElem->InsertEndChild(brushElem);
   }
 
-  TiXmlDeclaration declaration("1.0", "utf-8", "");
+  auto declaration = doc->NewDeclaration();
   doc->InsertEndChild(declaration);
   doc->InsertEndChild(brushesElem);
   save_xml(doc, filename);

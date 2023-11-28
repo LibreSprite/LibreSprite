@@ -16,8 +16,10 @@
 #include "ui/base.h"
 #include "ui/menu.h"
 
-class TiXmlElement;
-class TiXmlHandle;
+namespace tinyxml2 {
+  class XMLHandle;
+  class XMLElement;
+}
 
 namespace app {
   class Key;
@@ -60,9 +62,9 @@ namespace app {
     void applyShortcutToMenuitemsWithCommand(Command* command, const Params& params, Key* key);
 
   private:
-    void loadMenus(TiXmlHandle& handle);
-    Menu* convertXmlelemToMenu(TiXmlElement* elem);
-    Widget* convertXmlelemToMenuitem(TiXmlElement* elem);
+    void loadMenus(tinyxml2::XMLHandle& handle);
+    Menu* convertXmlelemToMenu(tinyxml2::XMLElement* elem);
+    Widget* convertXmlelemToMenuitem(tinyxml2::XMLElement* elem);
     Widget* createInvalidVersionMenuitem();
     void applyShortcutToMenuitemsWithCommand(Menu* menu, Command* command, const Params& params, Key* key);
     void clearIdentifiedWidgets();

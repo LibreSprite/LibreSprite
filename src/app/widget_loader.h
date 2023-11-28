@@ -12,7 +12,9 @@
 #include <map>
 #include <string>
 
-class TiXmlElement;
+namespace tinyxml2 {
+    class XMLElement;
+}
 
 namespace ui {
   class Widget;
@@ -28,7 +30,7 @@ namespace app {
     public:
       virtual ~IWidgetTypeCreator() { }
       virtual void dispose() = 0;
-      virtual ui::Widget* createWidgetFromXml(const TiXmlElement* xmlElem) = 0;
+      virtual ui::Widget* createWidgetFromXml(const tinyxml2::XMLElement* xmlElem) = 0;
     };
 
     WidgetLoader();
@@ -60,9 +62,9 @@ namespace app {
       const std::string& widgetId,
       ui::Widget* widget);
 
-    ui::Widget* convertXmlElementToWidget(const TiXmlElement* elem, ui::Widget* root, ui::Widget* parent, ui::Widget* widget);
-    void fillWidgetWithXmlElementAttributes(const TiXmlElement* elem, ui::Widget* root, ui::Widget* widget);
-    void fillWidgetWithXmlElementAttributesWithChildren(const TiXmlElement* elem, ui::Widget* root, ui::Widget* widget);
+    ui::Widget* convertXmlElementToWidget(const tinyxml2::XMLElement* elem, ui::Widget* root, ui::Widget* parent, ui::Widget* widget);
+    void fillWidgetWithXmlElementAttributes(const tinyxml2::XMLElement* elem, ui::Widget* root, ui::Widget* widget);
+    void fillWidgetWithXmlElementAttributesWithChildren(const tinyxml2::XMLElement* elem, ui::Widget* root, ui::Widget* widget);
 
     typedef std::map<std::string, IWidgetTypeCreator*> TypeCreatorsMap;
 

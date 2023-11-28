@@ -61,17 +61,17 @@ You'll need the following dependencies to compile LibreSprite:
 
 Debian/Ubuntu:
 
-    sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.4-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml-dev libnode-dev ninja-build zlib1g-dev libarchive-dev
+    sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev liblua5.4-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libnode-dev ninja-build zlib1g-dev libarchive-dev
 
 Fedora:
 
-    sudo dnf install g++ cmake libcurl-devel freetype-devel giflib-devel gtest-devel libjpeg-devel lua-devel pixman-devel libpng-devel SDL2-devel SDL2_image-devel tinyxml-devel zlib-devel ninja-build nodejs-devel libarchive-devel
+    sudo dnf install g++ cmake libcurl-devel freetype-devel giflib-devel gtest-devel libjpeg-devel lua-devel pixman-devel libpng-devel SDL2-devel SDL2_image-devel tinyxml2-devel zlib-devel ninja-build nodejs-devel libarchive-devel
 
 ### Windows dependencies
 
 To install the required dependencies with vcpkg, run:
 
-    vcpkg install curl freetype giflib gtest libjpeg-turbo lua libpng libwebp pixman sdl2 sdl2-image tinyxml v8 zlib libarchive --triplet x64-windows
+    vcpkg install curl freetype giflib gtest libjpeg-turbo lua libpng libwebp pixman sdl2 sdl2-image tinyxml2 v8 zlib libarchive --triplet x64-windows
 
 Beware: `--triplet x64-windows` is only necessary for a 64 architecture
 build.

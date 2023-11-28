@@ -12,8 +12,8 @@
 #include "app/gui_xml.h"
 
 #include "app/resource_finder.h"
-#include "app/xml_exception.h"
 #include "base/fs.h"
+#include "tinyxml2.h"
 
 namespace app {
 
@@ -42,8 +42,8 @@ GuiXml::GuiXml()
 
 std::string GuiXml::version()
 {
-  TiXmlHandle handle(m_doc.get());
-  TiXmlElement* xmlKey = handle.FirstChild("gui").ToElement();
+  tinyxml2::XMLHandle handle(m_doc.get());
+  tinyxml2::XMLElement* xmlKey = handle.FirstChildElement("gui").ToElement();
 
   if (xmlKey && xmlKey->Attribute("version")) {
     const char* guixml_version = xmlKey->Attribute("version");

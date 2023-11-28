@@ -37,6 +37,8 @@
 #include "app/tools/intertwiners.h"
 #include "app/tools/point_shapes.h"
 
+#include "tinyxml2.h"
+
 namespace app {
 namespace tools {
 
@@ -180,10 +182,13 @@ void ToolBox::loadTools()
   LOG("Loading LibreSprite tools\n");
 
   XmlDocumentRef doc(GuiXml::instance()->doc());
-  TiXmlHandle handle(doc.get());
+  tinyxml2::XMLHandle handle(doc.get());
 
   // For each group
-  TiXmlElement* xmlGroup = handle.FirstChild("gui").FirstChild("tools").FirstChild("group").ToElement();
+  tinyxml2::XMLElement* xmlGroup = handle.FirstChildElement("gui")
+      .FirstChildElement("tools")
+      .FirstChildElement("group")
+      .ToElement();
   while (xmlGroup) {
     const char* group_id = xmlGroup->Attribute("id");
     const char* group_text = xmlGroup->Attribute("text");
@@ -196,12 +201,12 @@ void ToolBox::loadTools()
     ToolGroup* tool_group = new ToolGroup(group_id, group_text);
 
     // For each tool
-    TiXmlNode* xmlToolNode = xmlGroup->FirstChild("tool");
-    TiXmlElement* xmlTool = xmlToolNode ? xmlToolNode->ToElement(): NULL;
+    tinyxml2::XMLNode* xmlToolNode = xmlGroup->FirstChildElement("tool");
+    tinyxml2::XMLElement* xmlTool = xmlToolNode ? xmlToolNode->ToElement(): NULL;
     while (xmlTool) {
       const char* tool_id = xmlTool->Attribute("id");
       const char* tool_text = xmlTool->Attribute("text");
-      const char* tool_tips = xmlTool->FirstChild("tooltip") ? ((TiXmlElement*)xmlTool->FirstChild("tooltip"))->GetText(): "";
+      const char* tool_tips = xmlTool->FirstChildElement("tooltip") ? ((tinyxml2::XMLElement*)xmlTool->FirstChildElement("tooltip"))->GetText(): "";
       const char* default_brush_size = xmlTool->Attribute("default_brush_size");
 
       Tool* tool = new Tool(tool_group, tool_id, tool_text, tool_tips,
@@ -222,7 +227,7 @@ void ToolBox::loadTools()
   }
 }
 
-void ToolBox::loadToolProperties(TiXmlElement* xmlTool, Tool* tool, int button, const std::string& suffix)
+void ToolBox::loadToolProperties(tinyxml2::XMLElement* xmlTool, Tool* tool, int button, const std::string& suffix)
 {
   const char* tool_id = tool->getId().c_str();
   const char* fill = xmlTool->Attribute(("fill_"+suffix).c_str());

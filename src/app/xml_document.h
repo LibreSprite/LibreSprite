@@ -8,19 +8,17 @@
 #pragma once
 
 #include "base/exception.h"
-#include "base/shared_ptr.h"
-
-#include "tinyxml.h"
-
 #include <string>
+
+#include "tinyxml2.h"
 
 namespace app {
 
-  typedef base::SharedPtr<TiXmlDocument> XmlDocumentRef;
+  typedef std::shared_ptr<tinyxml2::XMLDocument> XmlDocumentRef;
 
   XmlDocumentRef open_xml(const std::string& filename);
   void save_xml(XmlDocumentRef doc, const std::string& filename);
 
-  bool bool_attr_is_true(const TiXmlElement* elem, const char* attrName);
+  bool bool_attr_is_true(const tinyxml2::XMLElement* elem, const char* attrName);
 
 } // namespace app

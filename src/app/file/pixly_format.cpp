@@ -90,16 +90,16 @@ bool PixlyFormat::onLoad(FileOp* fop)
   try {
     // load XML metadata
     XmlDocumentRef doc = open_xml(fop->filename());
-    TiXmlHandle xml(doc.get());
+    tinyxml2::XMLHandle xml(doc.get());
     fop->setProgress(0.25);
 
-    TiXmlElement* xmlAnim = check(xml.FirstChild("PixlyAnimation").ToElement());
+    tinyxml2::XMLElement* xmlAnim = check(xml.FirstChildElement("PixlyAnimation").ToElement());
     double version = check_number<double>(xmlAnim->Attribute("version"));
     if (version < 1.5) {
       throw Exception("version 1.5 or above required");
     }
 
-    TiXmlElement* xmlInfo = check(xmlAnim->FirstChild("Info"))->ToElement();
+    tinyxml2::XMLElement* xmlInfo = check(xmlAnim->FirstChildElement("Info"))->ToElement();
 
     int layerCount  = check_number<int>(xmlInfo->Attribute("layerCount"));
     int frameWidth  = check_number<int>(xmlInfo->Attribute("frameWidth"));
@@ -107,7 +107,7 @@ bool PixlyFormat::onLoad(FileOp* fop)
 
     std::unique_ptr<Sprite> sprite(new Sprite(IMAGE_RGB, frameWidth, frameHeight, 0));
 
-    TiXmlElement* xmlFrames = check(xmlAnim->FirstChild("Frames"))->ToElement();
+    tinyxml2::XMLElement* xmlFrames = check(xmlAnim->FirstChildElement("Frames"))->ToElement();
     int imageCount = check_number<int>(xmlFrames->Attribute("length"));
 
     if (layerCount <= 0 || imageCount <= 0) {
@@ -142,10 +142,10 @@ bool PixlyFormat::onLoad(FileOp* fop)
     // slice cels from sheet
     std::vector<int> visible(layerCount, 0);
 
-    TiXmlElement* xmlFrame = check(xmlFrames->FirstChild("Frame"))->ToElement();
+    tinyxml2::XMLElement* xmlFrame = check(xmlFrames->FirstChildElement("Frame"))->ToElement();
     while (xmlFrame) {
-      TiXmlElement* xmlRegion = check(xmlFrame->FirstChild("Region"))->ToElement();
-      TiXmlElement* xmlIndex = check(xmlFrame->FirstChild("Index"))->ToElement();
+      tinyxml2::XMLElement* xmlRegion = check(xmlFrame->FirstChildElement("Region"))->ToElement();
+      tinyxml2::XMLElement* xmlIndex = check(xmlFrame->FirstChildElement("Index"))->ToElement();
 
       int index = check_number<int>(xmlIndex->Attribute("linear"));
       frame_t frame(index / layerCount);

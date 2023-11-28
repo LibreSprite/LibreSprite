@@ -13,6 +13,7 @@
 #include <memory>
 #include <unordered_map>
 #include <optional>
+#include <iostream>
 
 #include "app/file_system.h"
 #include "app/modules/gui.h"
@@ -28,7 +29,6 @@
 #include "app/ui/skin/style.h"
 #include "app/ui/skin/style_sheet.h"
 #include "app/xml_document.h"
-#include "app/xml_exception.h"
 #include "base/bind.h"
 #include "base/fs.h"
 #include "base/path.h"
@@ -44,7 +44,7 @@
 #include "ui/intern.h"
 #include "ui/ui.h"
 
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 #define BGCOLOR                 (getWidgetBgColor(widget))
 
@@ -308,15 +308,15 @@ void SkinTheme::loadXml(const std::string& skinId)
 
 void SkinTheme::loadThemeXml(const std::string& filename) {
   XmlDocumentRef doc = open_xml(filename);
-  TiXmlHandle handle(doc.get());
+  tinyxml2::XMLHandle handle(doc.get());
 
   // Load fonts
   {
     Preferences& pref = Preferences::instance();
-    TiXmlElement* xmlDim = handle
-      .FirstChild("theme")
-      .FirstChild("fonts")
-      .FirstChild("font").ToElement();
+    tinyxml2::XMLElement* xmlDim = handle
+      .FirstChildElement("theme")
+      .FirstChildElement("fonts")
+      .FirstChildElement("font").ToElement();
 
     std::unordered_map<std::string, std::shared_ptr<she::Font>> known;
     if (!m_defaultFont)
@@ -359,10 +359,10 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
   // Load dimension
   {
-    TiXmlElement* xmlDim = handle
-      .FirstChild("theme")
-      .FirstChild("dimensions")
-      .FirstChild("dim").ToElement();
+    tinyxml2::XMLElement* xmlDim = handle
+      .FirstChildElement("theme")
+      .FirstChildElement("dimensions")
+      .FirstChildElement("dim").ToElement();
     while (xmlDim) {
       std::string id = xmlDim->Attribute("id");
       uint32_t value = strtol(xmlDim->Attribute("value"), NULL, 10);
@@ -378,10 +378,10 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
   {
     m_colors_by_id.clear();
 
-    TiXmlElement* xmlColor = handle
-      .FirstChild("theme")
-      .FirstChild("colors")
-      .FirstChild("color").ToElement();
+    tinyxml2::XMLElement* xmlColor = handle
+      .FirstChildElement("theme")
+      .FirstChildElement("colors")
+      .FirstChildElement("color").ToElement();
     while (xmlColor) {
       std::string id = xmlColor->Attribute("id");
       uint32_t value = strtol(xmlColor->Attribute("value")+1, NULL, 16);
@@ -399,10 +399,10 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
   // Load cursors
   {
-    TiXmlElement* xmlPart = handle
-      .FirstChild("theme")
-      .FirstChild("parts")
-      .FirstChild("part").ToElement();
+    tinyxml2::XMLElement* xmlPart = handle
+      .FirstChildElement("theme")
+      .FirstChildElement("parts")
+      .FirstChildElement("part").ToElement();
 
     std::string cursor_prefix = "cursor_";
     std::string tool_prefix = "tool_";
@@ -486,10 +486,10 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
   // Load styles
   {
-    TiXmlElement* xmlStyle = handle
-      .FirstChild("skin")
-      .FirstChild("styles")
-      .FirstChild("style").ToElement();
+    tinyxml2::XMLElement* xmlStyle = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("styles")
+      .FirstChildElement("style").ToElement();
     while (xmlStyle) {
       const char* style_id = xmlStyle->Attribute("id");
       const char* base_id = xmlStyle->Attribute("base");
@@ -502,7 +502,7 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
       css::Style* style = new css::Style(style_id, base);
       m_stylesheet.addCssStyle(style);
 
-      TiXmlElement* xmlRule = xmlStyle->FirstChildElement();
+      tinyxml2::XMLElement* xmlRule = xmlStyle->FirstChildElement();
       while (xmlRule) {
         const std::string ruleName = xmlRule->Value();
 
@@ -575,14 +575,14 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
 void SkinTheme::loadSkinXml(const std::string& filename) {
   XmlDocumentRef doc = open_xml(filename);
-  TiXmlHandle handle(doc.get());
+  tinyxml2::XMLHandle handle(doc.get());
 
   // Load dimension
   {
-    TiXmlElement* xmlDim = handle
-      .FirstChild("skin")
-      .FirstChild("dimensions")
-      .FirstChild("dim").ToElement();
+    tinyxml2::XMLElement* xmlDim = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("dimensions")
+      .FirstChildElement("dim").ToElement();
     while (xmlDim) {
       std::string id = xmlDim->Attribute("id");
       uint32_t value = strtol(xmlDim->Attribute("value"), NULL, 10);
@@ -596,10 +596,10 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
 
   // Load colors
   {
-    TiXmlElement* xmlColor = handle
-      .FirstChild("skin")
-      .FirstChild("colors")
-      .FirstChild("color").ToElement();
+    tinyxml2::XMLElement* xmlColor = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("colors")
+      .FirstChildElement("color").ToElement();
     while (xmlColor) {
       std::string id = xmlColor->Attribute("id");
       uint32_t value = strtol(xmlColor->Attribute("value")+1, NULL, 16);
@@ -617,10 +617,10 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
 
   // Load cursors
   {
-    TiXmlElement* xmlCursor = handle
-      .FirstChild("skin")
-      .FirstChild("cursors")
-      .FirstChild("cursor").ToElement();
+    tinyxml2::XMLElement* xmlCursor = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("cursors")
+      .FirstChildElement("cursor").ToElement();
     while (xmlCursor) {
       std::string id = xmlCursor->Attribute("id");
       int x = strtol(xmlCursor->Attribute("x"), NULL, 10);
@@ -658,10 +658,10 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
 
   // Load tool icons
   {
-    TiXmlElement* xmlIcon = handle
-      .FirstChild("skin")
-      .FirstChild("tools")
-      .FirstChild("tool").ToElement();
+    tinyxml2::XMLElement* xmlIcon = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("tools")
+      .FirstChildElement("tool").ToElement();
     while (xmlIcon) {
       // Get the tool-icon rectangle
       const char* id = xmlIcon->Attribute("id");
@@ -681,10 +681,10 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
 
   // Load parts
   {
-    TiXmlElement* xmlPart = handle
-      .FirstChild("skin")
-      .FirstChild("parts")
-      .FirstChild("part").ToElement();
+    tinyxml2::XMLElement* xmlPart = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("parts")
+      .FirstChildElement("part").ToElement();
     while (xmlPart) {
       // Get the tool-icon rectangle
       const char* part_id = xmlPart->Attribute("id");
@@ -727,10 +727,10 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
 
   // Load styles
   {
-    TiXmlElement* xmlStyle = handle
-      .FirstChild("skin")
-      .FirstChild("stylesheet")
-      .FirstChild("style").ToElement();
+    tinyxml2::XMLElement* xmlStyle = handle
+      .FirstChildElement("skin")
+      .FirstChildElement("stylesheet")
+      .FirstChildElement("style").ToElement();
     while (xmlStyle) {
       const char* style_id = xmlStyle->Attribute("id");
       const char* base_id = xmlStyle->Attribute("base");
@@ -742,7 +742,7 @@ void SkinTheme::loadSkinXml(const std::string& filename) {
       css::Style* style = new css::Style(style_id, base);
       m_stylesheet.addCssStyle(style);
 
-      TiXmlElement* xmlRule = xmlStyle->FirstChildElement();
+      tinyxml2::XMLElement* xmlRule = xmlStyle->FirstChildElement();
       while (xmlRule) {
         const std::string ruleName = xmlRule->Value();
 

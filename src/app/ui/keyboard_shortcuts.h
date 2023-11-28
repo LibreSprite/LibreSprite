@@ -13,7 +13,7 @@
 #include "ui/accelerator.h"
 #include <vector>
 
-class TiXmlElement;
+#include "tinyxml2.h"
 
 namespace ui {
   class Message;
@@ -144,7 +144,7 @@ namespace app {
     const_iterator end() const { return m_keys.end(); }
 
     void clear();
-    void importFile(TiXmlElement* rootElement, KeySource source);
+    void importFile(tinyxml2::XMLElement* rootElement, KeySource source);
     void importFile(const std::string& filename, KeySource source);
     void exportFile(const std::string& filename);
     void reset();
@@ -165,8 +165,8 @@ namespace app {
   private:
     KeyboardShortcuts();
 
-    void exportKeys(TiXmlElement& parent, KeyType type);
-    void exportAccel(TiXmlElement& parent, Key* key, const ui::Accelerator& accel, bool removed);
+    void exportKeys(tinyxml2::XMLElement& parent, KeyType type);
+    void exportAccel(tinyxml2::XMLElement& parent, Key* key, const ui::Accelerator& accel, bool removed);
 
     Keys m_keys;
 

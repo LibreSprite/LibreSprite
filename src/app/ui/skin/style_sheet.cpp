@@ -16,7 +16,7 @@
 #include "base/exception.h"
 #include "css/sheet.h"
 
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 namespace app {
 namespace skin {

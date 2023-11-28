@@ -9,10 +9,10 @@
 #include "config.h"
 #endif
 
+#include <exception>
 #include "app/xml_document.h"
-
-#include "app/xml_exception.h"
 #include "base/file_handle.h"
+#include "tinyxml2.h"
 
 namespace app {
 
@@ -25,10 +25,10 @@ XmlDocumentRef open_xml(const std::string& filename)
     throw Exception("Error loading file: " + filename);
 
   // Try to load the XML file
-  XmlDocumentRef doc(new TiXmlDocument());
+  XmlDocumentRef doc(new tinyxml2::XMLDocument());
   doc->SetValue(filename.c_str());
-  if (!doc->LoadFile(file.get()))
-    throw XmlException(doc.get());
+  if (doc->LoadFile(file.get()) != tinyxml2::XML_SUCCESS)
+    throw Exception(doc->ErrorStr());
 
   return doc;
 }
@@ -37,13 +37,13 @@ void save_xml(XmlDocumentRef doc, const std::string& filename)
 {
   FileHandle file(open_file(filename, "wb"));
   if (!file)
-    throw Exception("Error loading file: " + filename);
+    throw Exception("Error saving file: " + filename);
 
-  if (!doc->SaveFile(file.get()))
-    throw XmlException(doc.get());
+  if (doc->SaveFile(file.get()) != tinyxml2::XML_SUCCESS)
+    throw Exception(doc->ErrorStr());
 }
 
-bool bool_attr_is_true(const TiXmlElement* elem, const char* attrName)
+bool bool_attr_is_true(const tinyxml2::XMLElement* elem, const char* attrName)
 {
   const char* value = elem->Attribute(attrName);
 
