@@ -61,6 +61,7 @@ static std::string convert_type(const std::string& name)
   if (name == "combobox") return "ui::ComboBox";
   if (name == "dropdownbutton") return "app::DropDownButton";
   if (name == "entry") return "ui::Entry";
+  if (name == "intentry") return "ui::IntEntry";
   if (name == "grid") return "ui::Grid";
   if (name == "hbox") return "ui::HBox";
   if (name == "item" && parent == "buttonset") return "app::ButtonSet::Item";
