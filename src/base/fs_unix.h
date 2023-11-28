@@ -27,6 +27,10 @@
 
 #define MAXPATHLEN 1024
 
+#if defined(ANDROID)
+extern std::string _AndroidDataDir;
+#endif
+
 namespace base {
 
 bool is_file(const std::string& path)
@@ -132,6 +136,8 @@ std::string get_app_path()
   const int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
   while (sysctl(mib, 4, &path[0], &size, NULL, 0) == -1)
       path.resize(size);
+#elif defined(ANDROID)
+  return _AndroidDataDir + "/";
 #else  /* linux */
   readlink("/proc/self/exe", &path[0], path.size());
 #endif

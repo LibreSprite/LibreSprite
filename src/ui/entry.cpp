@@ -238,6 +238,7 @@ bool Entry::onProcessMessage(Message* msg)
 
       m_recent_focused = false;
       m_got_focus_message = false;
+      she::set_input_rect({});
       break;
 
     case kKeyDownMessage:

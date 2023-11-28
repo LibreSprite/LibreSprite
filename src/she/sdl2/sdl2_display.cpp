@@ -19,8 +19,13 @@
 #include "she/common/system.h"
 #include "she/logger.h"
 
+#if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#else
+#include <SDL.h>
+#include <SDL_syswm.h>
+#endif
 
 #include <sstream>
 #include <iostream>
@@ -62,6 +67,9 @@ namespace she {
       throw DisplayCreationException(SDL_GetError());
 
     sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
+#if defined(ANDROID)
+    SDL_GetWindowSize(m_window, &width, &height);
+#endif
     m_width = width;
     m_height = height;
 

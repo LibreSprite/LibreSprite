@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include <SDL2/SDL_mouse.h>
 #include "she/display.h"
 
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Surface;
 struct SDL_Texture;
+struct SDL_Cursor;
 
 namespace she {
 

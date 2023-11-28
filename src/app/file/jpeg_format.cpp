@@ -124,7 +124,7 @@ bool JpegFormat::onLoad(FileOp* fop)
   jpeg_stdio_src(&cinfo, file);
 
   // Read file header, set default decompression parameters.
-  jpeg_read_header(&cinfo, true);
+  jpeg_read_header(&cinfo, TRUE);
 
   if (cinfo.jpeg_color_space == JCS_GRAYSCALE)
     cinfo.out_color_space = JCS_GRAYSCALE;
@@ -264,12 +264,12 @@ bool JpegFormat::onSave(FileOp* fop)
   }
 
   jpeg_set_defaults(&cinfo);
-  jpeg_set_quality(&cinfo, (int)MID(0, 100.0f * jpeg_options->quality, 100), true);
+  jpeg_set_quality(&cinfo, (int)MID(0, 100.0f * jpeg_options->quality, 100), TRUE);
   cinfo.dct_method = JDCT_ISLOW;
   cinfo.smoothing_factor = 0;
 
   // START compressor.
-  jpeg_start_compress(&cinfo, true);
+  jpeg_start_compress(&cinfo, TRUE);
 
   // CREATE the buffer.
   buffer_height = 1;

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#define register
 #include <ft2build.h>
 #include FT_GLYPH_H
 #include FT_FREETYPE_H
+#undef register

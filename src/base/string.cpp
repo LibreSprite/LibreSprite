@@ -158,7 +158,9 @@ std::wstring from_utf8(const std::string& src)
   utf8_const_iterator end(src.end());
 
   while (it != end) {
+#ifdef _DEBUG
     assert(buf_it != buf_end);
+#endif
     *buf_it = *it;
     ++buf_it;
     ++it;

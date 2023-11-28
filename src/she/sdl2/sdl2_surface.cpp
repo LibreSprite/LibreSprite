@@ -4,9 +4,6 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#include <SDL2/SDL_blendmode.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_surface.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -18,7 +15,11 @@
 #include "gfx/rect.h"
 
 #include <iostream>
+#if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
+#else
+#include <SDL.h>
+#endif
 
 namespace {
 

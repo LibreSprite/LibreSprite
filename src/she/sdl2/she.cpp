@@ -18,8 +18,13 @@
 #include "she/common/system.h"
 #include "she/logger.h"
 
+#if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#else
+#include <SDL.h>
+#include <SDL_image.h>
+#endif
 #include <iostream>
 #include <cassert>
 #include <list>
@@ -572,6 +577,10 @@ namespace she {
   }
 
   void set_input_rect(const gfx::Rect& rect) {
+    if (rect.isEmpty()) {
+      SDL_StopTextInput();
+      return;
+    }
     SDL_Rect sdlRect{
       rect.x,
       rect.y,
@@ -579,6 +588,7 @@ namespace she {
       rect.h
     };
     SDL_SetTextInputRect(&sdlRect);
+    SDL_StartTextInput();
   }
 
   void clear_keyboard_buffer() {
@@ -591,7 +601,9 @@ namespace she {
 extern int app_main(int argc, char* argv[]);
 
 int main(int argc, char* argv[]) {
+  #ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
   SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+  #endif
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS) != 0) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;

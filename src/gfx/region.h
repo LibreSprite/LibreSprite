@@ -49,7 +49,15 @@ namespace gfx {
       RegionIterator operator++(int) { RegionIterator o(*this); ++m_ptr; return o; }
       bool operator==(const RegionIterator& o) const { return m_ptr == o.m_ptr; }
       bool operator!=(const RegionIterator& o) const { return m_ptr != o.m_ptr; }
-      reference operator*() { m_rect = *m_ptr; return m_rect; }
+
+      reference operator*() {
+        m_rect = {
+          m_ptr->x1, m_ptr->y1,
+          m_ptr->x2 - m_ptr->x1, m_ptr->y2 - m_ptr->y1
+        };
+        return m_rect;
+      }
+
     private:
       Box* m_ptr;
       mutable Rect m_rect;

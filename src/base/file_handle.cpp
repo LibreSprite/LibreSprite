@@ -43,12 +43,12 @@ FILE* open_file_raw(const string& filename, const string& mode)
 
 FileHandle open_file(const string& filename, const string& mode)
 {
-  return FileHandle(open_file_raw(filename, mode), fclose);
+  return FileHandle(open_file_raw(filename, mode), [](auto ptr){ if(ptr) fclose(ptr); });
 }
 
 FileHandle open_file_with_exception(const string& filename, const string& mode)
 {
-  FileHandle f(open_file_raw(filename, mode), fclose);
+  FileHandle f(open_file_raw(filename, mode), [](auto ptr){ if(ptr) fclose(ptr); });
   if (!f)
     throw runtime_error("Cannot open " + filename);
   return f;
