@@ -12,6 +12,7 @@
         <vbox noborders="true" expansive="true">
           <vbox noborders="true" id="context_bar_placeholder" />
           <hbox noborders="true" expansive="true">
+            <vbox noborders="true" id="tool_bar_alt_placeholder" />
             <splitter id="timeline_splitter"
                       vertical="true" expansive="true"
                       by="percetage" position="100">

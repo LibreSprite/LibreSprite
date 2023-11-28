@@ -87,6 +87,7 @@
       <option id="visible_timeline" type="bool" default="false" />
       <option id="vertical_timeline" type="bool" default="false" />
       <option id="autoshow_timeline" type="bool" default="true" migrate="Options.AutoShowTimeline" />
+      <option id="left_tool_bar" type="bool" default="false" />
       <option id="rewind_on_stop" type="bool" default="false" />
       <option id="expand_menubar_on_mouseover" type="bool" default="false" migrate="Options.ExpandMenuBarOnMouseover" />
       <option id="data_recovery" type="bool" default="true" />

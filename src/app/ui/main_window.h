@@ -70,6 +70,7 @@ namespace app {
     void setTimelineVisibility(bool visible);
     void popTimeline();
     void alternateTimeline();
+    void alternateToolbar();
 
     void showDataRecovery(crash::DataRecovery* dataRecovery);
 

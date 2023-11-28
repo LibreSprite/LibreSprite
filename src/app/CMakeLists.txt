@@ -180,6 +180,7 @@ add_library(app-lib
   commands/cmd_add_color.cpp
   commands/cmd_advanced_mode.cpp
   commands/cmd_alternate_timeline.cpp
+  commands/cmd_alternate_toolbar.cpp
   commands/cmd_background_from_layer.cpp
   commands/cmd_cancel.cpp
   commands/cmd_canvas_size.cpp

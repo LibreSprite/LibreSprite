@@ -87,7 +87,11 @@ MainWindow::MainWindow()
   menuBarPlaceholder()->addChild(m_notifications);
   contextBarPlaceholder()->addChild(m_contextBar);
   colorBarPlaceholder()->addChild(m_colorBar);
-  toolBarPlaceholder()->addChild(m_toolBar);
+
+  auto leftToolbar = Preferences::instance().general.leftToolBar();
+  auto toolbarParent = leftToolbar ? toolBarAltPlaceholder() : this->toolBarPlaceholder();
+  toolbarParent->addChild(m_toolBar);
+
   statusBarPlaceholder()->addChild(m_statusBar);
   tabsPlaceholder()->addChild(m_tabsBar);
   workspacePlaceholder()->addChild(m_workspace);
@@ -109,6 +113,15 @@ void MainWindow::alternateTimeline() {
   Preferences::instance().general.verticalTimeline(!old);
   timelineSplitter()->setAlign(Preferences::instance().general.verticalTimeline() ? HORIZONTAL : VERTICAL);
   configureWorkspaceLayout();
+}
+
+void MainWindow::alternateToolbar() {
+  auto left = !Preferences::instance().general.leftToolBar();
+  Preferences::instance().general.leftToolBar(left);
+  auto parent = left ? toolBarAltPlaceholder() : toolBarPlaceholder();
+  m_toolBar->parent()->removeChild(m_toolBar);
+  parent->addChild(m_toolBar);
+  remapWindow();
 }
 
 MainWindow::~MainWindow()
