@@ -529,6 +529,9 @@
         <item command="Exit" text="E&amp;xit" />
       </menu>
       <menu text="&amp;Edit">
+        <item command="KeyboardShortcuts" text="&amp;Keyboard Shortcuts..." />
+        <item command="Options" text="Pre&amp;ferences..." />
+        <separator />
         <item command="Undo" text="&amp;Undo" />
         <item command="Redo" text="&amp;Redo" />
         <item command="UndoHistory" text="Undo Histor&amp;y" />
@@ -605,9 +608,6 @@
           <item command="Despeckle" text="&amp;Despeckle (median filter)" />
         </menu>
         <item command="PasteText" text="Insert Text" />
-        <separator />
-        <item command="KeyboardShortcuts" text="&amp;Keyboard Shortcuts..." />
-        <item command="Options" text="Pre&amp;ferences..." />
       </menu>
       <menu text="&amp;Sprite">
         <item command="SpriteProperties" text="&amp;Properties..." />
