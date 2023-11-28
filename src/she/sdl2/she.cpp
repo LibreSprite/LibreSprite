@@ -38,6 +38,7 @@ static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
   {SDL_BUTTON_RIGHT, she::Event::RightButton}
 };
 static she::KeyScancode lastScancode;
+static int lastScancodeSDL;
 struct Modifier {
   const int sheModifier;
   int ascii;
@@ -368,6 +369,7 @@ namespace she {
           event.setScancode(scancode);
           if (isPressed) {
             lastScancode = scancode;
+            lastScancodeSDL = sdlEvent.key.keysym.scancode;
           }
           if (sdlEvent.key.repeat) {
             event.setRepeat(sdlEvent.key.repeat);
@@ -412,9 +414,9 @@ namespace she {
           for (auto it = begin; it != end; ++it) {
             event.setType(Event::KeyDown);
             event.setUnicodeChar(*it);
-            if (lastScancode) {
+            if (lastScancodeSDL > SDL_SCANCODE_UNKNOWN && lastScancodeSDL < SDL_SCANCODE_RETURN) {
               event.setScancode(lastScancode);
-              lastScancode = she::kKeyNil;
+              lastScancodeSDL = SDL_SCANCODE_UNKNOWN;
             }
             keybuffer.push_back(event);
             event.setType(Event::KeyUp);
