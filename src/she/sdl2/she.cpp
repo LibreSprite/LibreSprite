@@ -225,6 +225,19 @@ namespace she {
       }
     }
 
+    void forceFlip() {
+      for (auto& entry : sdl::windowIdToDisplay) {
+        entry.second->flip({
+            0,
+            0,
+            entry.second->width(),
+            entry.second->height()
+          });
+        entry.second->present();
+      }
+      she::log("Force Flip");
+    }
+
     void getEvent(Event& event, bool) override {
       for (auto& entry : sdl::windowIdToDisplay) {
         entry.second->present();
@@ -233,19 +246,14 @@ namespace she {
       SDL_Event sdlEvent;
       while (SDL_PollEvent(&sdlEvent)) {
         switch (sdlEvent.type) {
+        case SDL_APP_DIDENTERFOREGROUND:
+          forceFlip();
+          continue;
+
         case SDL_WINDOWEVENT:
           switch (sdlEvent.window.event) {
           case SDL_WINDOWEVENT_EXPOSED:
-            for (auto& entry : sdl::windowIdToDisplay) {
-              entry.second->flip({
-                  0,
-                  0,
-                  entry.second->width(),
-                  entry.second->height()
-                });
-              entry.second->present();
-            }
-            std::cout << "Force Flip" << std::endl;
+            forceFlip();
             continue;
 
           case SDL_WINDOWEVENT_MAXIMIZED:
