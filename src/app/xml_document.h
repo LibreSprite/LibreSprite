@@ -9,7 +9,7 @@
 
 #include "base/exception.h"
 #include <string>
-
+#include <memory>
 #include "tinyxml2.h"
 
 namespace app {
