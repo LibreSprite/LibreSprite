@@ -163,6 +163,7 @@ public:
     uiScale()->setSelectedItemIndex(
       uiScale()->findItemIndexByValue(
         base::convert_to<std::string>(m_pref.experimental.uiScale())));
+    uiScale()->Change.connect([=]{updateScale();});
 
     if ((int(she::instance()->capabilities()) &
          int(she::Capabilities::GpuAccelerationSwitch)) == int(she::Capabilities::GpuAccelerationSwitch)) {
@@ -231,6 +232,21 @@ public:
     return (closer() == buttonOk());
   }
 
+  bool m_scaleWarningShown = false;
+  void updateScale() {
+    int newUIScale = base::convert_to<int>(uiScale()->getValue());
+    if (newUIScale != m_pref.experimental.uiScale()) {
+      m_pref.experimental.uiScale(newUIScale);
+      m_pref.save();
+      if (!m_scaleWarningShown) {
+          m_scaleWarningShown = true;
+          ui::Alert::show(PACKAGE
+                          "<<Restart LibreSprite to apply this change"
+                          "||&OK");
+      }
+    }
+  }
+
   void saveConfig() {
     m_pref.general.autoshowTimeline(autotimeline()->isSelected());
     m_pref.general.rewindOnStop(rewindOnStop()->isSelected());
@@ -295,12 +311,6 @@ public:
     if (newScreenScale != m_pref.general.screenScale()) {
       m_pref.general.screenScale(newScreenScale);
       reset_screen = true;
-    }
-
-    int newUIScale = base::convert_to<int>(uiScale()->getValue());
-    if (newUIScale != m_pref.experimental.uiScale()) {
-      m_pref.experimental.uiScale(newUIScale);
-      warnings += "<<- UI Elements Scale";
     }
 
     bool newGpuAccel = gpuAcceleration()->isSelected();
