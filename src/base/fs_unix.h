@@ -29,6 +29,7 @@
 
 #if defined(ANDROID)
 extern std::string _AndroidDataDir;
+extern std::string _AndroidStorageDir;
 #endif
 
 namespace base {
@@ -156,11 +157,15 @@ std::string get_temp_path()
 
 std::string get_user_docs_folder()
 {
+#ifdef ANDROID
+  return _AndroidStorageDir;
+#else
   char* tmpdir = getenv("HOME");
   if (tmpdir)
     return tmpdir;
   else
     return "/";
+#endif
 }
 
 std::string get_canonical_path(const std::string& path)
