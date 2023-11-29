@@ -186,7 +186,7 @@
       <option id="antialias" type="bool" default="false" />
     </section>
     <section id="symmetry_mode">
-      <option id="enabled" type="bool" default="false" />
+      <option id="enabled" type="bool" default="true" />
     </section>
   </global>
 
