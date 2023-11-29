@@ -88,7 +88,15 @@ MainWindow::MainWindow()
   contextBarPlaceholder()->addChild(m_contextBar);
   colorBarPlaceholder()->addChild(m_colorBar);
 
-  auto leftToolbar = Preferences::instance().general.leftToolBar();
+  bool leftToolbar = false;
+  if (get_config_value("general", "left_tool_bar", (const char*)nullptr) == nullptr) {
+    // TODO: Decide default based on DPI
+#if defined(ANDROID)
+    leftToolbar = true;
+#endif
+  } else {
+    leftToolbar = Preferences::instance().general.leftToolBar();
+  }
   auto toolbarParent = leftToolbar ? toolBarAltPlaceholder() : this->toolBarPlaceholder();
   toolbarParent->addChild(m_toolBar);
 
@@ -100,7 +108,17 @@ MainWindow::MainWindow()
   // Default splitter positions
   colorBarSplitter()->setPosition(m_colorBar->sizeHint().w);
   timelineSplitter()->setPosition(75);
-  timelineSplitter()->setAlign(Preferences::instance().general.verticalTimeline() ? HORIZONTAL : VERTICAL);
+
+  bool verticalTimeline = false;
+  if (get_config_value("general", "vertical_timeline", (const char*)nullptr) == nullptr) {
+    // TODO: Decide default based on DPI
+#if defined(ANDROID)
+    verticalTimeline = true;
+#endif
+  } else {
+    verticalTimeline = Preferences::instance().general.verticalTimeline();
+  }
+  timelineSplitter()->setAlign(verticalTimeline ? HORIZONTAL : VERTICAL);
 
   // Prepare the window
   remapWindow();

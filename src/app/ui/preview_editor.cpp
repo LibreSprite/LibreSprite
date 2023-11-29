@@ -189,7 +189,16 @@ PreviewEditorWindow::PreviewEditorWindow()
   setAutoRemap(false);
   setWantFocus(false);
 
-  m_isEnabled = get_config_bool("MiniEditor", "Enabled", true);
+  if (get_config_value("MiniEditor", "Enabled", (const char*)nullptr)) {
+      m_isEnabled = get_config_bool("MiniEditor", "Enabled", true);
+  } else {
+      // TODO: Decide default based on DPI
+#if defined(ANDROID)
+      m_isEnabled = false;
+#else
+      m_isEnabled = true;
+#endif
+  }
 
   m_centerButton->Click.connect(base::Bind<void>(&PreviewEditorWindow::onCenterClicked, this));
   m_playButton->Click.connect(base::Bind<void>(&PreviewEditorWindow::onPlayClicked, this));

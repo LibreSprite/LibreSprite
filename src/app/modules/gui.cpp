@@ -184,7 +184,19 @@ int init_module_gui()
 
   // Setup the GUI theme for all widgets
   gui_theme = new SkinTheme();
-  gui_theme->setScale(Preferences::instance().experimental.uiScale());
+  {
+      auto uiScale = Preferences::instance().experimental.uiScale();
+      if (uiScale < 1) {
+          // TODO: Guess ideal scale based on DPI
+#if defined(ANDROID)
+          uiScale = 2;
+#else
+          uiScale = 1;
+#endif
+          Preferences::instance().experimental.uiScale(uiScale);
+      }
+      gui_theme->setScale(uiScale);
+  }
   CurrentTheme::set(gui_theme);
 
   if (maximized)
