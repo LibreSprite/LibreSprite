@@ -738,15 +738,14 @@ App::~App()
 
 bool App::isPortable()
 {
-  static bool* is_portable = nullptr;
-  if (!is_portable) {
-    is_portable =
-      new bool(
-        base::is_file(base::join_path(
+  static bool iniFound = ([]{
+    return base::is_file(
+      base::join_path(
             base::get_file_path(base::get_app_path()),
-            "libresprite.ini")));
-  }
-  return *is_portable;
+            "libresprite.ini")
+      );
+  })();
+  return iniFound;
 }
 
 tools::ToolBox* App::toolBox() const
