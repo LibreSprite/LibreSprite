@@ -22,39 +22,34 @@
 
 namespace app {
 
-class AlternateToolbarCommand : public Command {
-public:
+  class AlternateToolbarCommand : public Command {
+  public:
+    Command* clone() const override { return new AlternateToolbarCommand(*this); }
 
-  AlternateToolbarCommand();
-  Command* clone() const override { return new AlternateToolbarCommand(*this); }
+    AlternateToolbarCommand()
+      : Command{"AlternateToolbar", "Alternate Toolbar", CmdUIOnlyFlag}
+      {}
 
-protected:
-  void onLoadParams(const Params& params) override;
-  bool onEnabled(Context* context) override;
-  void onExecute(Context* context) override;
-  std::string onGetFriendlyName() const override;
-};
+  protected:
 
-AlternateToolbarCommand::AlternateToolbarCommand()
-  : Command("AlternateToolbar",
-            "Alternate Toolbar",
-            CmdUIOnlyFlag)
-{
-}
+    void onLoadParams(const Params& params) override {}
 
-void AlternateToolbarCommand::onLoadParams(const Params& params){}
+    bool onEnabled(Context* context) override {
+      return true;
+    }
 
-bool AlternateToolbarCommand::onEnabled(Context* context){return true;}
+    bool onChecked(Context* context) override {
+      return Preferences::instance().general.leftToolBar();
+    }
 
-void AlternateToolbarCommand::onExecute(Context* context){
-    App::instance()->mainWindow()->alternateToolbar();
-}
+    void onExecute(Context* context) override{
+      App::instance()->mainWindow()->alternateToolbar();
+    }
+  };
 
-std::string AlternateToolbarCommand::onGetFriendlyName() const {return "Alternate Toolbar";}
-
-Command* CommandFactory::createAlternateToolbarCommand()
-{
-  return new AlternateToolbarCommand;
-}
+  Command* CommandFactory::createAlternateToolbarCommand()
+  {
+    return new AlternateToolbarCommand;
+  }
 
 } // namespace app

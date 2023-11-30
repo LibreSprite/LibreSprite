@@ -22,39 +22,34 @@
 
 namespace app {
 
-class AlternateTimelineCommand : public Command {
-public:
+  class AlternateTimelineCommand : public Command {
+  public:
+    Command* clone() const override { return new AlternateTimelineCommand(*this); }
 
-  AlternateTimelineCommand();
-  Command* clone() const override { return new AlternateTimelineCommand(*this); }
+    AlternateTimelineCommand()
+      : Command{"AlternateTimeline", "Alternate Timeline", CmdUIOnlyFlag}
+      {}
 
-protected:
-  void onLoadParams(const Params& params) override;
-  bool onEnabled(Context* context) override;
-  void onExecute(Context* context) override;
-  std::string onGetFriendlyName() const override;
-};
+  protected:
 
-AlternateTimelineCommand::AlternateTimelineCommand()
-  : Command("AlternateTimeline",
-            "Alternate Timeline",
-            CmdUIOnlyFlag)
-{
-}
+    void onLoadParams(const Params& params) override {}
 
-void AlternateTimelineCommand::onLoadParams(const Params& params){}
+    bool onEnabled(Context* context) override {
+      return true;
+    }
 
-bool AlternateTimelineCommand::onEnabled(Context* context){return true;}
+    bool onChecked(Context* context) override {
+      return Preferences::instance().general.verticalTimeline();
+    }
 
-void AlternateTimelineCommand::onExecute(Context* context){
-    App::instance()->mainWindow()->alternateTimeline();
-}
+    void onExecute(Context* context) override{
+        App::instance()->mainWindow()->alternateTimeline();
+    }
+  };
 
-std::string AlternateTimelineCommand::onGetFriendlyName() const {return "Alternate Timeline";}
-
-Command* CommandFactory::createAlternateTimelineCommand()
-{
-  return new AlternateTimelineCommand;
-}
+  Command* CommandFactory::createAlternateTimelineCommand()
+  {
+    return new AlternateTimelineCommand;
+  }
 
 } // namespace app
