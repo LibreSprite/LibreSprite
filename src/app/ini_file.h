@@ -54,6 +54,10 @@ namespace app {
 
   // Generic get/set_config_value functions
 
+  inline bool has_config_value(const char* section, const char* name) {
+    return get_config_string(section, name, nullptr) == nullptr;
+  }
+
   inline const char* get_config_value(const char* section, const char* name, const char* value) {
     return get_config_string(section, name, value);
   }

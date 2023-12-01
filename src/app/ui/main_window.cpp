@@ -89,7 +89,7 @@ MainWindow::MainWindow()
   colorBarPlaceholder()->addChild(m_colorBar);
 
   bool leftToolbar = false;
-  if (get_config_value("general", "left_tool_bar", (const char*)nullptr) == nullptr) {
+  if (!has_config_value("general", "left_tool_bar")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)
     leftToolbar = true;
@@ -110,7 +110,7 @@ MainWindow::MainWindow()
   timelineSplitter()->setPosition(75);
 
   bool verticalTimeline = false;
-  if (get_config_value("general", "vertical_timeline", (const char*)nullptr) == nullptr) {
+  if (!has_config_value("general", "vertical_timeline")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)
     verticalTimeline = true;
