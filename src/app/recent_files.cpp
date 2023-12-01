@@ -40,7 +40,7 @@ RecentFiles::RecentFiles()
   char buf[512];
 
   for (int c=m_files.limit()-1; c>=0; c--) {
-    sprintf(buf, "Filename%02d", c);
+    snprintf(buf, sizeof(buf), "Filename%02d", c);
 
     const char* filename = get_config_string("RecentFiles", buf, NULL);
     if (filename && *filename && base::is_file(filename)) {
@@ -50,7 +50,7 @@ RecentFiles::RecentFiles()
   }
 
   for (int c=m_paths.limit()-1; c>=0; c--) {
-    sprintf(buf, "Path%02d", c);
+    snprintf(buf, sizeof(buf), "Path%02d", c);
 
     const char* path = get_config_string("RecentPaths", buf, NULL);
     if (path && *path) {
