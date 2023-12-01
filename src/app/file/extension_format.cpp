@@ -5,6 +5,7 @@
 // published by the Free Software Foundation.
 //
 
+#if __has_include(<archive.h>)
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -129,3 +130,5 @@ bool ExtensionFormat::onLoad(FileOp* fop)
 }
 
 } // namespace app
+
+#endif

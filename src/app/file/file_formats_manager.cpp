@@ -74,7 +74,9 @@ void FileFormatsManager::registerAllFormats()
   registerFormat(CreatePcxFormat());
   registerFormat(CreatePngFormat());
   registerFormat(CreateTgaFormat());
+#if __has_include(<archive.h>)
   registerFormat(CreateExtensionFormat());
+#endif
 
 #ifdef ASEPRITE_WITH_WEBP_SUPPORT
   registerFormat(CreateWebPFormat());
