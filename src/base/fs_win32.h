@@ -171,7 +171,7 @@ std::vector<std::string> get_font_paths()
     HRESULT hr = SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
                                  SHGFP_TYPE_DEFAULT, &buf[0]);
     if (hr == S_OK) {
-        return {base::to_utf8(&buf[0]))};
+        return {base::to_utf8(&buf[0])};
     }
     return {};
 }

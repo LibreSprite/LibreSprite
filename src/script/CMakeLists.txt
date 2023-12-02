@@ -4,9 +4,6 @@
 
 include_directories(${DUKTAPE_DIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-
-
 # Debug C/C++ flags
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   if(LINUX)

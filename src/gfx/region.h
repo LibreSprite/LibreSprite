@@ -9,6 +9,7 @@
 #include "gfx/rect.h"
 #include <vector>
 #include <iterator>
+#include <cstdint>
 
 namespace gfx {
 
