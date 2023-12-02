@@ -49,6 +49,7 @@ jobs:
         cd build
         cmake -G "Unix Makefiles" ..
         make -j 4
+        cd ..
         node package_win.js build/bin/libresprite.exe
         cp /mingw32/bin/snapshot_blob.bin ./build/bin
     - name: Archive production artifacts
