@@ -20,6 +20,7 @@ jobs:
         install: >-
           base-devel
           git
+          node
           mingw-w64-i686-gcc
           mingw-w64-i686-cmake
           mingw-w64-i686-make
@@ -53,7 +54,6 @@ jobs:
     - name: Archive production artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: dotto-development-windows-i686
+        name: libresprite-development-windows-i686
         path: |
           build/bin/*
-          *.dll
