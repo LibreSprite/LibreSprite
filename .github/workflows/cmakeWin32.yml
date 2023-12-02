@@ -20,7 +20,7 @@ jobs:
         install: >-
           base-devel
           git
-          node
+          mingw-w64-i686-nodejs
           mingw-w64-i686-gcc
           mingw-w64-i686-cmake
           mingw-w64-i686-make
