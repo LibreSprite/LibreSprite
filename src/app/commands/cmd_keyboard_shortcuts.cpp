@@ -43,7 +43,7 @@ namespace app {
 using namespace ui;
 using namespace skin;
 
-static int g_sep = 0;
+static int g_sep, g_sep2;
 
 class KeyItem : public ListItem {
 
@@ -210,11 +210,18 @@ private:
         bounds.x + m_level*16 * guiscale(),
         bounds.y + 2*guiscale()));
 
-    if (m_key && !m_key->accels().empty()) {
+    if (m_key && !m_key->accels().empty() && !m_key->label().empty()) {
       std::string buf;
       int y = bounds.y;
-      int dh = textSize().h + 4*guiscale();
+      int dh = textHeight() + 4*guiscale();
       int i = 0;
+
+      if (!m_key->label().empty()) {
+        g->drawString(m_key->label(), fg, bg, {
+            bounds.x + g_sep2,
+            bounds.y + 2*guiscale()
+          });
+      }
 
       for (const Accelerator& accel : m_key->accels()) {
         if (i != m_hotAccel || !m_changeButton) {
@@ -298,8 +305,9 @@ private:
             }
           }
 
-          if (i == 0 && !m_addButton &&
-              (!m_menuitem || m_menuitem->getCommand())) {
+          if (i == 0 && !m_addButton && (!m_menuitem || m_menuitem->getCommand())) {
+            saveLabel();
+
             m_addConn = base::Connection();
             m_addButton.reset(new Button(""));
             m_addConn = m_addButton->Click.connect(base::Bind<void>(&KeyItem::onAddAccel, this));
@@ -313,6 +321,15 @@ private:
             m_addButton->setBounds(itemBounds);
             m_addButton->setText("Add");
 
+            auto label = m_key ? m_key->label().c_str() : "";
+            m_labelEntry.reset(new Entry(4, "%s", label));
+            setup_mini_look(m_labelEntry.get());
+            addChild(m_labelEntry.get());
+            itemBounds.w = 8*guiscale() + Graphics::measureUIStringLength("label", font().get());
+            itemBounds.x = bounds.x + g_sep2;
+            m_labelEntry->setBgColor(gfx::ColorNone);
+            m_labelEntry->setBounds(itemBounds);
+
             invalidate();
           }
         }
@@ -322,7 +339,14 @@ private:
     return ListItem::onProcessMessage(msg);
   }
 
+  void saveLabel() {
+    if (!m_labelEntry || !m_key)
+      return;
+    m_key->setLabel(m_labelEntry->text(), KeySource::UserDefined, false);
+  }
+
   void destroyButtons() {
+    saveLabel();
     m_changeConn = base::Connection();
     m_deleteConn = base::Connection();
     m_addConn = base::Connection();
@@ -331,12 +355,14 @@ private:
       m_changeButton.reset();
       m_deleteButton.reset();
       m_addButton.reset();
+      m_labelEntry.reset();
     }
     // Just hide the buttons
     else {
       if (m_changeButton) m_changeButton->setVisible(false);
       if (m_deleteButton) m_deleteButton->setVisible(false);
       if (m_addButton) m_addButton->setVisible(false);
+      if (m_labelEntry) m_labelEntry->setVisible(false);
     }
 
     m_hotAccel = -1;
@@ -350,6 +376,7 @@ private:
   base::SharedPtr<ui::Button> m_changeButton;
   base::SharedPtr<ui::Button> m_deleteButton;
   base::SharedPtr<ui::Button> m_addButton;
+  base::SharedPtr<ui::Entry> m_labelEntry;
   base::ScopedConnection m_changeConn;
   base::ScopedConnection m_deleteConn;
   base::ScopedConnection m_addConn;
@@ -634,7 +661,9 @@ void KeyboardShortcutsCommand::onExecute(Context* context)
   KeyboardShortcutsWindow window(neededSearchCopy);
 
   window.setBounds(gfx::Rect(0, 0, ui::display_w()*3/4, ui::display_h()*3/4));
-  g_sep = window.bounds().w / 2;
+  int columnWidth = window.bounds().w / 3;
+  g_sep = columnWidth;
+  g_sep2 = columnWidth * 2;
 
   window.centerWindow();
   window.setVisible(true);

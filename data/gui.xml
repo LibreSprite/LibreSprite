@@ -26,14 +26,14 @@
         <param name="type" value="all" />
       </key>
       <!-- Edit -->
-      <key command="Undo" shortcut="Ctrl+Z" mac="Cmd+Z" />
+      <key command="Undo" shortcut="Ctrl+Z" mac="Cmd+Z" label="UNDO"/>
       <key command="Undo" shortcut="Ctrl+U" mac="Cmd+U" />
       <key command="Redo" shortcut="Ctrl+Y" mac="Cmd+Y" />
-      <key command="Redo" shortcut="Ctrl+R" mac="Cmd+R" />
+      <key command="Redo" shortcut="Ctrl+R" mac="Cmd+R" label="REDO"/>
       <key command="Redo" shortcut="Ctrl+Shift+Z" mac="Cmd+Shift+Z" />
       <key command="Cut" shortcut="Ctrl+X" mac="Cmd+X" />
       <key command="Cut" shortcut="Shift+Del" />
-      <key command="Copy" shortcut="Ctrl+C" mac="Cmd+C" />
+      <key command="Copy" shortcut="Ctrl+C" mac="Cmd+C"/>
       <key command="Copy" shortcut="Ctrl+Ins" mac="Cmd+Ins" />
       <key command="CopyMerged" shortcut="Ctrl+Shift+C" mac="Cmd+Shift+C" />
       <key command="Paste" shortcut="Ctrl+V" mac="Cmd+V" />
@@ -62,14 +62,14 @@
       <!-- Layer -->
       <key command="LayerProperties" shortcut="Shift+P" />
       <key command="LayerVisibility" shortcut="Shift+X" />
-      <key command="NewLayer" shortcut="Ctrl+Shift+N" mac="Cmd+Shift+N" />
+      <key command="NewLayer" shortcut="Ctrl+Shift+N" mac="Cmd+Shift+N" label="LYR+"/>
       <key command="DuplicateLayer" shortcut="Ctrl+J" mac="Cmd+J" />
       <key command="MergeDownLayer" shortcut="Ctrl+E" mac="Cmd+E" />
       <key command="FlattenLayers" shortcut="Ctrl+Shift+E" mac="Cmd+Shift+E" />
-      <key command="GotoPreviousLayer" shortcut="Down" context="Normal" />
-      <key command="GotoNextLayer" shortcut="Up" context="Normal" />
+      <key command="GotoPreviousLayer" shortcut="Down" context="Normal" label="LYR&gt;"/>
+      <key command="GotoNextLayer" shortcut="Up" context="Normal" label="LYR&lt;"/>
       <!-- Frame -->
-      <key command="NewFrame" shortcut="Alt+N" />
+      <key command="NewFrame" shortcut="Alt+N" label="FRM+"/>
       <key command="NewFrame" shortcut="Alt+B">
         <param name="content" value="empty" />
       </key>
@@ -94,7 +94,7 @@
       <key command="GotoNextFrameWithSameTag" shortcut="." />
       <key command="GotoLastFrame" shortcut="End" />
       <key command="GotoFrame" shortcut="Alt+G" />
-      <key command="PlayAnimation" shortcut="Enter" />
+      <key command="PlayAnimation" shortcut="Enter" label="PLAY"/>
       <!-- Select -->
       <key command="MaskAll" shortcut="Ctrl+A" mac="Cmd+A" />
       <key command="MaskContent" shortcut="Ctrl+T" mac="Cmd+T" />
@@ -110,7 +110,7 @@
       <key command="SnapToGrid" shortcut="Shift+S" />
       <key command="SetLoopSection" shortcut="F2" />
       <key command="ShowOnionSkin" shortcut="F3" />
-      <key command="Timeline" shortcut="Tab">
+      <key command="Timeline" shortcut="Tab" label="TIME">
         <param name="switch" value="true" />
       </key>
       <key command="PaletteEditor" shortcut="F4">
@@ -774,8 +774,10 @@
           <param name="switch" value="true" />
         </item>
         <item command="AlternateTimeline" text="Alternate Timeline" />
-        <item command="AlternateToolbar" text="Alternate Toolbar" />
+        <item command="ToggleTouchbar" text="Touchbar" />
+        <item command="AlternateTouchbar" text="Alternate Touchbar" />
         <item command="TogglePreview" text="Previe&amp;w" />
+        <item command="AlternateToolbar" text="Alternate Toolbar" />
         <item command="FullscreenPreview" text="&amp;Fullscreen Preview" />
         <item command="ToggleFullScreen" text="Toggle Fullscreen"/>
         <item command="Home" text="&amp;Home" />

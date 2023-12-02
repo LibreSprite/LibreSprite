@@ -19,6 +19,7 @@ namespace ui {
 namespace app {
 
   class ColorBar;
+  class TouchBar;
   class ContextBar;
   class DevConsoleView;
   class DocumentView;
@@ -71,6 +72,8 @@ namespace app {
     void popTimeline();
     void alternateTimeline();
     void alternateToolbar();
+    void alternateTouchbar();
+    void toggleTouchbar();
 
     void showDataRecovery(crash::DataRecovery* dataRecovery);
 
@@ -100,6 +103,7 @@ namespace app {
     ContextBar* m_contextBar;
     StatusBar* m_statusBar;
     ColorBar* m_colorBar;
+    std::shared_ptr<TouchBar> m_touchBar;
     ui::Widget* m_toolBar;
     WorkspaceTabs* m_tabsBar;
     Mode m_mode;

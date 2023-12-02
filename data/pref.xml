@@ -125,6 +125,10 @@
       <option id="use_native_file_dialog" type="bool" default="false" />
       <option id="flash_layer" type="bool" default="false" migrate="Options.FlashLayer" />
     </section>
+    <section id="touch_bar" text="Touchbar">
+      <option id="visible" type="bool" default="false" />
+      <option id="alternate_position" type="bool" default="false" />
+    </section>
     <section id="status_bar">
       <option id="focus_frame_field_on_mouseover" type="bool" default="false" />
     </section>

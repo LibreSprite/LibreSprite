@@ -12,7 +12,7 @@
 #include "base/disable_copying.h"
 #include "ui/accelerator.h"
 #include <vector>
-
+#include <optional>
 #include "tinyxml2.h"
 
 namespace ui {
@@ -91,6 +91,9 @@ namespace app {
     const ui::Accelerators& userRemovedAccels() const { return m_userRemoved; }
 
     void add(const ui::Accelerator& accel, KeySource source);
+    void setLabel(const std::string& label, KeySource source, bool quiet);
+    const std::string& label() const { return m_userLabel.has_value() ? *m_userLabel : m_label; }
+    bool hasUserLabel() const { return m_userLabel.has_value(); }
     bool isPressed(ui::Message* msg) const;
     bool isPressed() const;
     bool isLooselyPressed() const;
@@ -123,6 +126,8 @@ namespace app {
     // for KeyType::Command
     Command* m_command;
     Params m_params;
+    std::string m_label;
+    std::optional<std::string> m_userLabel;
     // for KeyType::Tool or Quicktool
     tools::Tool* m_tool;
     // for KeyType::Action
@@ -149,8 +154,7 @@ namespace app {
     void exportFile(const std::string& filename);
     void reset();
 
-    Key* command(const char* commandName,
-      const Params& params = Params(), KeyContext keyContext = KeyContext::Any);
+    Key* command(const char* commandName, const Params& params = Params(), KeyContext keyContext = KeyContext::Any);
     Key* tool(tools::Tool* tool);
     Key* quicktool(tools::Tool* tool);
     Key* action(KeyAction action);
@@ -166,7 +170,12 @@ namespace app {
     KeyboardShortcuts();
 
     void exportKeys(tinyxml2::XMLElement& parent, KeyType type);
-    void exportAccel(tinyxml2::XMLElement& parent, Key* key, const ui::Accelerator& accel, bool removed);
+    void exportAccel(tinyxml2::XMLElement& parent, Key* key, const ui::Accelerator *accel, bool removed, bool& first);
+    void importCommands(tinyxml2::XMLHandle& handle, KeySource source);
+    void importTools(tinyxml2::XMLHandle& handle, KeySource source);
+    void importQuickTools(tinyxml2::XMLHandle &handle, KeySource source);
+    void importActions(tinyxml2::XMLHandle& handle, KeySource source);
+    void importTouches(tinyxml2::XMLHandle& handle, KeySource source);
 
     Keys m_keys;
 

@@ -19,8 +19,10 @@
 #include "app/tools/ink.h"
 #include "app/tools/tool.h"
 #include "app/tools/tool_box.h"
+#include "app/ui/touch_bar.h"
 #include "app/ui_context.h"
 #include "app/xml_document.h"
+#include "tinyxml2.h"
 #include "ui/message.h"
 
 #define XML_KEYBOARD_FILE_VERSION "1"
@@ -172,6 +174,35 @@ Key::Key(KeyAction action)
   }
 }
 
+void Key::setLabel(const std::string& label, KeySource source, bool quiet)
+{
+  if (source == KeySource::UserDefined) {
+    if (label == m_label) {
+      if (hasUserLabel())
+        TouchBar::removeTouch(*m_userLabel);
+      m_userLabel.reset();
+      TouchBar::addTouch(*this);
+      if (!quiet)
+        TouchBar::organize();
+      return;
+    }
+    if (!hasUserLabel())
+      m_userLabel = std::string{};
+  }
+
+  auto& target = source == KeySource::UserDefined ? *m_userLabel : m_label;
+  if (label == target)
+    return;
+  if (!target.empty())
+    TouchBar::removeTouch(target);
+  if (&target != &m_label)
+    TouchBar::removeTouch(m_label);
+  target = label;
+  TouchBar::addTouch(*this);
+  if (!quiet)
+    TouchBar::organize();
+}
+
 void Key::add(const ui::Accelerator& accel, KeySource source)
 {
   Accelerators* accels = &m_accels;
@@ -251,6 +282,7 @@ void Key::reset()
 {
   m_users.clear();
   m_userRemoved.clear();
+  m_userLabel.reset();
   m_useUsers = false;
 }
 
@@ -301,16 +333,14 @@ void KeyboardShortcuts::clear()
   m_keys.clear();
 }
 
-void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource source)
-{
-  // <keyboard><commands><key>
-  tinyxml2::XMLHandle handle(rootElement);
+void KeyboardShortcuts::importCommands(tinyxml2::XMLHandle& handle, KeySource source) {
   auto xmlKey = handle
     .FirstChildElement("commands")
     .FirstChildElement("key")
     .ToElement();
   while (xmlKey) {
     const char* command_name = xmlKey->Attribute("command");
+    const char* label = xmlKey->Attribute("label");
     const char* command_key = get_shortcut(xmlKey);
     bool removed = bool_attr_is_true(xmlKey, "removed");
 
@@ -343,33 +373,39 @@ void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource 
 
         // add the keyboard shortcut to the command
         Key* key = this->command(command_name, params, keycontext);
-        if (key && command_key) {
-          Accelerator accel(command_key);
+        if (key) {
+          if (label)
+            key->setLabel(label, source, true);
+          if (command_key) {
+            Accelerator accel(command_key);
 
-          if (!removed) {
-            key->add(accel, source);
+            if (!removed) {
+              key->add(accel, source);
 
-            // Add the shortcut to the menuitems with this command
-            // (this is only visual, the
-            // "CustomizedGuiManager::onProcessMessage" is the only
-            // one that process keyboard shortcuts)
-            if (key->accels().size() == 1) {
-              AppMenus::instance()->applyShortcutToMenuitemsWithCommand(
-                command, params, key);
+              // Add the shortcut to the menuitems with this command
+              // (this is only visual, the
+              // "CustomizedGuiManager::onProcessMessage" is the only
+              // one that process keyboard shortcuts)
+              if (key->accels().size() == 1) {
+                AppMenus::instance()->applyShortcutToMenuitemsWithCommand(
+                  command, params, key);
+              }
             }
+            else
+              key->disableAccel(accel);
           }
-          else
-            key->disableAccel(accel);
         }
       }
     }
 
     xmlKey = xmlKey->NextSiblingElement();
   }
+}
 
+void KeyboardShortcuts::importTools(tinyxml2::XMLHandle& handle, KeySource source) {
   // Load keyboard shortcuts for tools
   // <gui><keyboard><tools><key>
-  xmlKey = handle
+  auto xmlKey = handle
     .FirstChildElement("tools")
     .FirstChildElement("key").ToElement();
   while (xmlKey) {
@@ -394,10 +430,12 @@ void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource 
     }
     xmlKey = xmlKey->NextSiblingElement();
   }
+}
 
+void KeyboardShortcuts::importQuickTools(tinyxml2::XMLHandle &handle, KeySource source) {
   // Load keyboard shortcuts for quicktools
   // <gui><keyboard><quicktools><key>
-  xmlKey = handle
+  auto xmlKey = handle
     .FirstChildElement("quicktools")
     .FirstChildElement("key").ToElement();
   while (xmlKey) {
@@ -422,10 +460,12 @@ void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource 
     }
     xmlKey = xmlKey->NextSiblingElement();
   }
+}
 
+void KeyboardShortcuts::importActions(tinyxml2::XMLHandle& handle, KeySource source) {
   // Load special keyboard shortcuts for sprite editor customization
   // <gui><keyboard><spriteeditor>
-  xmlKey = handle
+  auto xmlKey = handle
     .FirstChildElement("actions")
     .FirstChildElement("key").ToElement();
   while (xmlKey) {
@@ -450,6 +490,17 @@ void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource 
     }
     xmlKey = xmlKey->NextSiblingElement();
   }
+}
+
+void KeyboardShortcuts::importFile(tinyxml2::XMLElement* rootElement, KeySource source)
+{
+  // <keyboard><commands><key>
+  tinyxml2::XMLHandle handle(rootElement);
+  importCommands(handle, source);
+  importTools(handle, source);
+  importQuickTools(handle, source);
+  importActions(handle, source);
+  TouchBar::organize();
 }
 
 void KeyboardShortcuts::importFile(const std::string& filename, KeySource source)
@@ -496,15 +547,20 @@ void KeyboardShortcuts::exportKeys(tinyxml2::XMLElement& parent, KeyType type)
     if (key->type() != type)
       continue;
 
-    for (const ui::Accelerator& accel : key->userRemovedAccels())
-      exportAccel(parent, key, accel, true);
+    bool first = true;
 
-    for (const ui::Accelerator& accel : key->userAccels())
-      exportAccel(parent, key, accel, false);
+    for (auto& accel : key->userRemovedAccels())
+      exportAccel(parent, key, &accel, true, first);
+
+    for (auto& accel : key->userAccels())
+      exportAccel(parent, key, &accel, false, first);
+
+    if (first && key->hasUserLabel())
+      exportAccel(parent, key, nullptr, false, first);
   }
 }
 
-void KeyboardShortcuts::exportAccel(tinyxml2::XMLElement& parent, Key* key, const ui::Accelerator& accel, bool removed)
+void KeyboardShortcuts::exportAccel(tinyxml2::XMLElement& parent, Key* key, const ui::Accelerator* accel, bool removed, bool& first)
 {
   auto doc = parent.GetDocument();
   auto& elem = *doc->NewElement("key");
@@ -572,7 +628,13 @@ void KeyboardShortcuts::exportAccel(tinyxml2::XMLElement& parent, Key* key, cons
       break;
   }
 
-  elem.SetAttribute("shortcut", accel.toString().c_str());
+  if (accel)
+    elem.SetAttribute("shortcut", accel->toString().c_str());
+
+  if (first && key->hasUserLabel()) {
+    elem.SetAttribute("label", key->label().c_str());
+    first = false;
+  }
 
   if (removed)
     elem.SetAttribute("removed", "true");

@@ -18,6 +18,7 @@
 #include "app/modules/editors.h"
 #include "app/pref/preferences.h"
 #include "app/ui/color_bar.h"
+#include "app/ui/touch_bar.h"
 #include "app/ui/context_bar.h"
 #include "app/ui/devconsole_view.h"
 #include "app/ui/document_view.h"
@@ -53,6 +54,9 @@ MainWindow::MainWindow()
   // Load all menus by first time.
   AppMenus::instance()->reload();
 
+  bool altTouchBar = Preferences::instance().touchBar.alternatePosition();
+  auto touchbarParent = altTouchBar ? touchBarAltPlaceholder() : touchBarPlaceholder();
+
   m_menuBar = new MainMenuBar();
   m_notifications = new Notifications();
   m_contextBar = new ContextBar();
@@ -63,6 +67,7 @@ MainWindow::MainWindow()
   m_workspace = new Workspace();
   m_previewEditor = new PreviewEditorWindow();
   m_timeline = new Timeline();
+  m_touchBar = TouchBar::create(touchbarParent->align());
 
   m_workspace->setTabsBar(m_tabsBar);
   m_workspace->ActiveViewChanged.connect(&MainWindow::onActiveViewChange, this);
@@ -73,6 +78,7 @@ MainWindow::MainWindow()
   m_contextBar->setVisible(false);
   m_statusBar->setExpansive(true);
   m_colorBar->setExpansive(true);
+  m_touchBar->setExpansive(true);
   m_toolBar->setExpansive(true);
   m_tabsBar->setExpansive(true);
   m_timeline->setExpansive(true);
@@ -87,6 +93,8 @@ MainWindow::MainWindow()
   menuBarPlaceholder()->addChild(m_notifications);
   contextBarPlaceholder()->addChild(m_contextBar);
   colorBarPlaceholder()->addChild(m_colorBar);
+
+  touchbarParent->addChild(m_touchBar.get());
 
   bool leftToolbar = false;
   if (!has_config_value("general", "left_tool_bar")) {
@@ -120,6 +128,15 @@ MainWindow::MainWindow()
   }
   timelineSplitter()->setAlign(verticalTimeline ? HORIZONTAL : VERTICAL);
 
+  if (!has_config_value("touch_bar", "visible")) {
+    // TODO: Decide default based on DPI
+#if defined(ANDROID)
+    Preferences::instance().touchBar.visible(true);
+#else
+    Preferences::instance().touchBar.visible(false);
+#endif
+  }
+
   // Prepare the window
   remapWindow();
 
@@ -140,6 +157,22 @@ void MainWindow::alternateToolbar() {
   m_toolBar->parent()->removeChild(m_toolBar);
   parent->addChild(m_toolBar);
   remapWindow();
+}
+
+void MainWindow::alternateTouchbar() {
+  auto left = !Preferences::instance().touchBar.alternatePosition();
+  Preferences::instance().touchBar.alternatePosition(left);
+  bool altTouchBar = Preferences::instance().touchBar.alternatePosition();
+  auto touchbarParent = altTouchBar ? touchBarAltPlaceholder() : touchBarPlaceholder();
+  m_touchBar->parent()->removeChild(m_touchBar.get());
+  touchbarParent->addChild(m_touchBar.get());
+  remapWindow();
+}
+
+void MainWindow::toggleTouchbar() {
+  auto visible = !Preferences::instance().touchBar.visible();
+  Preferences::instance().touchBar.visible(visible);
+  configureWorkspaceLayout();
 }
 
 MainWindow::~MainWindow()
@@ -410,6 +443,7 @@ void MainWindow::configureWorkspaceLayout()
   m_menuBar->setVisible(normal);
   m_tabsBar->setVisible(normal);
   colorBarPlaceholder()->setVisible(normal && isDoc);
+  m_touchBar->setVisible(normal && isDoc && Preferences::instance().touchBar.visible());
   m_toolBar->setVisible(normal && isDoc);
   m_statusBar->setVisible(normal);
   m_contextBar->setVisible(

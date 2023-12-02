@@ -181,6 +181,7 @@ add_library(app-lib
   commands/cmd_advanced_mode.cpp
   commands/cmd_alternate_timeline.cpp
   commands/cmd_alternate_toolbar.cpp
+  commands/cmd_alternate_touchbar.cpp
   commands/cmd_background_from_layer.cpp
   commands/cmd_cancel.cpp
   commands/cmd_canvas_size.cpp
@@ -284,6 +285,7 @@ add_library(app-lib
   commands/cmd_timeline.cpp
   commands/cmd_toggle_fullscreen.cpp
   commands/cmd_toggle_preview.cpp
+  commands/cmd_toggle_touchbar.cpp
   commands/cmd_undo.cpp
   commands/cmd_undo_history.cpp
   commands/cmd_unlink_cel.cpp
@@ -386,6 +388,7 @@ add_library(app-lib
   ui/brush_popup.cpp
   ui/button_set.cpp
   ui/color_bar.cpp
+  ui/touch_bar.cpp
   ui/color_button.cpp
   ui/color_popup.cpp
   ui/color_selector.cpp
