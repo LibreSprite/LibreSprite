@@ -40,20 +40,15 @@ namespace app {
 
 using namespace ui;
 
-static void destroy_instance(AppMenus* instance)
-{
-  delete instance;
-}
-
 // static
 AppMenus* AppMenus::instance()
 {
-  static AppMenus* instance = NULL;
+  static std::shared_ptr<AppMenus> instance;
   if (!instance) {
-    instance = new AppMenus;
-    App::instance()->Exit.connect(base::Bind<void>(&destroy_instance, instance));
+      instance.reset(new AppMenus());
+      App::instance()->Exit.connect([]{ instance.reset(); });
   }
-  return instance;
+  return instance.get();
 }
 
 void AppMenus::reload()
