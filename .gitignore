@@ -21,3 +21,5 @@ build
 /stage
 /*.snap
 /snap/.snapcraft/
+/.cache/
+*~
