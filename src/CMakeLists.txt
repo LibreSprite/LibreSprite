@@ -30,7 +30,7 @@ if(USE_ALLEG4_BACKEND AND NOT USE_SHARED_ALLEGRO4)
   add_subdirectory(allegro)
 endif()
 
-if(UNIX AND NOT APPLE)
+if((UNIX AND NOT APPLE) OR (WIN32 AND NOT MSVC))
   set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
   set(KEEP_INJECTIONS_END "-Wl,--no-whole-archive")
 endif()
@@ -127,7 +127,36 @@ add_executable(libresprite WIN32
   main/main.cpp
   ${win32_resources}
   ${x11_resources})
-target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN} app-lib ${PLATFORM_LIBS})
+
+target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
+  app-lib
+  base-lib
+  cfg-lib
+  clip
+  css-lib
+  doc-lib
+  filters-lib
+  fixmath-lib
+  flic-lib
+  gfx-lib
+  net-lib
+  render-lib
+  script-lib
+  she
+  ui-lib
+  undo
+  ${KEEP_INJECTIONS_END}
+  ${LibArchive_LIBRARY}
+  ${TINYXML2_LIBRARY}
+  ${JPEG_LIBRARIES}
+  ${GIF_LIBRARIES}
+  ${PNG_LIBRARIES}
+  ${WEBP_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${LUA_LIBRARIES}
+  ${V8_LIBRARIES}
+  ${FREETYPE_LIBRARIES}
+  ${PLATFORM_LIBS})
 add_dependencies(libresprite copy_data)
 
 install(TARGETS libresprite

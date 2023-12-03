@@ -476,31 +476,3 @@ add_library(app-lib
   xml_document.cpp
   ${data_recovery_files}
   ${generated_files})
-
-target_link_libraries(app-lib
-  base-lib
-  cfg-lib
-  clip
-  css-lib
-  doc-lib
-  filters-lib
-  fixmath-lib
-  flic-lib
-  gfx-lib
-  net-lib
-  render-lib
-  script-lib
-  she
-  ui-lib
-  undo
-  ${KEEP_INJECTIONS_END}
-  ${LibArchive_LIBRARY}
-  ${TINYXML2_LIBRARY}
-  ${JPEG_LIBRARIES}
-  ${GIF_LIBRARIES}
-  ${PNG_LIBRARIES}
-  ${WEBP_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-  ${LUA_LIBRARIES}
-  ${V8_LIBRARIES}
-  ${FREETYPE_LIBRARIES})

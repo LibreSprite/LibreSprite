@@ -26,9 +26,9 @@ namespace app {
 using namespace ui;
 using namespace doc;
 
-class GotoCommand : public Command {
+class GotoCommandBase : public Command {
 protected:
-  GotoCommand(const char* short_name, const char* friendly_name)
+  GotoCommandBase(const char* short_name, const char* friendly_name)
     : Command(short_name, friendly_name, CmdRecordableFlag) { }
 
   bool onEnabled(Context* context) override {
@@ -44,10 +44,10 @@ protected:
   virtual frame_t onGetFrame(Editor* editor) = 0;
 };
 
-class GotoFirstFrameCommand : public GotoCommand {
+class GotoFirstFrameCommand : public GotoCommandBase {
 public:
   GotoFirstFrameCommand()
-    : GotoCommand("GotoFirstFrame",
+    : GotoCommandBase("GotoFirstFrame",
                   "Go to First Frame") { }
   Command* clone() const override { return new GotoFirstFrameCommand(*this); }
 
@@ -57,10 +57,10 @@ protected:
   }
 };
 
-class GotoPreviousFrameCommand : public GotoCommand {
+class GotoPreviousFrameCommand : public GotoCommandBase {
 public:
   GotoPreviousFrameCommand()
-    : GotoCommand("GotoPreviousFrame",
+    : GotoCommandBase("GotoPreviousFrame",
                   "Go to Previous Frame") { }
   Command* clone() const override { return new GotoPreviousFrameCommand(*this); }
 
@@ -73,9 +73,9 @@ protected:
   }
 };
 
-class GotoNextFrameCommand : public GotoCommand {
+class GotoNextFrameCommand : public GotoCommandBase {
 public:
-  GotoNextFrameCommand() : GotoCommand("GotoNextFrame",
+  GotoNextFrameCommand() : GotoCommandBase("GotoNextFrame",
                                        "Go to Next Frame") { }
   Command* clone() const override { return new GotoNextFrameCommand(*this); }
 
@@ -88,9 +88,9 @@ protected:
   }
 };
 
-class GotoNextFrameWithSameTagCommand : public GotoCommand {
+class GotoNextFrameWithSameTagCommand : public GotoCommandBase {
 public:
-  GotoNextFrameWithSameTagCommand() : GotoCommand("GotoNextFrameWithSameTag",
+  GotoNextFrameWithSameTagCommand() : GotoCommandBase("GotoNextFrameWithSameTag",
                                                   "Go to Next Frame with same tag") { }
   Command* clone() const override { return new GotoNextFrameWithSameTagCommand(*this); }
 
@@ -105,9 +105,9 @@ protected:
   }
 };
 
-class GotoPreviousFrameWithSameTagCommand : public GotoCommand {
+class GotoPreviousFrameWithSameTagCommand : public GotoCommandBase {
 public:
-  GotoPreviousFrameWithSameTagCommand() : GotoCommand("GotoPreviousFrameWithSameTag",
+  GotoPreviousFrameWithSameTagCommand() : GotoCommandBase("GotoPreviousFrameWithSameTag",
                                                       "Go to Previous Frame with same tag") { }
   Command* clone() const override { return new GotoPreviousFrameWithSameTagCommand(*this); }
 
@@ -122,9 +122,9 @@ protected:
   }
 };
 
-class GotoLastFrameCommand : public GotoCommand {
+class GotoLastFrameCommand : public GotoCommandBase {
 public:
-  GotoLastFrameCommand() : GotoCommand("GotoLastFrame",
+  GotoLastFrameCommand() : GotoCommandBase("GotoLastFrame",
                                        "Go to Last Frame") { }
   Command* clone() const override { return new GotoLastFrameCommand(*this); }
 
@@ -134,9 +134,9 @@ protected:
   }
 };
 
-class GotoFrameCommand : public GotoCommand {
+class GotoFrameCommand : public GotoCommandBase {
 public:
-  GotoFrameCommand() : GotoCommand("GotoFrame",
+  GotoFrameCommand() : GotoCommandBase("GotoFrame",
                                    "Go to Frame")
                      , m_frame(0) { }
   Command* clone() const override { return new GotoFrameCommand(*this); }
