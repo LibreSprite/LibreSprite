@@ -29,7 +29,7 @@ To compile LibreSprite you will need:
 
 * [CMake](http://www.cmake.org/) (3.4 or greater)
 * [Ninja](https://ninja-build.org)
-* [vcpkg](https://vcpkg.io/en/getting-started.html) (Windows and MacOS only)
+* [Msys2](https://www.msys2.org/) (Windows only)
 
 ## Get the source code
 
@@ -69,17 +69,16 @@ Fedora:
 
 ### Windows dependencies
 
-To install the required dependencies with vcpkg, run:
+To install the required dependencies with msys2, run the following in mingw32:
 
-    vcpkg install curl freetype giflib gtest libjpeg-turbo lua libpng libwebp pixman sdl2 sdl2-image tinyxml2 v8 zlib libarchive --triplet x64-windows
-
-Beware: `--triplet x64-windows` is only necessary for a 64 architecture
-build.
+    pacman -S base-devel mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-make mingw-w64-i686-curl mingw-w64-i686-freetype mingw-w64-i686-giflib mingw-w64-i686-libjpeg-turbo mingw-w64-i686-lua mingw-w64-i686-libpng mingw-w64-i686-libwebp mingw-w64-i686-pixman mingw-w64-i686-SDL2 mingw-w64-i686-SDL2_image mingw-w64-i686-tinyxml2 mingw-w64-i686-v8 mingw-w64-i686-zlib mingw-w64-i686-libarchive
 
 ### MacOS dependencies
 
-On MacOS you will need Mac OS X 11.0 SDK and Xcode 7.3 (older versions
-might work).
+On MacOS you will need Mac OS X 11.0 SDK and the corresponding Xcode.
+In a terminal, install the dependencies using brew:
+
+    brew install gnutls freetype jpeg googletest lua pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
 
 ## Compiling
 
@@ -114,23 +113,9 @@ issues with Allegro 4.4
 
 ### Windows details
 
-If you're using a command prompt and aiming for a x64 build, be sure to
-use the [x64 prompt](https://i.stack.imgur.com/qeR0b.png) or it won't
-find `vcpkg` libraries.
+Run the following in mingw32.exe:
 
-To compile LibreSprite, run the following commands:
-
-    cmake ^
-      -DCMAKE_TOOLCHAIN_FILE=put_your_vcpkg_path_here\vcpkg\scripts\buildsystems\vcpkg.cmake ^
-      -G Ninja ^
-      ..
-
-To compile the legacy Allegro backend, run `cmake` with the flags
-`-DUSE_SDL2_BACKEND=off -DUSE_ALLEG4_BACKEND=on`.
-
-The repository contains a patched version of the Allegro 4 library.
-If you want to use your installed version of Allegro, run `cmake` with
-the flag `-DUSE_SHARED_ALLEGRO4=on`.
+    cmake -G Ninja ..
 
 ### MacOS details
 

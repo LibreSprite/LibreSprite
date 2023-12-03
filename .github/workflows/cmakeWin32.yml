@@ -35,7 +35,6 @@ jobs:
           mingw-w64-i686-SDL2
           mingw-w64-i686-SDL2_image
           mingw-w64-i686-tinyxml2
-          mingw-w64-i686-tinyxml
           mingw-w64-i686-v8
           mingw-w64-i686-zlib
           mingw-w64-i686-libarchive
