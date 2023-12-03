@@ -7,6 +7,6 @@
 #pragma once
 
 #include <string>
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
-void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn);
+void gen_skin_class(tinyxml2::XMLDocument* doc, const std::string& inputFn);

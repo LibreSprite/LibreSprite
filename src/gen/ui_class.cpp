@@ -15,17 +15,17 @@
 #include <iostream>
 #include <vector>
 
-typedef std::vector<TiXmlElement*> XmlElements;
+typedef std::vector<tinyxml2::XMLElement*> XmlElements;
 
-static TiXmlElement* find_element_by_id(TiXmlElement* elem, const std::string& thisId)
+static tinyxml2::XMLElement* find_element_by_id(tinyxml2::XMLElement* elem, const std::string& thisId)
 {
   const char* id = elem->Attribute("id");
   if (id && id == thisId)
     return elem;
 
-  TiXmlElement* child = elem->FirstChildElement();
+  tinyxml2::XMLElement* child = elem->FirstChildElement();
   while (child) {
-    TiXmlElement* match = find_element_by_id(child, thisId);
+    tinyxml2::XMLElement* match = find_element_by_id(child, thisId);
     if (match)
       return match;
 
@@ -35,9 +35,9 @@ static TiXmlElement* find_element_by_id(TiXmlElement* elem, const std::string& t
   return NULL;
 }
 
-static void collect_widgets_with_ids(TiXmlElement* elem, XmlElements& widgets)
+static void collect_widgets_with_ids(tinyxml2::XMLElement* elem, XmlElements& widgets)
 {
-  TiXmlElement* child = elem->FirstChildElement();
+  tinyxml2::XMLElement* child = elem->FirstChildElement();
   while (child) {
     const char* id = child->Attribute("id");
     if (id)
@@ -81,14 +81,14 @@ static std::string convert_type(const std::string& name)
   throw base::Exception("unknown widget name: " + name);
 }
 
-void gen_ui_class(TiXmlDocument* doc, const std::string& inputFn, const std::string& widgetId)
+void gen_ui_class(tinyxml2::XMLDocument* doc, const std::string& inputFn, const std::string& widgetId)
 {
   std::cout
     << "// Don't modify, generated file from " << inputFn << "\n"
     << "\n";
 
-  TiXmlHandle handle(doc);
-  TiXmlElement* elem = handle.FirstChild("gui").ToElement();
+  tinyxml2::XMLHandle handle(doc);
+  tinyxml2::XMLElement* elem = handle.FirstChildElement("gui").ToElement();
   elem = find_element_by_id(elem, widgetId);
   if (!elem) {
     std::cout << "#error Widget not found: " << widgetId << "\n";

@@ -12,18 +12,18 @@
 #include <iostream>
 #include <vector>
 
-void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
+void gen_skin_class(tinyxml2::XMLDocument* doc, const std::string& inputFn)
 {
   std::vector<std::string> dimensions;
   std::vector<std::string> colors;
   std::vector<std::string> parts;
   std::vector<std::string> styles;
 
-  TiXmlHandle handle(doc);
-  TiXmlElement* elem = handle
-    .FirstChild("skin")
-    .FirstChild("dimensions")
-    .FirstChild("dim").ToElement();
+  tinyxml2::XMLHandle handle(doc);
+  tinyxml2::XMLElement* elem = handle
+    .FirstChildElement("skin")
+    .FirstChildElement("dimensions")
+    .FirstChildElement("dim").ToElement();
   while (elem) {
     const char* id = elem->Attribute("id");
     dimensions.push_back(id);
@@ -31,9 +31,9 @@ void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
   }
 
   elem = handle
-    .FirstChild("skin")
-    .FirstChild("colors")
-    .FirstChild("color").ToElement();
+    .FirstChildElement("skin")
+    .FirstChildElement("colors")
+    .FirstChildElement("color").ToElement();
   while (elem) {
     const char* id = elem->Attribute("id");
     colors.push_back(id);
@@ -41,9 +41,9 @@ void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
   }
 
   elem = handle
-    .FirstChild("skin")
-    .FirstChild("parts")
-    .FirstChild("part").ToElement();
+    .FirstChildElement("skin")
+    .FirstChildElement("parts")
+    .FirstChildElement("part").ToElement();
   while (elem) {
     const char* id = elem->Attribute("id");
     if (!strchr(id, ':'))
@@ -52,9 +52,9 @@ void gen_skin_class(TiXmlDocument* doc, const std::string& inputFn)
   }
 
   elem = handle
-    .FirstChild("skin")
-    .FirstChild("stylesheet")
-    .FirstChild("style").ToElement();
+    .FirstChildElement("skin")
+    .FirstChildElement("stylesheet")
+    .FirstChildElement("style").ToElement();
   while (elem) {
     const char* id = elem->Attribute("id");
     if (!strchr(id, ':'))

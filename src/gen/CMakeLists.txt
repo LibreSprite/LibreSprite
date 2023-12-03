@@ -15,4 +15,4 @@ endif()
 
 target_link_libraries(gen
   base-lib
-  ${TINYXML_LIBRARY})
+  ${TINYXML2_LIBRARY})

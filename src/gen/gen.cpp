@@ -11,11 +11,13 @@
 #include "gen/pref_types.h"
 #include "gen/skin_class.h"
 #include "gen/ui_class.h"
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 #include <iostream>
+#include <sstream>
 
 typedef base::ProgramOptions PO;
+using namespace std::string_literals;
 
 static void run(int argc, const char* argv[])
 {
@@ -28,21 +30,17 @@ static void run(int argc, const char* argv[])
   po.parse(argc, argv);
 
   // Try to load the XML file
-  TiXmlDocument* doc = NULL;
+  tinyxml2::XMLDocument* doc = NULL;
 
   std::string inputFilename = po.value_of(inputOpt);
   if (!inputFilename.empty()) {
     base::FileHandle inputFile(base::open_file(inputFilename, "rb"));
-    doc = new TiXmlDocument();
+    if (!inputFile)
+      throw std::runtime_error("Could not open input file: "s + inputFilename);
+    doc = new tinyxml2::XMLDocument();
     doc->SetValue(inputFilename.c_str());
-    if (!doc->LoadFile(inputFile.get())) {
-      std::cerr << doc->Value() << ":"
-                << doc->ErrorRow() << ":"
-                << doc->ErrorCol() << ": "
-                << "error " << doc->ErrorId() << ": "
-                << doc->ErrorDesc() << "\n";
-
-      throw std::runtime_error("invalid input file");
+    if (doc->LoadFile(inputFile.get()) != tinyxml2::XML_SUCCESS) {
+      throw std::runtime_error("invalid input file: "s + inputFilename + "\n" + doc->ErrorStr());
     }
   }
 
@@ -65,7 +63,7 @@ int main(int argc, const char* argv[])
     return 0;
   }
   catch (const std::exception& e) {
-    std::cerr << e.what() << "\n";
+    std::cerr << "exception: " << e.what() << "\n";
     return 1;
   }
 }
