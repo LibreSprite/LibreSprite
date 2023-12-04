@@ -210,17 +210,20 @@ void SkinTheme::onRegenerate()
 
   // First we load the skin from default theme, which is more proper
   // to have every single needed skin part/color/dimension.
-  loadAll(pref.theme.selected.defaultValue());
-
   // Then we load the selected theme to redefine default theme parts.
-  if (pref.theme.selected.defaultValue() != pref.theme.selected())
-    loadAll(pref.theme.selected());
-}
-
-void SkinTheme::loadAll(const std::string& skinId)
-{
-  loadSheet(skinId);
-  loadXml(skinId);
+  if (pref.theme.selected.defaultValue() != pref.theme.selected()) {
+    auto skinId = pref.theme.selected();
+    try {
+      loadSheet(skinId);
+    } catch (const base::Exception&) {
+      loadSheet(pref.theme.selected.defaultValue());
+    }
+    loadXml(pref.theme.selected.defaultValue());
+    try { loadXml(skinId); } catch (const base::Exception&) {}
+  } else {
+    loadSheet(pref.theme.selected.defaultValue());
+    loadXml(pref.theme.selected.defaultValue());
+  }
 }
 
 void SkinTheme::loadSheet(const std::string& skinId)

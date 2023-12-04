@@ -115,7 +115,6 @@ namespace app {
       void onRegenerate() override;
 
     private:
-      void loadAll(const std::string& skinId);
       void loadSheet(const std::string& skinId);
       void loadFonts(const std::string& skinId);
       void loadXml(const std::string& skinId);
