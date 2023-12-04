@@ -1,4 +1,4 @@
-name: CMake MacOS
+name: MacOS
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
 
 jobs:
   build-x86_64:
-    runs-on: macos-11
+    runs-on: macos-14
     steps:
     - uses: actions/checkout@v2
       with:
@@ -20,7 +20,7 @@ jobs:
 
     - name: install deps
       run: |
-        brew install gnutls freetype jpeg googletest lua pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
+        brew install gnutls freetype jpeg googletest lua pixman sdl2 sdl2_image tinyxml2 tinyxml libarchive ninja zlib xmlto dylibbundler
 
     - name: git
       run: |
@@ -52,8 +52,7 @@ jobs:
     - name: Generate Makefiles
       run: |
         cmake -S . -B build -G Ninja \
-          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+          -DCMAKE_OSX_ARCHITECTURES=x86_64;arm64 \
           -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
     - name: Build
