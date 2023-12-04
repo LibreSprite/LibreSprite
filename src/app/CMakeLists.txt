@@ -56,6 +56,10 @@ list(APPEND generated_files ${output_fn})
 # Directory where generated files by "gen" utility will stay.
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+if(GEN_ONLY)
+  add_library(app-lib ${generated_files})
+else()
+
 if(WITH_WEBP_SUPPORT)
   add_definitions(-DASEPRITE_WITH_WEBP_SUPPORT)
 endif()
@@ -476,3 +480,4 @@ add_library(app-lib
   xml_document.cpp
   ${data_recovery_files}
   ${generated_files})
+endif()

@@ -80,20 +80,22 @@ add_subdirectory(base)
 # Directory where base/config.h file is located
 include_directories(${BASE_INCLUDE_DIR})
 
+add_subdirectory(gen)
+add_subdirectory(app)
+if (NOT GEN_ONLY)
 add_subdirectory(cfg)
 add_subdirectory(css)
 add_subdirectory(doc)
 add_subdirectory(filters)
 add_subdirectory(fixmath)
 add_subdirectory(flic)
-add_subdirectory(gen)
 add_subdirectory(gfx)
 add_subdirectory(net)
 add_subdirectory(render)
 add_subdirectory(script)
 add_subdirectory(she)
 add_subdirectory(ui)
-add_subdirectory(app)
+endif()
 
 ######################################################################
 # Copy data/ directory target
@@ -112,7 +114,7 @@ add_custom_target(copy_data DEPENDS ${out_data_files})
 
 ######################################################################
 # Aseprite application
-
+if (NOT GEN_ONLY)
 if(WIN32)
   set(win32_resources
     main/resources_win32.rc
@@ -157,13 +159,17 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   ${V8_LIBRARIES}
   ${FREETYPE_LIBRARIES}
   ${PLATFORM_LIBS})
-add_dependencies(libresprite copy_data)
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)
 
 install(DIRECTORY ../data
   DESTINATION share/libresprite)
+else()
+  add_custom_target(libresprite DEPENDS app-lib)
+endif()
+
+add_dependencies(libresprite copy_data)
 
 ######################################################################
 # Tests

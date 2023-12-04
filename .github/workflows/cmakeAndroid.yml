@@ -1,0 +1,45 @@
+name: Android
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Setup SDK
+      uses: android-actions/setup-android@v3
+    - name: Setup tools
+      run: |
+        # sudo apt-get install cmake g++ libtinyxml2-dev ninja-build
+        sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libarchive-dev
+        mkdir build
+        cd build
+        cmake -G Ninja -DGEN_ONLY=ON ..
+        ninja
+        cd ..
+    - name: Setup Submodule
+      run: git clone https://github.com/LibreSprite/ls-android-deps.git android
+    - name: Build Application
+      run: |
+        cd android
+        sh ./gradlew --no-daemon --parallel build
+        cd ..
+        ls -R android/app/build
+#    - name: Archive production artifacts
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: libresprite-development-android
+#        path: |
+#          android/app/build/outputs/apk/all_in_one/debug/app-all_in_one-debug.apk
