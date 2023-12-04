@@ -347,14 +347,10 @@ namespace she {
           event.setModifiers(getSheModifiers());
 
           if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
-            Event ev;
-            ev.setType(Event::MouseDoubleClick);
-            ev.setPosition(event.position());
-            ev.setButton(event.button());
-            queue_event(ev);
-
-            ev.setType(Event::MouseUp);
-            queue_event(ev);
+            queue_event(event);
+            event.setType(Event::MouseDoubleClick);
+            event.setPosition(event.position());
+            event.setButton(event.button());
           }
 
           return;
