@@ -36,10 +36,10 @@ jobs:
         cd android
         sh ./gradlew --no-daemon --parallel build
         cd ..
-        ls -R android/app/build
-#    - name: Archive production artifacts
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: libresprite-development-android
-#        path: |
-#          android/app/build/outputs/apk/all_in_one/debug/app-all_in_one-debug.apk
+#        ls -R android/app/build
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: libresprite-development-android
+        path: |
+          android/app/build/outputs/apk/all_in_one/debug/app-all_in_one-debug.apk
