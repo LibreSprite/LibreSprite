@@ -187,12 +187,7 @@ int init_module_gui()
   {
       auto uiScale = Preferences::instance().experimental.uiScale();
       if (uiScale < 1) {
-          // TODO: Guess ideal scale based on DPI
-#if defined(ANDROID)
-          uiScale = 2;
-#else
-          uiScale = 1;
-#endif
+          uiScale = 1 + (ui::display_h() > 400) + (ui::display_h() > 800);
           Preferences::instance().experimental.uiScale(uiScale);
       }
       gui_theme->setScale(uiScale);

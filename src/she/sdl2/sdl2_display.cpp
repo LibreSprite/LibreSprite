@@ -67,9 +67,7 @@ namespace she {
       throw DisplayCreationException(SDL_GetError());
 
     sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
-#if defined(ANDROID)
     SDL_GetWindowSize(m_window, &width, &height);
-#endif
     m_width = width;
     m_height = height;
 
