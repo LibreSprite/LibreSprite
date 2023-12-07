@@ -11,6 +11,8 @@
 
 namespace base {
 
+  std::vector<std::string> split(const std::string& original, char delimiter);
+
   std::string string_to_lower(const std::string& original);
   std::string string_to_upper(const std::string& original);
 

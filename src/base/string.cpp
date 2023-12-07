@@ -19,6 +19,20 @@
 
 namespace base {
 
+std::vector<std::string> split(const std::string& original, char delimiter)
+{
+  std::vector<std::string> output;
+  std::string::size_type prevPos = 0, pos = 0;
+
+  while ((pos = original.find(delimiter, pos)) != std::string::npos) {
+    output.emplace_back(original.substr(prevPos, pos - prevPos));
+    prevPos = ++pos;
+  }
+  output.emplace_back(original.substr(prevPos, pos - prevPos));
+
+  return output;
+}
+
 std::string string_to_lower(const std::string& original)
 {
   std::wstring result(from_utf8(original));
