@@ -18,8 +18,11 @@
 #include "base/cfile.h"
 #include "base/file_handle.h"
 #include "doc/doc.h"
+#include "doc/pixel_format.h"
 #include "render/render.h"
-
+#include "she/system.h"
+#include "she/surface.h"
+#include "she/surface_format.h"
 #include <memory>
 
 namespace app {
@@ -35,6 +38,7 @@ class IcoFormat : public FileFormat {
       FILE_SUPPORT_SAVE |
       FILE_SUPPORT_RGB |
       FILE_SUPPORT_GRAY |
+      FILE_SUPPORT_SEQUENCES |
       FILE_SUPPORT_INDEXED;
   }
 
@@ -80,6 +84,22 @@ struct BITMAPINFOHEADER {
 
 bool IcoFormat::onLoad(FileOp* fop)
 {
+  try {
+    auto surface = std::shared_ptr<she::Surface>(she::instance()->loadSurface(fop->filename().c_str()));
+    she::SurfaceFormatData data;
+    surface->getFormat(&data);
+    auto pixelFormat = data.bitsPerPixel <= 8 ? IMAGE_INDEXED : IMAGE_RGB;
+    auto width = surface->width();
+    auto height = surface->height();
+    Image* image = fop->sequenceImage(pixelFormat, width, height);
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        put_pixel(image, x, y, surface->getPixel(x, y));
+      }
+    }
+    return true;
+  } catch (...) {}
+
   FileHandle handle(open_file_with_exception(fop->filename(), "rb"));
   FILE* f = handle.get();
 
@@ -124,16 +144,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   if (entry.bpp > 8)
     pixelFormat = IMAGE_RGB;
 
-  // Create the sprite with one background layer
-  Sprite* sprite = new Sprite(pixelFormat, width, height, numcolors);
-  LayerImage* layer = new LayerImage(sprite);
-  sprite->folder()->addLayer(layer);
-
-  // Create the first image/cel
-  ImageRef image(Image::create(pixelFormat, width, height));
-  auto cel = std::make_shared<Cel>(frame_t(0), image);
-  layer->addCel(cel);
-  clear_image(image.get(), 0);
+  Image* image = fop->sequenceImage(pixelFormat, width, height);
 
   // Go to the entry start in the file
   fseek(f, entry.image_offset, SEEK_SET);
@@ -165,7 +176,7 @@ bool IcoFormat::onLoad(FileOp* fop)
       pal->setEntry(i, rgba(r, g, b, 255));
     }
 
-    sprite->setPalette(*pal, true);
+    fop->document()->sprite()->setPalette(*pal, true);
   }
 
   // Read XOR MASK
@@ -173,22 +184,23 @@ bool IcoFormat::onLoad(FileOp* fop)
   for (y=image->height()-1; y>=0; --y) {
     for (x=0; x<image->width(); ++x) {
       switch (entry.bpp) {
-
         case 8:
           c = fgetc(f);
-          ASSERT(c >= 0 && c < numcolors);
+
           if (c >= 0 && c < numcolors)
-            put_pixel(image.get(), x, y, c);
+            put_pixel(image, x, y, c);
           else
-            put_pixel(image.get(), x, y, 0);
+            put_pixel(image, x, y, 0);
           break;
 
         case 24:
           b = fgetc(f);
           g = fgetc(f);
           r = fgetc(f);
-          put_pixel(image.get(), x, y, rgba(r, g, b, 255));
+          put_pixel(image, x, y, rgba(r, g, b, 255));
           break;
+
+      default: break;
       }
     }
 
@@ -207,7 +219,7 @@ bool IcoFormat::onLoad(FileOp* fop)
       v = 128;
       for (b=0; b<8; b++) {
         if ((m & v) == v)
-          put_pixel(image.get(), x*8+b, y, 0); // TODO mask color
+          put_pixel(image, x*8+b, y, 0); // TODO mask color
         v >>= 1;
       }
     }
@@ -219,7 +231,6 @@ bool IcoFormat::onLoad(FileOp* fop)
     }
   }
 
-  fop->createDocument(sprite);
   return true;
 }
 
