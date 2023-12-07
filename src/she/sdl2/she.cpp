@@ -537,23 +537,19 @@ namespace she {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)
         throw std::runtime_error("Error loading image");
+      return new SDL2Surface(bmp, SDL2Surface::DeleteAndDestroy);
+    }
 
+    Surface* loadRgbaSurface(const char* filename) override {
+      SDL_Surface* bmp = IMG_Load(filename);
+      if (!bmp)
+        throw std::runtime_error("Error loading image");
       if (bmp->format->BitsPerPixel < 32) {
         auto copy = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA8888, 0);
         SDL_FreeSurface(bmp);
         bmp = copy;
       }
-
-      std::cout << "Loading " << filename << " "
-                << std::to_string(bmp->format->BitsPerPixel) << " "
-                << std::to_string(bmp->format->Rshift) << " "
-                << std::to_string(bmp->format->Ashift) << std::endl;
-
       return new SDL2Surface(bmp, SDL2Surface::DeleteAndDestroy);
-    }
-
-    Surface* loadRgbaSurface(const char* filename) override {
-      return loadSurface(filename);
     }
 
   };
