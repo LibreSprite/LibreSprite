@@ -64,6 +64,8 @@ namespace app {
       return ((onGetFlags() & f) == f);
     }
 
+    virtual int loadPriority() {return 1;}
+
   protected:
     virtual const char* onGetName() const = 0;
     virtual const char* onGetExtensions() const = 0;

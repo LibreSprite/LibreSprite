@@ -87,8 +87,7 @@ Document* load_document(Context* context, const char* filename)
     console.printf(fop->error().c_str());
   }
 
-  Document* document = fop->releaseDocument();
-  fop.release();
+  auto document = fop->releaseDocument();
 
   if (document && context)
     document->setContext(context);
@@ -123,42 +122,24 @@ int save_document(Context* context, doc::Document* document)
 // static
 FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filename, int flags)
 {
-  std::unique_ptr<FileOp> fop(
-    new FileOp(FileOpLoad, context));
-  if (!fop)
-    return nullptr;
-
-  // Get the extension of the filename (in lower case)
-  std::string extension = base::string_to_lower(base::get_file_extension(filename));
-
-  LOG("Loading file \"%s\" (%s)\n", filename, extension.c_str());
+  std::unique_ptr<FileOp> fop(new FileOp(FileOpLoad, context));
 
   // Does file exist?
   if (!base::is_file(filename)) {
     fop->setError("File not found: \"%s\"\n", filename);
-    goto done;
   }
 
-  // Get the format through the extension of the filename
-  fop->m_format = FileFormatsManager::instance()
-    ->getFileFormatByExtension(extension.c_str());
+  fop->m_loadFlags = flags;
+  fop->m_filename = filename;
 
-  if (!fop->m_format ||
-      !fop->m_format->support(FILE_SUPPORT_LOAD)) {
-    fop->setError("%s can't load \"%s\" files\n", PACKAGE, extension.c_str());
-    goto done;
-  }
+  /* prepare to load a sequence */
 
-  /* use the "sequence" interface */
-  if (fop->m_format->support(FILE_SUPPORT_SEQUENCES)) {
-    /* prepare to load a sequence */
-    fop->prepareForSequence();
-
+  if (fop->m_seq.filename_list.empty()) {
     /* per now, we want load just one file */
-    fop->m_seq.filename_list.push_back(filename);
+    fop->m_seq.filename_list.push_back(fop->m_filename);
 
     /* don't load the sequence (just the one file/one frame) */
-    if (!(flags & FILE_LOAD_SEQUENCE_NONE)) {
+    if (!(fop->m_loadFlags & FILE_LOAD_SEQUENCE_NONE)) {
       std::string left, right;
       int c, width, start_from;
       char buf[512];
@@ -166,15 +147,15 @@ FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filena
       /* first of all, we must generate the list of files to load in the
          sequence... */
 
-      // Check is this could be a sequence
-      start_from = split_filename(filename, left, right, width);
+      // Check if this could be a sequence
+      start_from = app::split_filename(fop->m_filename.c_str(), left, right, width);
       if (start_from >= 0) {
         // Try to get more file names
         for (c=start_from+1; ; c++) {
           // Get the next file name
           snprintf(buf, sizeof(buf), "%s%0*d%s", left.c_str(), width, c, right.c_str());
 
-          // If the file doesn't exist, we doesn't need more files to load
+          // If the file doesn't exist, we don't need more files to load
           if (!base::is_file(buf))
             break;
 
@@ -184,35 +165,27 @@ FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filena
       }
 
       /* TODO add a better dialog to edit file-names */
-      if ((flags & FILE_LOAD_SEQUENCE_ASK) && context && context->isUIAvailable()) {
+      if ((fop->m_loadFlags & FILE_LOAD_SEQUENCE_ASK) && fop->m_context && fop->m_context->isUIAvailable() && fop->m_seq.filename_list.size() > 1) {
         /* really want load all files? */
-        if ((fop->m_seq.filename_list.size() > 1) &&
-            (ui::Alert::show("Notice"
-              "<<Possible animation with:"
-              "<<%s, %s..."
-              "<<Do you want to load the sequence of bitmaps?"
-              "||&Agree||&Skip",
-              base::get_file_name(fop->m_seq.filename_list[0]).c_str(),
-              base::get_file_name(fop->m_seq.filename_list[1]).c_str()) != 1)) {
-
-          // If the user replies "Skip", we need just one file name
-          // (the first one).
-          if (fop->m_seq.filename_list.size() > 1) {
-            fop->m_seq.filename_list.erase(fop->m_seq.filename_list.begin()+1,
-                                           fop->m_seq.filename_list.end());
-          }
+        bool skip = ui::Alert::show("Notice"
+                                    "<<Possible animation with:"
+                                    "<<%s, %s..."
+                                    "<<Do you want to load the sequence of bitmaps?"
+                                    "||&Agree||&Skip",
+                                    base::get_file_name(fop->m_seq.filename_list[0]).c_str(),
+                                    base::get_file_name(fop->m_seq.filename_list[1]).c_str()) != 1;
+        if (skip) {
+          // If the user replies "Skip", we need just the first file name
+          fop->m_seq.filename_list.erase(fop->m_seq.filename_list.begin()+1, fop->m_seq.filename_list.end());
         }
       }
     }
   }
-  else
-    fop->m_filename = filename;
 
   /* load just one frame */
-  if (flags & FILE_LOAD_ONE_FRAME)
+  if (fop->m_loadFlags & FILE_LOAD_ONE_FRAME)
     fop->m_oneframe = true;
 
-done:;
   return fop.release();
 }
 
@@ -222,8 +195,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
                                             const char* filename,
                                             const char* fn_format_arg)
 {
-  std::unique_ptr<FileOp> fop(
-    new FileOp(FileOpSave, const_cast<Context*>(context)));
+  std::unique_ptr<FileOp> fop(new FileOp(FileOpSave, const_cast<Context*>(context)));
 
   // Document to save
   fop->m_document = const_cast<Document*>(document);
@@ -477,6 +449,173 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
   return fop.release();
 }
 
+bool FileOp::operateLoadTryFormat(IFileOpProgress* progress)
+{
+  if (!isSequence() || !m_format->support(FILE_SUPPORT_SEQUENCES)) {
+    // Direct load from one file.
+    return m_format->load(this);
+  }
+
+  // Load a sequence
+  // Default palette
+  m_seq.palette->makeBlack();
+
+  // Load the sequence
+  frame_t frames(m_seq.filename_list.size());
+  frame_t frame(0);
+  Image* old_image = nullptr;
+
+  // TODO set_palette for each frame???
+  auto add_image = [&]() {
+    m_seq.last_cel->data()->setImage(m_seq.image);
+    m_seq.layer->addCel(m_seq.last_cel);
+
+    if (m_document->sprite()->palette(frame)
+        ->countDiff(*m_seq.palette, NULL, NULL) > 0) {
+      m_seq.palette->setFrame(frame);
+      m_document->sprite()->setPalette(*m_seq.palette, true);
+    }
+
+    old_image = m_seq.image.get();
+    m_seq.image.reset();
+    m_seq.last_cel = NULL;
+  };
+
+  m_seq.has_alpha = false;
+  m_seq.progress_offset = 0.0f;
+  m_seq.progress_fraction = 1.0f / (double)frames;
+
+  auto it = m_seq.filename_list.begin(),
+    end = m_seq.filename_list.end();
+  for (; it != end; ++it) {
+    m_filename = it->c_str();
+
+    // Call the "load" procedure to read the first bitmap.
+    bool loadres = m_format->load(this);
+    if (!loadres) {
+      setError("Error loading frame %d from file \"%s\"\n", frame+1, m_filename.c_str());
+    }
+
+    // For the first frame...
+    if (!old_image) {
+      // Error reading the first frame
+      if (!loadres || !m_document || !m_seq.last_cel) {
+        m_seq.image.reset();
+        delete m_document;
+        m_document = nullptr;
+        break;
+      }
+      // Read ok
+      else {
+        // Add the keyframe
+        add_image();
+      }
+    }
+    // For other frames
+    else {
+      // All done (or maybe not enough memory)
+      if (!loadres || !m_seq.last_cel) {
+        m_seq.image.reset();
+        break;
+      }
+
+      // Compare the old frame with the new one
+#if USE_LINK // TODO this should be configurable through a check-box
+      if (count_diff_between_images(old_image, m_seq.image)) {
+        add_image();
+      }
+      // We don't need this image
+      else {
+        delete m_seq.image;
+
+        // But add a link frame
+        m_seq.last_cel->image = image_index;
+        layer_add_frame(m_seq.layer, m_seq.last_cel);
+
+        m_seq.last_image = NULL;
+        m_seq.last_cel = NULL;
+      }
+#else
+      add_image();
+#endif
+    }
+
+    ++frame;
+    m_seq.progress_offset += m_seq.progress_fraction;
+  }
+  m_filename = *m_seq.filename_list.begin();
+
+  // Final setup
+  if (m_document != NULL) {
+    // Configure the layer as the 'Background'
+    if (!m_seq.has_alpha)
+      m_seq.layer->configureAsBackground();
+
+    // Set the frames range
+    m_document->sprite()->setTotalFrames(frame);
+
+    // Sets special options from the specific format (e.g. BMP
+    // file can contain the number of bits per pixel).
+    m_document->setFormatOptions(m_seq.format_options);
+  }
+
+  return true;
+}
+
+void FileOp::operateLoad(IFileOpProgress* progress)
+{
+  if (m_format && m_format->support(FILE_SUPPORT_LOAD)) {
+    if (!operateLoadTryFormat(progress))
+      setError("Error loading sprite from file \"%s\"\n", m_filename.c_str());
+    return;
+  }
+
+  // Get the extension of the filename (in lower case)
+  std::string extension = base::string_to_lower(base::get_file_extension(m_filename));
+
+  printf("Loading file \"%s\" (%s)\n", m_filename.c_str(), extension.c_str());
+
+  std::vector<std::pair<FileFormat*, int>> loaders;
+
+  for (auto format : *FileFormatsManager::instance()) {
+      if (!format->support(FILE_SUPPORT_LOAD))
+        continue;
+      int priority = format->loadPriority();
+      for (auto& supported : base::split(format->extensions(), ',')) {
+        if (supported == extension) {
+          priority += 10;
+          break;
+        }
+      }
+      loaders.push_back(std::make_pair(format, priority));
+  }
+
+  std::sort(loaders.begin(), loaders.end(), [](auto& a, auto& b){
+    return a.second > b.second;
+  });
+
+  for (auto format : loaders) {
+    // Get the format through the extension of the filename
+    m_format = format.first;
+    m_error.clear();
+
+    printf("Using loader for format %s\n", m_format->extensions());
+    if (!m_seq.filename_list.empty())
+      prepareForSequence();
+
+    try {
+      if (operateLoadTryFormat(progress) && m_error.empty())
+        return;
+    } catch (...) {
+      LOG("Loading Exception");
+    }
+  }
+
+  if (!m_format) {
+    setError("%s can't load \"%s\" files\n", PACKAGE, extension.c_str());
+  }
+}
+
 // Executes the file operation: loads or saves the sprite.
 //
 // It can be called from a different thread of the one used
@@ -491,122 +630,8 @@ void FileOp::operate(IFileOpProgress* progress)
   m_progressInterface = progress;
 
   // Load //////////////////////////////////////////////////////////////////////
-  if (m_type == FileOpLoad &&
-      m_format != NULL &&
-      m_format->support(FILE_SUPPORT_LOAD)) {
-    // Load a sequence
-    if (isSequence()) {
-      // Default palette
-      m_seq.palette->makeBlack();
-
-      // Load the sequence
-      frame_t frames(m_seq.filename_list.size());
-      frame_t frame(0);
-      Image* old_image = nullptr;
-
-      // TODO set_palette for each frame???
-      auto add_image = [&]() {
-        m_seq.last_cel->data()->setImage(m_seq.image);
-        m_seq.layer->addCel(m_seq.last_cel);
-
-        if (m_document->sprite()->palette(frame)
-            ->countDiff(*m_seq.palette, NULL, NULL) > 0) {
-          m_seq.palette->setFrame(frame);
-          m_document->sprite()->setPalette(*m_seq.palette, true);
-        }
-
-        old_image = m_seq.image.get();
-        m_seq.image.reset();
-        m_seq.last_cel = NULL;
-      };
-
-      m_seq.has_alpha = false;
-      m_seq.progress_offset = 0.0f;
-      m_seq.progress_fraction = 1.0f / (double)frames;
-
-      auto it = m_seq.filename_list.begin(),
-           end = m_seq.filename_list.end();
-      for (; it != end; ++it) {
-        m_filename = it->c_str();
-
-        // Call the "load" procedure to read the first bitmap.
-        bool loadres = m_format->load(this);
-        if (!loadres) {
-          setError("Error loading frame %d from file \"%s\"\n",
-                   frame+1, m_filename.c_str());
-        }
-
-        // For the first frame...
-        if (!old_image) {
-          // Error reading the first frame
-          if (!loadres || !m_document || !m_seq.last_cel) {
-            m_seq.image.reset();
-            delete m_document;
-            m_document = nullptr;
-            break;
-          }
-          // Read ok
-          else {
-            // Add the keyframe
-            add_image();
-          }
-        }
-        // For other frames
-        else {
-          // All done (or maybe not enough memory)
-          if (!loadres || !m_seq.last_cel) {
-            m_seq.image.reset();
-            break;
-          }
-
-          // Compare the old frame with the new one
-#if USE_LINK // TODO this should be configurable through a check-box
-          if (count_diff_between_images(old_image, m_seq.image)) {
-            add_image();
-          }
-          // We don't need this image
-          else {
-            delete m_seq.image;
-
-            // But add a link frame
-            m_seq.last_cel->image = image_index;
-            layer_add_frame(m_seq.layer, m_seq.last_cel);
-
-            m_seq.last_image = NULL;
-            m_seq.last_cel = NULL;
-          }
-#else
-          add_image();
-#endif
-        }
-
-        ++frame;
-        m_seq.progress_offset += m_seq.progress_fraction;
-      }
-      m_filename = *m_seq.filename_list.begin();
-
-      // Final setup
-      if (m_document != NULL) {
-        // Configure the layer as the 'Background'
-        if (!m_seq.has_alpha)
-          m_seq.layer->configureAsBackground();
-
-        // Set the frames range
-        m_document->sprite()->setTotalFrames(frame);
-
-        // Sets special options from the specific format (e.g. BMP
-        // file can contain the number of bits per pixel).
-        m_document->setFormatOptions(m_seq.format_options);
-      }
-    }
-    // Direct load from one file.
-    else {
-      // Call the "load" procedure.
-      if (!m_format->load(this))
-        setError("Error loading sprite from file \"%s\"\n",
-                 m_filename.c_str());
-    }
-  }
+  if (m_type == FileOpLoad)
+    operateLoad(progress);
   // Save //////////////////////////////////////////////////////////////////////
   else if (m_type == FileOpSave &&
            m_format != NULL &&

@@ -117,6 +117,7 @@ namespace app {
     FileOp();                   // Undefined
     FileOp(FileOpType type, Context* context);
 
+    int m_loadFlags;
     FileOpType m_type;          // Operation type: 0=load, 1=save.
     FileFormat* m_format;
     Context* m_context;
@@ -153,6 +154,8 @@ namespace app {
     } m_seq;
 
     void prepareForSequence();
+    void operateLoad(IFileOpProgress* progress);
+    bool operateLoadTryFormat(IFileOpProgress* progress);
   };
 
   // Available extensions for each load/save operation.
