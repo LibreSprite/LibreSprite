@@ -90,6 +90,7 @@ set(data_recovery_files
   ui/data_recovery_view.cpp)
 
 set(file_formats
+  file/she_format.cpp
   file/ase_format.cpp
   file/bmp_format.cpp
   file/extension_format.cpp

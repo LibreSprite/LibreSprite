@@ -94,7 +94,12 @@ bool IcoFormat::onLoad(FileOp* fop)
     Image* image = fop->sequenceImage(pixelFormat, width, height);
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
-        put_pixel(image, x, y, surface->getPixel(x, y));
+        auto c = surface->getPixel(x, y);
+        auto r = gfx::getr(c);
+        auto g = gfx::getg(c);
+        auto b = gfx::getb(c);
+        auto a = gfx::geta(c);
+        put_pixel(image, x, y, doc::rgba(r,g,b,a));
       }
     }
     return true;

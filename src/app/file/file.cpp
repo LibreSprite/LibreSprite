@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <cstdarg>
+#include <string_view>
 
 namespace app {
 
@@ -46,9 +47,12 @@ std::string get_readable_extensions()
 
   for (const FileFormat* format : *FileFormatsManager::instance()) {
     if (format->support(FILE_SUPPORT_LOAD)) {
+      std::string_view extensions = format->extensions();
+      if (extensions.empty())
+        continue;
       if (!buf.empty())
         buf.push_back(',');
-      buf += format->extensions();
+      buf += extensions;
     }
   }
 
