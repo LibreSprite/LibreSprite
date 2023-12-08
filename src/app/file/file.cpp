@@ -318,29 +318,22 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
     if (context && context->isUIAvailable()) {
       warnings += "<<You can use \".ase\" format to keep all this information.";
 
-      std::string title, buttons;
       if (fatal) {
-        title = "Error";
-        buttons = "&Close";
-      }
-      else {
-        title = "Warning";
-        buttons = "&Yes||&No";
-      }
-
-      int ret = ui::Alert::show("%s<<File format \".%s\" doesn't support:%s"
-        "<<Do you want continue with \".%s\" anyway?"
-        "||%s",
-        title.c_str(),
-        fop->m_format->name(),
-        warnings.c_str(),
-        fop->m_format->name(),
-        buttons.c_str());
-
-      // Operation can't be done (by fatal error) or the user cancel
-      // the operation
-      if ((fatal) || (ret != 1))
+        ui::Alert::show("Error<<File format \".%s\" doesn't support:%s"
+                                  "||&Close",
+                                  fop->m_format->name(),
+                                  warnings.c_str());
         return nullptr;
+      } else {
+        int ret = ui::Alert::show("Warning<<File format \".%s\" doesn't support:%s"
+                                  "<<Do you want continue with \".%s\" anyway?"
+                                  "||&Yes||&No",
+                                  fop->m_format->name(),
+                                  warnings.c_str(),
+                                  fop->m_format->name());
+        if (ret != 1)
+          return nullptr;
+      }
     }
     // No interactive & fatal error?
     else if (fatal) {
