@@ -363,6 +363,7 @@ add_library(app-lib
   script/api/document_script.cpp
   script/api/image_script.cpp
   script/api/intentry_script.cpp
+  script/api/entry_script.cpp
   script/api/layer_script.cpp
   script/api/label_script.cpp
   script/api/pixelcolor_script.cpp

@@ -24,6 +24,8 @@ namespace ui {
     virtual bool showsKeyboard() const {return true;}
     void setReadOnly(bool state);
     void setPassword(bool state);
+    void setMaxTextSize(std::size_t maxsize) {m_maxsize = maxsize;}
+    std::size_t maxTextSize() {return m_maxsize;}
 
     void showCaret();
     void hideCaret();
