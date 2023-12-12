@@ -39,6 +39,7 @@ public:
   StorageScriptObject() {
     addMethod("get", &StorageScriptObject::get);
     addMethod("set", &StorageScriptObject::set);
+    addMethod("unload", &StorageScriptObject::unload);
     addMethod("save", &StorageScriptObject::save);
     addMethod("load", &StorageScriptObject::load);
     addMethod("fetch", &StorageScriptObject::fetch);
@@ -50,6 +51,21 @@ public:
         app::ResourceFinder rf;
         rf.includeUserDir(((domain.empty() ? app::AppScripting::getFileName() : domain) + "." + key).c_str());
         return rf.getFirstOrCreateDefault();
+  }
+
+  void unload(const std::string& key, const std::string& domain) {
+    auto domainIt = storage.find(domain.empty() ? app::AppScripting::getFileName() : domain);
+    if (domainIt == storage.end())
+      return;
+
+    auto entryIt = domainIt->second.find(key);
+    if (entryIt == domainIt->second.end())
+      return;
+
+    domainIt->second.erase(entryIt);
+    if (domainIt->second.empty()) {
+      storage.erase(domainIt);
+    }
   }
 
   script::Value get(const std::string& key, const std::string& domain) {
