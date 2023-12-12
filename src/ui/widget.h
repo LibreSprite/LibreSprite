@@ -60,6 +60,13 @@ namespace ui {
     // queue anymore.
     void deferDelete();
 
+    using Handle = std::weak_ptr<Widget*>;
+    Handle handle() {
+      if (!m_self)
+        m_self = std::make_shared<Widget*>(this);
+      return m_self;
+    }
+
     // Properties handler
 
     typedef std::map<std::string, PropertyPtr> Properties;
@@ -406,6 +413,7 @@ namespace ui {
     Widget* m_parent;             // Who is the parent?
     gfx::Size* m_sizeHint;
     Properties m_properties;
+    std::shared_ptr<Widget*> m_self;
 
     // Widget size limits
     gfx::Size m_minSize, m_maxSize;

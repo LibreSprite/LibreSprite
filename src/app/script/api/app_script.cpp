@@ -108,9 +108,10 @@ public:
     if (!ptr)
       return nullptr;
 
+    auto widget = ptr->getWrapped<ui::Widget>();
     if (!id.empty())
       ptr->set("id", id);
-    m_dialogScriptObjects[ ptr->getWrapped<ui::Widget>() ] = ptr;
+    m_dialogScriptObjects[widget] = ptr;
     return ptr;
   }
 

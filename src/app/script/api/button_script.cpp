@@ -6,7 +6,7 @@
 // published by the Free Software Foundation.
 
 #include "app/script/app_scripting.h"
-#include "base/alive.h"
+
 #include "script/script_object.h"
 #include "ui/button.h"
 #include "app/script/api/widget_script.h"
@@ -19,8 +19,8 @@ public:
         addProperty("text",
                     [this]{return m_text;},
                     [this](const std::string& text){
-                        if (m_widget)
-                            static_cast<ui::Button*>(m_widget)->setText(text);
+                        if (auto widget = getWidget())
+                            static_cast<ui::Button*>(widget)->setText(text);
                         m_text = text;
                         return text;
                     });
@@ -29,9 +29,11 @@ public:
     DisplayType getDisplayType() override {return DisplayType::Inline;}
     ui::Widget* build() override {
         auto scriptFileName = app::AppScripting::getFileName();
-        auto button = new base::AliveMonitor<ui::Button>(m_text);
+        auto button = new ui::Button(m_text);
+        auto handle = button->handle();
         button->Click.connect([=](ui::Event&){
-          app::AppScripting::raiseEvent(scriptFileName, button->id() + "_click");
+          if (handle.lock())
+            app::AppScripting::raiseEvent(scriptFileName, button->id() + "_click");
         });
         return button;
     }

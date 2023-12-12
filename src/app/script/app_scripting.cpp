@@ -10,6 +10,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/document.h"
 #include "app/script/app_scripting.h"
 #include "base/file_handle.h"
@@ -23,6 +24,7 @@ namespace {
 
 inject<script::Engine> engine{nullptr};
 std::string previousFileName;
+bool wasInit{};
 
 }
 
@@ -30,6 +32,11 @@ namespace app {
   std::string AppScripting::m_fileName;
 
   void AppScripting::initEngine() {
+    if (!wasInit) {
+      wasInit = true;
+      App::instance()->Exit.connect([]{engine = nullptr;});
+    }
+
     // if there is no engine OR
     // the engine we have doesn't match the default in the registry,
     // inject a new one

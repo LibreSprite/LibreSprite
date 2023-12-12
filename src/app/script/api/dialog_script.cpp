@@ -17,7 +17,6 @@
 #include "ui/window.h"
 #include <iostream>
 
-#include "base/alive.h"
 #include "base/bind.h"
 #include "base/memory.h"
 #include "ui/ui.h"
@@ -38,28 +37,36 @@
 namespace ui {
 class Dialog;
 }
+
 namespace dialog {
-  using DialogIndex = std::unordered_map<std::string, ui::Dialog*>;
-DialogIndex& getDialogIndex() {
-  static DialogIndex dialogs;
-  return dialogs;
+using DialogIndex = std::unordered_map<std::string, ui::Dialog*>;
+
+std::shared_ptr<DialogIndex> getDialogIndex() {
+  static std::weak_ptr<DialogIndex> dialogs;
+  std::shared_ptr<DialogIndex> ptr;
+  if (dialogs.expired() || !(ptr = dialogs.lock())) {
+    dialogs = ptr = std::make_shared<DialogIndex>();
+  }
+  return ptr;
 }
 }
 
 namespace ui {
-class Dialog : public base::IsAlive, public ui::Window {
+class Dialog : public ui::Window {
+  std::shared_ptr<dialog::DialogIndex> m_index;
 public:
   Dialog() : ui::Window(ui::Window::WithTitleBar, "Script") {}
 
   ~Dialog() {
-      unlist();
+    unlist();
   }
 
   void unlist() {
-    auto& index = dialog::getDialogIndex();
-    auto it = index.find(id());
-    if (it != index.end() && it->second == this)
-        index.erase(it);
+    if (m_index) {
+      auto it = m_index->find(id());
+      if (it != m_index->end() && it->second == this)
+        m_index->erase(it);
+    }
   }
 
   void add(WidgetScriptObject* child) {
@@ -85,14 +92,16 @@ public:
   }
 
   void build(){
-    if (!isAlive() || m_grid)
+    if (m_grid)
       return;
 
     // LibreSprite has closed the window, remove corresponding ScriptObject (this)
     Close.connect([this](ui::CloseEvent&){closeWindow(true, false);});
 
-    if (!id().empty())
-        dialog::getDialogIndex()[id()] = this;
+    if (!id().empty()) {
+      m_index = dialog::getDialogIndex();
+      m_index->insert({id(), this});
+    }
 
     if (m_grid)
         removeChild(m_grid);
@@ -127,8 +136,9 @@ public:
 
     unlist();
 
-    app::TaskManager::instance().delayed([this]{
-        if (isAlive()) delete this;
+    app::TaskManager::instance().delayed([handle = handle()]{
+      if (auto self = handle.lock())
+        delete *self;
     });
   }
 
@@ -144,20 +154,21 @@ private:
 
 class DialogScriptObject : public WidgetScriptObject {
   std::unordered_map<std::string, inject<script::ScriptObject>> m_widgets;
+
   ui::Widget* build() {
     auto dialog = new ui::Dialog();
-    dialog->onShutdown = [this]{m_widget = nullptr;};
 
     // Scripting engine has finished working, build and show the Window
     inject<script::Engine>{}->afterEval([this](bool success){
-        if (!m_widget)
-            return;
-        auto dialog = getWrapped<ui::Dialog>();
-        if (success)
-            dialog->build();
-        if (!dialog->isVisible()){
-            dialog->closeWindow(false, true);
-        }
+      auto widget = getWidget();
+      if (!widget)
+        return;
+      auto dialog = getWrapped<ui::Dialog>();
+      if (success)
+        dialog->build();
+      if (!dialog->isVisible()){
+        dialog->closeWindow(false, true);
+      }
     });
 
     return dialog;
@@ -166,9 +177,14 @@ class DialogScriptObject : public WidgetScriptObject {
 public:
   DialogScriptObject() {
     addProperty("title",
-                [this]{return getWrapped<ui::Dialog>()->text();},
+                [this]{
+                  auto widget = static_cast<ui::Dialog*>(getWidget());
+                  return widget ? widget->text() : "";
+                },
                 [this](const std::string& title){
-                  getWrapped<ui::Dialog>()->setText(title);
+                  auto widget = static_cast<ui::Dialog*>(getWidget());
+                  if (widget)
+                    widget->setText(title);
                   return title;
                 })
       .doc("read+write. Sets the title of the dialog window.");
@@ -176,8 +192,10 @@ public:
     addProperty("canClose",
                 []{return true;},
                 [this](bool canClose){
-                  if (!canClose)
-                    getWrapped<ui::Dialog>()->removeDecorativeWidgets();
+                  auto widget = static_cast<ui::Dialog*>(getWidget());
+                  if (widget && !canClose) {
+                    widget->removeDecorativeWidgets();
+                  }
                   return canClose;
                 })
       .doc("write only. Determines if the user can close the dialog window.");
@@ -187,8 +205,10 @@ public:
     addMethod("get", &DialogScriptObject::get);
 
     addFunction("close", [this]{
-        getWrapped<ui::Dialog>()->closeWindow(false, true);
-        return true;
+      auto widget = static_cast<ui::Dialog*>(getWidget());
+      if (widget)
+        widget->closeWindow(false, true);
+      return true;
     });
 
     addFunction("addDropDown", [this](const std::string& id) {
@@ -227,21 +247,23 @@ public:
     });
 
     addFunction("addEntry", [this](const std::string& text, const std::string& id) {
-        auto entry = add("entry", id);
-        return entry;
+        return add("entry", id);
     });
 
-    addFunction("addBreak", [this]{getWrapped<ui::Dialog>()->addBreak(); return true;});
+    addFunction("addBreak", [this]{
+      auto widget = static_cast<ui::Dialog*>(getWidget());
+      if (widget)
+        widget->addBreak();
+      return true;
+    });
   }
 
   ~DialogScriptObject() {
-    if (!m_widget)
+    auto dialog = static_cast<ui::Dialog*>(getWidget());
+    if (!dialog)
       return;
-    auto dialog = getWrapped<ui::Dialog>();
-    if (!dialog->isAlive())
-        return;
     if (!dialog->isVisible())
-        dialog->closeWindow(false, false);
+      dialog->closeWindow(false, false);
   }
 
   ScriptObject* get(const std::string& id) {
@@ -250,6 +272,10 @@ public:
   }
 
   ScriptObject* add(const std::string& type, const std::string& id) {
+    auto dialog = static_cast<ui::Dialog*>(getWidget());
+    if (!dialog)
+      return nullptr;
+
     if (type.empty() || get(id))
       return nullptr;
 
@@ -263,7 +289,7 @@ public:
         return nullptr;
 
     auto rawPtr = widget.get<WidgetScriptObject>();
-    getWrapped<ui::Dialog>()->add(rawPtr);
+    dialog->add(rawPtr);
 
     auto cleanId = !id.empty() ? id : unprefixedType + std::to_string(m_nextWidgetId++);
     widget->set("id", cleanId);
@@ -278,8 +304,8 @@ static script::ScriptObject::Regular<DialogScriptObject> dialogSO("DialogScriptO
 
 namespace dialog {
 ui::Widget* getDialogById(const std::string& id) {
-    auto& index = getDialogIndex();
-    auto it = index.find(id);
-    return it == index.end() ? nullptr : it->second;
+    auto index = getDialogIndex();
+    auto it = index->find(id);
+    return it == index->end() ? nullptr : it->second;
 }
 }

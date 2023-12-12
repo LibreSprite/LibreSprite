@@ -5,7 +5,6 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "base/alive.h"
 #include "ui/entry.h"
 #include "app/script/api/widget_script.h"
 #include "app/script/app_scripting.h"
@@ -50,7 +49,7 @@ public:
     DisplayType getDisplayType() override {return DisplayType::Block;}
 
     ui::Widget* build() override {
-        return new base::AliveMonitor<CustomEntry>(m_maxsize, app::AppScripting::getFileName());
+        return new CustomEntry(m_maxsize, app::AppScripting::getFileName());
     }
 };
 

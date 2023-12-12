@@ -8,7 +8,6 @@
 #include "app/ui/palette_listbox.h"
 #include "app/script/api/widget_script.h"
 #include "app/script/app_scripting.h"
-#include "base/alive.h"
 #include "doc/palette.h"
 #include "script/value.h"
 
@@ -48,7 +47,7 @@ public:
   DisplayType getDisplayType() override {return DisplayType::Block;}
 
   ui::Widget* build() override {
-    return new base::AliveMonitor<CustomPaletteListBox>(app::AppScripting::getFileName());
+    return new CustomPaletteListBox(app::AppScripting::getFileName());
   }
 
   std::vector<inject<script::ScriptObject>> m_listItems;
