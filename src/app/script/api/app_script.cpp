@@ -10,12 +10,14 @@
 #include "config.h"
 #endif
 
-#include "app/document.h"
-#include "app/document_api.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
-#include "app/ui_context.h"
+#include "app/document.h"
+#include "app/document_api.h"
+#include "app/script/app_scripting.h"
+#include "app/task_manager.h"
 #include "app/ui/document_view.h"
+#include "app/ui_context.h"
 #include "doc/site.h"
 
 #include "script/engine.h"
@@ -75,8 +77,23 @@ public:
     addMethod("getDialog", &AppScriptObject::getDialog)
       .doc("Returns an existing dialog window");
 
+    addMethod("yield", &AppScriptObject::yield)
+      .doc("Schedules a yield event on the next frame")
+      .docArg("event", "Name of the event to be raised. The default is yield.");
+
     makeGlobal("app");
     init();
+  }
+
+  void yield(const std::string& event, int cycles) {
+    auto fileName = app::AppScripting::getFileName();
+    TaskManager::instance().delayed([=] {
+      if (cycles > 0) {
+        yield(event, cycles - 1);
+        return;
+      }
+      app::AppScripting::raiseEvent(fileName, event.empty() ? "yield" : event);
+    });
   }
 
   ScriptObject* createDialog(const std::string& id) {
