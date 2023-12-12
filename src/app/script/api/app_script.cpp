@@ -81,6 +81,9 @@ public:
       .doc("Schedules a yield event on the next frame")
       .docArg("event", "Name of the event to be raised. The default is yield.");
 
+    addMethod("open", &AppScriptObject::open)
+      .doc("Opens a document for editing");
+
     makeGlobal("app");
     init();
   }
