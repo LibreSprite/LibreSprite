@@ -173,6 +173,15 @@ public:
                 })
       .doc("read+write. Sets the title of the dialog window.");
 
+    addProperty("canClose",
+                []{return true;},
+                [this](bool canClose){
+                  if (!canClose)
+                    getWrapped<ui::Dialog>()->removeDecorativeWidgets();
+                  return canClose;
+                })
+      .doc("write only. Determines if the user can close the dialog window.");
+
     addMethod("add", &DialogScriptObject::add);
 
     addMethod("get", &DialogScriptObject::get);
@@ -180,6 +189,11 @@ public:
     addFunction("close", [this]{
         getWrapped<ui::Dialog>()->closeWindow(false, true);
         return true;
+    });
+
+    addFunction("addDropDown", [this](const std::string& id) {
+        auto dropdown = add("dropdown", id);
+        return dropdown;
     });
 
     addFunction("addLabel", [this](const std::string& text, const std::string& id) {
@@ -210,6 +224,11 @@ public:
             intentry->set("max", max);
         }
         return intentry;
+    });
+
+    addFunction("addEntry", [this](const std::string& text, const std::string& id) {
+        auto entry = add("entry", id);
+        return entry;
     });
 
     addFunction("addBreak", [this]{getWrapped<ui::Dialog>()->addBreak(); return true;});
