@@ -15,6 +15,7 @@
 #include "app/ui/app_menuitem.h"
 #include "app/resource_finder.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "base/path.h"
 #include "base/fs.h"
 #include "base/string.h"
@@ -24,36 +25,36 @@
 namespace app {
 using namespace ui;
 
-  void scanFolder(const std::string& scriptsDir, Command* cmd_run_script, Menu* parent) {
-  FileSystemModule* fs = FileSystemModule::instance();
-  IFileItem* item = fs->getFileItemFromPath(scriptsDir);
-  if (item) {
-    Params params;
-    FileItemList list = item->children();
-    for (auto child : list) {
-      bool isFolder = child->isFolder();
-      std::string fullPath = base::fix_path_separators(child->fileName());
-      if (!isFolder) {
-        bool supported = false;
-        auto extension = base::string_to_lower(base::get_file_extension(fullPath));
-        for (auto& entry : script::Engine::getRegistry()) {
-          if (entry.second.hasFlag(extension)) {
-            supported = true;
-            break;
-          }
+void scanFolder(const std::string& scriptsDir, Command* cmd_run_script, Menu* parent) {
+  auto fs = FileSystemModule::instance();
+  auto item = fs->getFileItemFromPath(scriptsDir);
+  if (!item)
+    return;
+  Params params;
+  FileItemList list = item->children();
+  for (auto child : list) {
+    bool isFolder = child->isFolder();
+    std::string fullPath = base::fix_path_separators(child->fileName());
+    if (!isFolder) {
+      bool supported = false;
+      auto extension = base::string_to_lower(base::get_file_extension(fullPath));
+      for (auto& entry : script::Engine::getRegistry()) {
+        if (entry.second.hasFlag(extension)) {
+          supported = true;
+          break;
         }
-        if (!supported)
-          continue;
       }
-      auto cmd = isFolder ? nullptr : cmd_run_script;
-      params.set("filename", fullPath.c_str());
-      auto menuitem = new AppMenuItem(child->displayName().c_str(), cmd, params);
-      parent->addChild(menuitem);
-      if (isFolder) {
-        auto menu = new Menu();
-        scanFolder(fullPath, cmd_run_script, menu);
-        menuitem->setSubmenu(menu);
-      }
+      if (!supported)
+        continue;
+    }
+    auto cmd = isFolder ? nullptr : cmd_run_script;
+    params.set("filename", fullPath.c_str());
+    auto menuitem = new AppMenuItem(child->displayName().c_str(), cmd, params);
+    parent->addChild(menuitem);
+    if (isFolder) {
+      auto menu = new Menu();
+      scanFolder(fullPath, cmd_run_script, menu);
+      menuitem->setSubmenu(menu);
     }
   }
 }
@@ -70,17 +71,29 @@ bool ScriptMenu::rebuildScriptsList(Menu* menu)
   }
 
   Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
+  FileSystemModule* fs = FileSystemModule::instance();
+
   ResourceFinder rf;
   rf.includeUserDir("scripts");
-  std::string scriptsDir = rf.getFirstOrCreateDefault();
+  auto scriptsDir = rf.getFirstOrCreateDefault();
+  try {
+    if (!base::is_directory(scriptsDir))
+      base::make_directory(scriptsDir);
+  } catch(...){
+    LOG("Could not create scripts directory: %s", scriptsDir.c_str());
+  }
 
-  if (!base::is_directory(scriptsDir))
-    base::make_directory(scriptsDir);
-
-  FileSystemModule* fs = FileSystemModule::instance();
   LockFS lock(fs);
   fs->refresh();
-  scanFolder(scriptsDir, cmd_run_script, menu);
+
+  rf.includeDataDir("scripts");
+  while (rf.next()) {
+    std::string scriptsDir = rf.filename();
+    if (!base::is_directory(scriptsDir))
+      continue;
+    scanFolder(scriptsDir, cmd_run_script, menu);
+  }
+
   return true;
 }
 
