@@ -58,6 +58,10 @@ public:
   Dialog() : ui::Window(ui::Window::WithTitleBar, "Script") {}
 
   ~Dialog() {
+    if (m_grid) {
+      m_grid->removeAllChildren();
+      removeChild(m_grid.get());
+    }
     unlist();
   }
 
@@ -103,15 +107,17 @@ public:
       m_index->insert({id(), this});
     }
 
-    if (m_grid)
-        removeChild(m_grid);
+    if (m_grid) {
+      m_grid->removeAllChildren();
+      removeChild(m_grid.get());
+    }
 
     std::size_t maxColumns = 1;
     for (auto& row : m_children)
       maxColumns = std::max(row.size(), maxColumns);
 
-    m_grid = new ui::Grid(maxColumns, false);
-    addChild(m_grid);
+    m_grid = std::make_shared<ui::Grid>(maxColumns, false);
+    addChild(m_grid.get());
 
     for (auto& row : m_children) {
       auto size = row.size();
@@ -146,7 +152,7 @@ private:
   bool m_isInline = false;
   std::list<std::vector<ui::Widget*>> m_children;
   std::string m_scriptFileName = app::AppScripting::getFileName();
-  ui::Grid* m_grid = nullptr;
+  std::shared_ptr<ui::Grid> m_grid;
   inject<script::Engine> m_engine;
   std::unordered_map<std::string, ui::Widget*> m_namedWidgets;
 };
