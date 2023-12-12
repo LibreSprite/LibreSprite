@@ -11,7 +11,6 @@
 #include "net/http_request.h"
 
 #include "base/debug.h"
-#include "net/http_headers.h"
 #include "net/http_response.h"
 
 #include <curl/curl.h>
@@ -24,10 +23,12 @@ public:
     : m_curl(curl_easy_init())
     , m_headerlist(nullptr)
     , m_response(nullptr) {
+    curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, 102400L);
     curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &HttpRequestImpl::writeBodyCallback);
     curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1L);
   }
 
   ~HttpRequestImpl() {
@@ -37,6 +38,12 @@ public:
     curl_easy_cleanup(m_curl);
   }
 
+  void setPostBody(const std::string& body) {
+    m_body = body;
+    curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, m_body.c_str());
+    curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)m_body.size());
+  }
+
   void setHeaders(const HttpHeaders& headers) {
     if (m_headerlist) {
       curl_slist_free_all(m_headerlist);
@@ -44,11 +51,10 @@ public:
     }
 
     std::string tmp;
-    for (HttpHeaders::const_iterator it=headers.begin(), end=headers.end(); it!=end; ++it) {
-      tmp = it->first;
+    for (auto& entry : headers) {
+      tmp = entry.first;
       tmp += ": ";
-      tmp += it->second;
-
+      tmp += entry.second;
       m_headerlist = curl_slist_append(m_headerlist, tmp.c_str());
     }
 
@@ -87,6 +93,7 @@ private:
   CURL* m_curl;
   curl_slist* m_headerlist;
   HttpResponse* m_response;
+  std::string m_body;
 };
 
 HttpRequest::HttpRequest(const std::string& url)
@@ -112,6 +119,11 @@ bool HttpRequest::send(HttpResponse& response)
 void HttpRequest::abort()
 {
   m_impl->abort();
+}
+
+void HttpRequest::setPostBody(const std::string& body)
+{
+  m_impl->setPostBody(body);
 }
 
 } // namespace net

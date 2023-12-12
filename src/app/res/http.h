@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <sstream>
+#include <unordered_map>
 #include "app/task_manager.h"
 #include "net/http_request.h"
 #include "net/http_response.h"
@@ -20,8 +21,11 @@ namespace app {
       int status;
     };
 
-    static TaskHandle get(const std::string& url, std::function<void(Result&&)>&& callback) {
+    static TaskHandle fetch(const std::string& url, const std::string* post, std::unordered_map<std::string, std::string>& headers, std::function<void(Result&&)>&& callback) {
       auto req = std::make_shared<net::HttpRequest>(url);
+      req->setHeaders(headers);
+      if (post)
+        req->setPostBody(*post);
       return TaskManager::instance().addTask<Result>(
         [=]{
           Result result;

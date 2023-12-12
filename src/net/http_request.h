@@ -11,10 +11,11 @@
 #include "base/disable_copying.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace net {
 
-class HttpHeaders;
+using HttpHeaders = std::unordered_map<std::string, std::string>;
 class HttpRequestImpl;
 class HttpResponse;
 
@@ -24,6 +25,7 @@ public:
   ~HttpRequest();
 
   void setHeaders(const HttpHeaders& headers);
+  void setPostBody(const std::string& body);
   bool send(HttpResponse& response);
   void abort();
 
