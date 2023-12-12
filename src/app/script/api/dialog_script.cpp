@@ -74,13 +74,6 @@ public:
   }
 
   void add(WidgetScriptObject* child) {
-    auto nextIsInline = m_isInline;
-    switch (child->getDisplayType()) {
-    case WidgetScriptObject::DisplayType::Inherit: break;
-    case WidgetScriptObject::DisplayType::Block: nextIsInline = m_isInline = false; break;
-    case WidgetScriptObject::DisplayType::Inline: nextIsInline = true; break;
-    }
-
     auto ui = static_cast<ui::Widget*>(child->getWrapped());
     if (!ui)
         return;
@@ -88,7 +81,7 @@ public:
     if(m_isInline && !m_children.empty()) m_children.back().push_back(ui);
     else m_children.push_back({ui});
 
-    m_isInline = nextIsInline;
+    m_isInline = true;
   }
 
   void addBreak() {
