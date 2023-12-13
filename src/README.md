@@ -13,7 +13,6 @@ LibreSprite is separated in the following layers/modules:
 These libraries are easy to be used and embedded in other software
 because they don't depend on any other component.
 
-  * [allegro](allegro/): Modified version of [Allegro](http://alleg.sourceforge.net/) library, used for keyboard/mouse input, and drawing 2D graphics on screen.
   * [base](base/): Core/basic stuff, multithreading, utf8, sha1, file system, memory, etc.
   * [clip](https://github.com/aseprite/clip): Clipboard library.
   * [css](css/): Pseudo-style sheet library.
@@ -33,7 +32,7 @@ because they don't depend on any other component.
 ## Level 2
 
   * [doc](doc/) (base, fixmath, gfx): Document model library.
-  * [she](she/) (allegro, base, gfx, wacom): Platform abstraction layer.
+  * [she](she/) (sdl2, base, gfx, wacom): Platform abstraction layer.
 
 ## Level 3
 
@@ -43,7 +42,7 @@ because they don't depend on any other component.
 
 ## Level 4
 
-  * [app](app/) (allegro, base, doc, filters, fixmath, gfx, pen, render, scripting, she, ui, undo)
+  * [app](app/) (base, doc, filters, fixmath, gfx, pen, render, scripting, she, ui, undo)
 
 ## Level 5
 

@@ -25,11 +25,6 @@ endif(MSVC)
 # Directories where .h files can be found
 include_directories(. .. ../third_party)
 
-# Use patched version of Allegro 4 (with window resize support).
-if(USE_ALLEG4_BACKEND AND NOT USE_SHARED_ALLEGRO4)
-  add_subdirectory(allegro)
-endif()
-
 if((UNIX AND NOT APPLE) OR (WIN32 AND NOT MSVC))
   set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
   set(KEEP_INJECTIONS_END "-Wl,--no-whole-archive")
@@ -119,10 +114,6 @@ if(WIN32)
   set(win32_resources
     main/resources_win32.rc
     main/settings.manifest)
-endif()
-
-if(UNIX AND NOT APPLE AND USE_ALLEG4_BACKEND)
-  set(x11_resources main/xpm_icon.c)
 endif()
 
 add_executable(libresprite WIN32

@@ -12,7 +12,6 @@ It tries to replicate some pixel-art algorithms:
 
 And it uses the following third-party libraries:
 
-* [allegro 4.4](https://liballeg.org) (Giftware)
 * [curl](http://curl.haxx.se/) (curl)
 * [duktape](https://duktape.org) (MIT)
 * [freetype](https://www.freetype.org) (FTL)

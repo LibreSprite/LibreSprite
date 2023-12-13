@@ -464,9 +464,7 @@ namespace she {
     }
 
   private:
-    // We need a concurrent queue because events are generated in one
-    // thread (the thread created by Allegro 4 for the HWND), and
-    // consumed in the other thread (the main/program logic thread).
+    // We probably don't need a concurrent queue here.
     base::concurrent_queue<Event> m_events;
   };
 

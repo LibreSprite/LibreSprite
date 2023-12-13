@@ -38,8 +38,7 @@ void MessageLoop::pumpMessages()
   // If the dispatching of messages was faster than 10 milliseconds,
   // it means that the process is not using a lot of CPU, so we can
   // wait the difference to cover those 10 milliseconds
-  // sleeping. With this code we can avoid 100% CPU usage (a
-  // property of Allegro 4 polling nature).
+  // sleeping. With this code we can avoid 100% CPU usage.
   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   if (elapsed > 0ms && elapsed < 10ms)
     std::this_thread::sleep_for(10ms - elapsed);

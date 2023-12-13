@@ -7,9 +7,5 @@ if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
-if(USE_ALLEG4_BACKEND)
-  add_subdirectory(loadpng)
-endif()
-
 add_subdirectory(simpleini)
 add_subdirectory(modp_b64)

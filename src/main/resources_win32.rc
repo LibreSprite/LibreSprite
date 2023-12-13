@@ -23,10 +23,10 @@ BEGIN
             VALUE "FileDescription", "LibreSprite - Animated sprites editor & pixel art tool"
             VALUE "FileVersion", "1,0,0,0"
             VALUE "InternalName", "libresprite"
-            VALUE "LegalCopyright", "Copyright (C) 2001-2016 by David Capello, 2016-2021 LibreSprite contributors"
+            VALUE "LegalCopyright", "Copyright (C) 2001-2016 by David Capello, 2016-2023 LibreSprite contributors"
             VALUE "OriginalFilename", "libresprite.exe"
             VALUE "ProductName", "LIBRESPRITE"
-            VALUE "ProductVersion", "1,0,0,0"
+            VALUE "ProductVersion", "1,1,0,0"
         END
     END
     BLOCK "VarFileInfo"

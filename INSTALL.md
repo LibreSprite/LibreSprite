@@ -46,13 +46,6 @@ To update an existing clone, use the following commands:
     git pull
     git submodule update --init --recursive
 
-## Backends
-
-LibreSprite can be compiled with two different backends:
-
-1. SDL2 backend (WIP)
-2. Allegro backend (deprecated) (Windows and Linux only)
-
 ## Dependencies
 
 You'll need the following dependencies to compile LibreSprite:
@@ -100,16 +93,6 @@ To compile LibreSprite, run the following commands:
 
     cmake -G Ninja ..
     ninja libresprite
-
-To compile the legacy Allegro backend, run `cmake` with the flags
-`-DUSE_SDL2_BACKEND=off -DUSE_ALLEG4_BACKEND=on`.
-
-The repository contains a patched version of the Allegro 4 library.
-If you want to use your installed version of Allegro, run `cmake` with
-the flag `-DUSE_SHARED_ALLEGRO4=ON`. However, this is not recommended due to
-issues with Allegro 4.4
-[(1)](https://github.com/aseprite/aseprite/issues/192)
-[(2)](https://github.com/LibreSprite/LibreSprite/commit/27b55030e26e93c5e8d9e7e21206c8709d46ff22).
 
 ### Windows details
 
