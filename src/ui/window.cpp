@@ -23,6 +23,8 @@
 #include "ui/theme.h"
 #include "ui/window.h"
 
+#include <optional>
+
 namespace ui {
 
 using namespace gfx;
