@@ -8,8 +8,8 @@
 #include "config.h"
 #endif
 
-#include "ui/window.h"
-
+#include "app/task_manager.h"
+#include "gfx/rect.h"
 #include "gfx/size.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"
@@ -17,10 +17,11 @@
 #include "ui/message.h"
 #include "ui/message_loop.h"
 #include "ui/move_region.h"
-#include "ui/size_hint_event.h"
 #include "ui/resize_event.h"
+#include "ui/size_hint_event.h"
 #include "ui/system.h"
 #include "ui/theme.h"
+#include "ui/window.h"
 
 namespace ui {
 
@@ -327,9 +328,17 @@ bool Window::onProcessMessage(Message* msg)
         if (m_hitTest == HitTestCaption) {
           int x = clickedWindowPos->x + (mousePos.x - clickedMousePos.x);
           int y = clickedWindowPos->y + (mousePos.y - clickedMousePos.y);
-          moveWindow(gfx::Rect(x, y,
-                               bounds().w,
-                               bounds().h), true);
+          static std::optional<gfx::Rect> moveTarget;
+          if (!moveTarget.has_value()) {
+              app::TaskManager::instance().delayed([handle = handle()]{
+                  if (auto ptr = handle.lock(); ptr && *ptr) {
+                      auto self = static_cast<ui::Window*>(*ptr);
+                      self->moveWindow(*moveTarget, true);
+                  }
+                  moveTarget.reset();
+              });
+          }
+          moveTarget = {x, y, bounds().w, bounds().h};
         }
         else {
           int x, y, w, h;

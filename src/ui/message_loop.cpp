@@ -10,8 +10,8 @@
 
 #include "ui/message_loop.h"
 
-#include "base/chrono.h"
-#include "base/thread.h"
+#include <chrono>
+#include <thread>
 #include "ui/manager.h"
 
 namespace ui {
@@ -23,7 +23,8 @@ MessageLoop::MessageLoop(Manager* manager)
 
 void MessageLoop::pumpMessages()
 {
-  base::Chrono chrono;
+  using namespace std::chrono_literals;
+  auto start = std::chrono::high_resolution_clock::now();
 
   if (m_manager->generateMessages()) {
     m_manager->dispatchMessages();
@@ -32,14 +33,16 @@ void MessageLoop::pumpMessages()
     m_manager->collectGarbage();
   }
 
+  auto end = std::chrono::high_resolution_clock::now();
+
   // If the dispatching of messages was faster than 10 milliseconds,
   // it means that the process is not using a lot of CPU, so we can
   // wait the difference to cover those 10 milliseconds
   // sleeping. With this code we can avoid 100% CPU usage (a
   // property of Allegro 4 polling nature).
-  double elapsedMSecs = chrono.elapsed() * 1000.0;
-  if (elapsedMSecs > 0.0 && elapsedMSecs < 10.0)
-    base::this_thread::sleep_for((10.0 - elapsedMSecs) / 1000.0);
+  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  if (elapsed > 0ms && elapsed < 10ms)
+    std::this_thread::sleep_for(10ms - elapsed);
 }
 
 } // namespace ui
