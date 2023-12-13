@@ -73,19 +73,23 @@ bool ScriptMenu::rebuildScriptsList(Menu* menu)
   Command* cmd_run_script = CommandsModule::instance()->getCommandByName(CommandId::RunScript);
   FileSystemModule* fs = FileSystemModule::instance();
 
-  ResourceFinder rf;
-  rf.includeUserDir("scripts");
-  auto scriptsDir = rf.getFirstOrCreateDefault();
-  try {
-    if (!base::is_directory(scriptsDir))
-      base::make_directory(scriptsDir);
-  } catch(...){
-    LOG("Could not create scripts directory: %s", scriptsDir.c_str());
+  {
+    ResourceFinder rf;
+    rf.includeUserDir("scripts");
+    auto scriptsDir = rf.getFirstOrCreateDefault();
+    try {
+      if (!base::is_directory(scriptsDir))
+        base::make_directory(scriptsDir);
+    } catch(...){
+      LOG("Could not create scripts directory: %s", scriptsDir.c_str());
+    }
   }
 
   LockFS lock(fs);
   fs->refresh();
 
+  ResourceFinder rf;
+  rf.includeUserDir("scripts");
   rf.includeDataDir("scripts");
   while (rf.next()) {
     std::string scriptsDir = rf.filename();
