@@ -245,7 +245,7 @@ const views = {
         {
             type:"int",
             text:"Width:",
-            min:16,
+            min:256,
             max:1024,
             value:function(){return ai.settings.width;},
             change:function(value){ai.settings.width = value;}
@@ -254,7 +254,7 @@ const views = {
         {
             type:"int",
             text:"Height:",
-            min:16,
+            min:256,
             max:1024,
             value:function(){return ai.settings.height;},
             change:function(value){ai.settings.height = value;}
