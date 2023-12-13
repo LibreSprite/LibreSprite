@@ -60,7 +60,10 @@ namespace she {
 
     SDL_Texture* getTexture(SDL_Rect& rect);
 
+    static inline unsigned int textureGen;
+
   private:
+    unsigned int m_textureGen{};
     SDL_Texture* m_texture{};
     uint32_t m_textureFormat{};
     SDL_Surface* m_bmp{};

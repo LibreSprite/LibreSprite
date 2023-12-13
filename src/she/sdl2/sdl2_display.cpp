@@ -66,8 +66,8 @@ namespace she {
     if (!m_window)
       throw DisplayCreationException(SDL_GetError());
 
-    auto flags = gpu ? SDL_RENDERER_ACCELERATED : SDL_RENDERER_SOFTWARE;
-    m_renderer = SDL_CreateRenderer(m_window, -1, flags);
+    if (gpu)
+      m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
 
     sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
     SDL_GetWindowSize(m_window, &width, &height);
@@ -183,7 +183,10 @@ namespace she {
     if (!m_dirty)
       return;
     m_dirty = false;
-    SDL_UpdateWindowSurface(m_window);
+    if (m_renderer)
+      SDL_RenderPresent(m_renderer);
+    else
+      SDL_UpdateWindowSurface(m_window);
   }
 
   void SDL2Display::flip(const gfx::Rect& bounds)
@@ -193,9 +196,11 @@ namespace she {
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     if (m_renderer) {
       auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(rect);
-      SDL_RenderClear(m_renderer);
+      SDL_Rect dst {
+        rect.x * m_scale, rect.y * m_scale,
+        rect.w * m_scale, rect.h * m_scale
+      };
       SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
-      SDL_RenderPresent(m_renderer);
     } else {
       auto nativeSurface = SDL_GetWindowSurface(m_window);
       SDL_Rect dst {

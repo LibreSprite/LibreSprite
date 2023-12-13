@@ -51,6 +51,7 @@ namespace she {
 
     // Flips all graphics in the surface to the real display.
     virtual void flip(const gfx::Rect& bounds) = 0;
+    virtual void present() {}
 
     virtual void toggleFullscreen(){}
     virtual void maximize() = 0;

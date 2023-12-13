@@ -191,6 +191,7 @@ void Manager::flipDisplay()
 
     for (auto& rc : m_dirtyRegion)
       m_display->flip(rc);
+    m_display->present();
 
     m_dirtyRegion.clear();
   }

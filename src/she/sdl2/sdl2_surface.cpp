@@ -490,7 +490,12 @@ namespace she {
 
   SDL_Texture* SDL2Surface::getTexture(SDL_Rect& rect) {
     auto pixels = ((uint8_t*)m_bmp->pixels) + m_bmp->pitch * rect.y + m_bmp->format->BytesPerPixel * rect.x;
+    if (m_texture && m_textureGen != textureGen) {
+      SDL_DestroyTexture(m_texture);
+      m_texture = nullptr;
+    }
     if (!m_texture) {
+      m_textureGen = textureGen;
       auto renderer = she::unique_display->renderer();
       m_texture = SDL_CreateTexture(renderer,
                                     m_bmp->format->format,

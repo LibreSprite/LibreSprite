@@ -253,6 +253,7 @@ namespace she {
       while (SDL_PollEvent(&sdlEvent)) {
         switch (sdlEvent.type) {
         case SDL_APP_DIDENTERFOREGROUND:
+          SDL2Surface::textureGen++;
           forceFlip();
           continue;
 
@@ -260,6 +261,8 @@ namespace she {
           switch (sdlEvent.window.event) {
           case SDL_WINDOWEVENT_EXPOSED:
             forceFlip();
+            continue;
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
             continue;
 
           case SDL_WINDOWEVENT_MAXIMIZED:
@@ -297,6 +300,7 @@ namespace she {
               Event ev;
               ev.setType(Event::MouseLeave);
               queue_event(ev);
+              break;
             }
           }
 
@@ -508,6 +512,7 @@ namespace she {
     }
 
     void setGpuAcceleration(bool state) override {
+      if (!unique_display)
         SDL2Display::gpu = state;
     }
 
