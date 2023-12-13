@@ -44,7 +44,7 @@ function post(url, body, cb) {
 }
 
 const easydiffusion = {
-    get(path, cb) {
+    get:function(path, cb) {
         get(ai.settings.easydiffusion.endpoint + path, function(rsp) {
             var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
             try {
@@ -57,7 +57,7 @@ const easydiffusion = {
         });
     },
 
-    post(path, body, cb) {
+    post:function(path, body, cb) {
         post(ai.settings.easydiffusion.endpoint + path, body, function(rsp) {
             var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
             try {
@@ -70,7 +70,7 @@ const easydiffusion = {
         });
     },
 
-    getModels(cb) {
+    getModels:function(cb) {
         if (ai.settings.easydiffusion["stable-diffusion"] && ai.settings.easydiffusion["stable-diffusion"].length) {
             init();
             cb();
@@ -96,7 +96,7 @@ const easydiffusion = {
         }
     },
 
-    render(obj, cb) {
+    render:function(obj, cb) {
         this.post('/render', JSON.stringify(obj), function(data, error) {
             if (error) {
                 cb(null, error);
@@ -147,7 +147,7 @@ const views = {
             }
         },
         {
-            if(){return ai.settings.serverType == "easydiffusion"},
+            if:function(){return ai.settings.serverType == "easydiffusion"},
             then:[
                 {type:"break"},
                 {
@@ -184,7 +184,7 @@ const views = {
 
     choose_model : [
         {type:"label", text:"Choose a Model:"},
-        {dynamic(){
+        {dynamic:function(){
             const models = ai.settings.easydiffusion["stable-diffusion"];
             const options = [];
             for (var i = 0; i < models.length; ++i) {
@@ -219,8 +219,8 @@ const views = {
         {
             type:"entry",
             maxsize:128,
-            value(){return ai.settings.negativePrompt;},
-            change(text){ai.settings.negativePrompt = text;}
+            value:function(){return ai.settings.negativePrompt;},
+            change:function(text){ai.settings.negativePrompt = text;}
         },
         {type:"break"},
 
@@ -229,8 +229,8 @@ const views = {
             text:"Steps:",
             min:1,
             max:100,
-            value(){return ai.settings.inferenceSteps;},
-            change(value){ai.settings.inferenceSteps = value;}
+            value:function(){return ai.settings.inferenceSteps;},
+            change:function(value){ai.settings.inferenceSteps = value;}
         },
 
         {
@@ -238,8 +238,8 @@ const views = {
             text:"Guidance Scale:",
             min:0,
             max:30,
-            value(){return ai.settings.guidanceScale;},
-            change(value){ai.settings.guidanceScale = value;}
+            value:function(){return ai.settings.guidanceScale;},
+            change:function(value){ai.settings.guidanceScale = value;}
         },
         {type:"break"},
         {
@@ -247,8 +247,8 @@ const views = {
             text:"Width:",
             min:16,
             max:1024,
-            value(){return ai.settings.width;},
-            change(value){ai.settings.width = value;}
+            value:function(){return ai.settings.width;},
+            change:function(value){ai.settings.width = value;}
         },
 
         {
@@ -256,23 +256,23 @@ const views = {
             text:"Height:",
             min:16,
             max:1024,
-            value(){return ai.settings.height;},
-            change(value){ai.settings.height = value;}
+            value:function(){return ai.settings.height;},
+            change:function(value){ai.settings.height = value;}
         },
         {type:"break"},
 
-        {type:"button", click:"choose_model", text(){return ai.settings.model;}},
+        {type:"button", click:"choose_model", text:function(){return ai.settings.model;}},
         {
             type:"button",
             text:"Redo",
-            click(){
+            click:function(){
                 ai.generate(ai.settings.seed);
             }
         },
         {
             type:"button",
             text:"Gen",
-            click(){
+            click:function(){
                 ai.generate();
             }
         }
@@ -296,15 +296,15 @@ function AI() {
 }
 
 Object.assign(AI.prototype, {
-    init() {this.view("main");},
+    init:function() {this.view("main");},
 
-    saveSettings() {
+    saveSettings:function() {
         var clone = JSON.parse(JSON.stringify(this.settings));
         storage.set(JSON.stringify(clone), "settings");
         storage.save("settings");
     },
 
-    generate(seed) {
+    generate:function(seed) {
         if (!seed)
             seed = Math.random() * 0x7FFFFFFF >>> 0;
         this.settings.seed = seed;
@@ -358,7 +358,7 @@ Object.assign(AI.prototype, {
         }).bind(this));
     },
 
-    close(name) {
+    close:function(name) {
         if (this.stack.length == 0) {
             console.log("No window to close");
             return;
@@ -379,7 +379,7 @@ Object.assign(AI.prototype, {
         this.view(name);
     },
 
-    logError(error) {
+    logError:function(error) {
         if (!error)
             return;
         if (error == "status:0") {
@@ -396,7 +396,7 @@ Object.assign(AI.prototype, {
         console.log(error);
     },
 
-    getSetting(path, defval) {
+    getSetting:function(path, defval) {
         var obj = this;
         var parts = (path + '').split('.');
         while (parts.length) {
@@ -408,7 +408,7 @@ Object.assign(AI.prototype, {
         return obj;
     },
 
-    setSetting(path, value) {
+    setSetting:function(path, value) {
         var obj = this;
         var parts = (path + '').split('.');
         while (parts.length) {
@@ -422,7 +422,7 @@ Object.assign(AI.prototype, {
         }
     },
 
-    view(name, isTmp) {
+    view:function(name, isTmp) {
         if (this.dlg) {
             this.dlg.close();
             this.dlg = null;
