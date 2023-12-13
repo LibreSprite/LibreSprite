@@ -13,6 +13,7 @@ struct SDL_Renderer;
 struct SDL_Surface;
 struct SDL_Texture;
 struct SDL_Cursor;
+struct SDL_Rect;
 
 namespace she {
 
@@ -51,6 +52,10 @@ namespace she {
         void* nativeHandle() override;
 
         void present();
+        SDL_Renderer* renderer() {return m_renderer;}
+
+        static inline bool gpu{};
+
     private:
         SDL_Window* m_window;
         SDL_Renderer* m_renderer;

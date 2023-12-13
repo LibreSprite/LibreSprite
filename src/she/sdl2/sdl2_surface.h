@@ -10,6 +10,7 @@
 
 #include "she/surface.h"
 #include "she/common/generic_surface.h"
+#include "she/sdl2/sdl2_display.h"
 
 struct SDL_Surface;
 
@@ -57,8 +58,12 @@ namespace she {
     void drawSurface(const Surface* src, int dstx, int dsty) override;
     void drawRgbaSurface(const Surface* src, int dstx, int dsty) override;
 
+    SDL_Texture* getTexture(SDL_Rect& rect);
+
   private:
-    SDL_Surface* m_bmp = nullptr;
+    SDL_Texture* m_texture{};
+    uint32_t m_textureFormat{};
+    SDL_Surface* m_bmp{};
     DestroyFlag m_destroy;
     int m_lock;
   };

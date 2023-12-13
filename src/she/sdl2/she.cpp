@@ -242,7 +242,6 @@ namespace she {
           });
         entry.second->present();
       }
-      she::log("Force Flip");
     }
 
     void getEvent(Event& event, bool) override {
@@ -497,7 +496,7 @@ namespace she {
     }
 
     Capabilities capabilities() const override {
-      return (Capabilities)(Capabilities::CanResizeDisplay);
+      return (Capabilities)(int(Capabilities::CanResizeDisplay) | int(Capabilities::GpuAccelerationSwitch));
     }
 
     EventQueue* eventQueue() override { // TODO remove this function
@@ -505,11 +504,11 @@ namespace she {
     }
 
     bool gpuAcceleration() const override {
-      return true;
+      return SDL2Display::gpu;
     }
 
     void setGpuAcceleration(bool state) override {
-      // Do nothing
+        SDL2Display::gpu = state;
     }
 
     gfx::Size defaultNewDisplaySize() override {

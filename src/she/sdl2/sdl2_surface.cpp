@@ -13,7 +13,6 @@
 #include "base/string.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
-
 #include <iostream>
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
@@ -83,6 +82,8 @@ namespace she {
       if (m_bmp)
         SDL_FreeSurface(m_bmp);
     }
+    if (m_texture)
+      SDL_DestroyTexture(m_texture);
   }
 
 // Surface implementation
@@ -487,4 +488,19 @@ namespace she {
     src->blitTo(this, 0, 0, dstx, dsty, src->width(), src->height());
   }
 
+  SDL_Texture* SDL2Surface::getTexture(SDL_Rect& rect) {
+    auto pixels = ((uint8_t*)m_bmp->pixels) + m_bmp->pitch * rect.y + m_bmp->format->BytesPerPixel * rect.x;
+    if (!m_texture) {
+      auto renderer = she::unique_display->renderer();
+      m_texture = SDL_CreateTexture(renderer,
+                                    m_bmp->format->format,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    width(),
+                                    height());
+      SDL_UpdateTexture(m_texture, nullptr, pixels, m_bmp->pitch);
+    } else {
+      SDL_UpdateTexture(m_texture, &rect, pixels, m_bmp->pitch);
+    }
+    return m_texture;
+  }
 } // namespace she

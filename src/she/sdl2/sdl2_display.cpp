@@ -66,6 +66,9 @@ namespace she {
     if (!m_window)
       throw DisplayCreationException(SDL_GetError());
 
+    auto flags = gpu ? SDL_RENDERER_ACCELERATED : SDL_RENDERER_SOFTWARE;
+    m_renderer = SDL_CreateRenderer(m_window, -1, flags);
+
     sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
     SDL_GetWindowSize(m_window, &width, &height);
     m_width = width;
@@ -79,9 +82,13 @@ namespace she {
   SDL2Display::~SDL2Display()
   {
     unique_display = NULL;
-    sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
-    m_surface->dispose();
-    SDL_DestroyWindow(m_window);
+    if (m_window) {
+      sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
+      m_surface->dispose();
+      if (m_renderer)
+        SDL_DestroyRenderer(m_renderer);
+      SDL_DestroyWindow(m_window);
+    }
   }
 
   void SDL2Display::dispose()
@@ -183,10 +190,20 @@ namespace she {
   {
     m_dirty = true;
 
-    auto nativeSurface = SDL_GetWindowSurface(m_window);
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
-    SDL_Rect dst  {bounds.x * m_scale, bounds.y * m_scale, bounds.w * m_scale, bounds.h * m_scale};
-    SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
+    if (m_renderer) {
+      auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(rect);
+      SDL_RenderClear(m_renderer);
+      SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
+      SDL_RenderPresent(m_renderer);
+    } else {
+      auto nativeSurface = SDL_GetWindowSurface(m_window);
+      SDL_Rect dst {
+        rect.x * m_scale, rect.y * m_scale,
+        rect.w * m_scale, rect.h * m_scale
+      };
+      SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
+    }
   }
 
   void SDL2Display::maximize()
