@@ -10,7 +10,31 @@ const defaultSettings = {
     guidanceScale: 8,
     width: 128,
     height: 128,
-    uniqueFilenames: 0
+    uniqueFilenames: 0,
+    sampler: 'euler_a',
+    samplers: {
+        plms:'PLMS',
+        ddim:'DDIM',
+        heun:'Heun',
+        euler:'Euler',
+        euler_a:'Euler Ancestral',
+        dpm2:'DPM2',
+        dpm2_a:'DPM2 Ancestral',
+        lms:'LMS',
+        dpm_solver_stability:'DPM Solver (Stability AI)',
+        dpmpp_2s_a:'DPM++ 2s Ancestral (Karras)',
+        dpmpp_2m:'DPM++ 2m (Karras)',
+        dpmpp_2m_sde:'DPM++ 2m SDE (Karras)',
+        dpmpp_sde:'DPM++ SDE (Karras)',
+        dpm_adaptive:'DPM Adaptive (Karras)',
+        ddpm:'DDPM',
+        deis:'DEIS',
+        unipc_snr:'UniPC SNR',
+        unipc_tu:'UniPC TU',
+        unipc_snr_2:'UniPC SNR 2',
+        unipc_tu_2:'UniPC TU 2',
+        unipc_tq:'UniPC TQ',
+    }
 };
 
 function get(url, cb) {
@@ -99,7 +123,7 @@ const easydiffusion = {
     render:function(obj, cb) {
         this.post('/render', JSON.stringify(obj), function(data, error) {
             if (error) {
-                cb(null, error);
+                cb(data, error);
                 return;
             }
             ping(data);
@@ -123,8 +147,12 @@ const easydiffusion = {
                 }
 
                 if (obj) {
-                    done = obj.output && obj.output.length;
-                    cb(done ? {data:obj.output[0].data} : {percent: obj.step * 100 / obj.total_steps});
+                    if (obj.status == "failed") {
+                        cb(null, obj.detail);
+                    } else {
+                        done = obj.output && obj.output.length;
+                        cb(done ? {data:obj.output[0].data} : {percent: obj.step * 100 / obj.total_steps});
+                    }
                     done = "status" in obj;
                 }
 
@@ -182,6 +210,29 @@ const views = {
         }
     ],
 
+    choose_sampler : [
+        {type:"label", text:"Choose a Sampler:"},
+        {dynamic:function(){
+            const samplers = ai.settings.samplers;
+            const options = [];
+            var i = 0;
+            for (var key in samplers) {
+                var label = samplers[key];
+                if (i++ % 3 == 2)
+                    options.push({type:"break"});
+                options.push({
+                    type:"button",
+                    text:label,
+                    click: (function(key){
+                        ai.settings.sampler = key;
+                        ai.close("choose_sampler");
+                    }).bind(this, key)
+                });
+            }
+            return options;
+        }}
+    ],
+
     choose_model : [
         {type:"label", text:"Choose a Model:"},
         {dynamic:function(){
@@ -204,6 +255,9 @@ const views = {
     ],
 
     easydiffusion_T2I : [
+        {type:"button", click:"choose_model", text:function(){return ai.settings.model;}},
+        {type:"button", click:"choose_sampler", text:function(){return ai.settings.sampler;}},
+        {type:"break"},
 
         {type:"label", text:"Prompt:"},
         {type:"break"},
@@ -246,7 +300,7 @@ const views = {
             type:"int",
             text:"Width:",
             min:256,
-            max:1024,
+            max:2048,
             value:function(){return ai.settings.width;},
             change:function(value){ai.settings.width = value;}
         },
@@ -255,13 +309,12 @@ const views = {
             type:"int",
             text:"Height:",
             min:256,
-            max:1024,
+            max:2048,
             value:function(){return ai.settings.height;},
             change:function(value){ai.settings.height = value;}
         },
         {type:"break"},
 
-        {type:"button", click:"choose_model", text:function(){return ai.settings.model;}},
         {
             type:"button",
             text:"Redo",
@@ -271,7 +324,7 @@ const views = {
         },
         {
             type:"button",
-            text:"Gen",
+            text:"Generate",
             click:function(){
                 ai.generate();
             }
@@ -321,7 +374,7 @@ Object.assign(AI.prototype, {
             "width": this.settings.width,
             "height": this.settings.height,
             "vram_usage_level": "balanced",
-            "sampler_name": "euler_a",
+            "sampler_name": ai.settings.sampler,
             "use_stable_diffusion_model": this.settings.model,
             "clip_skip": false,
             "use_vae_model": "",
@@ -339,7 +392,7 @@ Object.assign(AI.prototype, {
             "session_id": this.settings.easydiffusion.session_id
         }, (function(obj, error){
             if (error) {
-                ai.logError(error);
+                ai.logError(error + (obj ? "\n" + obj : ""));
                 this.close("wait");
                 return;
             }
