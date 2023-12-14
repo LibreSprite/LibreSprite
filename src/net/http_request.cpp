@@ -23,6 +23,9 @@ public:
     : m_curl(curl_easy_init())
     , m_headerlist(nullptr)
     , m_response(nullptr) {
+#ifdef ANDROID
+    curl_easy_setopt(m_curl,  CURLOPT_SSL_VERIFYPEER, 0);
+#endif
     curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, 102400L);
     curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &HttpRequestImpl::writeBodyCallback);
