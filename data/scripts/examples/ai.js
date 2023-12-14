@@ -37,8 +37,9 @@ const defaultSettings = {
     }
 };
 
-function get(url, cb) {
-    const key = ai.nextNodeId++ + 'h';
+function get(url, cb, key, domain) {
+    if (!key)
+        key = ai.nextNodeId++ + 'h';
     ai[key + '_fetch'] = function() {
         const status = storage.get(key + '_status');
         const string = storage.get(key);
@@ -67,31 +68,110 @@ function post(url, body, cb) {
     storage.fetch(url, key, "", "POST", body, "Content-Type", "application/json");
 }
 
-const easydiffusion = {
-    get:function(path, cb) {
-        get(ai.settings.easydiffusion.endpoint + path, function(rsp) {
-            var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
-            try {
-                if (!error)
-                    data = JSON.parse(rsp.string);
-            } catch (ex) {
-                error = ex;
+function getJSON(endpoint, path, cb) {
+    get(endpoint + path, function(rsp) {
+        var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
+        try {
+            if (!error)
+                data = JSON.parse(rsp.string);
+        } catch (ex) {
+            error = ex;
+        }
+        cb(data, error);
+    });
+}
+
+function postJSON(endpoint, path, body, cb) {
+    post(endpoint + path, body, function(rsp) {
+        var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
+        try {
+            if (!error)
+                data = JSON.parse(rsp.string);
+            else error += rsp.string;
+        } catch (ex) {
+            error = ex;
+        }
+        cb(data, error);
+    });
+}
+
+
+const sdxlturboai = {
+    get:getJSON.bind(null, 'https://sd.cuilutech.com'),
+    post:postJSON.bind(null, 'https://sd.cuilutech.com'),
+
+    logError:function(error) {
+        if (!error)
+            return;
+        if (error == "status:0") {
+            error = "\n"
+                + "***************************************\n*\n"
+                + "* Could not connect to sdxlturbo.ai at:\n"
+                + "*      https://sd.cuilutech.com \n*\n"
+                + "***************************************\n\n"
+        }
+        console.log(error);
+    },
+
+    render:function(obj, cb) {
+        this.post('/sdapi/turbo/txt2img', JSON.stringify(obj), function(data, error) {
+            if (!error && data && data.msg != "success")
+                error = data.msg;
+            if (!error && !data.data.image_url)
+                error = JSON.stringify(data);
+            if (error) {
+                cb(null, error);
+                return;
             }
-            cb(data, error);
+            get(data.data.image_url, function(obj) {
+                cb(
+                    (obj.status == 200 ? obj.key : null),
+                    (obj.status == 200 ? null : JSON.stringify(obj))
+                );
+            }, 'png', 'ai');
         });
     },
 
-    post:function(path, body, cb) {
-        post(ai.settings.easydiffusion.endpoint + path, body, function(rsp) {
-            var data, error = rsp.status != 200 ? 'status:' + rsp.status : 0;
-            try {
-                if (!error)
-                    data = JSON.parse(rsp.string);
-            } catch (ex) {
-                error = ex;
+    generate:function() {
+        ai.view("wait", true);
+        sdxlturboai.render({
+            "prompt": ai.settings.prompt,
+            "negative_prompt": ai.settings.negativePrompt,
+            "source": "sdxlturbo.ai"
+        }, function(key, error){
+            if (error) {
+                sdxlturboai.logError(error);
+                ai.close("wait");
+                return;
             }
-            cb(data, error);
+            if (key) {
+                ai.close("wait");
+                var path = storage.save(key);
+                storage.unload(key);
+                if (path)
+                    app.open(path);
+            }
         });
+    }
+};
+
+const easydiffusion = {
+    get:getJSON,
+    post:postJSON,
+
+    logError:function(error) {
+        if (!error)
+            return;
+        if (error == "status:0") {
+            error = "\n"
+                + "***************************************\n*\n"
+                + "* Could not connect to EasyDiffusion at:\n"
+                + "*      " + ai.settings.easydiffusion.endpoint + "\n*\n"
+                + "* Make sure it is running or download the installer at:\n"
+                + "*      https://easydiffusion.github.io/\n*\n"
+                + "***************************************\n\n"
+        }
+        console.log(error);
     },
 
     getModels:function(cb) {
@@ -100,7 +180,7 @@ const easydiffusion = {
             cb();
             return;
         }
-        this.get('/get/models', function(data, error) {
+        this.get(ai.settings.easydiffusion.endpoint, '/get/models', function(data, error) {
             if (!error) {
                 Object.assign(ai.settings.easydiffusion, data.options);
                 ai.saveSettings();
@@ -121,7 +201,7 @@ const easydiffusion = {
     },
 
     render:function(obj, cb) {
-        this.post('/render', JSON.stringify(obj), function(data, error) {
+        this.post(ai.settings.easydiffusion.endpoint, '/render', JSON.stringify(obj), function(data, error) {
             if (error) {
                 cb(data, error);
                 return;
@@ -162,6 +242,60 @@ const easydiffusion = {
                 }
             });
         }
+    },
+
+    generate:function(seed) {
+        if (!seed)
+            seed = Math.random() * 0x7FFFFFFF >>> 0;
+        ai.settings.seed = seed;
+        ai.saveSettings();
+        ai.view("wait", true);
+        easydiffusion.render({
+            "prompt": ai.settings.prompt,
+            "seed": seed,
+            "used_random_seed": true,
+            "negative_prompt": ai.settings.negativePrompt,
+            "num_outputs": 1,
+            "num_inference_steps": ai.settings.inferenceSteps,
+            "guidance_scale": ai.settings.guidanceScale,
+            "width": ai.settings.width,
+            "height": ai.settings.height,
+            "vram_usage_level": "balanced",
+            "sampler_name": ai.settings.sampler,
+            "use_stable_diffusion_model": ai.settings.model,
+            "clip_skip": false,
+            "use_vae_model": "",
+            "stream_progress_updates": true,
+            "stream_image_progress": false,
+            "show_only_filtered_image": true,
+            "block_nsfw": false,
+            "output_format": "png",
+            "output_quality": 75,
+            "output_lossless": false,
+            "metadata_output_format": "none",
+            "original_prompt": ai.settings.prompt,
+            "active_tags": [],
+            "inactive_tags": [],
+            "session_id": ai.settings.easydiffusion.session_id
+        }, (function(obj, error){
+            if (error) {
+                easydiffusion.logError(error + (obj ? "\n" + obj : ""));
+                ai.close("wait");
+                return;
+            }
+            if (obj.data) {
+                ai.close("wait");
+                var fileName = ai.settings.uniqueFilenames ? seed + '' : 'ai';
+                storage.set(obj.data.substr(obj.data.indexOf(',') + 1), 'png', fileName);
+                storage.decodeBase64('png', fileName);
+                var path = storage.save('png', fileName);
+                storage.unload('png', fileName);
+                if (path)
+                    app.open(path);
+            } else if (obj.percent) {
+                ai.dlg.title = (obj.percent|0) + "%";
+            }
+        }).bind(ai));
     }
 }
 
@@ -174,18 +308,20 @@ const views = {
                 ai.view("settings");
             }
         },
+        {type:"break"},
+
         {
             if:function(){return ai.settings.serverType == "easydiffusion"},
             then:[
                 {type:"break"},
                 {
                     type:"button",
-                    text:"Text to Image...",
+                    text:function(){return ai.settings.easydiffusion.endpoint + ": Text to Image"},
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
                             if (error) {
-                                ai.logError(error);
+                                easydiffusion.logError(error);
                                 ai.close("wait");
                             } else
                                 ai.view("easydiffusion_T2I");
@@ -193,6 +329,13 @@ const views = {
                     }
                 }
             ]
+        },
+        {type:"break"},
+
+        {
+            type:"button",
+            text:"sdxlturbo.ai: Text to Image",
+            click:function(){ai.view("sdxlturboai_T2I");}
         }
     ],
 
@@ -207,6 +350,38 @@ const views = {
         {
             type:"entry",
             bind:"settings.easydiffusion.endpoint"
+        }
+    ],
+
+    sdxlturboai_T2I : [
+        {type:"label", text:"Warning: Free public service with no privacy policy"},
+        {type:"break"},
+
+        {type:"label", text:"Prompt:"},
+        {type:"break"},
+        {
+            type:"entry",
+            maxsize:128,
+            bind:"settings.prompt"
+        },
+        {type:"break"},
+
+        {type:"label", text:"Negative Prompt:"},
+        {type:"break"},
+        {
+            type:"entry",
+            maxsize:128,
+            value:function(){return ai.settings.negativePrompt;},
+            change:function(text){ai.settings.negativePrompt = text;}
+        },
+        {type:"break"},
+
+        {
+            type:"button",
+            text:"Generate",
+            click:function(){
+                sdxlturboai.generate();
+            }
         }
     ],
 
@@ -319,14 +494,14 @@ const views = {
             type:"button",
             text:"Redo",
             click:function(){
-                ai.generate(ai.settings.seed);
+                easydiffusion.generate(ai.settings.seed);
             }
         },
         {
             type:"button",
             text:"Generate",
             click:function(){
-                ai.generate();
+                easydiffusion.generate();
             }
         }
     ]
@@ -357,60 +532,6 @@ Object.assign(AI.prototype, {
         storage.save("settings");
     },
 
-    generate:function(seed) {
-        if (!seed)
-            seed = Math.random() * 0x7FFFFFFF >>> 0;
-        this.settings.seed = seed;
-        this.saveSettings();
-        this.view("wait", true);
-        easydiffusion.render({
-            "prompt": this.settings.prompt,
-            "seed": seed,
-            "used_random_seed": true,
-            "negative_prompt": this.settings.negativePrompt,
-            "num_outputs": 1,
-            "num_inference_steps": this.settings.inferenceSteps,
-            "guidance_scale": this.settings.guidanceScale,
-            "width": this.settings.width,
-            "height": this.settings.height,
-            "vram_usage_level": "balanced",
-            "sampler_name": ai.settings.sampler,
-            "use_stable_diffusion_model": this.settings.model,
-            "clip_skip": false,
-            "use_vae_model": "",
-            "stream_progress_updates": true,
-            "stream_image_progress": false,
-            "show_only_filtered_image": true,
-            "block_nsfw": false,
-            "output_format": "png",
-            "output_quality": 75,
-            "output_lossless": false,
-            "metadata_output_format": "none",
-            "original_prompt": this.settings.prompt,
-            "active_tags": [],
-            "inactive_tags": [],
-            "session_id": this.settings.easydiffusion.session_id
-        }, (function(obj, error){
-            if (error) {
-                ai.logError(error + (obj ? "\n" + obj : ""));
-                this.close("wait");
-                return;
-            }
-            if (obj.data) {
-                this.close("wait");
-                var fileName = this.settings.uniqueFilenames ? seed + '' : 'ai';
-                storage.set(obj.data.substr(obj.data.indexOf(',') + 1), 'png', fileName);
-                storage.decodeBase64('png', fileName);
-                var path = storage.save('png', fileName);
-                storage.unload('png', fileName);
-                if (path)
-                    app.open(path);
-            } else if (obj.percent) {
-                this.dlg.title = (obj.percent|0) + "%";
-            }
-        }).bind(this));
-    },
-
     close:function(name) {
         if (this.stack.length == 0) {
             console.log("No window to close");
@@ -430,23 +551,6 @@ Object.assign(AI.prototype, {
         name = this.stack[this.stack.length - 1].name;
         this.stack.pop();
         this.view(name);
-    },
-
-    logError:function(error) {
-        if (!error)
-            return;
-        if (error == "status:0") {
-            error = "\n"
-                + "***************************************\n*\n"
-                + "* Could not connect to EasyDiffusion at:\n"
-                + "*      " + ai.settings.easydiffusion.endpoint + "\n*\n"
-                + "* Make sure it is running or download the installer at:\n"
-                + "*      https://easydiffusion.github.io/\n*\n"
-                + "***************************************\n\n"
-        } else {
-            error = "Easy Diffusion error: " + error;
-        }
-        console.log(error);
     },
 
     getSetting:function(path, defval) {
