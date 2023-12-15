@@ -32,7 +32,7 @@ public:
         auto button = new ui::Button(m_text);
         auto handle = button->handle();
         button->Click.connect([=](ui::Event&){
-          if (handle.lock())
+          if (handle)
             app::AppScripting::raiseEvent(scriptFileName, button->id() + "_click");
         });
         return button;

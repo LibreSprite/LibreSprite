@@ -75,6 +75,7 @@ namespace script {
   class ScriptObject : public Injectable<ScriptObject> {
   public:
     InternalScriptObject* getInternalScriptObject() {return m_internal;};
+    script::Engine* getEngine() {return &*m_internal->m_engine;}
 
     virtual void* getWrapped(){return nullptr;}
     virtual void setWrapped(void*){}

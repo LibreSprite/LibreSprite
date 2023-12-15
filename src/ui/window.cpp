@@ -333,10 +333,8 @@ bool Window::onProcessMessage(Message* msg)
           static std::optional<gfx::Rect> moveTarget;
           if (!moveTarget.has_value()) {
               app::TaskManager::instance().delayed([handle = handle()]{
-                  if (auto ptr = handle.lock(); ptr && *ptr) {
-                      auto self = static_cast<ui::Window*>(*ptr);
+                  if (auto self = handle.get<ui::Widget, ui::Window>())
                       self->moveWindow(*moveTarget, true);
-                  }
                   moveTarget.reset();
               });
           }

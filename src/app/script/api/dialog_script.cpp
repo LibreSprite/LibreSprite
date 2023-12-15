@@ -136,8 +136,8 @@ public:
     unlist();
 
     app::TaskManager::instance().delayed([handle = handle()]{
-      if (auto self = handle.lock())
-        delete *self;
+      if (auto self = handle.get<ui::Widget>())
+        delete self;
     });
   }
 

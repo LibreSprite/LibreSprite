@@ -1,11 +1,13 @@
 // Aseprite Document Library
 // Copyright (c) 2001-2015 David Capello
+// LibreSprite - Copyright (C) 2023  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
 #pragma once
 
+#include "base/with_handle.h"
 #include "doc/object_id.h"
 #include "doc/object_type.h"
 #include <memory>
@@ -14,7 +16,7 @@ namespace doc {
 
   typedef uint32_t ObjectVersion;
 
-  class Object : public std::enable_shared_from_this<Object> {
+  class Object : public std::enable_shared_from_this<Object>, public WithHandle<Object> {
   public:
     Object(ObjectType type);
     Object(const Object& other);

@@ -42,7 +42,7 @@ protected:
   }
 
   ui::Widget* getWidget() {
-    return m_widget.expired() ? nullptr : *m_widget.lock();
+    return m_widget.get<ui::Widget>();
   }
 
 public:
@@ -58,9 +58,9 @@ public:
   Type* getWrapped(){ return static_cast<Type*>(static_cast<ui::Widget*>(getWrapped())); }
 
   void* getWrapped() override {
-    auto handle = m_widget.lock();
-    if (handle && *handle)
-      return *handle;
+    auto handle = m_widget.get<ui::Widget>();
+    if (handle)
+      return handle;
     auto raw = build();
     if (raw)
       m_widget = raw->handle();
