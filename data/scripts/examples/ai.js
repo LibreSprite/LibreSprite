@@ -159,6 +159,8 @@ const easydiffusion = {
     get:getJSON,
     post:postJSON,
 
+    animateSteps: 0,
+
     logError:function(error) {
         if (!error)
             return;
@@ -247,6 +249,8 @@ const easydiffusion = {
     generate:function(seed) {
         if (!seed)
             seed = Math.random() * 0x7FFFFFFF >>> 0;
+        if (!easydiffusion.totalSteps)
+            easydiffusion.totalSteps = easydiffusion.animateSteps;
         ai.settings.seed = seed;
         ai.saveSettings();
         ai.view("wait", true);
@@ -256,7 +260,7 @@ const easydiffusion = {
             "used_random_seed": true,
             "negative_prompt": ai.settings.negativePrompt,
             "num_outputs": 1,
-            "num_inference_steps": ai.settings.inferenceSteps,
+            "num_inference_steps": (this.animateSteps ? this.animateSteps : ai.settings.inferenceSteps),
             "guidance_scale": ai.settings.guidanceScale / 10,
             "width": ai.settings.width,
             "height": ai.settings.height,
@@ -283,17 +287,31 @@ const easydiffusion = {
                 ai.close("wait");
                 return;
             }
-            if (obj.data) {
+            if (obj.percent && !obj.data) {
+                if (easydiffusion.animateSteps !== undefined) {
+                    ai.dlg.title = (obj.percent|0) + "% - frame " + (easydiffusion.totalSteps - easydiffusion.animateSteps);
+                } else {
+                    ai.dlg.title = (obj.percent|0) + "%";
+                }
+                return;
+            }
+            if (!obj.data) {
+                return;
+            }
+            var fileName = ai.settings.uniqueFilenames ? seed + '' : 'ai';
+            if (easydiffusion.animateSteps) {
+                fileName += "_" + easydiffusion.animateSteps;
+                easydiffusion.animateSteps--;
+            }
+            storage.set(obj.data.substr(obj.data.indexOf(',') + 1), 'png', fileName);
+            storage.decodeBase64('png', fileName);
+            var path = storage.save('png', fileName);
+            storage.unload('png', fileName);
+            if (easydiffusion.animateSteps) {
+                easydiffusion.generate(seed);
+            } else if (path) {
                 ai.close("wait");
-                var fileName = ai.settings.uniqueFilenames ? seed + '' : 'ai';
-                storage.set(obj.data.substr(obj.data.indexOf(',') + 1), 'png', fileName);
-                storage.decodeBase64('png', fileName);
-                var path = storage.save('png', fileName);
-                storage.unload('png', fileName);
-                if (path)
-                    app.open(path);
-            } else if (obj.percent) {
-                ai.dlg.title = (obj.percent|0) + "%";
+                app.open(path);
             }
         }).bind(ai));
     }
@@ -313,18 +331,40 @@ const views = {
         {
             if:function(){return ai.settings.serverType == "easydiffusion"},
             then:[
+                {type:"label", text:"Custom EasyDiffusion Server:"},
+                {type:"break"},
+                {type:"label", text:function(){return ai.settings.easydiffusion.endpoint;}},
                 {type:"break"},
                 {
                     type:"button",
-                    text:function(){return ai.settings.easydiffusion.endpoint + ": Text to Image"},
+                    text:function(){return "Text to Image (Single image)"},
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
                             if (error) {
                                 easydiffusion.logError(error);
                                 ai.close("wait");
-                            } else
+                            } else {
+                                easydiffusion.animateSteps = undefined;
                                 ai.view("easydiffusion_T2I");
+                            }
+                        });
+                    }
+                },
+                {type:"break"},
+                {
+                    type:"button",
+                    text:function(){return "Text to Image (Animate steps)"},
+                    click:function(){
+                        ai.view("wait", true);
+                        easydiffusion.getModels(function(error){
+                            if (error) {
+                                easydiffusion.logError(error);
+                                ai.close("wait");
+                            } else {
+                                easydiffusion.animateSteps = 1;
+                                ai.view("easydiffusion_T2I");
+                            }
                         });
                     }
                 }
@@ -492,8 +532,11 @@ const views = {
 
         {
             type:"button",
-            text:"Redo",
+            text:function(){return "Redo (" + ai.settings.seed + ")";},
             click:function(){
+                if (easydiffusion.animateSteps !== undefined)
+                    easydiffusion.animateSteps = ai.settings.inferenceSteps;
+                easydiffusion.totalSteps = 0;
                 easydiffusion.generate(ai.settings.seed);
             }
         },
@@ -501,6 +544,9 @@ const views = {
             type:"button",
             text:"Generate",
             click:function(){
+                if (easydiffusion.animateSteps !== undefined)
+                    easydiffusion.animateSteps = ai.settings.inferenceSteps;
+                easydiffusion.totalSteps = 0;
                 easydiffusion.generate();
             }
         }
