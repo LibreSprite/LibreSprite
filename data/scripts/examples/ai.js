@@ -41,8 +41,8 @@ function get(url, cb, key, domain) {
     if (!key)
         key = ai.nextNodeId++ + 'h';
     ai[key + '_fetch'] = function() {
-        const status = storage.get(key + '_status');
-        const string = storage.get(key);
+        const status = storage.get(key + '_status', domain);
+        const string = storage.get(key, domain);
         delete ai[key + '_fetch'];
         cb({
             string,
@@ -50,7 +50,7 @@ function get(url, cb, key, domain) {
             status
         });
     };
-    storage.fetch(url, key);
+    storage.fetch(url, key, domain);
 }
 
 function post(url, body, cb) {
@@ -146,7 +146,7 @@ const sdxlturboai = {
             }
             if (key) {
                 ai.close("wait");
-                var path = storage.save(key);
+                var path = storage.save(key, 'ai');
                 storage.unload(key);
                 if (path)
                     app.open(path);
@@ -371,10 +371,11 @@ const views = {
             ]
         },
         {type:"break"},
-
+        {type:"label", text:"sdxlturbo.ai:"},
+        {type:"break"},
         {
             type:"button",
-            text:"sdxlturbo.ai: Text to Image",
+            text:"Text to Image",
             click:function(){ai.view("sdxlturboai_T2I");}
         }
     ],
@@ -394,7 +395,7 @@ const views = {
     ],
 
     sdxlturboai_T2I : [
-        {type:"label", text:"Warning: Free public service with no privacy policy"},
+        {type:"label", text:"Warning: Free public service with no privacy policy."},
         {type:"break"},
 
         {type:"label", text:"Prompt:"},
