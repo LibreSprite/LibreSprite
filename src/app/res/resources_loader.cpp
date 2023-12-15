@@ -24,23 +24,31 @@
 
 namespace app {
   void ResourcesLoader::load(Callback&& callback) {
-    std::string path = resourcesLocation();
-    LOG("Loading resources from %s...\n", path.c_str());
-    if (path.empty()) {
-      callback({});
-      return;
-    }
-
     auto fs = FileSystemModule::instance();
     LockFS lock{fs};
-    IFileItem* item = fs->getFileItemFromPath(path);
-    if (!item)
-      return;
-
+    std::size_t pending{};
     std::deque<std::string> files;
-    for (auto child : item->children()) {
-      if (!child->isFolder())
-        files.push_back(child->fileName());
+
+    for (auto& path : resourcesLocation()) {
+        LOG("Loading resources from %s...\n", path.c_str());
+        if (path.empty())
+            return;
+
+        IFileItem* item = fs->getFileItemFromPath(path);
+        if (!item)
+            continue;
+
+        for (auto child : item->children()) {
+            if (child->isFolder())
+                continue;
+            files.push_back(child->fileName());
+            pending++;
+        }
+    }
+
+    if (!pending) {
+        callback({});
+        return;
     }
 
     task = TaskManager::instance().addTask<Resource>(

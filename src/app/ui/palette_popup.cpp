@@ -80,7 +80,9 @@ void PalettePopup::onLoadPal()
 void PalettePopup::onOpenFolder()
 {
   inject<ResourcesLoader> loader{"palette"};
-  launcher::open_folder(loader->resourcesLocation());
+  auto paths = loader->resourcesLocation();
+  if (!paths.empty())
+      launcher::open_folder(paths.back());
 }
 
 } // namespace app

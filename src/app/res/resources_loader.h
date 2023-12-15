@@ -21,7 +21,7 @@ namespace app {
     using Callback = std::function<void(Resource)>;
     void load(Callback&& callback);
 
-    virtual std::string resourcesLocation() const = 0;
+    virtual std::vector<std::string> resourcesLocation() const = 0;
 
   protected:
     virtual Resource loadResource(const std::string& fileName) = 0;
