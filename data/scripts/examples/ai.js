@@ -7,7 +7,7 @@ const defaultSettings = {
     prompt: '',
     negativePrompt: '',
     inferenceSteps: 15,
-    guidanceScale: 8,
+    guidanceScale: 80,
     width: 128,
     height: 128,
     uniqueFilenames: 0,
@@ -257,7 +257,7 @@ const easydiffusion = {
             "negative_prompt": ai.settings.negativePrompt,
             "num_outputs": 1,
             "num_inference_steps": ai.settings.inferenceSteps,
-            "guidance_scale": ai.settings.guidanceScale,
+            "guidance_scale": ai.settings.guidanceScale / 10,
             "width": ai.settings.width,
             "height": ai.settings.height,
             "vram_usage_level": "balanced",
@@ -464,9 +464,9 @@ const views = {
 
         {
             type:"int",
-            text:"Guidance Scale:",
-            min:0,
-            max:30,
+            text:"Guidance Scale (x10):",
+            min:10,
+            max:200,
             value:function(){return ai.settings.guidanceScale;},
             change:function(value){ai.settings.guidanceScale = value;}
         },
