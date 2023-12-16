@@ -10,6 +10,7 @@
 #include "she/capabilities.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <vector>
 
