@@ -31,6 +31,7 @@
 #include <list>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
