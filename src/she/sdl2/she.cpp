@@ -535,6 +535,20 @@ namespace she {
       return new SDL2Surface(width, height, 32, SDL2Surface::DeleteAndDestroy);
     }
 
+    std::vector<uint8_t> encodeSurfaceAsPNG(Surface* s) override {
+      auto surface = static_cast<SDL2Surface*>(s);
+      std::vector<uint8_t> data;
+      data.resize(surface->width() * surface->height() * 4 + 1024);
+      std::shared_ptr<SDL_RWops> rops{
+        SDL_RWFromMem(data.data(), data.size()),
+        [](auto *rops){ rops->close(rops); }
+      };
+      if (IMG_SavePNG_RW(static_cast<SDL_Surface*>(surface->nativeHandle()), rops.get(), 0) != 0)
+        return {};
+      data.resize(SDL_RWtell(rops.get()));
+      return data;
+    }
+
     Surface* loadSurface(const char* filename) override {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)

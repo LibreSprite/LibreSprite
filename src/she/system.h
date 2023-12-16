@@ -9,7 +9,9 @@
 #include "gfx/fwd.h"
 #include "she/capabilities.h"
 
+#include <cstddef>
 #include <stdexcept>
+#include <vector>
 
 namespace she {
 
@@ -45,6 +47,7 @@ namespace she {
     virtual Surface* createRgbaSurface(int width, int height) = 0;
     virtual Surface* loadSurface(const char* filename) = 0;
     virtual Surface* loadRgbaSurface(const char* filename) = 0;
+    virtual std::vector<uint8_t> encodeSurfaceAsPNG(Surface*) = 0;
     virtual Font* loadSpriteSheetFont(const char* filename, int scale = 1) = 0;
     virtual Font* loadTrueTypeFont(const char* filename, int height) = 0;
     virtual void toggleFullscreen() {}
