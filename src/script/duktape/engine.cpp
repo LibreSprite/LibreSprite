@@ -143,6 +143,8 @@ public:
 
 static Engine::Regular<DukEngine> registration("duk", {"js"});
 
+#define HIDDEN(X)"\xff" X
+
 class DukScriptObject : public InternalScriptObject {
 public:
   static Value getValue(duk_context* ctx, int id) {
@@ -173,7 +175,7 @@ public:
   static duk_ret_t callFunc(duk_context* ctx) {
     int argc = duk_get_top(ctx);
     duk_push_current_function(ctx);
-    duk_get_prop_string(ctx, -1, "\0xFFfunc");
+    duk_get_prop_string(ctx, -1, HIDDEN("func"));
     auto& func = *reinterpret_cast<script::Function*>(duk_get_pointer(ctx, -1));
     for (int i = 0; i < argc; ++i) {
       func.arguments.push_back(getValue(ctx, i));
@@ -224,14 +226,14 @@ public:
     for (auto& entry : functions) {
       duk_push_c_function(handle, callFunc, DUK_VARARGS);
       duk_push_pointer(handle, &entry.second);
-      duk_put_prop_string(handle, -2, "\0xFFfunc");
+      duk_put_prop_string(handle, -2, HIDDEN("func"));
       duk_put_prop_string(handle, -2, entry.first.c_str());
     }
   }
 
   static duk_ret_t getterFunc(duk_context* ctx) {
     duk_push_current_function(ctx);
-    duk_get_prop_string(ctx, -1, "\0xFFfunc");
+    duk_get_prop_string(ctx, -1, HIDDEN("func"));
     auto& prop = *reinterpret_cast<script::ObjectProperty*>(duk_get_pointer(ctx, -1));
     prop.getter();
     returnValue(ctx, prop.getter.result);
@@ -240,7 +242,7 @@ public:
 
   static duk_ret_t setterFunc(duk_context* ctx) {
     duk_push_current_function(ctx);
-    duk_get_prop_string(ctx, -1, "\0xFFfunc");
+    duk_get_prop_string(ctx, -1, HIDDEN("func"));
     auto& prop = *reinterpret_cast<script::ObjectProperty*>(duk_get_pointer(ctx, -1));
     prop.setter.arguments.emplace_back(getValue(ctx, 0));
     prop.setter();
@@ -259,13 +261,13 @@ public:
       flags |= DUK_DEFPROP_HAVE_GETTER;
       duk_push_c_function(handle, getterFunc, 0);
       duk_push_pointer(handle, &prop);
-      duk_put_prop_string(handle, -2, "\0xFFfunc");
+      duk_put_prop_string(handle, -2, HIDDEN("func"));
       --idx;
 
       flags |= DUK_DEFPROP_HAVE_SETTER;
       duk_push_c_function(handle, setterFunc, 1);
       duk_push_pointer(handle, &prop);
-      duk_put_prop_string(handle, -2, "\0xFFfunc");
+      duk_put_prop_string(handle, -2, HIDDEN("func"));
       --idx;
 
       duk_def_prop(handle, idx, flags);

@@ -67,11 +67,11 @@ namespace script {
         return _data[pos];
       }
 
-      bool empty() {
+      bool empty() const {
         return !_data || !_size;
       }
 
-      std::size_t size() {
+      std::size_t size() const {
         return _size;
       }
 

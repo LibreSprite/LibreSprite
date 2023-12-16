@@ -37,8 +37,7 @@ public:
       first = false;
       stream << arg.str();
     }
-    auto str = stream.str();
-    delegate->onConsolePrint(str.c_str());
+    delegate->onConsolePrint(stream.str().c_str());
   }
 };
 
