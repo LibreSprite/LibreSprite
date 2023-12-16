@@ -18,7 +18,7 @@ public:
 
   template<typename Type>
   Handle(const std::shared_ptr<Type*>& ptr) :
-    ref{std::reinterpret_pointer_cast<void*>(ptr)},
+    ref{std::shared_ptr<void*>(ptr, reinterpret_cast<void**>(ptr.get()))},
     typeHash{typeid(Type).hash_code()}
     {}
 
