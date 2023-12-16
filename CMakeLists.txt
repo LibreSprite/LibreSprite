@@ -186,13 +186,6 @@ include_directories(${GIF_INCLUDE_DIRS})
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
-# Lua
-find_package(Lua)
-if(LUA_FOUND)
-  add_definitions(-DSCRIPT_ENGINE_LUA=1)
-  include_directories(${LUA_INCLUDE_DIR})
-endif()
-
 # v8
 find_package(V8)
 if(V8_FOUND)

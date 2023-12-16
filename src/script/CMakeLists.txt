@@ -20,7 +20,6 @@ endif()
 add_library(duktape ${DUKTAPE_DIR}/duktape.c)
 add_library(script-lib
   duktape/engine.cpp
-  lua/engine.cpp
   v8/engine.cpp
   cout_delegate.cpp)
 
