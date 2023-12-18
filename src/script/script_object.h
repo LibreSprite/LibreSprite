@@ -80,6 +80,23 @@ namespace script {
     bool m_own;
 
   public:
+    #if _DEBUG
+    static inline std::size_t count{};
+
+    ScriptObject() {
+      count++;
+      std::cout << "+Object count: " << count << std::endl;
+    }
+
+    ~ScriptObject() {
+      count--;
+      std::cout << "-Object count: " << count << std::endl;
+      if (m_own) {
+        m_handle.dispose();
+      }
+    }
+    #endif
+
     template <typename Base, typename Cast = Base>
     Cast* handle() {return m_handle.get<Base, Cast>();}
 
