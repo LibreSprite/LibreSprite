@@ -13,6 +13,7 @@
 #include "app/app.h"
 #include "app/document.h"
 #include "app/script/app_scripting.h"
+#include "app/task_manager.h"
 #include "base/file_handle.h"
 #include "base/path.h"
 #include "base/string.h"
@@ -49,8 +50,10 @@ namespace app {
   }
 
   void AppScripting::raiseEvent(const std::string& fileName, const std::string &event) {
-    if (fileName == previousFileName || evalFile(fileName))
-      engine->raiseEvent(event);
+    TaskManager::instance().delayed([=]{
+      if (fileName == previousFileName || evalFile(fileName))
+        engine->raiseEvent(event);
+    });
   }
 
   bool AppScripting::eval(const std::string& code) {
