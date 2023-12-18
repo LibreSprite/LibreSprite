@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "base/with_handle.h"
 #include "script/script_object.h"
 #include "script/value.h"
+#include <unordered_map>
 
 namespace script {
   class Engine : public Injectable<Engine> {
@@ -20,6 +22,14 @@ namespace script {
         listener(success);
       }
       m_afterEvalListeners.clear();
+      for (auto it = m_ObjToScriptObj.begin(); it != m_ObjToScriptObj.end();) {
+        auto& entry = it->second;
+        if (!entry.held && entry.script->disposable()) {
+          it = m_ObjToScriptObj.erase(it);
+        } else {
+          ++it;
+        }
+      }
     }
 
   public:
@@ -39,8 +49,61 @@ namespace script {
       m_afterEvalListeners.emplace_back(std::move(callback));
     }
 
+    template<typename Type>
+    ScriptObject* getScriptObject(Type* obj, bool own = false) {
+      if (!obj) {
+        return nullptr;
+      }
+      if (auto it = m_ObjToScriptObj.find(obj); it != m_ObjToScriptObj.end()) {
+        return it->second.script;
+      }
+      inject<ScriptObject> sobj{typeid(obj).name()};
+      if (!sobj) {
+        return nullptr;
+      }
+      sobj->setWrapped(obj->handle(), own);
+      return registerScriptObject(std::move(sobj));
+    }
+
+    ScriptObject* create(const std::string& name) {
+      inject<ScriptObject> sobj{name};
+      if (!sobj) {
+        std::cout << "Unknown ScriptObject type: " << name << std::endl;
+        return nullptr;
+      }
+      if (!sobj->create<void>())
+        return nullptr;
+      return registerScriptObject(std::move(sobj));
+    }
+
+    template <typename Type>
+    ScriptObject* create() {
+      return create(typeid(Type*).name());
+    }
+
+    ScriptObject* registerScriptObject(inject<ScriptObject>&& sobj) {
+      ScriptObject* ret = &*sobj;
+      auto raw = sobj->m_handle.get<void>();
+      sobj->getInternalScriptObject()->onRelease = [=]{
+        auto it = m_ObjToScriptObj.find(raw);
+        if (it == m_ObjToScriptObj.end())
+          return;
+        it->second.held = false;
+      };
+      m_ObjToScriptObj.emplace(std::make_pair(raw, HeldObject{sobj->m_handle, std::move(sobj)}));
+      return ret;
+    }
+
   private:
     Provides m_provides{this};
+
+    struct HeldObject {
+      Handle handle;
+      inject<ScriptObject> script;
+      bool held = true;
+    };
+
+    std::unordered_map<void*, HeldObject> m_ObjToScriptObj;
     std::vector<inject<ScriptObject>> m_scriptObjects;
     std::vector<std::function<void(bool)>> m_afterEvalListeners;
   };

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "base/injection.h"
+#include "base/with_handle.h"
 #include "function.h"
 
 namespace script {
@@ -70,15 +71,36 @@ namespace script {
     inject<script::Engine> m_engine;
     std::unordered_map<std::string, ObjectProperty> properties;
     std::unordered_map<std::string, DocumentedFunction> functions;
+    std::function<void()> onRelease;
   };
 
   class ScriptObject : public Injectable<ScriptObject> {
+    friend class Engine;
+    Handle m_handle;
+    bool m_own;
+
   public:
+    template <typename Base, typename Cast = Base>
+    Cast* handle() {return m_handle.get<Base, Cast>();}
+
+    template <typename Base, typename Cast = Base>
+    Cast* create() {
+      setWrapped(build(), true);
+      return handle<Base, Cast>();
+    }
+
+    virtual Handle build() {return {};}
+
+    virtual bool disposable() {return true;}
+
     InternalScriptObject* getInternalScriptObject() {return m_internal;};
     script::Engine* getEngine() {return &*m_internal->m_engine;}
 
     virtual void* getWrapped(){return nullptr;}
-    virtual void setWrapped(void*){}
+    virtual void setWrapped(const Handle& handle, bool own) {
+      m_handle = handle;
+      m_own = own;
+    }
 
     template <typename Type = Value>
     Type get(const std::string& name) {
