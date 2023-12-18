@@ -7,10 +7,12 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 #include <typeinfo>
 
 class Handle {
   std::weak_ptr<void*> ref;
+  void (*m_dispose)(void*);
   std::size_t typeHash;
 
 public:
@@ -19,16 +21,24 @@ public:
   template<typename Type>
   Handle(const std::shared_ptr<Type*>& ptr) :
     ref{std::shared_ptr<void*>(ptr, reinterpret_cast<void**>(ptr.get()))},
+    m_dispose{[](void* ptr){delete reinterpret_cast<Type*>(ptr);}},
     typeHash{typeid(Type).hash_code()}
     {}
+
+  template<typename Type>
+  Handle(Type* ptr) : Handle{ptr->handle()} {}
 
   template<typename Type, typename Derived = Type>
   Derived* get() const {
     if (ref.expired())
       return nullptr;
-    if (typeid(Type).hash_code() != typeHash)
-      return nullptr;
-    return static_cast<Derived*>(reinterpret_cast<Type*>(*ref.lock()));
+    if constexpr (std::is_void<Type>::value) {
+      return *ref.lock();
+    } else {
+      if (typeid(Type).hash_code() != typeHash)
+        return nullptr;
+      return static_cast<Derived*>(reinterpret_cast<Type*>(*ref.lock()));
+    }
   }
 
   operator bool () const {
@@ -37,6 +47,14 @@ public:
 
   void reset() {
     ref.reset();
+  }
+
+  void dispose() {
+    if (ref.expired())
+      return;
+    auto ptr = *ref.lock();
+    if (ptr && m_dispose)
+      m_dispose(ptr);
   }
 };
 
