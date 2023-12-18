@@ -341,9 +341,9 @@ const views = {
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
+                            ai.close("wait");
                             if (error) {
                                 easydiffusion.logError(error);
-                                ai.close("wait");
                             } else {
                                 easydiffusion.animateSteps = undefined;
                                 ai.view("easydiffusion_T2I");
@@ -358,9 +358,9 @@ const views = {
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
+                            ai.close("wait");
                             if (error) {
                                 easydiffusion.logError(error);
-                                ai.close("wait");
                             } else {
                                 easydiffusion.animateSteps = 1;
                                 ai.view("easydiffusion_T2I");
