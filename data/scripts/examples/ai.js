@@ -254,7 +254,7 @@ const easydiffusion = {
         ai.settings.seed = seed;
         ai.saveSettings();
         ai.view("wait", true);
-        easydiffusion.render({
+        const args = {
             "prompt": ai.settings.prompt,
             "seed": seed,
             "used_random_seed": true,
@@ -281,7 +281,11 @@ const easydiffusion = {
             "active_tags": [],
             "inactive_tags": [],
             "session_id": ai.settings.easydiffusion.session_id
-        }, (function(obj, error){
+        };
+        if (ai.settings.initImage) {
+            args.init_image = ai.settings.initImage;
+        }
+        easydiffusion.render(args, (function(obj, error){
             if (error) {
                 easydiffusion.logError(error + (obj ? "\n" + obj : ""));
                 ai.close("wait");
@@ -337,7 +341,7 @@ const views = {
                 {type:"break"},
                 {
                     type:"button",
-                    text:function(){return "Text to Image (Single image)"},
+                    text:function(){return "Single image"},
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
@@ -354,7 +358,7 @@ const views = {
                 {type:"break"},
                 {
                     type:"button",
-                    text:function(){return "Text to Image (Animate steps)"},
+                    text:function(){return "Animate steps"},
                     click:function(){
                         ai.view("wait", true);
                         easydiffusion.getModels(function(error){
@@ -473,6 +477,21 @@ const views = {
     easydiffusion_T2I : [
         {type:"button", click:"choose_model", text:function(){return ai.settings.model;}},
         {type:"button", click:"choose_sampler", text:function(){return ai.settings.sampler;}},
+        {
+            type:"button",
+            click:function(){
+                if (ai.settings.initImage) {
+                    ai.settings.initImage = "";
+                    this.text = "No initial image";
+                } else if (app.activeImage) {
+                    ai.settings.initImage = app.activeImage.getPNGData();
+                    this.text = "Using initial image";
+                }
+            },
+            text:function(){
+                return ai.settings.initImage ? "Using initial image" : "No initial image";
+            }
+        },
         {type:"break"},
 
         {type:"label", text:"Prompt:"},
@@ -670,10 +689,11 @@ Object.assign(AI.prototype, {
                     var click = nodeMeta.click;
                     if (typeof click == "string")
                         click = (function(name){this.view(name);}).bind(this, click);
-                    this[this.nextNodeId + "B_click"] = click.bind(this);
-                    dlg.addButton(
+                    var btn = dlg.addButton(
                         get(nodeMeta, 'text', ''),
-                        this.nextNodeId++ + 'B');
+                        this.nextNodeId + 'B');
+                    this[this.nextNodeId + "B_click"] = click.bind(btn);
+                    this.nextNodeId++;
                     break;
 
                 case 'break':
