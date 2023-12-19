@@ -97,7 +97,6 @@ public:
                              &on_fatal_handler))
     {
       InternalScriptObject::setDefault("DukScriptObject");
-      initGlobals();
       // Set 'on_search_module' as the function to search modules with
       // require('modulename') on JavaScript.
       // duk_get_global_string(m_handle, "Duktape");
@@ -117,6 +116,7 @@ public:
   bool eval(const std::string& code) override {
     bool success = true;
     try {
+      initGlobals();
       if (duk_peval_string(m_handle, code.c_str()) != 0) {
         printLastResult();
         std::cout << "Error: [" << duk_safe_to_string(m_handle, -1) << "]" << std::endl;
@@ -146,6 +146,8 @@ static Engine::Regular<DukEngine> registration("duk", {"js"});
 #define HIDDEN(X)"\xff" X
 
 class DukScriptObject : public InternalScriptObject {
+  int m_refC = 0;
+
 public:
   static Value getValue(duk_context* ctx, int id) {
     auto type = duk_get_type(ctx, id);
@@ -167,6 +169,8 @@ public:
       void* buffer = duk_get_buffer_data(ctx, id, &size);
       if (buffer)
         return {buffer, size, false};
+    } else if (type == DUK_TYPE_UNDEFINED) {
+      return {};
     }
     printf("Type: %d\n", type);
     return {};
@@ -182,6 +186,28 @@ public:
     }
     func();
     return returnValue(ctx, func.result);
+  }
+
+  static duk_ret_t dtorFunc(duk_context *ctx) {
+    duk_get_prop_string(ctx, 0, HIDDEN("self"));
+    auto self = reinterpret_cast<DukScriptObject*>(duk_to_pointer(ctx, -1));
+    duk_pop(ctx);
+
+    if (!self)
+      return 0;
+
+    // Mark as deleted
+    duk_push_pointer(ctx, 0);
+    duk_put_prop_string(ctx, 0, HIDDEN("self"));
+
+    --self->m_refC;
+    if (!self->m_refC && self->onRelease) {
+      auto cb = std::move(self->onRelease);
+      self->onRelease = nullptr;
+      cb();
+    }
+
+    return 0;
   }
 
   static duk_ret_t returnValue(duk_context* ctx, const Value& value) {
@@ -229,6 +255,13 @@ public:
       duk_put_prop_string(handle, -2, HIDDEN("func"));
       duk_put_prop_string(handle, -2, entry.first.c_str());
     }
+
+    m_refC++;
+    duk_push_pointer(handle, this);
+    duk_put_prop_string(handle, -2, HIDDEN("self"));
+    // Store the destructor
+    duk_push_c_function(handle, dtorFunc, 1);
+    duk_set_finalizer(handle, -2);
   }
 
   static duk_ret_t getterFunc(duk_context* ctx) {
