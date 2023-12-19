@@ -79,6 +79,7 @@ public:
 
     addFunction("close", [this]{
       dialog()->closeWindow(false, true);
+      setWrapped({}, false);
       return true;
     });
 

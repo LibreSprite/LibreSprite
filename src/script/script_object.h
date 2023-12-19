@@ -118,6 +118,9 @@ namespace script {
     script::Engine* getEngine() {return &*m_internal->m_engine;}
 
     virtual void setWrapped(const Handle& handle, bool own) {
+      if (m_own) {
+        m_handle.dispose();
+      }
       m_handle = handle;
       m_own = own;
     }
