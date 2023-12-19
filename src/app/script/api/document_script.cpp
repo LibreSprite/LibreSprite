@@ -14,6 +14,7 @@ class DocumentScriptObject : public script::ScriptObject {
 public:
   DocumentScriptObject() {
     addProperty("sprite", [this]{return getEngine()->getScriptObject(doc()->sprite());});
+    addFunction("close", [this]{doc()->close(); return true;});
   }
 
   doc::Document* doc() {
