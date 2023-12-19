@@ -85,4 +85,4 @@ public:
   bool needIncrement = false;
 };
 
-static script::ScriptObject::Regular<PaletteScriptObject> celSO("PaletteScriptObject");
+static script::ScriptObject::Regular<PaletteScriptObject> palSO(typeid(doc::Palette*).name());

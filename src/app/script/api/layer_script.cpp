@@ -74,4 +74,4 @@ public:
   }
 };
 
-static script::ScriptObject::Regular<LayerScriptObject> layerSO("LayerScriptObject");
+static script::ScriptObject::Regular<LayerScriptObject> layerSO(typeid(doc::Layer*).name());

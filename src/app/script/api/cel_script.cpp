@@ -37,4 +37,4 @@ public:
   }
 };
 
-static script::ScriptObject::Regular<CelScriptObject> celSO("CelScriptObject");
+static script::ScriptObject::Regular<CelScriptObject> celSO(typeid(doc::Cel*).name());

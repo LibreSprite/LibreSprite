@@ -181,4 +181,4 @@ public:
   }
 };
 
-static script::ScriptObject::Regular<SpriteScriptObject> spriteSO("SpriteScriptObject");
+static script::ScriptObject::Regular<SpriteScriptObject> spriteSO(typeid(doc::Sprite*).name());

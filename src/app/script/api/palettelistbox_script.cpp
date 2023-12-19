@@ -42,7 +42,7 @@ public:
     auto pal = doc::Palette::create(1);
     auto palSO = getEngine()->getScriptObject(pal.get());
     palSO->setWrapped(pal->handle(), false);
-    handle<CustomPaletteListBox>()->addPalette(pal, name);
+    listbox->addPalette(pal, name);
     return palSO;
   }
 
