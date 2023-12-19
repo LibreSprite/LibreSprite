@@ -39,17 +39,21 @@ class EntryWidgetScriptObject : public WidgetScriptObject {
 public:
     EntryWidgetScriptObject() {
         addProperty("maxsize",
-                    [this]() -> unsigned int {return getWrapped<ui::Entry>()->maxTextSize();},
-                    [this](unsigned int maxsize) {getWrapped<ui::Entry>()->setMaxTextSize(maxsize); return maxsize;});
+                    [this]() -> unsigned int {return entry()->maxTextSize();},
+                    [this](unsigned int maxsize) {entry()->setMaxTextSize(maxsize); return maxsize;});
         addProperty("value",
-                    [this] {return getWrapped<ui::Entry>()->text();},
-                    [this](const std::string& value) {getWrapped<CustomEntry>()->setTextSilent(value); return value;});
+                    [this] {return entry()->text();},
+                    [this](const std::string& value) {entry()->setTextSilent(value); return value;});
+    }
+
+    CustomEntry* entry() {
+        return getWidget<CustomEntry>();
     }
 
     DisplayType getDisplayType() override {return DisplayType::Block;}
 
-    ui::Widget* build() override {
-        return new CustomEntry(m_maxsize, app::AppScripting::getFileName());
+    Handle build() override {
+        return (new CustomEntry(m_maxsize, app::AppScripting::getFileName()))->handle();
     }
 };
 

@@ -1,6 +1,6 @@
-// Aseprite
+// LibreSprite
 // Copyright (C) 2015-2016  David Capello
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2023 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -14,15 +14,18 @@
 #include "app/commands/params.h"
 #include "app/document.h"
 #include "app/document_api.h"
+#include "app/modules/editors.h"
 #include "app/script/app_scripting.h"
 #include "app/task_manager.h"
+#include "app/ui/dialog.h"
 #include "app/ui/document_view.h"
+#include "app/ui/editor/editor.h"
 #include "app/ui_context.h"
 #include "doc/site.h"
-
 #include "script/engine.h"
 #include "script/engine_delegate.h"
 #include "script/script_object.h"
+#include "ui/widget.h"
 
 #include <sstream>
 
@@ -44,7 +47,6 @@ namespace app {
 class AppScriptObject : public script::ScriptObject {
 public:
   inject<ScriptObject> m_pixelColor{"pixelColor"};
-  std::vector<inject<ScriptObject>>  m_objects;
 
   AppScriptObject() {
     addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;})
@@ -53,14 +55,17 @@ public:
     addProperty("activeLayerNumber", [this]{return updateSite() ? m_site.layerIndex() : 0;})
       .doc("read-only. Returns the number of the current layer.");
 
-    addProperty("activeImage", []{return inject<ScriptObject>{"activeImage"}.get();})
-      .doc("read-only, can be null. Returns the current layer/frame's image.");
+    addProperty("activeImage", [this]{
+        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().image() : nullptr);
+    }).doc("read-only, can be null. Returns the current layer/frame's image.");
 
-    addProperty("activeSprite", []{return inject<ScriptObject>{"activeSprite"}.get();})
-      .doc("read-only. Returns the currently active Sprite.");
+    addProperty("activeSprite", [this]{
+        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().sprite() : nullptr);
+    }).doc("read-only. Returns the currently active Sprite.");
 
-    addProperty("activeDocument", []{return inject<ScriptObject>{"activeDocument"}.get();})
-      .doc("read-only. Returns the currently active Document.");
+    addProperty("activeDocument", [this]{
+        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().document() : nullptr);
+    }).doc("read-only. Returns the currently active Document.");
 
     addProperty("pixelColor", [this]{return m_pixelColor.get();})
       .doc("read-only. Returns an object with functions for color conversion.");
@@ -74,9 +79,6 @@ public:
     addMethod("createDialog", &AppScriptObject::createDialog)
       .doc("Creates a dialog window");
 
-    addMethod("getDialog", &AppScriptObject::getDialog)
-      .doc("Returns an existing dialog window");
-
     addMethod("yield", &AppScriptObject::yield)
       .doc("Schedules a yield event on the next frame")
       .docArg("event", "Name of the event to be raised. The default is yield.");
@@ -85,7 +87,6 @@ public:
       .doc("Opens a document for editing");
 
     makeGlobal("app");
-    init();
   }
 
   void yield(const std::string& event, int cycles) {
@@ -100,37 +101,14 @@ public:
   }
 
   ScriptObject* createDialog(const std::string& id) {
-    if (!id.empty() && dialog::getDialogById(id))
-      return nullptr;
-
-    m_objects.emplace_back("DialogScriptObject");
-    auto ptr = m_objects.back().get();
-    if (!ptr)
-      return nullptr;
-
-    auto widget = ptr->getWrapped<ui::Widget>();
-    if (!id.empty())
-      ptr->set("id", id);
-    m_dialogScriptObjects[widget] = ptr;
-    return ptr;
-  }
-
-  ScriptObject* getDialog(const std::string& id) {
-    auto dialog = dialog::getDialogById(id);
+    auto dialog = getEngine()->create<ui::Dialog>();
     if (!dialog)
       return nullptr;
-    auto it = m_dialogScriptObjects.find(dialog);
-    if (it != m_dialogScriptObjects.end())
-      return it->second;
 
-    m_objects.emplace_back("DialogScriptObject");
-    auto ptr = m_objects.back().get();
-    if (ptr) {
-      ptr->setWrapped(dialog);
-      m_dialogScriptObjects[ dialog ] = ptr;
-    }
+    if (!id.empty())
+      dialog->set("id", id);
 
-    return ptr;
+    return dialog;
   }
 
   void documentation() {
@@ -220,45 +198,18 @@ public:
     return true;
   }
 
-  ScriptObject* init() {
-    if (!updateSite())
-      return nullptr;
-
-    int layerIndex = m_site.layerIndex();
-    int frameIndex = m_site.frame();
-
-    m_objects.emplace_back("DocumentScriptObject");
-
-    auto sprite = m_objects.back()->get<ScriptObject*>("sprite");
-    if (!sprite) {
-      std::cout << "No sprite in document" << std::endl;
-      return nullptr;
-    }
-
-    auto layer = sprite->call<ScriptObject*>("layer", layerIndex);
-    if (!layer) {
-      std::cout << "No layer in sprite" << std::endl;
-      return nullptr;
-    }
-
-    return layer->call<ScriptObject*>("cel", frameIndex);
-  }
-
   script::Value open(const std::string& fn) {
     if (fn.empty())
       return {};
-    app::Document* oldDoc = UIContext::instance()->activeDocument();
+    auto oldDoc = static_cast<doc::Document*>(UIContext::instance()->activeDocument());
     Command* openCommand = CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
     Params params;
     params.set("filename", fn.c_str());
     UIContext::instance()->executeCommand(openCommand, params);
-
-    app::Document* newDoc = UIContext::instance()->activeDocument();
+    auto newDoc = static_cast<doc::Document*>(UIContext::instance()->activeDocument());
     if (newDoc == oldDoc)
       return {};
-
-    m_objects.emplace_back("DocumentScriptObject");
-    return inject<ScriptObject>{"activeSprite"}.get();
+    return getEngine()->getScriptObject(newDoc);
   }
 
   void App_exit() {

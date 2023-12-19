@@ -7,80 +7,68 @@
 
 #include "script/script_object.h"
 #include "doc/layer.h"
+#include "doc/cel.h"
+#include "script/engine.h"
 
 class LayerScriptObject : public script::ScriptObject {
 public:
   LayerScriptObject() {
     addProperty("name",
-                [this]{return m_layer->name();},
+                [this]{return layer()->name();},
                 [this](const std::string& name){
-                  m_layer->setName(name);
+                  layer()->setName(name);
                   return name;
                 })
       .doc("read+write. The name of the layer.");
 
-    addProperty("isImage", [this]{return m_layer->isImage();})
+    addProperty("isImage", [this]{return layer()->isImage();})
       .doc("read-only. Returns true if the layer is an image, false if it is a folder.");
 
-    addProperty("isBackground", [this]{return m_layer->isBackground();})
+    addProperty("isBackground", [this]{return layer()->isBackground();})
       .doc("read-only. Returns true if the layer is a background layer.");
 
-    addProperty("isTransparent", [this]{return m_layer->isTransparent();})
+    addProperty("isTransparent", [this]{return layer()->isTransparent();})
       .doc("read-only. Returns true if the layer is a non-background image layer.");
 
     addProperty("isVisible",
-                [this]{return m_layer->isVisible();},
+                [this]{return layer()->isVisible();},
                 [this](bool i){
-                  m_layer->setVisible(i);
+                  layer()->setVisible(i);
                   return i;
                 })
       .doc("read+write. Gets/sets whether the layer is visible or not.");
 
     addProperty("isEditable",
-                [this]{return m_layer->isEditable();},
+                [this]{return layer()->isEditable();},
                 [this](bool i){
-                  m_layer->setEditable(i);
+                  layer()->setEditable(i);
                   return i;
                 })
       .doc("read+write. Gets/sets whether the layer is editable (unlocked) or not (locked).");
 
-    addProperty("isMovable", [this]{return m_layer->isMovable();})
+    addProperty("isMovable", [this]{return layer()->isMovable();})
       .doc("read-only. Returns true if the layer is movable.");
 
-    addProperty("isContinuous", [this]{return m_layer->isContinuous();})
+    addProperty("isContinuous", [this]{return layer()->isContinuous();})
       .doc("read-only. Prefer to link cels when the user copies them.");
 
-    addProperty("flags", [this]{return (int) m_layer->flags();})
+    addProperty("flags", [this]{return (int) layer()->flags();})
       .doc("read-only. Returns all flags OR'd together as an int");
 
     addProperty("celCount", [this]{
-      return m_layer->isImage() ? static_cast<doc::LayerImage*>(m_layer)->getCelsCount() : 0;
-    })
-      .doc("read-only. Returns the number of cels.");
+      return layer()->isImage() ? static_cast<doc::LayerImage*>(layer())->getCelsCount() : 0;
+    }).doc("read-only. Returns the number of cels.");
 
-    addMethod("cel", &LayerScriptObject::cel)
-      .doc("retrieves a Cel")
+    addFunction("cel", [this](int i){
+      return getEngine()->getScriptObject(layer()->cel(i).get());
+    }).doc("retrieves a Cel")
       .docArg("index", "The number of the Cel")
       .docReturns("A Cel object or null if an invalid index is passed");
   }
 
-  ScriptObject* cel(int i){
-    auto cel = m_layer->cel(i);
-    if (!cel)
-      return nullptr;
-    auto it = m_cels.find(cel.get());
-    if (it == m_cels.end()) {
-      it = m_cels.emplace(cel.get(), "CelScriptObject").first;
-      it->second->setWrapped(cel.get());
-    }
-    return it->second.get();
+  doc::Layer* layer() {
+    return handle<doc::Object, doc::Layer>();
   }
-
-  void* getWrapped() override {return m_layer;}
-  void setWrapped(void* layer) override { m_layer = static_cast<doc::Layer*>(layer); }
-
-  doc::Layer* m_layer;
-  std::unordered_map<doc::Cel*, inject<ScriptObject>> m_cels;
 };
 
 static script::ScriptObject::Regular<LayerScriptObject> layerSO("LayerScriptObject");

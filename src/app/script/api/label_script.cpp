@@ -16,15 +16,15 @@ public:
         addProperty("text",
                     [this]{return m_text;},
                     [this](const std::string& text){
-                        if (auto widget = getWidget())
-                            static_cast<ui::Label*>(widget)->setText(text);
+                        if (auto label = getWidget<ui::Label>())
+                            label->setText(text);
                         m_text = text;
                         return text;
                     });
     }
 
     DisplayType getDisplayType() override {return DisplayType::Block;}
-    ui::Widget* build() override {return new ui::Label(m_text);}
+    Handle build() override {return new ui::Label(m_text);}
 };
 
 static script::ScriptObject::Regular<LabelWidgetScriptObject> _SO("LabelWidgetScriptObject", {

@@ -19,23 +19,25 @@ public:
         addProperty("text",
                     [this]{return m_text;},
                     [this](const std::string& text){
-                        if (auto widget = getWidget())
-                            static_cast<ui::Button*>(widget)->setText(text);
+                        if (auto button = getWidget<ui::Button>())
+                            button->setText(text);
                         m_text = text;
                         return text;
                     });
     }
 
     DisplayType getDisplayType() override {return DisplayType::Inline;}
-    ui::Widget* build() override {
+
+    Handle build() override {
         auto scriptFileName = app::AppScripting::getFileName();
         auto button = new ui::Button(m_text);
         auto handle = button->handle();
         button->Click.connect([=](ui::Event&){
-          if (handle)
+          if (handle) {
             app::AppScripting::raiseEvent(scriptFileName, button->id() + "_click");
+          }
         });
-        return button;
+        return handle;
     }
 };
 

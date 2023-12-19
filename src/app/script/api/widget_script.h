@@ -13,17 +13,14 @@
 
 class WidgetScriptObject : public script::ScriptObject {
 protected:
-  ui::Widget::Handle m_widget;
-  virtual ui::Widget* build() = 0;
-
   WidgetScriptObject() {
     addProperty("id",
                 [this]{
-                  auto widget = getWidget();
+                  auto widget = handle<ui::Widget>();
                   return widget ? widget->id() : "";
                 },
                 [this](const std::string& id){
-                  auto widget = getWidget();
+                  auto widget = handle<ui::Widget>();
                   if (widget && widget->id().empty()) {
                     widget->setId(id.c_str());
                   }
@@ -32,17 +29,13 @@ protected:
   }
 
   ~WidgetScriptObject() {
-    auto widget = getWidget();
+    auto widget = handle<ui::Widget>();
     if (widget) {
       widget->removeAllChildren();
       if (widget->parent())
         widget->parent()->removeChild(widget);
       delete widget;
     }
-  }
-
-  ui::Widget* getWidget() {
-    return m_widget.get<ui::Widget>();
   }
 
 public:
@@ -52,27 +45,17 @@ public:
     Inline
   };
 
-  virtual DisplayType getDisplayType() {return DisplayType::Inherit;}
-
-  template<typename Type>
-  Type* getWrapped(){ return static_cast<Type*>(static_cast<ui::Widget*>(getWrapped())); }
-
-  void* getWrapped() override {
-    auto handle = m_widget.get<ui::Widget>();
-    if (handle)
-      return handle;
-    auto raw = build();
-    if (raw)
-      m_widget = raw->handle();
-    return raw;
+  bool disposable() override {
+    auto widget = handle<ui::Widget>();
+    if (!widget)
+      return true;
+    return !widget->isVisible();
   }
 
-  void setWrapped(void* widget) override {
-    auto raw = static_cast<ui::Widget*>(widget);
-    if (raw) {
-      m_widget = raw->handle();
-    } else {
-      m_widget.reset();
-    }
+  virtual DisplayType getDisplayType() {return DisplayType::Inherit;}
+
+  template <typename Type = ui::Widget>
+  Type* getWidget() {
+    return handle<ui::Widget, Type>();
   }
 };

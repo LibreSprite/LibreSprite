@@ -6,6 +6,7 @@
 // published by the Free Software Foundation.
 
 #include "app/modules/palettes.h"
+#include "doc/object.h"
 #include "doc/palette.h"
 #include "doc/image.h"
 #include "doc/sprite.h"
@@ -18,12 +19,12 @@ public:
   PaletteScriptObject() {
     addProperty("length",
                 [this]{
-                  if (auto pal = m_pal.lock())
+                  if (auto pal = palette())
                     return pal->size();
                   return 0;
                 },
                 [this](int s){
-                  if (auto pal = m_pal.lock()) {
+                  if (auto pal = palette()) {
                     pal->resize(s);
                     modify();
                   }
@@ -31,7 +32,7 @@ public:
                 });
 
     addFunction("get", [this](int i){
-      if (auto pal = m_pal.lock())
+      if (auto pal = palette())
         return pal->getEntry(i);
       return doc::color_t{};
     });
@@ -39,15 +40,19 @@ public:
     addMethod("set", &PaletteScriptObject::set);
   }
 
+  doc::Palette* palette() {
+    return handle<doc::Object, doc::Palette>();
+  }
+
   void modify() {
       if (needIncrement)
           return;
       needIncrement = true;
-      m_engine->afterEval([=](bool success){
-        auto pal = m_pal.lock();
+      getEngine()->afterEval([=](bool success){
+        auto pal = palette();
         if (pal) {
           pal->incrementVersion();
-          app::set_current_palette(pal.get(), true);
+          app::set_current_palette(pal, true);
           ui::Manager::getDefault()->invalidate();
         }
         needIncrement = false;
@@ -55,7 +60,7 @@ public:
   }
 
   void set(int i){
-    auto pal = m_pal.lock();
+        auto pal = palette();
     if (!pal)
       return;
     if (i >= pal->size())
@@ -74,18 +79,7 @@ public:
     modify();
   }
 
-  void* getWrapped() override {return m_pal.lock().get();}
-  void setWrapped(void* pal) override {
-    if (pal) {
-      m_pal = std::static_pointer_cast<doc::Palette>(static_cast<doc::Object*>(pal)->shared_from_this());
-    } else {
-      m_pal.reset();
-    }
-  }
-
   bool needIncrement = false;
-  std::weak_ptr<doc::Palette> m_pal;
-  inject<script::Engine> m_engine;
 };
 
 static script::ScriptObject::Regular<PaletteScriptObject> celSO("PaletteScriptObject");

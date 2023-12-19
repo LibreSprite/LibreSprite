@@ -10,6 +10,7 @@
 #include "app/script/app_scripting.h"
 #include "doc/palette.h"
 #include "script/value.h"
+#include "script/engine.h"
 
 namespace script {
   void setStorage(const script::Value& value, const std::string& key, const std::string& domain);
@@ -31,26 +32,23 @@ public:
 class PaletteListBoxWidgetScriptObject : public WidgetScriptObject {
 public:
   PaletteListBoxWidgetScriptObject() {
-    addProperty("selected",[this]{return getWrapped<CustomPaletteListBox>()->selectedPaletteName();});
-    addMethod("addPalette",&PaletteListBoxWidgetScriptObject::addPalette);
+    addProperty("selected", [this]{return handle<CustomPaletteListBox>()->selectedPaletteName();});
+    addMethod("addPalette", &PaletteListBoxWidgetScriptObject::addPalette);
   }
 
   script::ScriptObject* addPalette(const std::string& name) {
-    m_listItems.emplace_back("PaletteScriptObject");
-    auto& palSO = m_listItems.back();
     auto pal = doc::Palette::create(1);
-    palSO->setWrapped(pal.get());
-    getWrapped<CustomPaletteListBox>()->addPalette(pal, name);
+    auto palSO = getEngine()->getScriptObject(pal.get());
+    palSO->setWrapped(pal->handle(), false);
+    handle<CustomPaletteListBox>()->addPalette(pal, name);
     return palSO;
   }
 
   DisplayType getDisplayType() override {return DisplayType::Block;}
 
-  ui::Widget* build() override {
+  Handle build() override {
     return new CustomPaletteListBox(app::AppScripting::getFileName());
   }
-
-  std::vector<inject<script::ScriptObject>> m_listItems;
 };
 
 static script::ScriptObject::Regular<PaletteListBoxWidgetScriptObject> _SO("PalettelistboxWidgetScriptObject", {

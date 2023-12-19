@@ -5,6 +5,7 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "doc/document.h"
 #include "script/engine.h"
 #include "app/document.h"
 #include "app/ui_context.h"
@@ -12,14 +13,8 @@
 class DocumentScriptObject : public script::ScriptObject {
 public:
   DocumentScriptObject() {
-    addProperty("sprite", [this]{return m_sprite.get();});
+    addProperty("sprite", [this]{return getEngine()->getScriptObject(handle<doc::Document>()->sprite());});
   }
-
-  void* getWrapped() override {return m_doc;}
-
-  Provides provides{this, "activeDocument"};
-  doc::Document* m_doc{app::UIContext::instance()->activeDocument()};
-  inject<ScriptObject> m_sprite{"SpriteScriptObject"};
 };
 
-static script::ScriptObject::Regular<DocumentScriptObject> reg("DocumentScriptObject");
+static script::ScriptObject::Regular<DocumentScriptObject> reg(typeid(doc::Document*).name());

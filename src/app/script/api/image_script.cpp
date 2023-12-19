@@ -15,19 +15,19 @@
 class ImageScriptObject : public script::ScriptObject {
 public:
   ImageScriptObject() {
-    addProperty("width", [this]{return m_image->width();})
+    addProperty("width", [this]{return img()->width();})
       .doc("read-only. The width of the image.");
 
-    addProperty("height", [this]{return m_image->height();})
+    addProperty("height", [this]{return img()->height();})
       .doc("read-only. The height of the image.");
 
-    addProperty("stride", [this]{return m_image->getRowStrideSize();})
-        .doc("read-only. The number of bytes per image row.");
+    addProperty("stride", [this]{return img()->getRowStrideSize();})
+      .doc("read-only. The number of bytes per image row.");
 
-    addProperty("format", [this]{return (int) m_image->pixelFormat();})
+    addProperty("format", [this]{return (int) img()->pixelFormat();})
       .doc("read-only. The PixelFormat of the image.");
 
-    addFunction("getPixel", [this](int x, int y){return m_image->getPixel(x, y);})
+    addFunction("getPixel", [this](int x, int y){return img()->getPixel(x, y);})
       .doc("reads a color from the given coordinate of the image.")
       .docArg("x", "integer")
       .docArg("y", "integer")
@@ -49,32 +49,36 @@ public:
 
     addMethod("getImageData", &ImageScriptObject::getImageData)
       .doc("creates an array containing all of the image's pixels.")
-      .docReturns("All pixels in an array (Lua) or a Uint8Array (JS)");
+      .docReturns("All pixels in a Uint8Array");
 
     addMethod("getPNGData", &ImageScriptObject::getPNGData)
       .doc("Encodes the image as a PNG.")
       .docReturns("The image as a Base64-encoded PNG string.");
   }
 
+  doc::Image* img() {
+    return handle<doc::Object, doc::Image>();
+  }
+
   void putImageData(script::Value::Buffer& data) {
-    if (data.size() != std::size_t(m_image->getRowStrideSize()*m_image->height())) {
+    if (data.size() != std::size_t(img()->getRowStrideSize()*img()->height())) {
       std::cout << "Data size mismatch: " << data.size() << std::endl;
       return;
     }
-    std::memcpy(m_image->getPixelAddress(0, 0), data.data(), data.size());
+    std::memcpy(img()->getPixelAddress(0, 0), data.data(), data.size());
   }
 
   script::Value getImageData() {
     return {
-      m_image->getPixelAddress(0, 0),
-      std::size_t(m_image->getRowStrideSize()*m_image->height()),
+      img()->getPixelAddress(0, 0),
+      std::size_t(img()->getRowStrideSize()*img()->height()),
       false
     };
   }
 
   std::string getPNGData() {
-    auto w = m_image->width();
-    auto h = m_image->height();
+    auto w = img()->width();
+    auto h = img()->height();
     std::shared_ptr<she::Surface> surface{
       she::instance()->createRgbaSurface(w, h),
       [](auto s) {s->dispose();}
@@ -84,7 +88,7 @@ public:
 
     for (auto y = 0; y < h; ++y) {
       for (auto x = 0; x < w; ++x) {
-        surface->putPixel(m_image->getPixel(x, y), x, y);
+        surface->putPixel(img()->getPixel(x, y), x, y);
       }
     }
 
@@ -94,21 +98,13 @@ public:
   }
 
   void putPixel(int x, int y, int color) {
-    if (unsigned(x) < unsigned(m_image->width()) && unsigned(y) < unsigned(m_image->height()))
-      m_image->putPixel(x, y, color);
+    if (unsigned(x) < unsigned(img()->width()) && unsigned(y) < unsigned(img()->height()))
+      img()->putPixel(x, y, color);
   }
 
   void clear(int color) {
-    m_image->clear(color);
+    img()->clear(color);
   }
-
-  void* getWrapped() override {return m_image;}
-  void setWrapped(void* image) override {
-    m_image = static_cast<doc::Image*>(image);
-  }
-
-  Provides p{this, "activeImage"};
-  doc::Image* m_image;
 };
 
-static script::ScriptObject::Regular<ImageScriptObject> imageSO("ImageScriptObject");
+static script::ScriptObject::Regular<ImageScriptObject> imageSO(typeid(doc::Image*).name());

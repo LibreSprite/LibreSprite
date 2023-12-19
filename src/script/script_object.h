@@ -113,7 +113,6 @@ namespace script {
     InternalScriptObject* getInternalScriptObject() {return m_internal;};
     script::Engine* getEngine() {return &*m_internal->m_engine;}
 
-    virtual void* getWrapped(){return nullptr;}
     virtual void setWrapped(const Handle& handle, bool own) {
       m_handle = handle;
       m_own = own;
@@ -147,9 +146,6 @@ namespace script {
       func();
       return func.result;
     }
-
-    template<typename Type>
-    Type* getWrapped(){ return static_cast<Type*>(getWrapped()); }
 
   protected:
     void makeGlobal(const std::string& name) {

@@ -38,21 +38,25 @@ class IntEntryWidgetScriptObject : public WidgetScriptObject {
 public:
     IntEntryWidgetScriptObject() {
         addProperty("min",
-                    [this]{return getWrapped<ui::IntEntry>()->min();},
-                    [this](int min){getWrapped<ui::IntEntry>()->setMin(min); return min;});
+                    [this]{return entry()->min();},
+                    [this](int min){entry()->setMin(min); return min;});
 
         addProperty("max",
-                    [this]{return getWrapped<ui::IntEntry>()->max();},
-                    [this](int max){getWrapped<ui::IntEntry>()->setMax(max); return max;});
+                    [this]{return entry()->max();},
+                    [this](int max){entry()->setMax(max); return max;});
 
         addProperty("value",
-                    [this]{return getWrapped<ui::IntEntry>()->getValue();},
-                    [this](int value){getWrapped<CustomIntEntry>()->setValueSilent(value); return value;});
+                    [this]{return entry()->getValue();},
+                    [this](int value){entry()->setValueSilent(value); return value;});
+    }
+
+    CustomIntEntry* entry() {
+        return getWidget<CustomIntEntry>();
     }
 
     DisplayType getDisplayType() override {return DisplayType::Block;}
 
-    ui::Widget* build() override {
+    Handle build() override {
         return new CustomIntEntry(app::AppScripting::getFileName());
     }
 };
