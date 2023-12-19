@@ -56,14 +56,9 @@ class DialogScriptObject : public WidgetScriptObject {
 public:
   DialogScriptObject() {
     addProperty("title",
-                [this]{
-                  auto widget = getWidget<ui::Dialog>();
-                  return widget ? widget->text() : "";
-                },
+                [this] {return dialog()->text();},
                 [this](const std::string& title){
-                  auto widget = getWidget<ui::Dialog>();
-                  if (widget)
-                    widget->setText(title);
+                  dialog()->setText(title);
                   return title;
                 })
       .doc("read+write. Sets the title of the dialog window.");
@@ -71,9 +66,8 @@ public:
     addProperty("canClose",
                 []{return true;},
                 [this](bool canClose){
-                  auto widget = getWidget<ui::Dialog>();
-                  if (widget && !canClose) {
-                    widget->removeDecorativeWidgets();
+                  if (!canClose) {
+                    dialog()->removeDecorativeWidgets();
                   }
                   return canClose;
                 })
@@ -84,9 +78,7 @@ public:
     addMethod("get", &DialogScriptObject::get);
 
     addFunction("close", [this]{
-      auto widget = getWidget<ui::Dialog>();
-      if (widget)
-        widget->closeWindow(false, true);
+      dialog()->closeWindow(false, true);
       return true;
     });
 
@@ -130,9 +122,7 @@ public:
     });
 
     addFunction("addBreak", [this]{
-      auto widget = getWidget<ui::Dialog>();
-      if (widget)
-        widget->addBreak();
+      dialog()->addBreak();
       return true;
     });
   }
@@ -145,13 +135,20 @@ public:
       dialog->closeWindow(false, false);
   }
 
+  ui::Dialog* dialog() {
+    auto dialog = handle<ui::Widget, ui::Dialog>();
+    if (!dialog)
+      throw script::ObjectDestroyedException{};
+    return dialog;
+  }
+
   ScriptObject* get(const std::string& id) {
     auto it = m_widgets.find(id);
     return it != m_widgets.end() ? it->second.get() : nullptr;
   }
 
   ScriptObject* add(const std::string& type, const std::string& id) {
-    auto dialog = getWidget<ui::Dialog>();
+    auto dialog = this->dialog();
     if (!dialog)
       return nullptr;
 

@@ -57,7 +57,10 @@ public:
   }
 
   doc::Image* img() {
-    return handle<doc::Object, doc::Image>();
+    auto img = handle<doc::Object, doc::Image>();
+    if (!img)
+      throw script::ObjectDestroyedException{};
+    return img;
   }
 
   void putImageData(script::Value::Buffer& data) {

@@ -184,7 +184,12 @@ public:
     for (int i = 0; i < argc; ++i) {
       func.arguments.push_back(getValue(ctx, i));
     }
-    func();
+    func.result.makeUndefined();
+    try {
+        func();
+    } catch (const ObjectDestroyedException&) {
+      std::cout << "Object Destroyed Exception" << std::endl;
+    }
     return returnValue(ctx, func.result);
   }
 

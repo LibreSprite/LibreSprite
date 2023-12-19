@@ -14,53 +14,57 @@ namespace script {
 }
 
 class CustomIntEntry : public ui::IntEntry {
-    std::string m_fileName;
+  std::string m_fileName;
 public:
 
-    CustomIntEntry(const std::string& fileName) : ui::IntEntry(0, 100), m_fileName(fileName) {}
+  CustomIntEntry(const std::string& fileName) : ui::IntEntry(0, 100), m_fileName(fileName) {}
 
-    bool canRaiseEvent = true;
+  bool canRaiseEvent = true;
 
-    void setValueSilent(int value) {
-        canRaiseEvent = false;
-        setValue(value);
-        canRaiseEvent = true;
-    }
+  void setValueSilent(int value) {
+    canRaiseEvent = false;
+    setValue(value);
+    canRaiseEvent = true;
+  }
 
-    void onValueChange() override {
-        script::setStorage(getValue(), id(), m_fileName);
-        if (canRaiseEvent)
-            app::AppScripting::raiseEvent(m_fileName, id() + "_change");
-    }
+  void onValueChange() override {
+    script::setStorage(getValue(), id(), m_fileName);
+    if (canRaiseEvent)
+      app::AppScripting::raiseEvent(m_fileName, id() + "_change");
+  }
 };
 
 class IntEntryWidgetScriptObject : public WidgetScriptObject {
 public:
-    IntEntryWidgetScriptObject() {
-        addProperty("min",
-                    [this]{return entry()->min();},
-                    [this](int min){entry()->setMin(min); return min;});
+  IntEntryWidgetScriptObject() {
+    addProperty("min",
+                [this]{return entry()->min();},
+                [this](int min){entry()->setMin(min); return min;});
 
-        addProperty("max",
-                    [this]{return entry()->max();},
-                    [this](int max){entry()->setMax(max); return max;});
+    addProperty("max",
+                [this]{return entry()->max();},
+                [this](int max){entry()->setMax(max); return max;});
 
-        addProperty("value",
-                    [this]{return entry()->getValue();},
-                    [this](int value){entry()->setValueSilent(value); return value;});
-    }
+    addProperty("value",
+                [this]{return entry()->getValue();},
+                [this](int value){entry()->setValueSilent(value); return value;});
+  }
 
-    CustomIntEntry* entry() {
-        return getWidget<CustomIntEntry>();
-    }
 
-    DisplayType getDisplayType() override {return DisplayType::Block;}
+  CustomIntEntry* entry() {
+    auto entry = getWidget<CustomIntEntry>();
+    if (!entry)
+      throw script::ObjectDestroyedException{};
+    return entry;
+  }
 
-    Handle build() override {
-        return new CustomIntEntry(app::AppScripting::getFileName());
-    }
+  DisplayType getDisplayType() override {return DisplayType::Block;}
+
+  Handle build() override {
+    return new CustomIntEntry(app::AppScripting::getFileName());
+  }
 };
 
 static script::ScriptObject::Regular<IntEntryWidgetScriptObject> _SO("IntentryWidgetScriptObject", {
-        "widget" + std::to_string(ui::kEntryWidget)
-    });
+    "widget" + std::to_string(ui::kEntryWidget)
+  });

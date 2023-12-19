@@ -261,8 +261,13 @@ public:
       func.arguments.push_back(getValue(isolate, args[i]));
     }
 
-    func();
+    func.result.makeUndefined();
 
+    try {
+      func();
+    } catch (const ObjectDestroyedException&) {
+      std::cout << "Object Destroyed Exception" << std::endl;
+    }
     args.GetReturnValue().Set(returnValue(isolate, func.result));
   }
 

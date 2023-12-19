@@ -14,49 +14,52 @@ namespace script {
 }
 
 class CustomEntry : public ui::Entry {
-    std::string m_fileName;
+  std::string m_fileName;
 public:
 
-    CustomEntry(std::size_t maxsize, const std::string& fileName) : ui::Entry{maxsize, nullptr}, m_fileName(fileName) {}
+  CustomEntry(std::size_t maxsize, const std::string& fileName) : ui::Entry{maxsize, nullptr}, m_fileName(fileName) {}
 
-    bool canRaiseEvent = true;
+  bool canRaiseEvent = true;
 
-    void setTextSilent(const std::string& text) {
-        canRaiseEvent = false;
-        setText(text);
-        canRaiseEvent = true;
-    }
+  void setTextSilent(const std::string& text) {
+    canRaiseEvent = false;
+    setText(text);
+    canRaiseEvent = true;
+  }
 
-    void onChange() override {
-        script::setStorage(text(), id(), m_fileName);
-        if (canRaiseEvent)
-            app::AppScripting::raiseEvent(m_fileName, id() + "_change");
-    }
+  void onChange() override {
+    script::setStorage(text(), id(), m_fileName);
+    if (canRaiseEvent)
+      app::AppScripting::raiseEvent(m_fileName, id() + "_change");
+  }
 };
 
 class EntryWidgetScriptObject : public WidgetScriptObject {
-    unsigned int m_maxsize = 40;
+  unsigned int m_maxsize = 40;
 public:
-    EntryWidgetScriptObject() {
-        addProperty("maxsize",
-                    [this]() -> unsigned int {return entry()->maxTextSize();},
-                    [this](unsigned int maxsize) {entry()->setMaxTextSize(maxsize); return maxsize;});
-        addProperty("value",
-                    [this] {return entry()->text();},
-                    [this](const std::string& value) {entry()->setTextSilent(value); return value;});
-    }
+  EntryWidgetScriptObject() {
+    addProperty("maxsize",
+                [this]() -> unsigned int {return entry()->maxTextSize();},
+                [this](unsigned int maxsize) {entry()->setMaxTextSize(maxsize); return maxsize;});
+    addProperty("value",
+                [this] {return entry()->text();},
+                [this](const std::string& value) {entry()->setTextSilent(value); return value;});
+  }
 
-    CustomEntry* entry() {
-        return getWidget<CustomEntry>();
-    }
+  CustomEntry* entry() {
+    auto entry = getWidget<CustomEntry>();
+    if (!entry)
+      throw script::ObjectDestroyedException{};
+    return entry;
+  }
 
-    DisplayType getDisplayType() override {return DisplayType::Block;}
+  DisplayType getDisplayType() override {return DisplayType::Block;}
 
-    Handle build() override {
-        return (new CustomEntry(m_maxsize, app::AppScripting::getFileName()))->handle();
-    }
+  Handle build() override {
+    return (new CustomEntry(m_maxsize, app::AppScripting::getFileName()))->handle();
+  }
 };
 
 static script::ScriptObject::Regular<EntryWidgetScriptObject> _SO("EntryWidgetScriptObject", {
-        "widget" + std::to_string(ui::kEntryWidget)
-    });
+    "widget" + std::to_string(ui::kEntryWidget)
+  });

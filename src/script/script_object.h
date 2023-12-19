@@ -9,9 +9,13 @@
 #include "base/injection.h"
 #include "base/with_handle.h"
 #include "function.h"
+#include <exception>
 
 namespace script {
   class Engine;
+
+  class ObjectDestroyedException : public std::exception {};
+
 
   struct ObjectProperty {
     Function getter;

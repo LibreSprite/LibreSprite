@@ -67,7 +67,10 @@ public:
   }
 
   doc::Layer* layer() {
-    return handle<doc::Object, doc::Layer>();
+    auto layer = handle<doc::Object, doc::Layer>();
+    if (!layer)
+      throw script::ObjectDestroyedException{};
+    return layer;
   }
 };
 

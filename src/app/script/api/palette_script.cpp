@@ -41,7 +41,10 @@ public:
   }
 
   doc::Palette* palette() {
-    return handle<doc::Object, doc::Palette>();
+    auto pal = handle<doc::Object, doc::Palette>();
+    if (!pal)
+      throw script::ObjectDestroyedException{};
+    return pal;
   }
 
   void modify() {

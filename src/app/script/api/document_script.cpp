@@ -13,7 +13,14 @@
 class DocumentScriptObject : public script::ScriptObject {
 public:
   DocumentScriptObject() {
-    addProperty("sprite", [this]{return getEngine()->getScriptObject(handle<doc::Document>()->sprite());});
+    addProperty("sprite", [this]{return getEngine()->getScriptObject(doc()->sprite());});
+  }
+
+  doc::Document* doc() {
+    auto doc = handle<doc::Object, doc::Document>();
+    if (!doc)
+      throw script::ObjectDestroyedException{};
+    return doc;
   }
 };
 

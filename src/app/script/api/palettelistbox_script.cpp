@@ -11,6 +11,7 @@
 #include "doc/palette.h"
 #include "script/value.h"
 #include "script/engine.h"
+#include "ui/widget.h"
 
 namespace script {
   void setStorage(const script::Value& value, const std::string& key, const std::string& domain);
@@ -32,16 +33,24 @@ public:
 class PaletteListBoxWidgetScriptObject : public WidgetScriptObject {
 public:
   PaletteListBoxWidgetScriptObject() {
-    addProperty("selected", [this]{return handle<CustomPaletteListBox>()->selectedPaletteName();});
+    addProperty("selected", [this]{return listbox()->selectedPaletteName();});
     addMethod("addPalette", &PaletteListBoxWidgetScriptObject::addPalette);
   }
 
   script::ScriptObject* addPalette(const std::string& name) {
+    auto listbox = this->listbox();
     auto pal = doc::Palette::create(1);
     auto palSO = getEngine()->getScriptObject(pal.get());
     palSO->setWrapped(pal->handle(), false);
     handle<CustomPaletteListBox>()->addPalette(pal, name);
     return palSO;
+  }
+
+  CustomPaletteListBox* listbox() {
+    auto listbox = handle<ui::Widget, CustomPaletteListBox>();
+    if (!listbox)
+      throw script::ObjectDestroyedException{};
+    return listbox;
   }
 
   DisplayType getDisplayType() override {return DisplayType::Block;}

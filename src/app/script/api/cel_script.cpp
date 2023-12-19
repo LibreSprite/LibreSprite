@@ -30,7 +30,10 @@ public:
   }
 
   doc::Cel* cel() {
-    return handle<doc::Cel>();
+    auto cel = handle<doc::Object, doc::Cel>();
+    if (!cel)
+      throw script::ObjectDestroyedException{};
+    return cel;
   }
 };
 

@@ -97,7 +97,10 @@ public:
   }
 
   doc::Sprite* sprite() {
-    return handle<doc::Object, doc::Sprite>();
+    auto sprite = handle<doc::Object, doc::Sprite>();
+    if (!sprite)
+      throw script::ObjectDestroyedException{};
+    return sprite;
   }
 
   app::Document* doc() {
