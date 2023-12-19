@@ -24,8 +24,16 @@ namespace script {
       m_afterEvalListeners.clear();
       for (auto it = m_ObjToScriptObj.begin(); it != m_ObjToScriptObj.end();) {
         auto& entry = it->second;
-        if (!entry.held && entry.script->disposable()) {
+        if (!entry->held && entry->script->disposable()) {
           it = m_ObjToScriptObj.erase(it);
+        } else {
+          ++it;
+        }
+      }
+      for (auto it = m_scriptObjects.begin(); it != m_scriptObjects.end();) {
+        auto& entry = *it;
+        if (!entry->held && entry->script->disposable()) {
+          it = m_scriptObjects.erase(it);
         } else {
           ++it;
         }
@@ -35,8 +43,10 @@ namespace script {
   public:
 
     void initGlobals() {
-      if (m_scriptObjects.empty())
-        m_scriptObjects = ScriptObject::getAllWithFlag("global");
+      if (m_scriptObjects.empty()) {
+        for (auto& obj : ScriptObject::getAllWithFlag("global"))
+          m_scriptObjects.push_back(std::make_shared<HeldObject>(std::move(obj)));
+      }
     }
 
     virtual void printLastResult() { m_printLastResult = true; }
@@ -54,8 +64,8 @@ namespace script {
       if (!obj) {
         return nullptr;
       }
-      if (auto it = m_ObjToScriptObj.find(obj); it != m_ObjToScriptObj.end()) {
-        return it->second.script;
+      if (auto it = m_ObjToScriptObj.find(obj); it != m_ObjToScriptObj.end() && it->second->handle) {
+        return it->second->script;
       }
       inject<ScriptObject> sobj{typeid(obj).name()};
       if (!sobj) {
@@ -88,9 +98,11 @@ namespace script {
         auto it = m_ObjToScriptObj.find(raw);
         if (it == m_ObjToScriptObj.end())
           return;
-        it->second.held = false;
+        it->second->held = false;
       };
-      m_ObjToScriptObj.emplace(std::make_pair(raw, HeldObject{sobj->m_handle, std::move(sobj)}));
+      auto hold = std::make_shared<HeldObject>(std::move(sobj), sobj->m_handle);
+      m_ObjToScriptObj.emplace(std::make_pair(raw, hold));
+      m_scriptObjects.push_back(hold);
       return ret;
     }
 
@@ -101,10 +113,11 @@ namespace script {
       Handle handle;
       inject<ScriptObject> script;
       bool held = true;
+      HeldObject(inject<ScriptObject>&& script, const Handle& handle = {}) : handle{handle}, script{std::move(script)} {}
     };
 
-    std::unordered_map<void*, HeldObject> m_ObjToScriptObj;
-    std::vector<inject<ScriptObject>> m_scriptObjects;
+    std::unordered_map<void*, std::shared_ptr<HeldObject>> m_ObjToScriptObj;
+    std::vector<std::shared_ptr<HeldObject>> m_scriptObjects;
     std::vector<std::function<void(bool)>> m_afterEvalListeners;
   };
 }
