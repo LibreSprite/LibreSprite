@@ -142,7 +142,15 @@ public:
 static Engine::Regular<V8Engine> registration("js", {"js"});
 
 class V8ScriptObject : public InternalScriptObject {
+  v8::Persistent<v8::Object> m_local;
 public:
+
+  ~V8ScriptObject() {
+    if (!m_local.IsEmpty()) {
+      m_local.ClearWeak();
+      m_local.Reset();
+    }
+  }
 
   static Value getValue(v8::Isolate *isolate, v8::Local<v8::Value> local) {
     if (local->IsNullOrUndefined())
@@ -290,10 +298,26 @@ public:
 
   v8::Local<v8::Object> makeLocal() {
     auto isolate = m_engine.get<V8Engine>()->m_isolate;
+    if (!m_local.IsEmpty())
+      return m_local.Get(isolate);
     auto local = v8::Object::New(isolate);
     pushFunctions(local);
     pushProperties(local);
+    m_local.Reset(isolate, local);
+    m_local.SetWeak(this, [](const auto& info) {
+      reinterpret_cast<V8ScriptObject*>(info.GetParameter())->release();
+    }, v8::WeakCallbackType::kParameter);
     return local;
+  }
+
+  void release() {
+    m_local.ClearWeak();
+    m_local.Reset();
+    if (onRelease) {
+      auto cb = std::move(onRelease);
+      onRelease = nullptr;
+      cb();
+    }
   }
 
   void makeGlobal(const std::string& name) override {
