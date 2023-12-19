@@ -127,6 +127,7 @@ public:
         v8::String::Utf8Value utf8(m_isolate, result.ToLocalChecked());
         m_delegate->onConsolePrint(*utf8);
       }
+      m_isolate->LowMemoryNotification();
     } catch (const std::exception& ex) {
       std::string err = "Error: ";
       err += ex.what();
