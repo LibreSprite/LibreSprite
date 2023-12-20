@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -25,23 +26,19 @@ namespace doc {
 
 namespace {
 
-template<typename ImageTraits, she::SurfaceFormat format>
+template<bool formatMatch, typename ImageTraits, she::SurfaceFormat format>
 uint32_t convert_color_to_surface(color_t color, const Palette* palette, const she::SurfaceFormatData* fd) {
   static_assert(false && sizeof(ImageTraits), "Invalid color conversion");
   return 0;
 }
 
 template<>
-uint32_t convert_color_to_surface<RgbTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
-  return
-    ((rgba_getr(c) << fd->redShift  ) & fd->redMask  ) |
-    ((rgba_getg(c) << fd->greenShift) & fd->greenMask) |
-    ((rgba_getb(c) << fd->blueShift ) & fd->blueMask ) |
-    ((rgba_geta(c) << fd->alphaShift) & fd->alphaMask);
+uint32_t convert_color_to_surface<true, RgbTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
+  return c;
 }
 
 template<>
-uint32_t convert_color_to_surface<GrayscaleTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
+uint32_t convert_color_to_surface<true, GrayscaleTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
   return
     ((graya_getv(c) << fd->redShift  ) & fd->redMask  ) |
     ((graya_getv(c) << fd->greenShift) & fd->greenMask) |
@@ -50,7 +47,35 @@ uint32_t convert_color_to_surface<GrayscaleTraits, she::kRgbaSurfaceFormat>(colo
 }
 
 template<>
-uint32_t convert_color_to_surface<IndexedTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
+uint32_t convert_color_to_surface<true, IndexedTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
+  return palette->getEntry(c0);
+}
+
+template<>
+uint32_t convert_color_to_surface<true, BitmapTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
+  return palette->getEntry(c0);
+}
+
+template<>
+uint32_t convert_color_to_surface<false, RgbTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
+  return
+    ((rgba_getr(c) << fd->redShift  ) & fd->redMask  ) |
+    ((rgba_getg(c) << fd->greenShift) & fd->greenMask) |
+    ((rgba_getb(c) << fd->blueShift ) & fd->blueMask ) |
+    ((rgba_geta(c) << fd->alphaShift) & fd->alphaMask);
+}
+
+template<>
+uint32_t convert_color_to_surface<false, GrayscaleTraits, she::kRgbaSurfaceFormat>(color_t c, const Palette* palette, const she::SurfaceFormatData* fd) {
+  return
+    ((graya_getv(c) << fd->redShift  ) & fd->redMask  ) |
+    ((graya_getv(c) << fd->greenShift) & fd->greenMask) |
+    ((graya_getv(c) << fd->blueShift ) & fd->blueMask ) |
+    ((graya_geta(c) << fd->alphaShift) & fd->alphaMask);
+}
+
+template<>
+uint32_t convert_color_to_surface<false, IndexedTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
   color_t c = palette->getEntry(c0);
   return
     ((rgba_getr(c) << fd->redShift  ) & fd->redMask  ) |
@@ -60,7 +85,7 @@ uint32_t convert_color_to_surface<IndexedTraits, she::kRgbaSurfaceFormat>(color_
 }
 
 template<>
-uint32_t convert_color_to_surface<BitmapTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
+uint32_t convert_color_to_surface<false, BitmapTraits, she::kRgbaSurfaceFormat>(color_t c0, const Palette* palette, const she::SurfaceFormatData* fd) {
   color_t c = palette->getEntry(c0);
   return
     ((rgba_getr(c) << fd->redShift  ) & fd->redMask  ) |
@@ -79,15 +104,37 @@ void convert_image_to_surface_templ(const Image* image, she::Surface* dst,
   typename LockImageBits<ImageTraits>::const_iterator src_end = bits.end();
 #endif
 
-  for (int v=0; v<h; ++v, ++dst_y) {
-    AddressType dst_address = AddressType(dst->getData(dst_x, dst_y));
-    for (int u=0; u<w; ++u) {
-      ASSERT(src_it != src_end);
-
-      *dst_address = convert_color_to_surface<ImageTraits, she::kRgbaSurfaceFormat>(*src_it, palette, fd);
-      ++dst_address;
-      ++src_it;
+  if (fd->redShift == doc::rgba_r_shift &&
+      fd->greenShift == doc::rgba_g_shift &&
+      fd->blueShift == doc::rgba_b_shift &&
+      fd->alphaShift == doc::rgba_a_shift) {
+    if constexpr (std::is_same_v<ImageTraits, RgbTraits> && std::is_same_v<AddressType, uint32_t*>) {
+      for (int v=0; v<h; ++v, ++dst_y) {
+          auto dst_address = AddressType(dst->getData(dst_x, dst_y));
+          auto src_address = doc::get_pixel_address_fast<ImageTraits>(image, src_x, src_y + v);
+          memcpy(dst_address, src_address, w * 4);
+      }
+    } else {
+      for (int v=0; v<h; ++v, ++dst_y) {
+          AddressType dst_address = AddressType(dst->getData(dst_x, dst_y));
+          for (int u=0; u<w; ++u) {
+              ASSERT(src_it != src_end);
+              *dst_address = convert_color_to_surface<true, ImageTraits, she::kRgbaSurfaceFormat>(*src_it, palette, fd);
+              ++dst_address;
+              ++src_it;
+          }
+      }
     }
+  } else {
+      for (int v=0; v<h; ++v, ++dst_y) {
+          AddressType dst_address = AddressType(dst->getData(dst_x, dst_y));
+          for (int u=0; u<w; ++u) {
+              ASSERT(src_it != src_end);
+              *dst_address = convert_color_to_surface<false, ImageTraits, she::kRgbaSurfaceFormat>(*src_it, palette, fd);
+              ++dst_address;
+              ++src_it;
+          }
+      }
   }
 }
 
