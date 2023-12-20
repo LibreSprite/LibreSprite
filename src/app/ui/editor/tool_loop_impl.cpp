@@ -134,13 +134,16 @@ public:
       tools::ToolBox* toolbox = App::instance()->toolBox();
 
       switch (algorithm) {
+        case tools::FreehandAlgorithm::PIXEL_PERFECT:
+          if (m_toolPref.brush.size() == 1) {
+            m_intertwine = toolbox->getIntertwinerById(tools::WellKnownIntertwiners::AsPixelPerfect);
+            m_tracePolicy = tools::TracePolicy::AccumulateUpdateLast;
+            break;
+          }
+          [[fallthrough]];
         case tools::FreehandAlgorithm::DEFAULT:
           m_intertwine = toolbox->getIntertwinerById(tools::WellKnownIntertwiners::AsLines);
           m_tracePolicy = tools::TracePolicy::Accumulate;
-          break;
-        case tools::FreehandAlgorithm::PIXEL_PERFECT:
-          m_intertwine = toolbox->getIntertwinerById(tools::WellKnownIntertwiners::AsPixelPerfect);
-          m_tracePolicy = tools::TracePolicy::AccumulateUpdateLast;
           break;
         case tools::FreehandAlgorithm::DOTS:
           m_intertwine = toolbox->getIntertwinerById(tools::WellKnownIntertwiners::None);
