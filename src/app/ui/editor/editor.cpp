@@ -715,8 +715,10 @@ void Editor::drawSpriteClipped(const gfx::Region& updateRegion)
   for (const Rect& updateRect : updateRegion) {
     for (const Rect& screenRect : screenRegion) {
       IntersectClip clip(&screenGraphics, screenRect);
-      if (clip)
+      if (clip) {
         drawSpriteUnclippedRect(editorGraphics.get(), updateRect);
+        break;
+      }
     }
   }
 }

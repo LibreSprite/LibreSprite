@@ -65,7 +65,7 @@ public:
       }
     }
 
-    for (auto scanline : *m_compressedImage) {
+    for (auto& scanline : *m_compressedImage) {
       int u = x+scanline.x;
       doInkHline(u, y+scanline.y, u+scanline.w-1, loop);
     }

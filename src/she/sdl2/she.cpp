@@ -246,10 +246,6 @@ namespace she {
     }
 
     void getEvent(Event& event, bool) override {
-      for (auto& entry : sdl::windowIdToDisplay) {
-        entry.second->present();
-      }
-
       SDL_Event sdlEvent;
       while (SDL_PollEvent(&sdlEvent)) {
         switch (sdlEvent.type) {
@@ -630,7 +626,7 @@ int main(int argc, char* argv[]) {
   #ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
   SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
   #endif
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS) != 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
   }

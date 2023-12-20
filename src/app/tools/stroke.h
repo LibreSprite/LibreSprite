@@ -36,7 +36,7 @@ namespace app {
 
       const gfx::Point& lastPoint() const {
         ASSERT(!m_points.empty());
-        return m_points[m_points.size()-1];
+        return m_points.back();
       }
 
       // Clears the whole stroke.
