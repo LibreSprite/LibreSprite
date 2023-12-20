@@ -40,8 +40,8 @@ void MessageLoop::pumpMessages()
   // wait the difference to cover those 10 milliseconds
   // sleeping. With this code we can avoid 100% CPU usage.
   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  if (elapsed > 0ms && elapsed < 10ms)
-    std::this_thread::sleep_for(10ms - elapsed);
+  if (elapsed < 15ms)
+    std::this_thread::sleep_for(15ms - elapsed);
 }
 
 } // namespace ui
