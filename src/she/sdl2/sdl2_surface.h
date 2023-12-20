@@ -58,7 +58,7 @@ namespace she {
     void drawSurface(const Surface* src, int dstx, int dsty) override;
     void drawRgbaSurface(const Surface* src, int dstx, int dsty) override;
 
-    SDL_Texture* getTexture(SDL_Rect& rect);
+    SDL_Texture* getTexture(const SDL_Rect* rect = nullptr);
 
     static inline unsigned int textureGen;
 

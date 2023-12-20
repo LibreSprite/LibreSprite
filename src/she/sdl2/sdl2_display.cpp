@@ -183,32 +183,30 @@ namespace she {
     if (!m_dirty)
       return;
     m_dirty = false;
-    if (m_renderer)
+    if (m_renderer) {
+      SDL_Rect empty{0, 0, 0, 0};
+      auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(&empty);
+      SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
       SDL_RenderPresent(m_renderer);
-    else
+    } else
       SDL_UpdateWindowSurface(m_window);
   }
 
   void SDL2Display::flip(const gfx::Rect& bounds)
   {
     m_dirty = true;
-
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     if (m_renderer) {
-      auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(rect);
-      SDL_Rect dst {
-        rect.x * m_scale, rect.y * m_scale,
-        rect.w * m_scale, rect.h * m_scale
-      };
-      SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
-    } else {
-      auto nativeSurface = SDL_GetWindowSurface(m_window);
-      SDL_Rect dst {
-        rect.x * m_scale, rect.y * m_scale,
-        rect.w * m_scale, rect.h * m_scale
-      };
-      SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
+      static_cast<SDL2Surface*>(m_surface)->getTexture(&rect);
+      return;
     }
+
+    auto nativeSurface = SDL_GetWindowSurface(m_window);
+    SDL_Rect dst {
+        rect.x * m_scale, rect.y * m_scale,
+        rect.w * m_scale, rect.h * m_scale
+    };
+    SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
   }
 
   void SDL2Display::maximize()

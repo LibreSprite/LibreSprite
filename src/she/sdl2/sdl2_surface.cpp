@@ -488,8 +488,10 @@ namespace she {
     src->blitTo(this, 0, 0, dstx, dsty, src->width(), src->height());
   }
 
-  SDL_Texture* SDL2Surface::getTexture(SDL_Rect& rect) {
-    auto pixels = ((uint8_t*)m_bmp->pixels) + m_bmp->pitch * rect.y + m_bmp->format->BytesPerPixel * rect.x;
+  SDL_Texture* SDL2Surface::getTexture(const SDL_Rect* rect) {
+    int x = rect ? rect->x : 0;
+    int y = rect ? rect->y : 0;
+    auto pixels = ((uint8_t*)m_bmp->pixels) + m_bmp->pitch * y + m_bmp->format->BytesPerPixel * x;
     if (m_texture && m_textureGen != textureGen) {
       SDL_DestroyTexture(m_texture);
       m_texture = nullptr;
@@ -504,7 +506,7 @@ namespace she {
                                     height());
       SDL_UpdateTexture(m_texture, nullptr, pixels, m_bmp->pitch);
     } else {
-      SDL_UpdateTexture(m_texture, &rect, pixels, m_bmp->pitch);
+      SDL_UpdateTexture(m_texture, rect, pixels, m_bmp->pitch);
     }
     return m_texture;
   }
