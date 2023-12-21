@@ -14,10 +14,11 @@
 #include "base/concurrent_queue.h"
 #include "base/exception.h"
 #include "base/string.h"
-#include "she/sdl2/sdl2_display.h"
-#include "she/sdl2/sdl2_surface.h"
 #include "she/common/system.h"
 #include "she/logger.h"
+#include "she/native_cursor.h"
+#include "she/sdl2/sdl2_display.h"
+#include "she/sdl2/sdl2_surface.h"
 
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
@@ -234,8 +235,37 @@ namespace she {
     return m_nativeCursor;
   }
 
+  std::vector<std::shared_ptr<SDL_Cursor>> m_cursors;
+
+  void applyCursor(SDL_SystemCursor id)
+  {
+    if (id <= m_cursors.size()) {
+      m_cursors.resize(id + 1);
+    }
+    if (!m_cursors[id]) {
+      auto ptr = SDL_CreateSystemCursor(id);
+      m_cursors[id] = std::shared_ptr<SDL_Cursor>(ptr, [](SDL_Cursor* ptr){
+        if (ptr) {
+          SDL_FreeCursor(ptr);
+        }
+      });
+    }
+    SDL_SetCursor(m_cursors[id].get());
+    SDL_ShowCursor(SDL_ENABLE);
+  }
+
   bool SDL2Display::setNativeMouseCursor(NativeCursor cursor)
   {
+    switch (cursor) {
+    case she::kArrowCursor: applyCursor(SDL_SYSTEM_CURSOR_ARROW); return true;
+    case she::kIBeamCursor: applyCursor(SDL_SYSTEM_CURSOR_IBEAM); return true;
+    case she::kWaitCursor: applyCursor(SDL_SYSTEM_CURSOR_WAIT); return true;
+    case she::kLinkCursor: applyCursor(SDL_SYSTEM_CURSOR_HAND); return true;
+    case she::kForbiddenCursor: applyCursor(SDL_SYSTEM_CURSOR_NO); return true;
+    case she::kMoveCursor: applyCursor(SDL_SYSTEM_CURSOR_SIZEALL); return true;
+    default: break;
+    }
+    SDL_ShowCursor(SDL_DISABLE);
     return false;
   }
 
