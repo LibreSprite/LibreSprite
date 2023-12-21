@@ -144,6 +144,7 @@ static std::unordered_map<SDL_Keycode, Modifier> keyCodeMapping = {
   {SDLK_KP_MINUS, she::kKeyMinusPad},
   {SDLK_KP_PLUS, she::kKeyPlusPad},
   // {SDLK_KP_DEL, she::kKeyDelPad},
+  {SDLK_KP_PERIOD, she::kKeyDelPad},
   {SDLK_KP_ENTER, she::kKeyEnterPad},
   {SDLK_PRINTSCREEN, she::kKeyPrtscr},
   {SDLK_PAUSE, she::kKeyPause},
