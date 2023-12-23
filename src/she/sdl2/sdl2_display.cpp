@@ -41,6 +41,7 @@ namespace she {
 
   namespace sdl {
     she::SDL2Surface* screen;
+    she::SDL2Surface* tempSurface;
     extern bool isMaximized;
     extern bool isMinimized;
     std::unordered_map<int, SDL2Display*> windowIdToDisplay;
@@ -85,6 +86,8 @@ namespace she {
   SDL2Display::~SDL2Display()
   {
     unique_display = NULL;
+    if (sdl::tempSurface)
+        sdl::tempSurface->dispose();
     if (m_window) {
       sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
       m_surface->dispose();

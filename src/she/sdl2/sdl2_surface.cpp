@@ -31,6 +31,7 @@ namespace she {
 
   namespace sdl {
     extern SDL2Surface* screen;
+    extern SDL2Surface* tempSurface;
   }
 
   inline gfx::Color from_sdl(SDL_PixelFormat *format, int color)
@@ -421,8 +422,20 @@ namespace she {
 
   void SDL2Surface::fillRect(gfx::Color color, const gfx::Rect& rc)
   {
-    SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
-    SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
+    auto alpha = gfx::geta(color);
+    if (!alpha)
+      return;
+    if (alpha != 255) {
+      if (!sdl::tempSurface)
+        sdl::tempSurface = new SDL2Surface(1, 1, SDL2Surface::DeleteAndDestroy);
+      SDL_FillRect(sdl::tempSurface->m_bmp, nullptr, to_sdl(sdl::tempSurface->m_bmp->format, color));
+      SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
+      SDL_Rect srcRect{0, 0, 1, 1};
+      SDL_BlitScaled(sdl::tempSurface->m_bmp, &srcRect, m_bmp, &rect);
+    } else {
+      SDL_Rect rect{rc.x, rc.y, rc.w, rc.h};
+      SDL_FillRect(m_bmp, &rect, to_sdl(m_bmp->format, color));
+    }
   }
 
   void SDL2Surface::blitTo(Surface* dest, int srcx, int srcy, int dstx, int dsty, int width, int height) const
