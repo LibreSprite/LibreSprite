@@ -117,7 +117,7 @@ void HomeView::onResize(ui::ResizeEvent& ev)
   headerPlaceholder()->setVisible(ev.bounds().h > 200*ui::guiscale());
   foldersPlaceholder()->setVisible(ev.bounds().h > 150*ui::guiscale());
 
-  ui::VBox::onResize(ev);
+  ui::Box::onResize(ev);
 }
 
 void HomeView::onRecoverSprites()

@@ -77,6 +77,7 @@ static std::string convert_type(const std::string& name)
   if (name == "tipwindow") return "ui::TipWindow";
   if (name == "vbox") return "ui::VBox";
   if (name == "view") return "ui::View";
+  if (name == "image") return "ui::ImageView";
   if (name == "window") return "ui::Window";
   throw base::Exception("unknown widget name: " + name);
 }
