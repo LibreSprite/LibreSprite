@@ -27,14 +27,14 @@ using namespace ui;
 
 void scanFolder(const std::string& scriptsDir, Command* cmd_run_script, Menu* parent) {
   auto fs = FileSystemModule::instance();
-  auto item = fs->getFileItemFromPath(scriptsDir);
+  auto item = fs->getFileItemFromPath(base::fix_path_separators(scriptsDir));
   if (!item)
     return;
   Params params;
   FileItemList list = item->children();
   for (auto child : list) {
     bool isFolder = child->isFolder();
-    std::string fullPath = base::fix_path_separators(child->fileName());
+    std::string fullPath = child->fileName();
     if (!isFolder) {
       bool supported = false;
       auto extension = base::string_to_lower(base::get_file_extension(fullPath));

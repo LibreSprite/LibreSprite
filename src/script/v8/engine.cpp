@@ -5,7 +5,6 @@
 // Read LICENSE.txt for more information.
 
 
-#include <cstring>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -19,6 +18,8 @@
 #include "script/engine.h"
 #include "script/engine_delegate.h"
 
+#include "app/resource_finder.h"
+#include <cstring>
 #include <map>
 #include <iostream>
 #include <string>
@@ -59,10 +60,13 @@ public:
   void initV8() {
     static std::unique_ptr<v8::Platform> m_platform;
     if (!m_platform) {
-      // Conflicting documentation. Not sure if this is actually needed.
-      // v8::V8::InitializeICUDefaultLocation(base::get_app_path().c_str());
-      // v8::V8::InitializeExternalStartupData(base::get_app_path().c_str());
-      v8::V8::InitializeICU();
+      app::ResourceFinder rf;
+      rf.includeBinDir("snapshot_blob.bin");
+      if (rf.findFirst()) {
+	v8::V8::InitializeExternalStartupData(rf.filename().c_str());
+      } else {
+	v8::V8::InitializeICU();
+      }
 
       m_platform = v8::platform::NewDefaultPlatform();
       v8::V8::InitializePlatform(m_platform.get());
