@@ -550,14 +550,14 @@ namespace she {
     Surface* loadSurface(const char* filename) override {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)
-        throw std::runtime_error("Error loading image");
+	throw std::runtime_error(std::string{"Error loading image "} + filename);
       return new SDL2Surface(bmp, SDL2Surface::DeleteAndDestroy);
     }
 
     Surface* loadRgbaSurface(const char* filename) override {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)
-        throw std::runtime_error("Error loading image");
+	throw std::runtime_error(std::string{"Error loading image "} + filename);
       if (bmp->format->BitsPerPixel < 32) {
         auto copy = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA8888, 0);
         SDL_FreeSurface(bmp);
@@ -631,8 +631,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
   }
-  if (!IMG_Init( IMG_INIT_PNG | IMG_INIT_WEBP | IMG_INIT_JPG )) {
-    std::cerr << "Critical: Could not initialize SDL2_image. Aborting." << std::endl;
+  if (!IMG_Init(IMG_INIT_PNG | IMG_INIT_WEBP | IMG_INIT_JPG)) {
+    std::cerr << "Critical: Could not initialize SDL2_image (" << IMG_GetError() << "). Aborting." << std::endl;
     return -2;
   }
 
