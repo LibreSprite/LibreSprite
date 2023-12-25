@@ -13,6 +13,8 @@
 #include "base/debug.h"
 #include "net/http_response.h"
 
+#if __has_include(<curl/curl.h>)
+
 #include <curl/curl.h>
 
 namespace net {
@@ -130,3 +132,5 @@ void HttpRequest::setPostBody(const std::string& body)
 }
 
 } // namespace net
+
+#endif
