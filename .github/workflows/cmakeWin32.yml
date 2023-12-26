@@ -38,7 +38,7 @@ jobs:
           mingw-w64-i686-zlib
           mingw-w64-i686-libarchive
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: 'true'
     - shell: msys2 {0}
@@ -51,7 +51,7 @@ jobs:
         node package_win.js build/bin/libresprite.exe
         cp /mingw32/bin/snapshot_blob.bin ./build/bin
     - name: Archive production artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: libresprite-development-windows-i686
         path: |

@@ -39,7 +39,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -47,7 +47,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
     
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     # install dependencies
     - name: update
       run: sudo apt-get update

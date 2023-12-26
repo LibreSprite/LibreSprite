@@ -14,7 +14,7 @@ jobs:
   build-x86_64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: 'stable-1.x'
 
@@ -94,14 +94,14 @@ jobs:
         dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite -d ./bundle/libresprite.app/Contents/libs/
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: macos-x86_64
         path: ./build/bin/
         if-no-files-found: error
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: macos-x86_64-bundle
         path: ./bundle/
