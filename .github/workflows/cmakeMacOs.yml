@@ -92,17 +92,13 @@ jobs:
       run: |
         dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite -d ./bundle/libresprite.app/Contents/libs/
 
+    - name: Create DMG
+      run: |
+        hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: macos-x86_64
-        path: ./build/bin/
+        path: libresprite.dmg
         if-no-files-found: error
-
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: macos-x86_64-bundle
-        path: ./bundle/
-        if-no-files-found: error
-
