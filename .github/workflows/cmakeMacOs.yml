@@ -15,8 +15,6 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
-      with:
-        ref: 'stable-1.x'
 
     - name: install deps
       run: |
@@ -88,6 +86,7 @@ jobs:
         cp -r ./build/bin/data/ ./bundle/libresprite.app/Contents/MacOS/data/
         cp ./libresprite.icns ./bundle/libresprite.app/Contents/Resources/
         cp ./desktop/Info.plist ./bundle/libresprite.app/Contents/
+        chmod +x ./bundle/libresprite.app/Contents/MacOS/libresprite
 
     - name: Put Dylibs
       run: |
