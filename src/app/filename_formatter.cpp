@@ -36,7 +36,7 @@ static bool replace_frame(const char* frameKey, // E.g. = "{frame"
         std::vector<char> to(32);
         int offset = std::strtol(from.c_str()+keyLen, NULL, 10);
 
-        std::sprintf(&to[0], "%0*d", (int(j)-int(i+keyLen)), frameBase + offset);
+        std::snprintf(&to[0], to.size(), "%0*d", (int(j)-int(i+keyLen)), frameBase + offset);
         base::replace_string(str, from, &to[0]);
       }
       else

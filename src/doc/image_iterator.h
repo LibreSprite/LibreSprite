@@ -7,6 +7,7 @@
 #pragma once
 
 #include "doc/color.h"
+#include "doc/image_traits.h"
 #include "doc/primitives_fast.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
@@ -23,16 +24,14 @@ namespace doc {
   template<typename ImageTraits,
            typename PointerType,
            typename ReferenceType>
-  class ImageIteratorT : public std::iterator<std::forward_iterator_tag,
-                                              typename ImageTraits::pixel_t,
-                                              ptrdiff_t,
-                                              PointerType,
-                                              ReferenceType> {
+  class ImageIteratorT {
   public:
-    // GCC 4.6 needs these re-definitions here.
-    typedef ptrdiff_t difference_type;
-    typedef PointerType pointer;
-    typedef ReferenceType reference;
+
+    typedef typename ImageTraits::pixel_t value_type;
+    typedef ptrdiff_t                     difference_type;
+    typedef PointerType                   pointer;
+    typedef ReferenceType                 reference;
+    typedef std::forward_iterator_tag     iterator_category;
 
     ImageIteratorT() : m_ptr(NULL) {
     }
@@ -257,17 +256,15 @@ namespace doc {
 
   template<typename PointerType,
            typename ReferenceType>
-  class ImageIteratorT<BitmapTraits, PointerType, ReferenceType>
-    : public std::iterator<std::forward_iterator_tag,
-                           BitmapTraits::pixel_t,
-                           ptrdiff_t,
-                           PointerType,
-                           ReferenceType> {
+  class ImageIteratorT<BitmapTraits, PointerType, ReferenceType> {
   public:
-    // GCC 4.6 needs these re-definitions here.
+    // std::iterator<std::forward_iterator_tag, BitmapTraits::pixel_t, ptrdiff_t, PointerType, ReferenceType>
+    typedef std::forward_iterator_tag iterator_category;
+    typedef BitmapTraits::pixel_t value_type;
     typedef ptrdiff_t difference_type;
     typedef PointerType pointer;
     typedef ReferenceType reference;
+
     enum { pixels_per_byte = BitmapTraits::pixels_per_byte };
 
     ImageIteratorT() : m_ptr(NULL) {

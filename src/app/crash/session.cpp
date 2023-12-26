@@ -38,7 +38,7 @@ Session::Backup::Backup(const std::string& dir)
   read_document_info(dir, info);
 
   std::vector<char> buf(1024);
-  sprintf(&buf[0], "%s Sprite %dx%d, %d %s: %s",
+  snprintf(&buf[0], buf.size(), "%s Sprite %dx%d, %d %s: %s",
     info.format == IMAGE_RGB ? "RGB":
     info.format == IMAGE_GRAYSCALE ? "Grayscale":
     info.format == IMAGE_INDEXED ? "Indexed":

@@ -50,7 +50,6 @@ namespace she {
   SDL2Display::SDL2Display(int width, int height, int scale) :
     m_window(nullptr),
     m_renderer(nullptr),
-    m_cursor(nullptr),
     m_surface(nullptr),
     m_scale(0),
     m_nativeCursor(kNoCursor),

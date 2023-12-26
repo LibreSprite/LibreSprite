@@ -391,7 +391,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
       Sprite* spr = fop->m_document->sprite();
       std::vector<char> buf(32);
-      std::snprintf(buf.data(), sizeof(buf), "{frame%0*d}", width, 0);
+      std::snprintf(buf.data(), buf.size(), "{frame%0*d}", width, 0);
       if (default_format)
         fn_format = set_frame_format(fn_format, &buf[0]);
       else if (spr->totalFrames() > 1)

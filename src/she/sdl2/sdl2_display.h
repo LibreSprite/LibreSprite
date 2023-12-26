@@ -51,7 +51,7 @@ namespace she {
         void setLayout(const std::string& layout) override;
         void* nativeHandle() override;
 
-        void present();
+        void present() override;
         SDL_Renderer* renderer() {return m_renderer;}
 
         static inline bool gpu{};
@@ -59,7 +59,6 @@ namespace she {
     private:
         SDL_Window* m_window;
         SDL_Renderer* m_renderer;
-        SDL_Cursor* m_cursor;
         Surface* m_surface;
         int m_scale;
         int m_width;

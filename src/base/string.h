@@ -24,13 +24,14 @@ namespace base {
   int utf8_icmp(const std::string& a, const std::string& b, int n = 0);
 
   template<typename SubIterator>
-  class utf8_iteratorT : public std::iterator<std::forward_iterator_tag,
-                                              std::string::value_type,
-                                              std::string::difference_type,
-                                              typename SubIterator::pointer,
-                                              typename SubIterator::reference> {
+  class utf8_iteratorT {
   public:
-    typedef typename SubIterator::pointer pointer; // Needed for GCC
+// std::iterator<std::forward_iterator_tag, std::string::value_type, std::string::difference_type, typename SubIterator::pointer, typename SubIterator::reference>
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::string::value_type value_type;
+    typedef std::string::difference_type difference_type;
+    typedef typename SubIterator::pointer pointer;
+    typedef typename SubIterator::reference reference;
 
     explicit utf8_iteratorT(const SubIterator& it)
       : m_internal(it) {

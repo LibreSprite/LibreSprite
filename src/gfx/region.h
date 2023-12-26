@@ -7,6 +7,7 @@
 #pragma once
 
 #include "gfx/rect.h"
+#include <cstddef>
 #include <vector>
 #include <iterator>
 #include <cstdint>
@@ -37,9 +38,14 @@ namespace gfx {
 #endif
 
     template<typename T>
-    class RegionIterator : public std::iterator<std::forward_iterator_tag, T> {
+    class RegionIterator {
     public:
-      typedef typename std::iterator<std::forward_iterator_tag, T>::reference reference;
+      // std::iterator<std::forward_iterator_tag, T>
+      typedef std::forward_iterator_tag iterator_category;
+      typedef T value_type;
+      typedef ptrdiff_t difference_type;
+      typedef T* pointer;
+      typedef T& reference;
 
       RegionIterator() : m_ptr(NULL) { }
       RegionIterator(const RegionIterator& o) : m_ptr(o.m_ptr) { }

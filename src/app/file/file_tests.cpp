@@ -30,7 +30,7 @@ TEST(File, SeveralSizes)
   for (int w=10; w<=10+503*2; w+=503) {
     for (int h=10; h<=10+503*2; h+=503) {
       //std::sprintf(&fn[0], "test_%dx%d.ase", w, h);
-      std::sprintf(&fn[0], "test.ase");
+      std::snprintf(&fn[0], fn.size(), "test.ase");
 
       {
         doc::Document* doc = ctx.documents().add(w, h, doc::ColorMode::INDEXED, 256);

@@ -162,7 +162,7 @@ Point get_config_point(const char* section, const char* name, const Point& point
 void set_config_point(const char* section, const char* name, const Point& point)
 {
   char buf[128];
-  sprintf(buf, "%d %d", point.x, point.y);
+  snprintf(buf, sizeof(buf), "%d %d", point.x, point.y);
   set_config_string(section, name, buf);
 }
 
@@ -186,7 +186,7 @@ Rect get_config_rect(const char* section, const char* name, const Rect& rect)
 void set_config_rect(const char* section, const char* name, const Rect& rect)
 {
   char buf[128];
-  sprintf(buf, "%d %d %d %d", rect.x, rect.y, rect.w, rect.h);
+  snprintf(buf, sizeof(buf), "%d %d %d %d", rect.x, rect.y, rect.w, rect.h);
   set_config_string(section, name, buf);
 }
 

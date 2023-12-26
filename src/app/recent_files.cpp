@@ -66,14 +66,14 @@ RecentFiles::~RecentFiles()
 
   int c = 0;
   for (auto const& filename : m_files) {
-    sprintf(buf, "Filename%02d", c);
+    snprintf(buf, sizeof(buf), "Filename%02d", c);
     set_config_string("RecentFiles", buf, filename.c_str());
     c++;
   }
 
   c = 0;
   for (auto const& path : m_paths) {
-    sprintf(buf, "Path%02d", c);
+    snprintf(buf, sizeof(buf), "Path%02d", c);
     set_config_string("RecentPaths", buf, path.c_str());
     c++;
   }

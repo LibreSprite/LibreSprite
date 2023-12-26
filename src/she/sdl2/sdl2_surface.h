@@ -65,7 +65,6 @@ namespace she {
   private:
     unsigned int m_textureGen{};
     SDL_Texture* m_texture{};
-    uint32_t m_textureFormat{};
     SDL_Surface* m_bmp{};
     DestroyFlag m_destroy;
     int m_lock;
