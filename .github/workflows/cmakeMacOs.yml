@@ -50,6 +50,7 @@ jobs:
     - name: Generate Makefiles
       run: |
         cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DUSE_V8_SANDBOX=ON
           -DCMAKE_OSX_ARCHITECTURES=x86_64 \
           -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 

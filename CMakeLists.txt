@@ -43,6 +43,7 @@ option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+option(USE_V8_SANDBOX "Use V8 Sandbox" off)
 
 ######################################################################
 # Profile build type
@@ -218,6 +219,10 @@ if(V8_FOUND)
       message(STATUS "Enabling V8 pointer compression")
       add_definitions(-DV8_COMPRESS_POINTERS)
     endif()
+  endif()
+
+  if (USE_V8_SANDBOX)
+    add_definitions(-DV8_ENABLE_SANDBOX)
   endif()
 
   message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
