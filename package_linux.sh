@@ -43,8 +43,8 @@ mkdir LibreSprite/usr
 mkdir LibreSprite/usr/bin
 mkdir LibreSprite/usr/lib
 
-mv desktop/libresprite.desktop LibreSprite
-cp desktop/icons/hicolor/16x16/apps/libresprite.png LibreSprite/libresprite.png
+mv ../../desktop/libresprite.desktop LibreSprite/
+cp ../../desktop/icons/hicolor/16x16/apps/libresprite.png LibreSprite/libresprite.png
 
 mv libresprite LibreSprite/usr/bin
 mv data LibreSprite/usr/bin
