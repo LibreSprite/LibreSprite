@@ -31,7 +31,7 @@ jobs:
     - name: mkdir
       run: mkdir build
     - name: cmake
-      run: cd build && cmake -G Ninja .. && ninja libresprite
+      run: cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release .. && ninja libresprite
     - name: appimage
       run: |
         cd build/bin
