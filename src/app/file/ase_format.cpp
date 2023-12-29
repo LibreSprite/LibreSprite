@@ -32,13 +32,20 @@
 
 #define ASE_FILE_CHUNK_FLI_COLOR2           4
 #define ASE_FILE_CHUNK_FLI_COLOR            11
+
 #define ASE_FILE_CHUNK_LAYER                0x2004
 #define ASE_FILE_CHUNK_CEL                  0x2005
+#define ASE_FILE_CHUNK_CEL_EXTRA            0x2006
+#define ASE_FILE_CHUNK_COLOR_PROFILE        0x2007
+#define ASE_FILE_CHUNK_EXTERNAL_FILE        0x2008
 #define ASE_FILE_CHUNK_MASK                 0x2016
 #define ASE_FILE_CHUNK_PATH                 0x2017
-#define ASE_FILE_CHUNK_FRAME_TAGS           0x2018
+#define ASE_FILE_CHUNK_TAGS                 0x2018
 #define ASE_FILE_CHUNK_PALETTE              0x2019
 #define ASE_FILE_CHUNK_USER_DATA            0x2020
+#define ASE_FILE_CHUNK_SLICES               0x2021 // Deprecated chunk (used on dev versions only between v1.2-beta7 and v1.2-beta8)
+#define ASE_FILE_CHUNK_SLICE                0x2022
+#define ASE_FILE_CHUNK_TILESET              0x2023
 
 #define ASE_FILE_RAW_CEL                    0
 #define ASE_FILE_LINK_CEL                   1
@@ -286,7 +293,7 @@ bool AseFormat::onLoad(FileOp* fop)
             // Ignore
             break;
 
-          case ASE_FILE_CHUNK_FRAME_TAGS:
+          case ASE_FILE_CHUNK_TAGS:
             ase_file_read_frame_tags_chunk(f, &sprite->frameTags());
             break;
 
@@ -295,6 +302,14 @@ bool AseFormat::onLoad(FileOp* fop)
             ase_file_read_user_data_chunk(f, &userData);
             if (last_object_with_user_data)
               last_object_with_user_data->setUserData(userData);
+            break;
+          }
+
+          case ASE_FILE_CHUNK_COLOR_PROFILE: {
+            (void) fgetw(f); //  type
+            (void) fgetw(f); //  flags
+            (void) fgetl(f); //  gamma
+            ase_file_read_padding(f, 8);
             break;
           }
 
@@ -1456,7 +1471,7 @@ static void ase_file_read_frame_tags_chunk(FILE* f, FrameTags* frameTags)
 
 static void ase_file_write_frame_tags_chunk(FILE* f, ASE_FrameHeader* frame_header, const FrameTags* frameTags)
 {
-  ChunkWriter chunk(f, frame_header, ASE_FILE_CHUNK_FRAME_TAGS);
+  ChunkWriter chunk(f, frame_header, ASE_FILE_CHUNK_TAGS);
 
   fputw(frameTags->size(), f);
 

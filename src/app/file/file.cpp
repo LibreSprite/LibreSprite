@@ -591,6 +591,7 @@ void FileOp::operateLoad(IFileOpProgress* progress)
     return a.second > b.second;
   });
 
+  std::string firstError;
   for (auto format : loaders) {
     // Get the format through the extension of the filename
     m_format = format.first;
@@ -606,11 +607,12 @@ void FileOp::operateLoad(IFileOpProgress* progress)
     } catch (...) {
       LOG("Loading Exception");
     }
+
+    if (firstError.empty())
+      firstError = m_error;
   }
 
-  if (!m_format) {
-    setError("%s can't load \"%s\" files\n", PACKAGE, extension.c_str());
-  }
+  setError("%s can't load file \"%s\"\n%s\n", PACKAGE, m_filename.c_str(), firstError.c_str());
 }
 
 // Executes the file operation: loads or saves the sprite.
