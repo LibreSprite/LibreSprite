@@ -32,5 +32,14 @@ jobs:
       run: mkdir build
     - name: cmake
       run: cd build && cmake -G Ninja .. && ninja libresprite
-    
-      
+    - name: appimage
+      run: |
+        cd bin
+        sh ../../package_linux.sh
+        mv ./LibreSprite-x86_64.AppImage ../../
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: libresprite-development-linux-x86_64
+        path: LibreSprite-x86_64.AppImage
+        if-no-files-found: error
