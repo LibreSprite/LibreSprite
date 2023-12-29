@@ -31,10 +31,10 @@ src=$(pwd)
 
 add "libresprite"
 
-rm libc.so*
-rm libpthread.so*
-rm librt.so*
-rm libstdc++.so*
+# rm libc.so*
+# rm libpthread.so*
+# rm librt.so*
+# rm libstdc++.so*
 
 chmod +x libresprite
 
