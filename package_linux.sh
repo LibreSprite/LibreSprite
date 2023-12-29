@@ -31,12 +31,12 @@ src=$(pwd)
 
 add "libresprite"
 
-cp /usr/lib/libc.so* ./
 cp /usr/lib/libpthread.so* ./
 cp /usr/lib/librt.so* ./
 cp /usr/lib/libstdc++.so* ./
 
-# rm libc.so*
+rm libc.so*
+rm libm.so*
 # rm libpthread.so*
 # rm librt.so*
 # rm libstdc++.so*
