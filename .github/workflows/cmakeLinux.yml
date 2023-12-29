@@ -34,7 +34,7 @@ jobs:
       run: cd build && cmake -G Ninja .. && ninja libresprite
     - name: appimage
       run: |
-        cd bin
+        cd build/bin
         sh ../../package_linux.sh
         mv ./LibreSprite-x86_64.AppImage ../../
     - name: Archive production artifacts
