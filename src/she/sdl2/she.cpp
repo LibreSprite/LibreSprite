@@ -26,6 +26,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #endif
+
 #include <iostream>
 #include <cassert>
 #include <list>
@@ -35,6 +36,10 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+
+#ifdef EMSCRIPTEN
+#include <emscripten/emscripten.h>
+#endif
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
@@ -580,10 +585,10 @@ namespace she {
       mainThreadId = gfxThreadId;
       return func();
       #else
-      mainThread = std::thread{[func = std::move(func)]{
+      mainThread = std::thread{[this, func = std::move(func)]{
+        mainThreadId = std::this_thread::get_id();
 	func();
       }};
-      mainThreadId = mainThread.id();
       emscripten_set_main_loop([]{
 	static_cast<SDL2System*>(g_instance)->refresh();
       }, 0, true);
