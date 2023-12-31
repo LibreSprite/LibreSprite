@@ -10,6 +10,7 @@
 #endif
 
 #include "she/she.h"
+#include "she/system.h"
 
 #include "base/concurrent_queue.h"
 #include "base/exception.h"
@@ -61,23 +62,25 @@ namespace she {
     width = 800;
     height = 600;
 
-    m_window = SDL_CreateWindow("",
-                                SDL_WINDOWPOS_UNDEFINED,
-                                SDL_WINDOWPOS_UNDEFINED,
-                                width, height,
-                                SDL_WINDOW_RESIZABLE);
-    if (!m_window)
-      throw DisplayCreationException(SDL_GetError());
+    instance()->gfx([&]{
+      m_window = SDL_CreateWindow("",
+				  SDL_WINDOWPOS_UNDEFINED,
+				  SDL_WINDOWPOS_UNDEFINED,
+				  width, height,
+				  SDL_WINDOW_RESIZABLE);
+      if (!m_window)
+	throw DisplayCreationException(SDL_GetError());
 
-    if (gpu)
-      m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
+      if (gpu)
+	m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
 
-    sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
-    SDL_GetWindowSize(m_window, &width, &height);
-    m_width = width;
-    m_height = height;
+      sdl::windowIdToDisplay[SDL_GetWindowID(m_window)] = this;
+      SDL_GetWindowSize(m_window, &width, &height);
+      m_width = width;
+      m_height = height;
 
-    SDL_ShowCursor(SDL_DISABLE);
+      SDL_ShowCursor(SDL_DISABLE);
+    }, true);
 
     setScale(scale);
   }
@@ -169,6 +172,8 @@ namespace she {
 
   void SDL2Display::recreateSurface()
   {
+    if (!m_scale)
+      return;
     auto  newSurface = new SDL2Surface(width() / m_scale, height() / m_scale, SDL2Surface::DeleteAndDestroy);
     if (m_surface) {
       m_surface->blitTo(newSurface, 0, 0, 0, 0, width(), height());
@@ -184,13 +189,19 @@ namespace she {
     return m_surface;
   }
 
-  void SDL2Display::present() {
-    if (!m_dirty)
+  void SDL2Display::present()
+  {
+    if (!m_dirty || !she::instance()->isGfxThread() || !m_surface)
       return;
     m_dirty = false;
+
     if (m_renderer) {
+      #ifdef EMSCRIPTEN
+      auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(nullptr);
+      #else
       SDL_Rect empty{0, 0, 0, 0};
       auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(&empty);
+      #endif
       SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
       SDL_RenderPresent(m_renderer);
     } else
@@ -200,6 +211,9 @@ namespace she {
   void SDL2Display::flip(const gfx::Rect& bounds)
   {
     m_dirty = true;
+    if (!she::instance()->isGfxThread())
+      return;
+
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     if (m_renderer) {
       static_cast<SDL2Surface*>(m_surface)->getTexture(&rect);
@@ -208,8 +222,8 @@ namespace she {
 
     auto nativeSurface = SDL_GetWindowSurface(m_window);
     SDL_Rect dst {
-        rect.x * m_scale, rect.y * m_scale,
-        rect.w * m_scale, rect.h * m_scale
+      rect.x * m_scale, rect.y * m_scale,
+      rect.w * m_scale, rect.h * m_scale
     };
     SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect, nativeSurface, &dst);
   }
