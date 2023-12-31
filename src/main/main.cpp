@@ -28,7 +28,12 @@
 #include <iostream>
 
 #ifdef _WIN32
-  #include <windows.h>
+#include <windows.h>
+#endif
+#ifdef EMSCRIPTEN
+#define LIFETIME static
+#else
+#define LIFETIME
 #endif
 
 namespace {
@@ -63,27 +68,35 @@ int app_main(int argc, char* argv[])
 #endif
 
   try {
-    base::MemoryDump memoryDump;
-    MemLeak memleak;
-    base::SystemConsole systemConsole;
-    app::AppOptions options(argc, const_cast<const char**>(argv));
-    auto system = std::unique_ptr<she::System>(she::create_system());
-    app::App app;
+    static app::AppOptions options(argc, const_cast<const char**>(argv));
+    LIFETIME auto system = std::unique_ptr<she::System>(she::create_system());
+    return system->run([]{
+      try {
+	base::MemoryDump memoryDump; //
+	MemLeak memleak;
+	base::SystemConsole systemConsole;
+	app::App app;
 
-    // Change the name of the memory dump file
-    {
-      std::string filename = app::memory_dump_filename();
-      if (!filename.empty())
-        memoryDump.setFileName(filename);
-    }
+	// Change the name of the memory dump file
+	{
+	  std::string filename = app::memory_dump_filename();
+	  if (!filename.empty())
+	    memoryDump.setFileName(filename);
+	}
 
-    app.initialize(options);
+	app.initialize(options);
 
-    if (options.startShell())
-      systemConsole.prepareShell();
+	if (options.startShell())
+	  systemConsole.prepareShell();
 
-    app.run();
-    return 0;
+	app.run();
+	return 0;
+      } catch (std::exception& e) {
+	std::cerr << e.what() << '\n';
+	she::error_message(e.what());
+	return 1;
+      }
+    });
   }
   catch (std::exception& e) {
     std::cerr << e.what() << '\n';
