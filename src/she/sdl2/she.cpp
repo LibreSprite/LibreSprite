@@ -32,6 +32,9 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
+#include <chrono>
+#include <thread>
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
@@ -208,6 +211,12 @@ she::KeyModifiers getSheModifiers() {
   return (she::KeyModifiers) mod;
 }
 
+#ifdef EMSCRIPTEN
+EM_JS(int, get_canvas_width, (), { return canvas.clientWidth; });
+EM_JS(int, get_canvas_height, (), { return canvas.clientHeight; });
+static int oldWidth, oldHeight;
+#endif
+
 static std::deque<she::Event> keybuffer;
 static bool display_has_mouse = false;
 namespace she {
@@ -246,7 +255,30 @@ namespace she {
       }
     }
 
+    void refresh() {
+      if (!m_events.empty())
+	return;
+      Event event;
+      while (true) {
+	event.setType(Event::None);
+	getEventInternal(event, false);
+	if (event.type() == Event::None) {
+	  return;
+	}
+	m_events.push(event);
+      }
+    }
+
     void getEvent(Event& event, bool) override {
+      event.setType(Event::None);
+      if (she::instance()->isGfxThread()) {
+	getEventInternal(event, false);
+      } else {
+	m_events.try_pop(event);
+      }
+    }
+
+    void getEventInternal(Event& event, bool) {
       SDL_Event sdlEvent;
       while (SDL_PollEvent(&sdlEvent)) {
         switch (sdlEvent.type) {
@@ -282,6 +314,9 @@ namespace she {
             continue;
 
           case SDL_WINDOWEVENT_RESIZED: {
+	    #ifdef EMSCRIPTEN
+	    continue;
+	    #else
             auto display = sdl::windowIdToDisplay[sdlEvent.window.windowID];
             display->setWidth(sdlEvent.window.data1);
             display->setHeight(sdlEvent.window.data2);
@@ -289,6 +324,7 @@ namespace she {
             event.setType(Event::ResizeDisplay);
             event.setDisplay(display);
             return;
+	    #endif
           }
 
           case SDL_WINDOWEVENT_LEAVE: {
@@ -297,7 +333,7 @@ namespace she {
 
               Event ev;
               ev.setType(Event::MouseLeave);
-              queue_event(ev);
+              m_events.push(ev);
               break;
             }
           }
@@ -313,7 +349,7 @@ namespace she {
             display_has_mouse = true;
             Event ev;
             ev.setType(Event::MouseEnter);
-            queue_event(ev);
+            m_events.push(ev);
           }
 
           event.setType(Event::MouseMove);
@@ -348,7 +384,7 @@ namespace she {
           event.setModifiers(getSheModifiers());
 
           if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
-            queue_event(event);
+            m_events.push(event);
             event.setType(Event::MouseDoubleClick);
             event.setPosition(event.position());
             event.setButton(event.button());
@@ -452,9 +488,6 @@ namespace she {
         keybuffer.pop_front();
         return;
       }
-
-      if (!m_events.try_pop(event))
-        event.setType(Event::None);
     }
 
     void queueEvent(const Event& event) override {
@@ -462,7 +495,6 @@ namespace she {
     }
 
   private:
-    // We probably don't need a concurrent queue here.
     base::concurrent_queue<Event> m_events;
   };
 
@@ -478,9 +510,122 @@ namespace she {
     }
 
     ~SDL2System() {
+      shutdown = true;
+      sleeping = false;
+      if (mainThread.joinable())
+	mainThread.join();
       IMG_Quit();
       SDL_Quit();
       g_instance = nullptr;
+    }
+
+    bool shutdown{false};
+    std::thread mainThread;
+    std::thread::id mainThreadId;
+    std::thread::id gfxThreadId;
+    std::vector<std::function<void()>> gfxQueue;
+    std::atomic<bool> sleeping{false};
+
+    bool isGfxThread() override {
+      return std::this_thread::get_id() == gfxThreadId;
+    }
+
+    bool isMainThread() override {
+      return std::this_thread::get_id() == mainThreadId;
+    }
+
+    void gfx(std::function<void()>&& func, bool sleep) override {
+      if (isGfxThread()) {
+	func();
+	return;
+      }
+      gfxQueue.emplace_back(std::move(func));
+      if (sleep)
+	this->sleep();
+    }
+
+    using Timestamp = std::chrono::high_resolution_clock::time_point;
+    Timestamp start = std::chrono::high_resolution_clock::now();
+
+    void sleep() override {
+      using namespace std::chrono_literals;
+      if (shutdown)
+	return;
+
+      if (mainThreadId == gfxThreadId) {
+	refresh();
+	auto now = std::chrono::high_resolution_clock::now();
+
+	// If the dispatching of messages was faster than 10 milliseconds,
+	// it means that the process is not using a lot of CPU, so we can
+	// wait the difference to cover those 10 milliseconds
+	// sleeping. With this code we can avoid 100% CPU usage.
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+	start = now;
+
+	if (elapsed < 15ms)
+	  std::this_thread::sleep_for(15ms - elapsed);
+      } else if (isMainThread()) {
+	sleeping = true;
+	while (sleeping) {
+	  using namespace std::chrono_literals;
+	  std::this_thread::sleep_for(10ms);
+	}
+      }
+    }
+
+    int run(std::function<int()>&& func) override {
+      gfxThreadId = std::this_thread::get_id();
+      #ifndef EMSCRIPTEN
+      mainThreadId = gfxThreadId;
+      return func();
+      #else
+      mainThread = std::thread{[func = std::move(func)]{
+	func();
+      }};
+      mainThreadId = mainThread.id();
+      emscripten_set_main_loop([]{
+	static_cast<SDL2System*>(g_instance)->refresh();
+      }, 0, true);
+      return 0;
+      #endif
+    }
+
+    void refresh() {
+      if (!sleeping) {
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->refresh();
+	return;
+      }
+      #ifdef EMSCRIPTEN
+      auto width = get_canvas_width();
+      auto height = get_canvas_height();
+      if (width && height && (oldWidth != width || oldHeight != height) && !sdl::windowIdToDisplay.empty()) {
+	oldWidth = width;
+	oldHeight = height;
+	for (auto& entry : sdl::windowIdToDisplay) {
+	  auto display = entry.second;
+	  SDL_SetWindowSize(display->m_window, width, height);
+	  display->setWidth(width);
+	  display->setHeight(height);
+	  display->recreateSurface();
+	  Event event;
+	  event.setType(Event::ResizeDisplay);
+	  event.setDisplay(display);
+	  static_cast<SDL2EventQueue*>(EventQueue::instance())->queueEvent(event);
+	}
+      }
+      #endif
+      int frames = 5;
+      do {
+	for (auto it = gfxQueue.begin(); it != gfxQueue.end(); ++it) {
+	  (*it)();
+	}
+	gfxQueue.clear();
+	sleeping = false;
+	for (auto& entry : sdl::windowIdToDisplay)
+	  entry.second->present();
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->refresh();
+      } while (sleeping && --frames);
     }
 
     void activateApp() override {

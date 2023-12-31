@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <stdexcept>
 #include <vector>
 
@@ -51,6 +52,11 @@ namespace she {
     virtual Font* loadSpriteSheetFont(const char* filename, int scale = 1) = 0;
     virtual Font* loadTrueTypeFont(const char* filename, int height) = 0;
     virtual void toggleFullscreen() {}
+    virtual int run(std::function<int()>&& func) = 0;
+    virtual bool isGfxThread() = 0;
+    virtual bool isMainThread() = 0;
+    virtual void gfx(std::function<void()>&& func, bool sleep = false) = 0;
+    virtual void sleep() = 0;
   };
 
   System* create_system();
