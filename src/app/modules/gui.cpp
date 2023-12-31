@@ -187,7 +187,11 @@ int init_module_gui()
   {
       auto uiScale = Preferences::instance().experimental.uiScale();
       if (uiScale < 1) {
+	  #ifdef EMSCRIPTEN
+	  uiScale = 1;
+	  #else
           uiScale = 1 + (ui::display_h() > 400) + (ui::display_h() > 800);
+	  #endif
           Preferences::instance().experimental.uiScale(uiScale);
       }
       gui_theme->setScale(uiScale);
