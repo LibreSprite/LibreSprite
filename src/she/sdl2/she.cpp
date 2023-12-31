@@ -483,10 +483,6 @@ namespace she {
       g_instance = nullptr;
     }
 
-    void dispose() override {
-      delete this;
-    }
-
     void activateApp() override {
       // Do nothing
     }
