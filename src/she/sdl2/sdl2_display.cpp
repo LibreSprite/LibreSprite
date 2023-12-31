@@ -93,6 +93,8 @@ namespace she {
     if (m_window) {
       sdl::windowIdToDisplay.erase(SDL_GetWindowID(m_window));
       m_surface->dispose();
+      if (m_doublebuffer)
+	  m_doublebuffer->dispose();
       if (m_renderer)
         SDL_DestroyRenderer(m_renderer);
       SDL_DestroyWindow(m_window);
@@ -182,6 +184,15 @@ namespace she {
     m_dirty = true;
     m_surface = newSurface;
     she::sdl::screen = newSurface;
+
+    #ifdef EMSCRIPTEN
+    newSurface = new SDL2Surface(width() / m_scale, height() / m_scale, SDL2Surface::DeleteAndDestroy);
+    if (m_doublebuffer) {
+      m_doublebuffer->blitTo(newSurface, 0, 0, 0, 0, width(), height());
+      m_doublebuffer->dispose();
+    }
+    m_doublebuffer = newSurface;
+    #endif
   }
 
   Surface* SDL2Display::getSurface()
@@ -197,7 +208,7 @@ namespace she {
 
     if (m_renderer) {
       #ifdef EMSCRIPTEN
-      auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(nullptr);
+      auto texture = static_cast<SDL2Surface*>(m_doublebuffer)->getTexture(nullptr);
       #else
       SDL_Rect empty{0, 0, 0, 0};
       auto texture = static_cast<SDL2Surface*>(m_surface)->getTexture(&empty);
@@ -211,8 +222,13 @@ namespace she {
   void SDL2Display::flip(const gfx::Rect& bounds)
   {
     m_dirty = true;
-    if (!she::instance()->isGfxThread())
+    if (!she::instance()->isGfxThread()) {
+      SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
+      SDL_Rect dst { rect.x, rect.y, rect.w, rect.h };
+      SDL_BlitScaled((SDL_Surface*)m_surface->nativeHandle(), &rect,
+		     (SDL_Surface*)m_doublebuffer->nativeHandle(), &dst);
       return;
+    }
 
     SDL_Rect rect {bounds.x, bounds.y, bounds.w, bounds.h};
     if (m_renderer) {

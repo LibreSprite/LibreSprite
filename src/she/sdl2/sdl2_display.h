@@ -60,7 +60,8 @@ namespace she {
     private:
         SDL_Window* m_window;
         SDL_Renderer* m_renderer;
-        Surface* m_surface;
+        Surface* m_surface{};
+        Surface* m_doublebuffer{};
         int m_scale;
         int m_width;
         int m_height;

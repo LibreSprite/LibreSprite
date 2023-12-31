@@ -37,7 +37,7 @@
 #include <chrono>
 #include <thread>
 
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
@@ -216,7 +216,7 @@ she::KeyModifiers getSheModifiers() {
   return (she::KeyModifiers) mod;
 }
 
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 EM_JS(int, get_canvas_width, (), { return canvas.clientWidth; });
 EM_JS(int, get_canvas_height, (), { return canvas.clientHeight; });
 static int oldWidth, oldHeight;
@@ -319,7 +319,7 @@ namespace she {
             continue;
 
           case SDL_WINDOWEVENT_RESIZED: {
-	    #ifdef EMSCRIPTEN
+	    #ifdef __EMSCRIPTEN__
 	    continue;
 	    #else
             auto display = sdl::windowIdToDisplay[sdlEvent.window.windowID];
@@ -584,6 +584,15 @@ namespace she {
       #ifndef EMSCRIPTEN
       mainThreadId = gfxThreadId;
       return func();
+      #elif defined(EMSCRIPTEN) && !defined(__EMSCRIPTEN__)
+      // like emscripten, but not really
+      mainThread = std::thread{[this, func = std::move(func)]{
+        mainThreadId = std::this_thread::get_id();
+	func();
+      }};
+      while (!shutdown)(
+	refresh();
+      }
       #else
       mainThread = std::thread{[this, func = std::move(func)]{
         mainThreadId = std::this_thread::get_id();
@@ -592,8 +601,8 @@ namespace she {
       emscripten_set_main_loop([]{
 	static_cast<SDL2System*>(g_instance)->refresh();
       }, 0, true);
-      return 0;
       #endif
+      return 0;
     }
 
     void refresh() {
@@ -601,7 +610,7 @@ namespace she {
 	static_cast<SDL2EventQueue*>(EventQueue::instance())->refresh();
 	return;
       }
-      #ifdef EMSCRIPTEN
+      #ifdef __EMSCRIPTEN__
       auto width = get_canvas_width();
       auto height = get_canvas_height();
       if (width && height && (oldWidth != width || oldHeight != height) && !sdl::windowIdToDisplay.empty()) {
