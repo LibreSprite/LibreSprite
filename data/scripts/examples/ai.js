@@ -123,12 +123,18 @@ const sdxlturboai = {
                 cb(null, error);
                 return;
             }
-            get(data.data.image_url, function(obj) {
-                cb(
-                    (obj.status == 200 ? obj.key : null),
-                    (obj.status == 200 ? null : JSON.stringify(obj))
-                );
-            }, 'png', 'ai');
+
+	    if (app.platform == "emscripten") {
+		app.launch(data.data.image_url); // server without CORS, must open in new tab
+		cb(null, null);
+	    } else {
+		get(data.data.image_url, function(obj) {
+                    cb(
+			(obj.status == 200 ? obj.key : null),
+			(obj.status == 200 ? null : JSON.stringify(obj))
+                    );
+		}, 'png', 'ai');
+	    }
         });
     },
 
@@ -139,13 +145,11 @@ const sdxlturboai = {
             "negative_prompt": ai.settings.negativePrompt,
             "source": "sdxlturbo.ai"
         }, function(key, error){
+            ai.close("wait");
             if (error) {
                 sdxlturboai.logError(error);
-                ai.close("wait");
-                return;
             }
             if (key) {
-                ai.close("wait");
                 var path = storage.save(key, 'ai');
                 storage.unload(key);
                 if (path)
