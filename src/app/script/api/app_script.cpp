@@ -73,6 +73,20 @@ public:
     addProperty("version", []{return script::Value{VERSION};})
       .doc("read-only. Returns LibreSprite's current version as a string.");
 
+    addProperty("platform", []() -> std::string {
+      #ifdef EMSCRIPTEN
+      return "emscripten";
+      #elif _WIN32
+      return "windows";
+      #elif __APPLE__
+      return "macos";
+      #elif ANDROID
+      return "android";
+      #else
+      return "linux";
+      #endif
+    }).doc("read-only. Returns one of: emscripten, windows, macos, android, linux.");
+
     addMethod("documentation", &AppScriptObject::documentation)
       .doc("Prints this text.");
 
