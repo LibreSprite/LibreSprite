@@ -302,14 +302,13 @@ void Brush::regenerate()
         break;
 
       case kLineBrushType: {
-        double a = PI * m_angle / 180;
-        double r = m_size/2;
-        double d = m_size;
-        int x1 = int(r + r*cos(a+PI));
-        int y1 = int(r - r*sin(a+PI));
-        int x2 = int(x1 + d*cos(a));
-        int y2 = int(y1 - d*sin(a));
-
+	int r = m_size/2;
+	int sa = r * sin(m_angle * (PI / 180.0)) + 0.5;
+	int ca = r * cos(m_angle * (PI / 180.0)) + 0.5;
+	int x1 = -ca + r;
+	int y1 = -sa + r;
+	int x2 =  ca + r;
+	int y2 =  sa + r;
         draw_line(m_image.get(), x1, y1, x2, y2, BitmapTraits::max_value);
         break;
       }
