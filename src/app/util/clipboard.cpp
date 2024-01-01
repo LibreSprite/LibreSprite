@@ -543,7 +543,7 @@ void paste()
 
 bool get_image_size(gfx::Size& size)
 {
-#if defined(_WIN32) || defined(__APPLE__)
+#if !defined(EMSCRIPTEN) && !defined(ANDROID)
   if (get_native_clipboard_bitmap_size(&size))
     return true;
 #else
