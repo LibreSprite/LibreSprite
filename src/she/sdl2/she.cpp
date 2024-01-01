@@ -236,6 +236,30 @@ static void cancelEvent(void*) {
     event.preventDefault();
   });
 }
+
+static bool wrapped;
+static void patchEventListeners() {
+  if (wrapped)
+    return;
+  wrapped = EM_ASM_INT({
+    let handle = 0;
+    JSEvents.eventHandlers.forEach(handler => {
+	if (handler.eventTypeString == 'keydown' || handler.eventTypeString == 'keyup') {
+          handle = handler.callbackfunc;
+	  let tmp = getWasmTableEntry(handle);
+	  function wrapper(...args) {
+	    let ret = tmp(...args);
+	    let keyCode = GROWABLE_HEAP_I32()[(args[1] >> 2) + 9];
+	    return ret && keyCode != 86;
+	  }
+	  if (tmp.name != wrapper.name)
+	    wasmTableMirror[handle] = wrapper;
+	}
+    });
+    return !!handle;
+  });
+}
+
 #endif
 
 static std::deque<she::Event> keybuffer;
@@ -647,6 +671,7 @@ namespace she {
 	func();
       }};
       emscripten_set_main_loop([]{
+	patchEventListeners();
 	static_cast<SDL2System*>(g_instance)->refresh();
       }, 0, true);
       #endif
