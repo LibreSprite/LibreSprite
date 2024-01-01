@@ -278,19 +278,24 @@ void Brush::regenerate()
           clear_image(m_image.get(), BitmapTraits::max_value);
         }
         else {
-          double a = PI * m_angle / 180;
           int c = size/2;
           int r = m_size/2;
-          int d = m_size;
-          int x1 = int(c + r*cos(a-PI/2) + r*cos(a-PI));
-          int y1 = int(c - r*sin(a-PI/2) - r*sin(a-PI));
-          int x2 = int(x1 + d*cos(a));
-          int y2 = int(y1 - d*sin(a));
-          int x3 = int(x2 + d*cos(a+PI/2));
-          int y3 = int(y2 - d*sin(a+PI/2));
-          int x4 = int(x3 + d*cos(a+PI));
-          int y4 = int(y3 - d*sin(a+PI));
-          int points[8] = { x1, y1, x2, y2, x3, y3, x4, y4 };
+	  int sa = r * sin(m_angle * (PI / 180.0f)) + 0.5;
+	  int ca = r * cos(m_angle * (PI / 180.0f)) + 0.5;
+          int x1 = -ca - -sa;
+          int y1 = -sa + -ca;
+          int x2 =  ca - -sa;
+          int y2 =  sa + -ca;
+          int x3 =  ca -  sa;
+          int y3 =  ca +  sa;
+          int x4 = -ca -  sa;
+          int y4 = -sa +  ca;
+	  int points[8] = {
+	      x1 + c, y1 + c,
+	      x4 + c, y4 + c,
+	      x3 + c, y3 + c,
+	      x2 + c, y2 + c
+	  };
 
           doc::algorithm::polygon(4, points, m_image.get(), algo_hline);
         }
