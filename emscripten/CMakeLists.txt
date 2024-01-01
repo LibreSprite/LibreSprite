@@ -634,7 +634,7 @@ set(SRC_FILES
   ${SRC}/gfx/rgb.cpp
   ${SRC}/main/main.cpp
   ${SRC}/net/http_request.cpp
-  ${SRC}/net/http_request_null.cpp
+  ${SRC}/net/http_request_wasm.cpp
   ${SRC}/net/http_response.cpp
   ${SRC}/observable/obs/connection.cpp
   ${SRC}/render/get_sprite_pixel.cpp

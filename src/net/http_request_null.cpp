@@ -16,6 +16,7 @@
 #if !__has_include(<curl/curl.h>)
 
 namespace net {
+class HttpRequestImpl {};
 
 HttpRequest::HttpRequest(const std::string& url) {}
 

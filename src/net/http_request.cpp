@@ -101,15 +101,8 @@ private:
   std::string m_body;
 };
 
-HttpRequest::HttpRequest(const std::string& url)
-  : m_impl(new HttpRequestImpl(url))
-{
-}
-
-HttpRequest::~HttpRequest()
-{
-  delete m_impl;
-}
+HttpRequest::HttpRequest(const std::string& url) : m_impl{new HttpRequestImpl(url)} {}
+HttpRequest::~HttpRequest() {}
 
 void HttpRequest::setHeaders(const HttpHeaders& headers)
 {
