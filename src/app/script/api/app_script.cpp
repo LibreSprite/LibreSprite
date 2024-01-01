@@ -14,6 +14,7 @@
 #include "app/commands/params.h"
 #include "app/document.h"
 #include "app/document_api.h"
+#include "base/launcher.h"
 #include "app/modules/editors.h"
 #include "app/script/app_scripting.h"
 #include "app/task_manager.h"
@@ -99,6 +100,8 @@ public:
 
     addMethod("open", &AppScriptObject::open)
       .doc("Opens a document for editing");
+
+    addMethod("launch", &AppScriptObject::launch);
 
     makeGlobal("app");
   }
@@ -224,6 +227,10 @@ public:
     if (newDoc == oldDoc)
       return {};
     return getEngine()->getScriptObject(newDoc);
+  }
+
+  bool launch(const std::string& cmd) {
+    return base::launcher::open_file(cmd);
   }
 
   void App_exit() {
