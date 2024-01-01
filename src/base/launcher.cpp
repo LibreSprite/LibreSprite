@@ -16,6 +16,10 @@
 
 #include <cstdlib>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #ifndef SEE_MASK_DEFAULT
@@ -73,7 +77,17 @@ bool open_file(const std::string& file)
 {
   int ret = -1;
 
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+
+  auto protocol = base::string_to_lower(base::split(file, ':')[0]);
+  if (protocol == "https" || protocol == "http") {
+      MAIN_THREAD_EM_ASM({
+	      open(UTF8ToString($0));
+	  }, file.c_str());
+      ret = 0;
+  }
+
+#elif _WIN32
 
   ret = win32_shell_execute(L"open",
                             base::from_utf8(file).c_str(), NULL);
