@@ -220,6 +220,22 @@ she::KeyModifiers getSheModifiers() {
 EM_JS(int, get_canvas_width, (), { return canvas.clientWidth; });
 EM_JS(int, get_canvas_height, (), { return canvas.clientHeight; });
 static int oldWidth, oldHeight;
+
+static void addEventListener(const std::string& name, void (*function)(void*), void* data = nullptr) {
+  EM_ASM({
+    canvas.addEventListener(UTF8ToString($0), (event) => {
+      window.event = event;
+      dynCall('vi', $1, [$2]);
+    });
+  }, name.c_str(), function, data);
+}
+
+static void cancelEvent(void*) {
+  EM_ASM({
+    event.stopPropagation();
+    event.preventDefault();
+  });
+}
 #endif
 
 static std::deque<she::Event> keybuffer;
@@ -594,6 +610,38 @@ namespace she {
 	refresh();
       }
       #else
+      addEventListener("dragenter", cancelEvent);
+      addEventListener("dragover", cancelEvent);
+
+      addEventListener("drop", [](void*){
+	EM_ASM({
+	  event.stopPropagation();
+	  event.preventDefault();
+	  let files = event.dataTransfer?.files;
+	  if (files?.length) {
+	    for (let i = 0; i < files.length; ++i) {
+	      let fr = new FileReader();
+	      fr.onload = ((fr, name)=>{
+		  try{ FS.mkdir('/tmp'); }catch(ex){}
+		  FS.writeFile('/tmp/' + name, new Uint8Array(fr.result));
+		  canvas.dispatchEvent(new CustomEvent("readFile", {detail:{path:'/tmp/' + name}}));
+		}).bind(null, fr, files[i].name);
+	      fr.readAsArrayBuffer(files[i]);
+	    }
+	  }
+        });
+      });
+
+      addEventListener("readFile", [](void*){
+	auto str = (char*) EM_ASM_PTR({return stringToNewUTF8(event.detail.path)});
+	std::string path = str;
+	free(str);
+	Event event;
+	event.setType(Event::DropFiles);
+	event.setFiles({path});
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->queueEvent(event);
+      });
+
       mainThread = std::thread{[this, func = std::move(func)]{
         mainThreadId = std::this_thread::get_id();
 	func();

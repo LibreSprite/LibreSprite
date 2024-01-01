@@ -117,6 +117,7 @@ public:
         break;
       }
 
+      default: break;
     }
   }
 
@@ -223,6 +224,7 @@ public:
           });
         break;
       }
+      default: break;
 
     }
   }
