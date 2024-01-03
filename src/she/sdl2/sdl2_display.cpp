@@ -273,7 +273,7 @@ namespace she {
 
   void applyCursor(SDL_SystemCursor id)
   {
-    if (id <= m_cursors.size()) {
+    if (id >= m_cursors.size()) {
       m_cursors.resize(id + 1);
     }
     if (!m_cursors[id]) {
