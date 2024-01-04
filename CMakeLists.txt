@@ -97,6 +97,7 @@ set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
+set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
 
 # Search in the "cmake" directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -132,6 +133,9 @@ endif()
 if(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
+
+# qoi
+include_directories(${QOI_DIR})
 
 # tinyxml2
 find_library(TINYXML2_LIBRARY NAMES tinyxml2)

@@ -76,7 +76,6 @@ set(data_recovery_files
   ui/data_recovery_view.cpp)
 
 set(file_formats
-  file/she_format.cpp
   file/ase_format.cpp
   file/bmp_format.cpp
   file/extension_format.cpp
@@ -85,8 +84,10 @@ set(file_formats
   file/ico_format.cpp
   file/jpeg_format.cpp
   file/pcx_format.cpp
-  file/png_format.cpp
   file/pixly_format.cpp
+  file/png_format.cpp
+  file/qoi_format.cpp
+  file/she_format.cpp
   file/tga_format.cpp)
 if(WITH_WEBP_SUPPORT)
   list(APPEND file_formats file/webp_format.cpp)

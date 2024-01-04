@@ -14,6 +14,7 @@ set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/../third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/../third_party/simpleini)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/../third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/../third_party/modp_b64)
+set(QOI_DIR             ${CMAKE_SOURCE_DIR}/../third_party/qoi)
 
 
 include_directories(
@@ -23,6 +24,7 @@ include_directories(
         ${SIMPLEINI_DIR}
         ${DUKTAPE_DIR}
         ${MODP_B64_DIR}
+        ${QOI_DIR}
 )
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/third_party/)

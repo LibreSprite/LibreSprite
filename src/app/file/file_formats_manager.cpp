@@ -31,6 +31,7 @@ extern FileFormat* CreateJpegFormat();
 extern FileFormat* CreatePcxFormat();
 extern FileFormat* CreatePngFormat();
 extern FileFormat* CreateTgaFormat();
+extern FileFormat* CreateQoiFormat();
 extern FileFormat* CreateExtensionFormat();
 
 #ifdef ASEPRITE_WITH_WEBP_SUPPORT
@@ -76,6 +77,7 @@ void FileFormatsManager::registerAllFormats()
   registerFormat(CreatePcxFormat());
   registerFormat(CreatePngFormat());
   registerFormat(CreateTgaFormat());
+  registerFormat(CreateQoiFormat());
 #if __has_include(<archive.h>)
   registerFormat(CreateExtensionFormat());
 #endif
