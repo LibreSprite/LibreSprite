@@ -241,6 +241,17 @@ public:
     return *registry;
   }
 
+  static std::vector<inject<BaseClass>> getAll() {
+    std::vector<inject<BaseClass>> all;
+    auto& registry = getRegistry();
+    all.reserve(registry.size());
+    for (auto& entry : registry) {
+      if (!entry.first.empty())
+        all.emplace_back(entry.first);
+    }
+    return all;
+  }
+
   static std::vector<inject<BaseClass>> getAllWithFlag(const std::string& flag) {
     std::vector<std::string> temp;
     std::vector<inject<BaseClass>> all;
