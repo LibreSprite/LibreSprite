@@ -859,7 +859,7 @@ int main(int argc, char* argv[]) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
   }
-  if (!IMG_Init(IMG_INIT_PNG | IMG_INIT_WEBP | IMG_INIT_JPG)) {
+  if (!IMG_Init(-1)) {
     std::cerr << "Critical: Could not initialize SDL2_image (" << IMG_GetError() << "). Aborting." << std::endl;
     return -2;
   }
