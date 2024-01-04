@@ -11,12 +11,12 @@
 
 #include "app/file/file_formats_manager.h"
 
-#include "app/file/file_format.h"
 #include "app/file/format_options.h"
 #include "base/string.h"
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 namespace app {
 static std::unique_ptr<FileFormatsManager> singleton;
