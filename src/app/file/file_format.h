@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "base/injection.h"
 #include "base/shared_ptr.h"
 
 #include <vector>
@@ -36,7 +37,7 @@ namespace app {
   // A file format supported by ASE. It is the base class to extend if
   // you want to add support to load and/or save a new kind of
   // image/animation format.
-  class FileFormat {
+  class FileFormat : public Injectable<FileFormat> {
   public:
     FileFormat();
     virtual ~FileFormat();

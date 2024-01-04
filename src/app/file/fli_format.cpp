@@ -41,10 +41,7 @@ class FliFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreateFliFormat()
-{
-  return new FliFormat;
-}
+static FileFormat::Regular<FliFormat> ff{"fli"};
 
 bool FliFormat::onLoad(FileOp* fop)
 {

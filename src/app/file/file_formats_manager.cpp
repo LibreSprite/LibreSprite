@@ -19,104 +19,44 @@
 #include <cstring>
 
 namespace app {
-
-extern FileFormat* CreateAseFormat();
-extern FileFormat* CreateSheFormat();
-extern FileFormat* CreatePixlyFormat();
-extern FileFormat* CreateBmpFormat();
-extern FileFormat* CreateFliFormat();
-extern FileFormat* CreateGifFormat();
-extern FileFormat* CreateIcoFormat();
-extern FileFormat* CreateJpegFormat();
-extern FileFormat* CreatePcxFormat();
-extern FileFormat* CreatePngFormat();
-extern FileFormat* CreateTgaFormat();
-extern FileFormat* CreateQoiFormat();
-extern FileFormat* CreateExtensionFormat();
-
-#ifdef ASEPRITE_WITH_WEBP_SUPPORT
-extern FileFormat* CreateWebPFormat();
-#endif
-
-static FileFormatsManager* singleton = NULL;
+static std::unique_ptr<FileFormatsManager> singleton;
 
 // static
 FileFormatsManager* FileFormatsManager::instance()
 {
   if (!singleton)
-    singleton = new FileFormatsManager();
-  return singleton;
+    singleton.reset(new FileFormatsManager());
+  return singleton.get();
 }
 
 // static
 void FileFormatsManager::destroyInstance()
 {
-  delete singleton;
-  singleton = NULL;
+  singleton.reset();
 }
 
-FileFormatsManager::~FileFormatsManager()
+std::vector<FileFormat*> FileFormatsManager::support(int flags)
 {
-  FileFormatsList::iterator end = this->end();
-  for (FileFormatsList::iterator it = begin(); it != end; ++it) {
-    delete (*it);               // delete the FileFormat
+  std::vector<FileFormat*> pick;
+  for (auto& ff : m_formats) {
+    if (ff->support(flags))
+      pick.push_back(ff.get());
   }
+  return pick;
 }
 
-void FileFormatsManager::registerAllFormats()
+FileFormat* FileFormatsManager::getFileFormatByExtension(const char* extension)
 {
-  // The first format is the default image format in FileSelector
-  registerFormat(CreateAseFormat());
-  registerFormat(CreateSheFormat());
-  registerFormat(CreatePixlyFormat());
-  registerFormat(CreateBmpFormat());
-  registerFormat(CreateFliFormat());
-  registerFormat(CreateGifFormat());
-  registerFormat(CreateIcoFormat());
-  registerFormat(CreateJpegFormat());
-  registerFormat(CreatePcxFormat());
-  registerFormat(CreatePngFormat());
-  registerFormat(CreateTgaFormat());
-  registerFormat(CreateQoiFormat());
-#if __has_include(<archive.h>)
-  registerFormat(CreateExtensionFormat());
-#endif
-
-#ifdef ASEPRITE_WITH_WEBP_SUPPORT
-  registerFormat(CreateWebPFormat());
-#endif
-}
-
-void FileFormatsManager::registerFormat(FileFormat* fileFormat)
-{
-  m_formats.push_back(fileFormat);
-}
-
-FileFormatsList::iterator FileFormatsManager::begin()
-{
-  return m_formats.begin();
-}
-
-FileFormatsList::iterator FileFormatsManager::end()
-{
-  return m_formats.end();
-}
-
-FileFormat* FileFormatsManager::getFileFormatByExtension(const char* extension) const
-{
-  char buf[512], *tok;
-
-  for (FileFormat* ff : m_formats) {
-    std::strcpy(buf, ff->extensions());
-
-    for (tok=std::strtok(buf, ","); tok;
-         tok=std::strtok(NULL, ",")) {
+  std::string extensions;
+  for (auto& ff : m_formats) {
+    extensions = ff->extensions();
+    for (auto tok=std::strtok(extensions.data(), ","); tok; tok=std::strtok(NULL, ",")) {
       if (base::utf8_icmp(extension, tok) == 0)
-        return ff;
+        return ff.get();
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 } // namespace app

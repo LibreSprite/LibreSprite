@@ -47,10 +47,7 @@ class PngFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreatePngFormat()
-{
-  return new PngFormat;
-}
+static FileFormat::Regular<PngFormat> ff{"png"};
 
 static void report_png_error(png_structp png_ptr, png_const_charp error)
 {

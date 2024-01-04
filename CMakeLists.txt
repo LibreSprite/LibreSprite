@@ -166,9 +166,9 @@ find_package(PNG REQUIRED)
 include_directories(${PNG_INCLUDE_DIRS})
 
 # libwebp
-if(WITH_WEBP_SUPPORT)
-  find_package(PkgConfig)
-  pkg_check_modules(WEBP libwebp REQUIRED)
+find_package(WEBP)
+if(WEBP_FOUND)
+  message(STATUS "Enabling WEBP support")
   include_directories(${WEBP_INCLUDE_DIR})
 endif()
 
@@ -183,9 +183,6 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 
 find_package(GIF REQUIRED)
 include_directories(${GIF_INCLUDE_DIRS})
-
-##find_package(GTest REQUIRED)
-#include_directories(${GTEST_INCLUDE_DIRS})
 
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})

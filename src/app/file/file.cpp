@@ -45,15 +45,13 @@ std::string get_readable_extensions()
 {
   std::string buf;
 
-  for (const FileFormat* format : *FileFormatsManager::instance()) {
-    if (format->support(FILE_SUPPORT_LOAD)) {
-      std::string_view extensions = format->extensions();
-      if (extensions.empty())
-        continue;
-      if (!buf.empty())
-        buf.push_back(',');
-      buf += extensions;
-    }
+  for (auto format : FileFormatsManager::instance()->support(FILE_SUPPORT_LOAD)) {
+    std::string_view extensions = format->extensions();
+    if (extensions.empty())
+      continue;
+    if (!buf.empty())
+      buf.push_back(',');
+    buf += extensions;
   }
 
   return buf;
@@ -63,12 +61,10 @@ std::string get_writable_extensions()
 {
   std::string buf;
 
-  for (const FileFormat* format : *FileFormatsManager::instance()) {
-    if (format->support(FILE_SUPPORT_SAVE)) {
-      if (!buf.empty())
-        buf.push_back(',');
-      buf += format->extensions();
-    }
+  for (auto format : FileFormatsManager::instance()->support(FILE_SUPPORT_SAVE)) {
+    if (!buf.empty())
+      buf.push_back(',');
+    buf += format->extensions();
   }
 
   return buf;
@@ -574,9 +570,7 @@ void FileOp::operateLoad(IFileOpProgress* progress)
 
   std::vector<std::pair<FileFormat*, int>> loaders;
 
-  for (auto format : *FileFormatsManager::instance()) {
-      if (!format->support(FILE_SUPPORT_LOAD))
-        continue;
+  for (auto format : FileFormatsManager::instance()->support(FILE_SUPPORT_LOAD)) {
       int priority = format->loadPriority();
       for (auto& supported : base::split(format->extensions(), ',')) {
         if (supported == extension) {

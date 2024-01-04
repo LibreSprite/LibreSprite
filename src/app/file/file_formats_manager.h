@@ -1,5 +1,6 @@
-// Aseprite
+// LibreSprite
 // Copyright (C) 2001-2015  David Capello
+// Copyright (c) 2024 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -7,15 +8,14 @@
 
 #pragma once
 
+#include "app/file/file_format.h"
+#include "base/injection.h"
 #include <vector>
 
 namespace app {
-
-  class FileFormat;
-
   // A list of file formats. Used by the FileFormatsManager to keep
   // track of all known file extensions supported by ASE.
-  typedef std::vector<FileFormat*> FileFormatsList;
+  typedef std::vector<inject<FileFormat>> FileFormatsList;
 
   // Manages the list of known formats by ASEPRITE (image file format that can
   // be loaded and/or saved).
@@ -25,21 +25,12 @@ namespace app {
     static FileFormatsManager* instance();
     static void destroyInstance();
 
-    virtual ~FileFormatsManager();
+    std::vector<FileFormat*> support(int);
 
-    void registerAllFormats();
-
-    // Iterators to access to the list of formats.
-    FileFormatsList::iterator begin();
-    FileFormatsList::iterator end();
-
-    FileFormat* getFileFormatByExtension(const char* extension) const;
+    FileFormat* getFileFormatByExtension(const char* extension);
 
   private:
-    // Register one format.
-    void registerFormat(FileFormat* fileFormat);
-
-    FileFormatsList m_formats;
+    FileFormatsList m_formats = FileFormat::getAll();
   };
 
 } // namespace app

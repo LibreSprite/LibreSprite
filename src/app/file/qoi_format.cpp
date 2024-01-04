@@ -45,10 +45,7 @@ class QoiFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreateQoiFormat()
-{
-  return new QoiFormat;
-}
+static FileFormat::Regular<QoiFormat> ff{"qoi"};
 
 bool QoiFormat::onLoad(FileOp* fop)
 {

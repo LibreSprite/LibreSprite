@@ -88,10 +88,9 @@ set(file_formats
   file/png_format.cpp
   file/qoi_format.cpp
   file/she_format.cpp
-  file/tga_format.cpp)
-if(WITH_WEBP_SUPPORT)
-  list(APPEND file_formats file/webp_format.cpp)
-endif()
+  file/tga_format.cpp
+  file/webp_format.cpp
+)
 
 add_library(app-lib
   app.cpp

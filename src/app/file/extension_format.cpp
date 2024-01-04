@@ -40,10 +40,7 @@ class ExtensionFormat : public FileFormat {
   bool onSave(FileOp* fop) override {return false;}
 };
 
-FileFormat* CreateExtensionFormat()
-{
-  return new ExtensionFormat;
-}
+static FileFormat::Regular<ExtensionFormat> ff{"extension"};
 
 class Archive {
   std::shared_ptr<void> lib;
