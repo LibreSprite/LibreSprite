@@ -12,8 +12,7 @@
 #include "config.h"
 #endif
 
-#include "ui/manager.h"
-
+#include "app/task_manager.h"
 #include "base/scoped_value.h"
 #include "base/time.h"
 #include "she/display.h"
@@ -22,6 +21,7 @@
 #include "she/surface.h"
 #include "she/system.h"
 #include "ui/intern.h"
+#include "ui/manager.h"
 #include "ui/ui.h"
 
 #ifdef DEBUG_PAINT_EVENTS
@@ -125,6 +125,8 @@ Manager::~Manager()
   if (m_defaultManager == this) {
     // No more cursor
     set_mouse_cursor(kNoCursor);
+
+    app::TaskManager::cleanup();
 
     // Destroy timers
     Timer::checkNoTimers();

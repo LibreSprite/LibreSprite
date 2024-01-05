@@ -221,6 +221,8 @@ namespace app {
       }
     }
 
+    static inline TaskManager* manager;
+
   public:
     void delayed(std::function<void()>&& func) {
       if (!m_timer.isRunning())
@@ -274,9 +276,14 @@ namespace app {
     }
 
     static TaskManager& instance() {
-      // static auto manager = new TaskManager();
-      static TaskManager manager;
-      return manager;
+      if (!manager)
+        manager = new TaskManager();
+      return *manager;
+    }
+
+    static void cleanup() {
+      delete manager;
+      manager = nullptr;
     }
   };
 
