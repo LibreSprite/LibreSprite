@@ -68,7 +68,7 @@ set(SRC_FILES
   # ${SRC}/app/errno_tests.cpp
   # ${SRC}/app/file/file_tests.cpp
   # ${SRC}/app/file/split_filename_tests.cpp
-  # ${SRC}/app/file/webp_format.cpp
+  ${SRC}/app/file/webp_format.cpp
   # ${SRC}/app/filename_formatter_tests.cpp
   # ${SRC}/app/ini_file_tests.cpp
   # ${SRC}/base/base64_tests.cpp

@@ -166,10 +166,20 @@ find_package(PNG REQUIRED)
 include_directories(${PNG_INCLUDE_DIRS})
 
 # libwebp
-find_package(WEBP)
+find_package(WEBP QUIET)
 if(WEBP_FOUND)
   message(STATUS "Enabling WEBP support")
   include_directories(${WEBP_INCLUDE_DIR})
+else()
+  find_package(PkgConfig)
+  if (PkgConfig_FOUND)
+    pkg_search_module(WEBP libwebp)
+    if (WEBP_FOUND)
+      message(STATUS "Enabling WEBP support")
+      include_directories(${WEBP_INCLUDE_DIRS})
+      set(WEB_LIBRARIES ${WEBP_LDFLAGS})
+    endif()
+  endif()
 endif()
 
 # pixman
@@ -188,7 +198,7 @@ find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
 # v8
-find_package(V8)
+find_package(V8 QUIET)
 if(V8_FOUND)
   include_directories(${V8_INCLUDE_DIR})
   add_definitions(-DSCRIPT_ENGINE_V8=1)
