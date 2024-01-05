@@ -113,7 +113,7 @@ public:
         yield(event, cycles - 1);
         return;
       }
-      app::AppScripting::raiseEvent(fileName, event.empty() ? "yield" : event);
+      app::AppScripting::raiseEvent(fileName, {event.empty() ? "yield" : event});
     });
   }
 

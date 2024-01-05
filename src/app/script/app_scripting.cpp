@@ -83,7 +83,7 @@ namespace app {
     if (!instance.eval({std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()}))
       return false;
 
-    engine->raiseEvent("init");
+    engine->raiseEvent({"init"});
 
     previousFileName = fileName;
     return true;

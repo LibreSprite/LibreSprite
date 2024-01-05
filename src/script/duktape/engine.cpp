@@ -109,8 +109,23 @@ public:
     duk_destroy_heap(m_handle);
   }
 
-  bool raiseEvent(const std::string& event) override {
-    return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
+  bool raiseEvent(const std::vector<std::string>& event) override {
+    try {
+      duk_push_global_object(m_handle);
+      duk_get_prop_string(m_handle, -1, "onEvent");
+      if (duk_is_callable(m_handle, -1)) {
+        for (auto& str : event) {
+          duk_push_string(m_handle, str.c_str());
+        }
+        duk_call(m_handle, event.size());
+        duk_pop(m_handle);// remove return value
+      }
+      duk_pop(m_handle);// remove global object
+      // return eval("if (typeof onEvent === \"function\") onEvent(\"" + join(event, "\",\"") + "\");");
+    } catch (const std::exception& ex) {
+      return false;
+    }
+    return true;
   }
 
   bool eval(const std::string& code) override {

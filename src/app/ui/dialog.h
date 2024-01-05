@@ -80,7 +80,7 @@ public:
 
   void closeWindow(bool raiseEvent, bool notifyManager){
     if (raiseEvent) {
-      app::AppScripting::raiseEvent(m_scriptFileName, id() + "_close");
+      app::AppScripting::raiseEvent(m_scriptFileName, {id() + "_close"});
     }
     if (notifyManager) {
       manager()->_closeWindow(this, true);
