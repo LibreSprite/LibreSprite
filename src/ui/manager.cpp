@@ -1273,37 +1273,7 @@ void Manager::pumpQueue()
 
 #ifdef REPORT_EVENTS
       {
-        static char *msg_name[] = {
-          "kOpenMessage",
-          "kCloseMessage",
-          "kCloseDisplayMessage",
-          "kResizeDisplayMessage",
-          "kPaintMessage",
-          "kTimerMessage",
-          "kDropFilesMessage",
-          "kWinMoveMessage",
-
-          "kKeyDownMessage",
-          "kKeyUpMessage",
-          "kFocusEnterMessage",
-          "kFocusLeaveMessage",
-
-          "kMouseDownMessage",
-          "kMouseUpMessage",
-          "kDoubleClickMessage",
-          "kMouseEnterMessage",
-          "kMouseLeaveMessage",
-          "kMouseMoveMessage",
-          "kSetCursorMessage",
-          "kMouseWheelMessage",
-          "kTouchMagnifyMessage",
-        };
-        const char* string =
-          (msg->type() >= kOpenMessage &&
-           msg->type() <= kMouseWheelMessage) ? msg_name[msg->type()]:
-                                                "Unknown";
-
-        std::cout << "Event " << msg->type() << " (" << string << ") "
+        std::cout << "Event " << msg->type() << " (" << ui::to_string(msg->type()) << ") "
                   << "for " << typeid(*widget).name();
         if (!widget->id().empty())
           std::cout << " (" << widget->id() << ")";
