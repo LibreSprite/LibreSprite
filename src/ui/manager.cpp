@@ -931,6 +931,12 @@ void Manager::removeMessagesForTimer(Timer* timer)
   }
 }
 
+void Manager::removeMessageListener(Widget* widget) {
+  auto it = std::find(m_messageListeners.begin(), m_messageListeners.end(), widget);
+  if (it != m_messageListeners.end())
+    m_messageListeners.erase(it);
+}
+
 void Manager::addMessageFilter(int message, Widget* widget)
 {
   int c = message;
@@ -1255,9 +1261,15 @@ void Manager::pumpQueue()
     }
 
     bool done = false;
+
+    for (auto listener : m_messageListeners)
+      done = listener->sendMessage(msg);
+
     for (auto widget : msg->recipients()) {
       if (!widget)
         continue;
+      if (done)
+        break;
 
 #ifdef REPORT_EVENTS
       {
@@ -1348,9 +1360,6 @@ void Manager::pumpQueue()
         // Call the message handler
         done = widget->sendMessage(msg);
       }
-
-      if (done)
-        break;
     }
 
     // Remove the message from the msg_queue
