@@ -370,6 +370,6 @@ inject<BaseClass_>::inject(const std::string& name) {
     onDetach = registryEntry.detach;
     m_ptr = registryEntry.attach();
   } else {
-    std::cout << "Could not create " << name << std::endl;
+    std::cout << "Could not create " << typeid(BaseClass).name() << " named \"" << name << "\"" << std::endl;
   }
 }
