@@ -316,11 +316,10 @@ namespace she {
 
     void getEvent(Event& event, bool) override {
       event.setType(Event::None);
-      if (she::instance()->isGfxThread()) {
+      if (m_events.try_pop(event))
+        return;
+      if (she::instance()->isGfxThread())
 	getEventInternal(event, false);
-      } else {
-	m_events.try_pop(event);
-      }
     }
 
     void getEventInternal(Event& event, bool) {
