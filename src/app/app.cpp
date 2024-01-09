@@ -183,6 +183,7 @@ void App::initialize(const AppOptions& options)
   UIContext* ctx = UIContext::instance();
   if (isGui()) {
     LOG("GUI mode\n");
+    script::EngineDelegate::setDefault("gui");
 
     // Setup the GUI cursor and redraw screen
 

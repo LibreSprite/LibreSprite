@@ -50,7 +50,6 @@ void RunScriptCommand::onLoadParams(const Params& params)
 
 void RunScriptCommand::onExecute(Context* context)
 {
-  script::EngineDelegate::setDefault("gui");
   AppScripting::evalFile(m_filename);
   ui::Manager::getDefault()->invalidate();
 }

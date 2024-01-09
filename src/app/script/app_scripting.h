@@ -24,6 +24,8 @@ namespace app {
     static const std::string& getFileName() {return m_fileName;}
     static bool evalFile(const std::string& fileName);
     static void raiseEvent(const std::string& fileName, const std::vector<std::string>& event);
+    static bool scanScript(const std::string& fullPath);
+    static void clearEventHooks();
 
     bool eval(const std::string& code);
     void printLastResult();
