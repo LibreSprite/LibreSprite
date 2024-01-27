@@ -66,6 +66,7 @@ namespace app {
     }
 
     virtual int loadPriority() {return 1;}
+    virtual int listPriority() {return 1;}
 
   protected:
     virtual const char* onGetName() const = 0;

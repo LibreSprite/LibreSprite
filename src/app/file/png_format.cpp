@@ -28,6 +28,7 @@ namespace app {
 using namespace base;
 
 class PngFormat : public FileFormat {
+  int listPriority() override {return 0;}
   const char* onGetName() const override { return "png"; }
   const char* onGetExtensions() const override { return "png"; }
   int onGetFlags() const override {

@@ -42,6 +42,7 @@ std::vector<FileFormat*> FileFormatsManager::support(int flags)
     if (ff->support(flags))
       pick.push_back(ff.get());
   }
+  std::sort(pick.begin(), pick.end(), [](auto a, auto b){return a->listPriority() < b->listPriority();});
   return pick;
 }
 
