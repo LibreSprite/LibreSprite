@@ -84,6 +84,7 @@ public:
 
   bool raiseEvent(const std::vector<std::string>& event) override {
     // return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
+    bool success = true;
     try {
       v8::Isolate::Scope isolatescope(m_isolate);
       // Create a stack-allocated handle scope.
@@ -118,14 +119,15 @@ public:
         } else {
           m_delegate->onConsolePrint(*utf8);
         }
-        return false;
+        success = false;
       }
 
     } catch (const std::exception& ex) {
       m_delegate->onConsolePrint(ex.what());
-      return false;
+      success = false;
     }
-    return true;
+    execAfterEval(success);
+    return success;
   }
 
   bool eval(const std::string& code) override {

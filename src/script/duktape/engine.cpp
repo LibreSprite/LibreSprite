@@ -110,6 +110,7 @@ public:
   }
 
   bool raiseEvent(const std::vector<std::string>& event) override {
+    bool success = true;
     try {
       duk_push_global_object(m_handle);
       duk_get_prop_string(m_handle, -1, "onEvent");
@@ -123,9 +124,10 @@ public:
       duk_pop(m_handle);// remove global object
       // return eval("if (typeof onEvent === \"function\") onEvent(\"" + join(event, "\",\"") + "\");");
     } catch (const std::exception& ex) {
-      return false;
+      success = false;
     }
-    return true;
+    execAfterEval(success);
+    return success;
   }
 
   bool eval(const std::string& code) override {

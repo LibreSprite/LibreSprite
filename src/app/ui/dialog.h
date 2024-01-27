@@ -27,7 +27,9 @@ public:
   ~Dialog() {
     if (m_grid) {
       m_grid->removeAllChildren();
-      removeChild(m_grid.get());
+      // m_grid might have been removed if the dialog was already closed
+      if (m_grid->parent())
+        removeChild(m_grid.get());
     }
   }
 
@@ -55,6 +57,7 @@ public:
     if (m_grid) {
       m_grid->removeAllChildren();
       removeChild(m_grid.get());
+      m_grid.reset();
     }
 
     std::size_t maxColumns = 1;
