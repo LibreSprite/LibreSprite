@@ -108,7 +108,7 @@ private:
                     gfx::getg(color),
                     gfx::getb(color),
                     gfx::geta(color)),
-          true));                   // antialias
+          false));                   // antialias
 
       View* view = View::getView(listbox);
       view->updateView();
