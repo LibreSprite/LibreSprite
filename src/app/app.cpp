@@ -172,9 +172,6 @@ void App::initialize(const AppOptions& options)
   if (isGui() && preferences().general.dataRecovery())
     m_modules->createDataRecovery();
 
-  // Register well-known image file types.
-  FileFormatsManager::instance()->registerAllFormats();
-
   if (isPortable())
     LOG("Running in portable mode\n");
 
@@ -186,6 +183,7 @@ void App::initialize(const AppOptions& options)
   UIContext* ctx = UIContext::instance();
   if (isGui()) {
     LOG("GUI mode\n");
+    script::EngineDelegate::setDefault("gui");
 
     // Setup the GUI cursor and redraw screen
 

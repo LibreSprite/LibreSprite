@@ -83,10 +83,7 @@ class GifFormat : public FileFormat {
   base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
-FileFormat* CreateGifFormat()
-{
-  return new GifFormat;
-}
+static FileFormat::Regular<GifFormat> ff{"gif"};
 
 static int interlaced_offset[] = { 0, 4, 2, 1 };
 static int interlaced_jumps[] = { 8, 8, 4, 2 };

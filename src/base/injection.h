@@ -241,6 +241,17 @@ public:
     return *registry;
   }
 
+  static std::vector<inject<BaseClass>> getAll() {
+    std::vector<inject<BaseClass>> all;
+    auto& registry = getRegistry();
+    all.reserve(registry.size());
+    for (auto& entry : registry) {
+      if (!entry.first.empty())
+        all.emplace_back(entry.first);
+    }
+    return all;
+  }
+
   static std::vector<inject<BaseClass>> getAllWithFlag(const std::string& flag) {
     std::vector<std::string> temp;
     std::vector<inject<BaseClass>> all;
@@ -359,6 +370,6 @@ inject<BaseClass_>::inject(const std::string& name) {
     onDetach = registryEntry.detach;
     m_ptr = registryEntry.attach();
   } else {
-    std::cout << "Could not create " << name << std::endl;
+    std::cout << "Could not create " << typeid(BaseClass).name() << " named \"" << name << "\"" << std::endl;
   }
 }

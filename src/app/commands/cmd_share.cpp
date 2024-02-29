@@ -25,6 +25,38 @@
 extern void _AndroidShareFile(const std::string& path);
 #endif
 
+#if defined(EMSCRIPTEN)
+#include "she/system.h"
+#include <emscripten/emscripten.h>
+#include "base/file_handle.h"
+#include "base/path.h"
+
+static void EmscriptenShareFile(const std::string& path) {
+  she::instance()->gfx([=]{
+    std::vector<uint8_t> bytes;
+    auto handle = base::open_file_with_exception(path, "rb");
+    FILE* f = handle.get();
+    fseek(f, 0, SEEK_END);
+    bytes.resize(ftell(f));
+    fseek(f, 0, SEEK_SET);
+    fread(bytes.data(), bytes.size(), 1, f);
+
+    EM_ASM({
+	const array = new Uint8Array($1);
+	for (let i = 0; i < $1; ++i)
+	  array[i] = getValue($0 + i, 'i8');
+	const blob = new Blob([array], {type:'application/octet-stream'});
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = UTF8ToString($2);
+	a.click();
+	URL.revokeObjectURL(url);
+      }, bytes.data(), bytes.size(), base::get_file_name(path).c_str());
+  });
+}
+#endif
+
 namespace app {
 
   class ShareCommand : public Command {
@@ -36,11 +68,10 @@ namespace app {
 
   protected:
     bool onEnabled(Context* context) override {
-#if defined(ANDROID)
+#if defined(ANDROID) || defined(__EMSCRIPTEN__)
       return context->checkFlags(ContextFlags::ActiveDocumentIsWritable);
-#else
-      return false;
 #endif
+      return false;
     }
 
     void onExecute(Context* context) override {
@@ -55,6 +86,10 @@ namespace app {
 
 #if defined(ANDROID)
       _AndroidShareFile(document->filename());
+#endif
+
+#if defined(EMSCRIPTEN)
+      EmscriptenShareFile(document->filename());
 #endif
     }
   };

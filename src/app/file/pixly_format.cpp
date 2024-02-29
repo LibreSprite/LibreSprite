@@ -47,10 +47,7 @@ class PixlyFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreatePixlyFormat()
-{
-  return new PixlyFormat;
-}
+static FileFormat::Regular<PixlyFormat> ff{"anim"};
 
 template<typename Any> static Any* check(Any* a, Any* alt = NULL) {
   if (a == NULL) {

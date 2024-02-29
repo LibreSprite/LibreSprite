@@ -47,4 +47,34 @@ namespace ui {
     kLastRegisteredMessage = 0x7fffffff
   };
 
+  inline const char* to_string(MessageType type) {
+    if (type >= kFirstRegisteredMessage)
+      return "";
+    switch (type) {
+    case kOpenMessage: return "Open";
+    case kCloseMessage: return "Close";
+    case kCloseDisplayMessage: return "CloseDisplay";
+    case kResizeDisplayMessage: return "ResizeDisplay";
+    case kPaintMessage: return "Paint";
+    case kTimerMessage: return "Timer";
+    case kDropFilesMessage: return "DropFiles";
+    case kWinMoveMessage: return "WinMove";
+    case kKeyDownMessage: return "KeyDown";
+    case kKeyUpMessage: return "KeyUp";
+    case kFocusEnterMessage: return "FocusEnter";
+    case kFocusLeaveMessage: return "FocusLeave";
+    case kMouseDownMessage: return "MouseDown";
+    case kMouseUpMessage: return "MouseUp";
+    case kDoubleClickMessage: return "DoubleClick";
+    case kMouseEnterMessage: return "MouseEnter";
+    case kMouseLeaveMessage: return "MouseLeave";
+    case kMouseMoveMessage: return "MouseMove";
+    case kSetCursorMessage: return "SetCursor";
+    case kMouseWheelMessage: return "MouseWheel";
+    case kTouchMagnifyMessage: return "TouchMagnify";
+    case kFirstRegisteredMessage: return "FirstRegistered";
+    case kLastRegisteredMessage: return "LastRegistered";
+    }
+    return "";
+  }
 } // namespace ui

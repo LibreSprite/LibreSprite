@@ -36,10 +36,6 @@ public:
     delete m_nativeDialogs;
   }
 
-  void dispose() override {
-    delete this;
-  }
-
   Logger* logger() override {
 #ifdef __APPLE__
     return getOsxLogger();

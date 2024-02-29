@@ -60,10 +60,7 @@ class BmpFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreateBmpFormat()
-{
-  return new BmpFormat;
-}
+static FileFormat::Regular<BmpFormat> ff{"bmp"};
 
 #define BI_RGB          0
 #define BI_RLE8         1

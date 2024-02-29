@@ -9,6 +9,8 @@
 #include "config.h"
 #endif
 
+#if __has_include(<webp/encode.h>)
+
 #include "app/app.h"
 #include "app/console.h"
 #include "app/context.h"
@@ -57,10 +59,7 @@ class WebPFormat : public FileFormat {
 base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
-FileFormat* CreateWebPFormat()
-{
-  return new WebPFormat;
-}
+static FileFormat::Regular<WebPFormat> ff{"webp"};
 
 const char* getDecoderErrorMessage(VP8StatusCode statusCode)
 {
@@ -367,3 +366,5 @@ base::SharedPtr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
 }
 
 } // namespace app
+
+#endif

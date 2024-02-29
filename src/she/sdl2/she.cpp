@@ -26,12 +26,20 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #endif
+
 #include <iostream>
 #include <cassert>
 #include <list>
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
+#include <chrono>
+#include <thread>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
@@ -208,6 +216,52 @@ she::KeyModifiers getSheModifiers() {
   return (she::KeyModifiers) mod;
 }
 
+#ifdef __EMSCRIPTEN__
+EM_JS(int, get_canvas_width, (), { return canvas.clientWidth; });
+EM_JS(int, get_canvas_height, (), { return canvas.clientHeight; });
+static int oldWidth, oldHeight;
+
+static void addEventListener(const std::string& name, void (*function)(void*), void* data = nullptr) {
+  EM_ASM({
+    canvas.addEventListener(UTF8ToString($0), (event) => {
+      window.event = event;
+      dynCall('vi', $1, [$2]);
+    });
+  }, name.c_str(), function, data);
+}
+
+static void cancelEvent(void*) {
+  EM_ASM({
+    event.stopPropagation();
+    event.preventDefault();
+  });
+}
+
+static bool wrapped;
+static void patchEventListeners() {
+  if (wrapped)
+    return;
+  wrapped = EM_ASM_INT({
+    let handle = 0;
+    JSEvents.eventHandlers.forEach(handler => {
+	if (handler.eventTypeString == 'keydown' || handler.eventTypeString == 'keyup') {
+          handle = handler.callbackfunc;
+	  let tmp = getWasmTableEntry(handle);
+	  function wrapper(...args) {
+	    let ret = tmp(...args);
+	    let keyCode = GROWABLE_HEAP_I32()[(args[1] >> 2) + 9];
+	    return ret && keyCode != 86;
+	  }
+	  if (tmp.name != wrapper.name)
+	    wasmTableMirror[handle] = wrapper;
+	}
+    });
+    return !!handle;
+  });
+}
+
+#endif
+
 static std::deque<she::Event> keybuffer;
 static bool display_has_mouse = false;
 namespace she {
@@ -246,7 +300,29 @@ namespace she {
       }
     }
 
+    void refresh() {
+      if (!m_events.empty())
+	return;
+      Event event;
+      while (true) {
+	event.setType(Event::None);
+	getEventInternal(event, false);
+	if (event.type() == Event::None) {
+	  return;
+	}
+	m_events.push(event);
+      }
+    }
+
     void getEvent(Event& event, bool) override {
+      event.setType(Event::None);
+      if (m_events.try_pop(event))
+        return;
+      if (she::instance()->isGfxThread())
+	getEventInternal(event, false);
+    }
+
+    void getEventInternal(Event& event, bool) {
       SDL_Event sdlEvent;
       while (SDL_PollEvent(&sdlEvent)) {
         switch (sdlEvent.type) {
@@ -282,6 +358,9 @@ namespace she {
             continue;
 
           case SDL_WINDOWEVENT_RESIZED: {
+	    #ifdef __EMSCRIPTEN__
+	    continue;
+	    #else
             auto display = sdl::windowIdToDisplay[sdlEvent.window.windowID];
             display->setWidth(sdlEvent.window.data1);
             display->setHeight(sdlEvent.window.data2);
@@ -289,6 +368,7 @@ namespace she {
             event.setType(Event::ResizeDisplay);
             event.setDisplay(display);
             return;
+	    #endif
           }
 
           case SDL_WINDOWEVENT_LEAVE: {
@@ -297,7 +377,7 @@ namespace she {
 
               Event ev;
               ev.setType(Event::MouseLeave);
-              queue_event(ev);
+              m_events.push(ev);
               break;
             }
           }
@@ -313,7 +393,7 @@ namespace she {
             display_has_mouse = true;
             Event ev;
             ev.setType(Event::MouseEnter);
-            queue_event(ev);
+            m_events.push(ev);
           }
 
           event.setType(Event::MouseMove);
@@ -348,7 +428,7 @@ namespace she {
           event.setModifiers(getSheModifiers());
 
           if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
-            queue_event(event);
+            m_events.push(event);
             event.setType(Event::MouseDoubleClick);
             event.setPosition(event.position());
             event.setButton(event.button());
@@ -452,9 +532,6 @@ namespace she {
         keybuffer.pop_front();
         return;
       }
-
-      if (!m_events.try_pop(event))
-        event.setType(Event::None);
     }
 
     void queueEvent(const Event& event) override {
@@ -462,7 +539,6 @@ namespace she {
     }
 
   private:
-    // We probably don't need a concurrent queue here.
     base::concurrent_queue<Event> m_events;
   };
 
@@ -478,13 +554,164 @@ namespace she {
     }
 
     ~SDL2System() {
+      shutdown = true;
+      sleeping = false;
+      if (mainThread.joinable())
+	mainThread.join();
       IMG_Quit();
       SDL_Quit();
       g_instance = nullptr;
     }
 
-    void dispose() override {
-      delete this;
+    bool shutdown{false};
+    std::thread mainThread;
+    std::thread::id mainThreadId;
+    std::thread::id gfxThreadId;
+    std::vector<std::function<void()>> gfxQueue;
+    std::atomic<bool> sleeping{false};
+
+    bool isGfxThread() override {
+      return std::this_thread::get_id() == gfxThreadId;
+    }
+
+    bool isMainThread() override {
+      return std::this_thread::get_id() == mainThreadId;
+    }
+
+    void gfx(std::function<void()>&& func, bool sleep) override {
+      if (isGfxThread()) {
+	func();
+	return;
+      }
+      gfxQueue.emplace_back(std::move(func));
+      if (sleep)
+	this->sleep();
+    }
+
+    using Timestamp = std::chrono::high_resolution_clock::time_point;
+    Timestamp start = std::chrono::high_resolution_clock::now();
+
+    void sleep() override {
+      using namespace std::chrono_literals;
+      if (shutdown)
+	return;
+
+      if (mainThreadId == gfxThreadId) {
+	refresh();
+	auto now = std::chrono::high_resolution_clock::now();
+
+	// If the dispatching of messages was faster than 10 milliseconds,
+	// it means that the process is not using a lot of CPU, so we can
+	// wait the difference to cover those 10 milliseconds
+	// sleeping. With this code we can avoid 100% CPU usage.
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+	start = now;
+
+	if (elapsed < 15ms)
+	  std::this_thread::sleep_for(15ms - elapsed);
+      } else if (isMainThread()) {
+	sleeping = true;
+	while (sleeping) {
+	  using namespace std::chrono_literals;
+	  std::this_thread::sleep_for(10ms);
+	}
+      }
+    }
+
+    int run(std::function<int()>&& func) override {
+      gfxThreadId = std::this_thread::get_id();
+      #ifndef EMSCRIPTEN
+      mainThreadId = gfxThreadId;
+      return func();
+      #elif defined(EMSCRIPTEN) && !defined(__EMSCRIPTEN__)
+      // like emscripten, but not really
+      mainThread = std::thread{[this, func = std::move(func)]{
+        mainThreadId = std::this_thread::get_id();
+	func();
+      }};
+      while (!shutdown)(
+	refresh();
+      }
+      #else
+      addEventListener("dragenter", cancelEvent);
+      addEventListener("dragover", cancelEvent);
+
+      addEventListener("drop", [](void*){
+	EM_ASM({
+	  event.stopPropagation();
+	  event.preventDefault();
+	  let files = event.dataTransfer?.files;
+	  if (files?.length) {
+	    for (let i = 0; i < files.length; ++i) {
+	      let fr = new FileReader();
+	      fr.onload = ((fr, name)=>{
+		  try{ FS.mkdir('/tmp'); }catch(ex){}
+		  FS.writeFile('/tmp/' + name, new Uint8Array(fr.result));
+		  canvas.dispatchEvent(new CustomEvent("readFile", {detail:{path:'/tmp/' + name}}));
+		}).bind(null, fr, files[i].name);
+	      fr.readAsArrayBuffer(files[i]);
+	    }
+	  }
+        });
+      });
+
+      addEventListener("readFile", [](void*){
+	auto str = (char*) EM_ASM_PTR({return stringToNewUTF8(event.detail.path)});
+	std::string path = str;
+	free(str);
+	Event event;
+	event.setType(Event::DropFiles);
+	event.setFiles({path});
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->queueEvent(event);
+      });
+
+      mainThread = std::thread{[this, func = std::move(func)]{
+        mainThreadId = std::this_thread::get_id();
+	func();
+      }};
+      emscripten_set_main_loop([]{
+	patchEventListeners();
+	static_cast<SDL2System*>(g_instance)->refresh();
+      }, 0, true);
+      #endif
+      return 0;
+    }
+
+    void refresh() {
+      if (!sleeping) {
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->refresh();
+	return;
+      }
+      #ifdef __EMSCRIPTEN__
+      auto width = get_canvas_width();
+      auto height = get_canvas_height();
+      if (width && height && (oldWidth != width || oldHeight != height) && !sdl::windowIdToDisplay.empty()) {
+	oldWidth = width;
+	oldHeight = height;
+	for (auto& entry : sdl::windowIdToDisplay) {
+	  auto display = entry.second;
+	  SDL_SetWindowSize(display->m_window, width, height);
+	  display->setWidth(width);
+	  display->setHeight(height);
+	  display->recreateSurface();
+	  Event event;
+	  event.setType(Event::ResizeDisplay);
+	  event.setDisplay(display);
+	  static_cast<SDL2EventQueue*>(EventQueue::instance())->queueEvent(event);
+	}
+      }
+      #endif
+      int frames = 5;
+      do {
+	for (auto it = gfxQueue.begin(); it != gfxQueue.end(); ++it) {
+	  (*it)();
+	}
+	gfxQueue.clear();
+	sleeping = false;
+	for (auto& entry : sdl::windowIdToDisplay)
+	  entry.second->present();
+	static_cast<SDL2EventQueue*>(EventQueue::instance())->refresh();
+      } while (sleeping && --frames);
     }
 
     void activateApp() override {
@@ -550,14 +777,14 @@ namespace she {
     Surface* loadSurface(const char* filename) override {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)
-        throw std::runtime_error("Error loading image");
+	throw std::runtime_error(std::string{"Error loading image "} + filename);
       return new SDL2Surface(bmp, SDL2Surface::DeleteAndDestroy);
     }
 
     Surface* loadRgbaSurface(const char* filename) override {
       SDL_Surface* bmp = IMG_Load(filename);
       if (!bmp)
-        throw std::runtime_error("Error loading image");
+	throw std::runtime_error(std::string{"Error loading image "} + filename);
       if (bmp->format->BitsPerPixel < 32) {
         auto copy = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA8888, 0);
         SDL_FreeSurface(bmp);
@@ -631,8 +858,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
   }
-  if (!IMG_Init( IMG_INIT_PNG | IMG_INIT_WEBP | IMG_INIT_JPG )) {
-    std::cerr << "Critical: Could not initialize SDL2_image. Aborting." << std::endl;
+  if (!IMG_Init(-1)) {
+    std::cerr << "Critical: Could not initialize SDL2_image (" << IMG_GetError() << "). Aborting." << std::endl;
     return -2;
   }
 

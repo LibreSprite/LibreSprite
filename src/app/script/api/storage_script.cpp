@@ -153,7 +153,7 @@ public:
     app::HTTP::fetch(url, post, headers, [=](app::HTTP::Result&& result) {
       storage[domainKey][key] = std::move(result.body);
       storage[domainKey][key + "_status"] = result.status;
-      app::AppScripting::raiseEvent(fileName, key + "_fetch");
+      app::AppScripting::raiseEvent(fileName, {key + "_fetch"});
     });
   }
 };

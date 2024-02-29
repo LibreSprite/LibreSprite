@@ -11,6 +11,7 @@
 #include "base/disable_copying.h"
 
 #include <string>
+#include <memory>
 #include <unordered_map>
 
 namespace net {
@@ -30,7 +31,7 @@ public:
   void abort();
 
 private:
-  HttpRequestImpl* m_impl;
+  std::unique_ptr<HttpRequestImpl> m_impl;
 
   DISABLE_COPYING(HttpRequest);
 };

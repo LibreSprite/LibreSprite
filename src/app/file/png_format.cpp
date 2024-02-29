@@ -28,6 +28,7 @@ namespace app {
 using namespace base;
 
 class PngFormat : public FileFormat {
+  int listPriority() override {return 0;}
   const char* onGetName() const override { return "png"; }
   const char* onGetExtensions() const override { return "png"; }
   int onGetFlags() const override {
@@ -47,10 +48,7 @@ class PngFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreatePngFormat()
-{
-  return new PngFormat;
-}
+static FileFormat::Regular<PngFormat> ff{"png"};
 
 static void report_png_error(png_structp png_ptr, png_const_charp error)
 {

@@ -13,6 +13,8 @@
 #include "base/debug.h"
 #include "net/http_response.h"
 
+#if __has_include(<curl/curl.h>)
+
 #include <curl/curl.h>
 
 namespace net {
@@ -99,15 +101,8 @@ private:
   std::string m_body;
 };
 
-HttpRequest::HttpRequest(const std::string& url)
-  : m_impl(new HttpRequestImpl(url))
-{
-}
-
-HttpRequest::~HttpRequest()
-{
-  delete m_impl;
-}
+HttpRequest::HttpRequest(const std::string& url) : m_impl{new HttpRequestImpl(url)} {}
+HttpRequest::~HttpRequest() {}
 
 void HttpRequest::setHeaders(const HttpHeaders& headers)
 {
@@ -130,3 +125,5 @@ void HttpRequest::setPostBody(const std::string& body)
 }
 
 } // namespace net
+
+#endif

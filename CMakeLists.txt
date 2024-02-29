@@ -97,6 +97,7 @@ set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
+set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
 
 # Search in the "cmake" directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -133,6 +134,9 @@ if(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
+# qoi
+include_directories(${QOI_DIR})
+
 # tinyxml2
 find_library(TINYXML2_LIBRARY NAMES tinyxml2)
 find_path(TINYXML2_INCLUDE_DIR NAMES tinyxml2.h)
@@ -162,10 +166,20 @@ find_package(PNG REQUIRED)
 include_directories(${PNG_INCLUDE_DIRS})
 
 # libwebp
-if(WITH_WEBP_SUPPORT)
-  find_package(PkgConfig)
-  pkg_check_modules(WEBP libwebp REQUIRED)
+find_package(WEBP QUIET)
+if(WEBP_FOUND)
+  message(STATUS "Enabling WEBP support")
   include_directories(${WEBP_INCLUDE_DIR})
+else()
+  find_package(PkgConfig)
+  if (PkgConfig_FOUND)
+    pkg_search_module(WEBP libwebp)
+    if (WEBP_FOUND)
+      message(STATUS "Enabling WEBP support")
+      include_directories(${WEBP_INCLUDE_DIRS})
+      set(WEB_LIBRARIES ${WEBP_LDFLAGS})
+    endif()
+  endif()
 endif()
 
 # pixman
@@ -180,14 +194,11 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 find_package(GIF REQUIRED)
 include_directories(${GIF_INCLUDE_DIRS})
 
-##find_package(GTest REQUIRED)
-#include_directories(${GTEST_INCLUDE_DIRS})
-
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
 # v8
-find_package(V8)
+find_package(V8 QUIET)
 if(V8_FOUND)
   include_directories(${V8_INCLUDE_DIR})
   add_definitions(-DSCRIPT_ENGINE_V8=1)

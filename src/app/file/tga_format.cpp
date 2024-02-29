@@ -41,10 +41,7 @@ class TgaFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreateTgaFormat()
-{
-  return new TgaFormat;
-}
+static FileFormat::Regular<TgaFormat> ff{"tga"};
 
 /* rle_tga_read:
  *  Helper for reading 256 color RLE data from TGA files.

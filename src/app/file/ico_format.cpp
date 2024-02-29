@@ -46,10 +46,7 @@ class IcoFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreateIcoFormat()
-{
-  return new IcoFormat;
-}
+static FileFormat::Regular<IcoFormat> ff{"ico"};
 
 struct ICONDIR {
   uint16_t reserved;

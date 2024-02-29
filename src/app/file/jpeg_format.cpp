@@ -59,10 +59,7 @@ class JpegFormat : public FileFormat {
   base::SharedPtr<FormatOptions> onGetFormatOptions(FileOp* fop) override;
 };
 
-FileFormat* CreateJpegFormat()
-{
-  return new JpegFormat;
-}
+static FileFormat::Regular<JpegFormat> ff{"jpg"};
 
 struct error_mgr {
   struct jpeg_error_mgr head;

@@ -82,8 +82,52 @@ public:
     m_context = v8::Global<v8::Context>(m_isolate, v8::Context::New(m_isolate));
   }
 
-  bool raiseEvent(const std::string& event) override {
-    return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
+  bool raiseEvent(const std::vector<std::string>& event) override {
+    // return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
+    bool success = true;
+    try {
+      v8::Isolate::Scope isolatescope(m_isolate);
+      // Create a stack-allocated handle scope.
+      v8::HandleScope handle_scope(m_isolate);
+
+      // Enter the context for compiling and running the hello world script.
+      v8::Context::Scope context_scope(context());
+
+      v8::TryCatch trycatch(m_isolate);
+
+      auto global = context()->Global();
+
+      auto onEvent = ToLocal(global->Get(context(), ToLocal(v8::String::NewFromUtf8(m_isolate, "onEvent"))));
+      if (!onEvent.IsEmpty() && onEvent->IsFunction()) {
+        std::vector<v8::Local<v8::Value>> argv;
+        argv.reserve(event.size());
+        for (auto& str : event) {
+          argv.emplace_back(ToLocal(v8::String::NewFromUtf8(m_isolate, str.c_str())));
+        }
+        Check(onEvent.As<v8::Function>()->Call(context(), global, event.size(), argv.data()));
+      }
+
+      if (trycatch.HasCaught()) {
+        v8::Local<v8::Value> exception = trycatch.Exception();
+        auto trace = trycatch.StackTrace(context());
+
+        v8::String::Utf8Value utf8(m_isolate, exception);
+
+        if (!trace.IsEmpty()){
+          v8::String::Utf8Value utf8Trace(m_isolate, ToLocal(trace));
+          m_delegate->onConsolePrint(*utf8Trace);
+        } else {
+          m_delegate->onConsolePrint(*utf8);
+        }
+        success = false;
+      }
+
+    } catch (const std::exception& ex) {
+      m_delegate->onConsolePrint(ex.what());
+      success = false;
+    }
+    execAfterEval(success);
+    return success;
   }
 
   bool eval(const std::string& code) override {

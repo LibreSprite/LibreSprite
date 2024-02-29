@@ -12,8 +12,7 @@
 #include "config.h"
 #endif
 
-#include "ui/manager.h"
-
+#include "app/task_manager.h"
 #include "base/scoped_value.h"
 #include "base/time.h"
 #include "she/display.h"
@@ -22,6 +21,7 @@
 #include "she/surface.h"
 #include "she/system.h"
 #include "ui/intern.h"
+#include "ui/manager.h"
 #include "ui/ui.h"
 
 #ifdef DEBUG_PAINT_EVENTS
@@ -125,6 +125,8 @@ Manager::~Manager()
   if (m_defaultManager == this) {
     // No more cursor
     set_mouse_cursor(kNoCursor);
+
+    app::TaskManager::cleanup();
 
     // Destroy timers
     Timer::checkNoTimers();
@@ -929,6 +931,12 @@ void Manager::removeMessagesForTimer(Timer* timer)
   }
 }
 
+void Manager::removeMessageListener(Widget* widget) {
+  auto it = std::find(m_messageListeners.begin(), m_messageListeners.end(), widget);
+  if (it != m_messageListeners.end())
+    m_messageListeners.erase(it);
+}
+
 void Manager::addMessageFilter(int message, Widget* widget)
 {
   int c = message;
@@ -1253,43 +1261,19 @@ void Manager::pumpQueue()
     }
 
     bool done = false;
+
+    for (auto listener : m_messageListeners)
+      done = listener->sendMessage(msg);
+
     for (auto widget : msg->recipients()) {
       if (!widget)
         continue;
+      if (done)
+        break;
 
 #ifdef REPORT_EVENTS
       {
-        static char *msg_name[] = {
-          "kOpenMessage",
-          "kCloseMessage",
-          "kCloseDisplayMessage",
-          "kResizeDisplayMessage",
-          "kPaintMessage",
-          "kTimerMessage",
-          "kDropFilesMessage",
-          "kWinMoveMessage",
-
-          "kKeyDownMessage",
-          "kKeyUpMessage",
-          "kFocusEnterMessage",
-          "kFocusLeaveMessage",
-
-          "kMouseDownMessage",
-          "kMouseUpMessage",
-          "kDoubleClickMessage",
-          "kMouseEnterMessage",
-          "kMouseLeaveMessage",
-          "kMouseMoveMessage",
-          "kSetCursorMessage",
-          "kMouseWheelMessage",
-          "kTouchMagnifyMessage",
-        };
-        const char* string =
-          (msg->type() >= kOpenMessage &&
-           msg->type() <= kMouseWheelMessage) ? msg_name[msg->type()]:
-                                                "Unknown";
-
-        std::cout << "Event " << msg->type() << " (" << string << ") "
+        std::cout << "Event " << msg->type() << " (" << ui::to_string(msg->type()) << ") "
                   << "for " << typeid(*widget).name();
         if (!widget->id().empty())
           std::cout << " (" << widget->id() << ")";
@@ -1346,9 +1330,6 @@ void Manager::pumpQueue()
         // Call the message handler
         done = widget->sendMessage(msg);
       }
-
-      if (done)
-        break;
     }
 
     // Remove the message from the msg_queue

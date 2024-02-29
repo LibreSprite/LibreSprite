@@ -95,7 +95,7 @@ private:
   FileOp* m_fop;
 };
 
-static void save_document_in_background(const Context* context,
+static bool save_document_in_background(const Context* context,
                                         const Document* document, bool mark_as_saved,
                                         const std::string& fn_format)
 {
@@ -104,7 +104,7 @@ static void save_document_in_background(const Context* context,
       context, document,
       document->filename().c_str(), fn_format.c_str()));
   if (!fop)
-    return;
+    return false;
 
   SaveFileJob job(fop.get());
   job.showProgressWindow();
@@ -116,12 +116,16 @@ static void save_document_in_background(const Context* context,
     // We don't know if the file was saved correctly or not. So mark
     // it as it should be saved again.
     const_cast<Document*>(document)->impossibleToBackToSavedState();
+    return false;
   }
+
   // If the job was cancelled, mark the document as modified.
-  else if (fop->isStop()) {
+  if (fop->isStop()) {
     const_cast<Document*>(document)->impossibleToBackToSavedState();
+    return false;
   }
-  else if (context->isUIAvailable()) {
+
+  if (context->isUIAvailable()) {
     App::instance()->recentFiles()->addRecentFile(document->filename().c_str());
     if (mark_as_saved)
       const_cast<Document*>(document)->markAsSaved();
@@ -130,6 +134,7 @@ static void save_document_in_background(const Context* context,
       ->setStatusText(2000, "File %s, saved.",
         document->name().c_str());
   }
+  return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -223,7 +228,7 @@ bool SaveFileBaseCommand::saveAsDialog(Context* context,
   }
 
   // Save the document
-  save_document_in_background(
+  bool success = save_document_in_background(
     context, const_cast<Document*>(document),
     markAsSaved, m_filenameFormat);
 
@@ -244,7 +249,7 @@ bool SaveFileBaseCommand::saveAsDialog(Context* context,
       documentWriter->incrementVersion();
   }
 
-  return true;
+  return success;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -339,6 +344,9 @@ void SaveFileCopyAsCommand::onExecute(Context* context)
   if (saveAsDialog(context, "Save Copy As", &delegate)) {
     docPref.saveCopy.filename(document->filename());
     docPref.saveCopy.resizeScale(delegate.getResizeScale());
+
+    if (auto shareCommand = app::CommandsModule::instance()->getCommandByName(CommandId::Share))
+	context->executeCommand(shareCommand);
   }
 
   // Restore the file name.

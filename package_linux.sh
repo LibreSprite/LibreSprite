@@ -37,9 +37,6 @@ cp /usr/lib/libstdc++.so* ./
 
 rm libc.so*
 rm libm.so*
-# rm libpthread.so*
-# rm librt.so*
-# rm libstdc++.so*
 
 chmod +x libresprite
 
@@ -49,7 +46,7 @@ mkdir LibreSprite/usr/bin
 mkdir LibreSprite/usr/lib
 
 mv ../../desktop/libresprite.desktop LibreSprite/
-cp ../../desktop/icons/hicolor/16x16/apps/libresprite.png LibreSprite/libresprite.png
+cp ../../desktop/icons/hicolor/256x256/apps/libresprite.png LibreSprite/libresprite.png
 
 mv libresprite LibreSprite/usr/bin
 mv data LibreSprite/usr/bin

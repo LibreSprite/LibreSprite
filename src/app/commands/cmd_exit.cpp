@@ -25,6 +25,13 @@ public:
   Command* clone() const override { return new ExitCommand(*this); }
 
 protected:
+  bool onEnabled(Context* context) override {
+#if defined(__EMSCRIPTEN__)
+    return false;
+#endif
+    return true;
+  }
+
   void onExecute(Context* context) override;
 };
 

@@ -26,7 +26,7 @@ public:
 
   void onChange() override {
     script::setStorage(selectedPaletteName(), id(), m_fileName);
-    app::AppScripting::raiseEvent(m_fileName, id() + "_change");
+    app::AppScripting::raiseEvent(m_fileName, {id() + "_change"});
   }
 };
 

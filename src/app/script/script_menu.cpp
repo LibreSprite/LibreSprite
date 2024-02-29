@@ -12,6 +12,7 @@
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
 #include "app/file_system.h"
+#include "app/script/app_scripting.h"
 #include "app/ui/app_menuitem.h"
 #include "app/resource_finder.h"
 #include "base/bind.h"
@@ -35,16 +36,7 @@ void scanFolder(const std::string& scriptsDir, Command* cmd_run_script, Menu* pa
   for (auto child : list) {
     bool isFolder = child->isFolder();
     std::string fullPath = child->fileName();
-    if (!isFolder) {
-      bool supported = false;
-      auto extension = base::string_to_lower(base::get_file_extension(fullPath));
-      for (auto& entry : script::Engine::getRegistry()) {
-        if (entry.second.hasFlag(extension)) {
-          supported = true;
-          break;
-        }
-      }
-      if (!supported)
+    if (!isFolder && !app::AppScripting::scanScript(fullPath)) {
         continue;
     }
     auto cmd = isFolder ? nullptr : cmd_run_script;
@@ -64,6 +56,8 @@ bool ScriptMenu::rebuildScriptsList(Menu* menu)
   // Update the recent file list menu item
   if (!menu)
     return false;
+
+  app::AppScripting::clearEventHooks();
 
   const WidgetsList& children = menu->children();
   while (children.size() && children.back()->type() != kSeparatorWidget) {

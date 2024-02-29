@@ -14,6 +14,7 @@
 #include "app/commands/params.h"
 #include "app/document.h"
 #include "app/document_api.h"
+#include "base/launcher.h"
 #include "app/modules/editors.h"
 #include "app/script/app_scripting.h"
 #include "app/task_manager.h"
@@ -73,6 +74,20 @@ public:
     addProperty("version", []{return script::Value{VERSION};})
       .doc("read-only. Returns LibreSprite's current version as a string.");
 
+    addProperty("platform", []() -> std::string {
+      #ifdef EMSCRIPTEN
+      return "emscripten";
+      #elif _WIN32
+      return "windows";
+      #elif __APPLE__
+      return "macos";
+      #elif ANDROID
+      return "android";
+      #else
+      return "linux";
+      #endif
+    }).doc("read-only. Returns one of: emscripten, windows, macos, android, linux.");
+
     addMethod("documentation", &AppScriptObject::documentation)
       .doc("Prints this text.");
 
@@ -86,6 +101,8 @@ public:
     addMethod("open", &AppScriptObject::open)
       .doc("Opens a document for editing");
 
+    addMethod("launch", &AppScriptObject::launch);
+
     makeGlobal("app");
   }
 
@@ -96,7 +113,7 @@ public:
         yield(event, cycles - 1);
         return;
       }
-      app::AppScripting::raiseEvent(fileName, event.empty() ? "yield" : event);
+      app::AppScripting::raiseEvent(fileName, {event.empty() ? "yield" : event});
     });
   }
 
@@ -210,6 +227,10 @@ public:
     if (newDoc == oldDoc)
       return {};
     return getEngine()->getScriptObject(newDoc);
+  }
+
+  bool launch(const std::string& cmd) {
+    return base::launcher::open_file(cmd);
   }
 
   void App_exit() {

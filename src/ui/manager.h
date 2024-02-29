@@ -73,6 +73,9 @@ namespace ui {
     void removeMessagesFor(Widget* widget, MessageType type);
     void removeMessagesForTimer(Timer* timer);
 
+    void addMessageListener(Widget* widget) {m_messageListeners.push_back(widget);}
+    void removeMessageListener(Widget* widget);
+
     void addMessageFilter(int message, Widget* widget);
     void removeMessageFilter(int message, Widget* widget);
     void removeMessageFilterFor(Widget* widget);
@@ -159,6 +162,7 @@ namespace ui {
     static Manager* m_defaultManager;
     static gfx::Region m_dirtyRegion;
 
+    WidgetsList m_messageListeners;
     WidgetsList m_garbage;
     she::Display* m_display;
     she::EventQueue* m_eventQueue;

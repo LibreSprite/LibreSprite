@@ -44,10 +44,7 @@ class SheFormat : public FileFormat {
   bool onLoad(FileOp* fop) override;
 };
 
-FileFormat* CreateSheFormat()
-{
-  return new SheFormat;
-}
+static FileFormat::Regular<SheFormat> ff{"she"};
 
 bool SheFormat::onLoad(FileOp* fop)
 {

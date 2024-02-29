@@ -174,12 +174,10 @@ class AseFormat : public FileFormat {
   bool onLoad(FileOp* fop) override;
   bool onPostLoad(FileOp* fop) override;
   bool onSave(FileOp* fop) override;
+  int listPriority() override {return -100;}
 };
 
-FileFormat* CreateAseFormat()
-{
-  return new AseFormat;
-}
+static FileFormat::Regular<AseFormat> ff{"ase"};
 
 bool AseFormat::onLoad(FileOp* fop)
 {

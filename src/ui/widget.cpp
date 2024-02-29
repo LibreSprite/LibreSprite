@@ -41,6 +41,7 @@
 #include <cstring>
 #include <queue>
 #include <sstream>
+#include <iostream>
 
 namespace ui {
 
@@ -526,6 +527,14 @@ void Widget::removeChild(Widget* child)
   ASSERT_VALID_WIDGET(child);
 
   WidgetsList::iterator it = std::find(m_children.begin(), m_children.end(), child);
+
+#ifdef _DEBUG
+  if (child && it == m_children.end()) {
+    std::cout << "Attempting to remove " << typeid(*child).name() << " that is not a child." << std::endl;
+    return;
+  }
+#endif
+
   removeChild(it);
 }
 

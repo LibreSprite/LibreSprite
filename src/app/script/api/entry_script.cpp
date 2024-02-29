@@ -30,7 +30,7 @@ public:
   void onChange() override {
     script::setStorage(text(), id(), m_fileName);
     if (canRaiseEvent)
-      app::AppScripting::raiseEvent(m_fileName, id() + "_change");
+      app::AppScripting::raiseEvent(m_fileName, {id() + "_change"});
   }
 };
 

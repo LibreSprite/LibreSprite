@@ -34,7 +34,7 @@ public:
         auto handle = button->handle();
         button->Click.connect([=](ui::Event&){
           if (handle) {
-            app::AppScripting::raiseEvent(scriptFileName, button->id() + "_click");
+            app::AppScripting::raiseEvent(scriptFileName, {button->id() + "_click"});
           }
         });
         return handle;

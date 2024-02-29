@@ -18,7 +18,7 @@ jobs:
 
     - name: install deps
       run: |
-        brew install gnutls freetype jpeg googletest pixman sdl2 sdl2_image tinyxml2 tinyxml libarchive v8 ninja zlib xmlto dylibbundler
+        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 tinyxml libarchive v8 ninja zlib xmlto dylibbundler
 
     - name: git
       run: |

@@ -39,10 +39,7 @@ class PcxFormat : public FileFormat {
   bool onSave(FileOp* fop) override;
 };
 
-FileFormat* CreatePcxFormat()
-{
-  return new PcxFormat;
-}
+static FileFormat::Regular<PcxFormat> ff{"pcx"};
 
 bool PcxFormat::onLoad(FileOp* fop)
 {
