@@ -286,6 +286,12 @@ bool StandbyState::onMouseDown(Editor* editor, MouseMessage* msg)
       if (handle.rect().contains(msg->position())) {
         auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
         const auto& axis = handle.axis();
+        switch (Axis::HORIZONTAL) {
+          case true:
+            symmetry.yAxis.setDefaultValue(editor->getVisibleSpriteBounds().w / 2);
+          case false:
+            symmetry.xAxis.setDefaultValue(editor->getVisibleSpriteBounds().h / 2);
+        }
         auto& axisPos = axis == Axis::HORIZONTAL ? symmetry.xAxis : symmetry.yAxis;
 
         editor->setState(
