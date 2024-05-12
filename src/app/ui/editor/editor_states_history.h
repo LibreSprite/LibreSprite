@@ -20,6 +20,8 @@ namespace app {
     EditorStatesHistory();
     ~EditorStatesHistory();
 
+    bool empty() const { return m_states.empty(); }
+
     // Gets the current state.
     EditorStatePtr top();
 

@@ -261,6 +261,8 @@ void Editor::setStateInternal(const EditorStatePtr& newState)
   else {
     m_state->onBeforePopState(this);
 
+    m_deletedStates.push(m_state);
+
     m_statesHistory.pop();
     m_state = m_statesHistory.top();
   }
@@ -1146,6 +1148,10 @@ app::Color Editor::getColorByPosition(const gfx::Point& mousePos)
 
 bool Editor::onProcessMessage(Message* msg)
 {
+
+  if (!m_deletedStates.empty())
+    m_deletedStates.clear();
+
   switch (msg->type()) {
 
     case kTimerMessage:
@@ -1636,7 +1642,6 @@ void Editor::showAnimationSpeedMultiplierPopup(Option<bool>& playOnce,
     item->setSelected(Preferences::instance().general.rewindOnStop());
     menu.addChild(item);
   }
-
   menu.showPopup(ui::get_mouse_position());
 }
 
