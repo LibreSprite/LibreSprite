@@ -339,3 +339,5 @@ namespace app {
   ui::WidgetType editor_type();
 
 } // namespace app
+
+//The play once crashing patch is licensed under GPL thanks to @decap permission https://github.com/LibreSprite/LibreSprite/pull/476#issuecomment-2140727827
