@@ -1,5 +1,5 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2024  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -11,6 +11,10 @@
 #include "script/engine_delegate.h"
 #include <iostream>
 #include <sstream>
+
+#if defined(__FreeBSD__)
+#undef _assert
+#endif
 
 class ConsoleScriptObject : public script::ScriptObject {
 public:
