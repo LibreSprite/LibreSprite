@@ -18,11 +18,11 @@ public:
 
   ConsoleScriptObject() {
     addMethod("log", this, &ConsoleScriptObject::log);
-    addMethod("assert", this, &ConsoleScriptObject::_assert);
+    addMethod("assert", this, &ConsoleScriptObject::conditionalLog);
     makeGlobal("console");
   }
 
-  void _assert(bool condition, const std::string& msg){
+  void conditionalLog(bool condition, const std::string& msg){
     if (!condition)
       log();
   }
