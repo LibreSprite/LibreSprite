@@ -11,7 +11,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-x86_64:
+  build-arm64:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
         tar -xvf giflib.tar.gz
         cd giflib-4.2.3/
         ./configure
-        make install -j4
+        sudo make install -j4
 
     - name: Build & Install libpng v1.4.12
       run: |
@@ -51,7 +51,7 @@ jobs:
       run: |
         cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
           -DUSE_V8_SANDBOX=ON \
-          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+          -DCMAKE_OSX_ARCHITECTURES=arm64 \
           -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
     - name: Build
@@ -100,6 +100,6 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: macos-x86_64
+        name: macos-arm64
         path: libresprite.dmg
         if-no-files-found: error
