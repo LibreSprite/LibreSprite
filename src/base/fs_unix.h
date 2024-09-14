@@ -208,26 +208,29 @@ std::vector<std::string> get_font_paths()
 
 std::vector<std::string> get_font_paths()
 {
+    std::string home = getenv("HOME");
+    if (home.empty())
+        home = "~";
     return {
         "/usr/share/fonts",
         "/usr/local/share/fonts",
-        "~/.local/share/fonts",
-        "~/.fonts",
+        home + "/.local/share/fonts",
+        home + "/.fonts",
         "/usr/share/fonts/OTF",
         "/usr/local/share/fonts/OTF",
-        "~/.local/share/fonts/OTF",
+        home + "/.local/share/fonts/OTF",
         "/usr/share/fonts/OTF",
         "/usr/local/share/fonts/OTF",
-        "~/.local/share/fonts/OTF",
-        "~/.font/OTF",
+        home + "/.local/share/fonts/OTF",
+        home + "/.font/OTF",
         "/usr/share/fonts/TTF",
         "/usr/local/share/fonts/TTF",
-        "~/.local/share/fonts/TTF",
-        "~/.font/TTF",
+        home + "/.local/share/fonts/TTF",
+        home + "/.font/TTF",
         "/usr/share/fonts/ttf",
         "/usr/local/share/fonts/ttf",
-        "~/.local/share/fonts/ttf",
-        "~/.font/ttf"
+        home + "/.local/share/fonts/ttf",
+        home + "/.font/ttf"
     };
 }
 #endif
