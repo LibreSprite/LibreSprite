@@ -48,6 +48,7 @@ namespace app {
 class AppScriptObject : public script::ScriptObject {
 public:
   inject<ScriptObject> m_pixelColor{"pixelColor"};
+  inject<ScriptObject> m_command{"command"};
 
   AppScriptObject() {
     addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;})
@@ -70,6 +71,9 @@ public:
 
     addProperty("pixelColor", [this]{return m_pixelColor.get();})
       .doc("read-only. Returns an object with functions for color conversion.");
+
+    addProperty("command", [this]{return m_command.get();})
+      .doc("read-only. Returns an object with functions for running commands.");
 
     addProperty("version", []{return script::Value{VERSION};})
       .doc("read-only. Returns LibreSprite's current version as a string.");

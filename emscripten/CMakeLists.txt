@@ -399,6 +399,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/cel_script.cpp
   ${SRC}/app/script/api/colormode_script.cpp
   ${SRC}/app/script/api/console_script.cpp
+  ${SRC}/app/script/api/command_script.cpp
   ${SRC}/app/script/api/dialog_script.cpp
   ${SRC}/app/script/api/document_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
