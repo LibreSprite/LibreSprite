@@ -30,7 +30,9 @@ async function call(file, {args, grep, callback}) {
                 })
             } catch (abort) {
                 aborted = true;
-                proc.kill();
+                try {
+                    proc.kill();
+                } catch(e){}
             }
         });
         proc.stderr.on('data', (data) => stderr += data);
