@@ -1,0 +1,58 @@
+name: Windows x86_64
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        release: false
+        update: false
+        install: >-
+          base-devel
+          git
+          mingw-w64-x86_64-nodejs
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-make
+          mingw-w64-x86_64-curl
+          mingw-w64-x86_64-freetype
+          mingw-w64-x86_64-giflib
+          mingw-w64-x86_64-libjpeg-turbo
+          mingw-w64-x86_64-libpng
+          mingw-w64-x86_64-libwebp
+          mingw-w64-x86_64-pixman
+          mingw-w64-x86_64-SDL2
+          mingw-w64-x86_64-SDL2_image
+          mingw-w64-x86_64-tinyxml2
+          mingw-w64-x86_64-v8
+          mingw-w64-x86_64-zlib
+          mingw-w64-x86_64-libarchive
+
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+    - shell: msys2 {0}
+      run: |
+        mkdir build
+        cd build
+        cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+        make -j 4
+        cd ..
+        node package_win.js build/bin/libresprite.exe
+        cp /mingw64/bin/snapshot_blob.bin ./build/bin
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: libresprite-development-windows-x86_64
+        path: |
+          build/bin/*
