@@ -1,5 +1,5 @@
 # LibreSprite [![Liberapay](https://i.imgur.com/UOLKpPA.png "Support our work")](https://liberapay.com/LibreSprite/)
-[![Linux](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeLinux.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeLinux.yml) [![Windows x86](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeWin32.yml/badge.svg?branch=master)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeWin32.yml) [![MacOS](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeMacOs.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeMacOs.yml) [![Android](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeAndroid.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeAndroid.yml)
+[![Linux](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeLinux.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeLinux.yml) [![Windows x64](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeWin32.yml/badge.svg?branch=master)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeWin64.yml) [![MacOS](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeMacOs.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeMacOs.yml) [![Android](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeAndroid.yml/badge.svg)](https://github.com/LibreSprite/LibreSprite/actions/workflows/cmakeAndroid.yml)
 
 ## Introduction
 LibreSprite is a free and open source program for creating and animating your sprites.
@@ -13,7 +13,7 @@ LibreSprite is a free and open source program for creating and animating your sp
 * Several file types supported for your sprites and animations.
 
 ## Download
-Grab an [AppImage](https://github.com/LibreSprite/LibreSprite/releases/latest) for Linux, or get the [Windows Portable](https://github.com/LibreSprite/LibreSprite/releases/latest).
+Get the [latest release](https://github.com/LibreSprite/LibreSprite/releases/latest) for Linux, MacOS, Windows or Android.
 
 ## History
 LibreSprite originated as a fork of [Aseprite](https://www.aseprite.org), developed by [David Capello](https://github.com/dacap). Aseprite used to be distributed under the GNU General Public License version 2, but was moved to a proprietary license on [August 26th, 2016](https://github.com/aseprite/aseprite/commit/5ecc356a41c8e29977f8608d8826489d24f5fa6c).
