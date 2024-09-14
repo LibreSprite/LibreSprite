@@ -20,7 +20,7 @@ jobs:
         install: >-
           base-devel
           git
-          mingw-w64-i686-nodejs
+          mingw-w64-nodejs
           mingw-w64-i686-gcc
           mingw-w64-i686-cmake
           mingw-w64-i686-make
@@ -33,8 +33,8 @@ jobs:
           mingw-w64-i686-pixman
           mingw-w64-i686-SDL2
           mingw-w64-i686-SDL2_image
-          mingw-w64-i686-tinyxml2
-          mingw-w64-i686-v8
+          mingw-w64-tinyxml2
+          mingw-w64-v8
           mingw-w64-i686-zlib
           mingw-w64-i686-libarchive
 
