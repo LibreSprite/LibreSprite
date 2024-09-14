@@ -210,7 +210,7 @@ private:
         bounds.x + m_level*16 * guiscale(),
         bounds.y + 2*guiscale()));
 
-    if (m_key && !m_key->accels().empty() && !m_key->label().empty()) {
+    if (m_key && !m_key->accels().empty()) {
       std::string buf;
       int y = bounds.y;
       int dh = textHeight() + 4*guiscale();
