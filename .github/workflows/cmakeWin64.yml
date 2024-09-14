@@ -45,7 +45,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+        cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_V8_SANDBOX=ON ..
         make -j 4
         cd ..
         node package_win.js build/bin/libresprite.exe
