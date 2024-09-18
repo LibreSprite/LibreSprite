@@ -107,7 +107,13 @@ public:
 
     addMethod("launch", &AppScriptObject::launch);
 
+    addMethod("redraw", &AppScriptObject::redraw);
+
     makeGlobal("app");
+  }
+
+  void redraw() {
+    ui::Manager::getDefault()->invalidate();
   }
 
   void yield(const std::string& event, int cycles) {
