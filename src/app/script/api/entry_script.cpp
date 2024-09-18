@@ -24,6 +24,7 @@ public:
   void setTextSilent(const std::string& text) {
     canRaiseEvent = false;
     setText(text);
+    script::setStorage(text, id(), m_fileName);
     canRaiseEvent = true;
   }
 
