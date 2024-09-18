@@ -119,6 +119,11 @@ public:
     });
 
     addFunction("addEntry", [this](const std::string& text, const std::string& id) {
+        if (!text.empty()) {
+            auto label = add("label", id + "-label");
+            if (label)
+                label->set("text", text);
+        }
         return add("entry", id);
     });
 
