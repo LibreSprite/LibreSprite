@@ -10,6 +10,7 @@
 #include "doc/image.h"
 #include "she/surface.h"
 #include "she/system.h"
+#include "ui/manager.h"
 #include <cstring>
 
 class ImageScriptObject : public script::ScriptObject {
@@ -69,6 +70,7 @@ public:
       return;
     }
     std::memcpy(img()->getPixelAddress(0, 0), data.data(), data.size());
+    ui::Manager::getDefault()->invalidate();
   }
 
   script::Value getImageData() {
