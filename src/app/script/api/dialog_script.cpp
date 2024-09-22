@@ -63,6 +63,11 @@ public:
                 })
       .doc("read+write. Sets the title of the dialog window.");
 
+    addProperty("width",[this] {return dialog()->size().w;})
+      .doc("read only. Gets the width of the dialog window.");
+    addProperty("height",[this] {return dialog()->size().h;})
+      .doc("read only. Gets the height of the dialog window.");
+
     addProperty("canClose",
                 []{return true;},
                 [this](bool canClose){

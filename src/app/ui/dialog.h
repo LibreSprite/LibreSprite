@@ -13,6 +13,7 @@
 
 #include "app/script/app_scripting.h"
 #include "app/task_manager.h"
+#include "script/value.h"
 #include "ui/base.h"
 #include "ui/grid.h"
 #include "ui/ui.h"
@@ -79,6 +80,10 @@ public:
     setVisible(true);
     centerWindow();
     openWindow();
+  }
+
+  void onWindowResize() override {
+    app::AppScripting::raiseEvent(m_scriptFileName, {id() + "_resize", size().w, size().h});
   }
 
   void closeWindow(bool raiseEvent, bool notifyManager){
