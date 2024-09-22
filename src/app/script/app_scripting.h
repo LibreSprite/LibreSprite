@@ -12,6 +12,7 @@
 
 namespace script {
     class Engine;
+    class Value;
 };
 
 namespace app {
@@ -23,7 +24,7 @@ namespace app {
   public:
     static const std::string& getFileName() {return m_fileName;}
     static bool evalFile(const std::string& fileName);
-    static void raiseEvent(const std::string& fileName, const std::vector<std::string>& event);
+    static void raiseEvent(const std::string& fileName, const std::vector<script::Value>& event);
     static bool scanScript(const std::string& fullPath);
     static void clearEventHooks();
 

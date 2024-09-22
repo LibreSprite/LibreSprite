@@ -17,6 +17,7 @@
 #include "base/memory.h"
 #include "script/engine.h"
 #include "script/engine_delegate.h"
+#include "script/value.h"
 
 #include "app/resource_finder.h"
 #include <cstring>
@@ -43,6 +44,8 @@ v8::Local<Inner> ToLocal(v8::MaybeLocal<Inner> thing) {
 
 template<typename T>
 void Check(const T&){}
+
+static v8::Local<v8::Value> returnValue(v8::Isolate* isolate, const Value& value);
 
 class V8Engine : public Engine {
 public:
@@ -82,7 +85,7 @@ public:
     m_context = v8::Global<v8::Context>(m_isolate, v8::Context::New(m_isolate));
   }
 
-  bool raiseEvent(const std::vector<std::string>& event) override {
+    bool raiseEvent(const std::vector<script::Value>& event) override {
     // return eval("if (typeof onEvent === \"function\") onEvent(\"" + event + "\");");
     bool success = true;
     try {
@@ -101,8 +104,8 @@ public:
       if (!onEvent.IsEmpty() && onEvent->IsFunction()) {
         std::vector<v8::Local<v8::Value>> argv;
         argv.reserve(event.size());
-        for (auto& str : event) {
-          argv.emplace_back(ToLocal(v8::String::NewFromUtf8(m_isolate, str.c_str())));
+        for (auto& arg : event) {
+          argv.emplace_back(returnValue(m_isolate, arg));
         }
         Check(onEvent.As<v8::Function>()->Call(context(), global, event.size(), argv.data()));
       }
@@ -243,63 +246,6 @@ public:
     return {};
   }
 
-  static v8::Local<v8::Value> returnValue(v8::Isolate* isolate, const Value& value) {
-    switch (value.type) {
-    case Value::Type::UNDEFINED:
-      return v8::Local<v8::Value>();
-
-    case Value::Type::INT:
-      return v8::Int32::New(isolate, value);
-
-    case Value::Type::DOUBLE:
-      return v8::Number::New(isolate, value);
-
-    case Value::Type::STRING:
-      return ToLocal(v8::String::NewFromUtf8(isolate, value));
-
-    case Value::Type::OBJECT:
-      if (auto object = static_cast<ScriptObject*>(value)) {
-        return static_cast<V8ScriptObject*>(object->getInternalScriptObject())->makeLocal();
-      }
-      return {};
-
-    case Value::Type::BUFFER: {
-      auto& buffer = value.buffer();
-      if (buffer.canSteal()) {
-#if V8_MAJOR_VERSION > 7
-        auto store = v8::ArrayBuffer::NewBackingStore(
-          buffer.steal(),
-          buffer.size(),
-          +[](void* data, size_t length, void* deleter_data){
-            delete[] static_cast<uint8_t*>(data);
-          },
-          nullptr
-        );
-        auto arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(store));
-        return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
-#else
-        auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.steal(), buffer.size());
-#endif
-        return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
-
-      } else {
-        auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.size());
-#if V8_MAJOR_VERSION > 7
-        std::memcpy(arrayBuffer->GetBackingStore()->Data(), buffer.data(), buffer.size());
-#else
-        std::memcpy(arrayBuffer->GetContents().Data(), buffer.data(), buffer.size());
-#endif
-        return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
-      }
-    }
-
-    default:
-      printf("Unknown return type: %d\n", int(value.type));
-      break;
-    }
-    return {};
-  }
-
   static void callFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
     auto isolate = args.GetIsolate();
     v8::HandleScope handle_scope(isolate);
@@ -382,6 +328,63 @@ public:
                                  makeLocal()));
   }
 };
+
+static v8::Local<v8::Value> returnValue(v8::Isolate* isolate, const Value& value) {
+    switch (value.type) {
+    case Value::Type::UNDEFINED:
+        return v8::Local<v8::Value>();
+
+    case Value::Type::INT:
+        return v8::Int32::New(isolate, value);
+
+    case Value::Type::DOUBLE:
+        return v8::Number::New(isolate, value);
+
+    case Value::Type::STRING:
+        return ToLocal(v8::String::NewFromUtf8(isolate, value));
+
+    case Value::Type::OBJECT:
+        if (auto object = static_cast<ScriptObject*>(value)) {
+            return static_cast<V8ScriptObject*>(object->getInternalScriptObject())->makeLocal();
+        }
+        return {};
+
+    case Value::Type::BUFFER: {
+        auto& buffer = value.buffer();
+        if (buffer.canSteal()) {
+#if V8_MAJOR_VERSION > 7
+            auto store = v8::ArrayBuffer::NewBackingStore(
+                buffer.steal(),
+                buffer.size(),
+                +[](void* data, size_t length, void* deleter_data){
+                    delete[] static_cast<uint8_t*>(data);
+                },
+                nullptr
+                );
+            auto arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(store));
+            return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
+#else
+            auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.steal(), buffer.size());
+#endif
+            return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
+
+        } else {
+            auto arrayBuffer = v8::ArrayBuffer::New(isolate, buffer.size());
+#if V8_MAJOR_VERSION > 7
+            std::memcpy(arrayBuffer->GetBackingStore()->Data(), buffer.data(), buffer.size());
+#else
+            std::memcpy(arrayBuffer->GetContents().Data(), buffer.data(), buffer.size());
+#endif
+            return v8::Uint8Array::New(arrayBuffer, 0, buffer.size());
+        }
+    }
+
+    default:
+        printf("Unknown return type: %d\n", int(value.type));
+        break;
+    }
+    return {};
+}
 
 static InternalScriptObject::Regular<V8ScriptObject> v8SO("V8ScriptObject");
 

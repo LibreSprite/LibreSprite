@@ -53,7 +53,7 @@ namespace script {
     bool getPrintLastResult() {return m_printLastResult;}
 
     virtual bool eval(const std::string& code) = 0;
-    virtual bool raiseEvent(const std::vector<std::string>& event) = 0;
+    virtual bool raiseEvent(const std::vector<script::Value>& event) = 0;
 
     void afterEval(std::function<void(bool)>&& callback) {
       m_afterEvalListeners.emplace_back(std::move(callback));

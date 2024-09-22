@@ -84,6 +84,8 @@ namespace {
 
 using namespace script;
 
+static duk_ret_t returnValue(duk_context* ctx, const Value& value);
+
 class DukEngine : public Engine {
 public:
   duk_hthread* m_handle;
@@ -109,14 +111,14 @@ public:
     duk_destroy_heap(m_handle);
   }
 
-  bool raiseEvent(const std::vector<std::string>& event) override {
+  bool raiseEvent(const std::vector<script::Value>& event) override {
     bool success = true;
     try {
       duk_push_global_object(m_handle);
       duk_get_prop_string(m_handle, -1, "onEvent");
       if (duk_is_callable(m_handle, -1)) {
-        for (auto& str : event) {
-          duk_push_string(m_handle, str.c_str());
+        for (auto& arg : event) {
+          returnValue(m_handle, arg);
         }
         duk_call(m_handle, event.size());
         duk_pop(m_handle);// remove return value
@@ -232,43 +234,6 @@ public:
     return 0;
   }
 
-  static duk_ret_t returnValue(duk_context* ctx, const Value& value) {
-    switch (value.type) {
-    case Value::Type::UNDEFINED:
-      return 0;
-
-    case Value::Type::INT:
-      duk_push_int(ctx, value);
-      break;
-
-    case Value::Type::DOUBLE:
-      duk_push_number(ctx, value);
-      break;
-
-    case Value::Type::STRING:
-      duk_push_string(ctx, value);
-      break;
-
-    case Value::Type::OBJECT:
-      if (auto object = static_cast<ScriptObject*>(value)) {
-        static_cast<DukScriptObject*>(object->getInternalScriptObject())->makeLocal();
-      } else {
-        duk_push_null(ctx);
-      }
-      break;
-
-    case Value::Type::BUFFER: {
-      auto& buffer = value.buffer();
-      void* out = duk_push_buffer(ctx, buffer.size(), 0);
-      memcpy(out, &buffer[0], buffer.size());
-      break;
-    }
-
-    }
-
-    return 1;
-  }
-
   void pushFunctions() {
     auto handle = m_engine.get<DukEngine>()->m_handle;
     for (auto& entry : functions) {
@@ -346,5 +311,42 @@ public:
     duk_pop(handle);
   }
 };
+
+static duk_ret_t returnValue(duk_context* ctx, const Value& value) {
+    switch (value.type) {
+    case Value::Type::UNDEFINED:
+        return 0;
+
+    case Value::Type::INT:
+        duk_push_int(ctx, value);
+        break;
+
+    case Value::Type::DOUBLE:
+        duk_push_number(ctx, value);
+        break;
+
+    case Value::Type::STRING:
+        duk_push_string(ctx, value);
+        break;
+
+    case Value::Type::OBJECT:
+        if (auto object = static_cast<ScriptObject*>(value)) {
+            static_cast<DukScriptObject*>(object->getInternalScriptObject())->makeLocal();
+        } else {
+            duk_push_null(ctx);
+        }
+        break;
+
+    case Value::Type::BUFFER: {
+        auto& buffer = value.buffer();
+        void* out = duk_push_buffer(ctx, buffer.size(), 0);
+        memcpy(out, &buffer[0], buffer.size());
+        break;
+    }
+
+    }
+
+    return 1;
+}
 
 static InternalScriptObject::Regular<DukScriptObject> dukSO("DukScriptObject");

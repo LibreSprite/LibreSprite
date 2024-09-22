@@ -21,6 +21,7 @@
 #include "base/trim_string.h"
 #include "script/engine.h"
 #include "script/engine_delegate.h"
+#include "script/value.h"
 #include "ui/keys.h"
 #include "ui/message.h"
 #include "ui/message_type.h"
@@ -53,16 +54,16 @@ namespace app {
       if (range.empty())
         return false;
 
-      std::vector<std::string> args {
+      std::vector<script::Value> args {
         event,
-        std::to_string(static_cast<int>(msg->modifiers()))
+        static_cast<int>(msg->modifiers())
       };
 
       switch (msg->type()) {
       case ui::kKeyDownMessage:
       case ui::kKeyUpMessage:
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->unicodeChar())));
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->scancode())));
+        args.push_back(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->unicodeChar()));
+        args.push_back(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->scancode()));
         break;
 
       case ui::kMouseDownMessage:
@@ -73,11 +74,11 @@ namespace app {
       case ui::kMouseMoveMessage:
       case ui::kSetCursorMessage:
       case ui::kMouseWheelMessage:
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().x)));
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().y)));
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->buttons())));
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().x)));
-        args.push_back(std::to_string(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().y)));
+        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().x));
+        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().y));
+        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->buttons()));
+        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().x));
+        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().y));
         break;
 
       default:
@@ -173,7 +174,7 @@ namespace app {
     }
   }
 
-  void AppScripting::raiseEvent(const std::string& fileName, const std::vector<std::string> &event) {
+  void AppScripting::raiseEvent(const std::string& fileName, const std::vector<script::Value> &event) {
     TaskManager::instance().delayed([=]{
       if ((engine && fileName == previousFileName) || evalFile(fileName)) {
         engine->raiseEvent(event);
