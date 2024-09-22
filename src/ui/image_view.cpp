@@ -1,5 +1,6 @@
 // Aseprite UI Library
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2024  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -20,22 +21,22 @@
 
 namespace ui {
 
-ImageView::ImageView(she::Surface* sur, int align, bool dispose)
- : Widget(kImageViewWidget)
- , m_sur(sur)
- , m_disposeSurface(dispose)
-{
+ImageView::ImageView(she::Surface* sur, int align, bool dispose) : Widget{kImageViewWidget} {
   setAlign(align);
+  setSurface(sur, dispose);
 }
 
-ImageView::~ImageView()
-{
-  if (m_disposeSurface)
+void ImageView::release() {
+  if (m_disposeSurface) {
     delete m_sur;
+    m_disposeSurface = false;
+    m_sur = nullptr;
+  }
 }
 
-void ImageView::onSizeHint(SizeHintEvent& ev)
-{
+void ImageView::onSizeHint(SizeHintEvent& ev) {
+  if (!m_sur)
+    return;
   gfx::Rect box;
   getTextIconInfo(&box, NULL, NULL,
     align(), m_sur->width(), m_sur->height());
@@ -46,8 +47,9 @@ void ImageView::onSizeHint(SizeHintEvent& ev)
       box.h + border().height()));
 }
 
-void ImageView::onPaint(PaintEvent& ev)
-{
+void ImageView::onPaint(PaintEvent& ev) {
+  if (!m_sur)
+    return;
   Graphics* g = ev.graphics();
   gfx::Rect bounds = clientBounds();
   gfx::Rect icon;
