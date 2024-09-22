@@ -100,6 +100,10 @@ public:
         return label;
     });
 
+    addFunction("addImageView", [this](const std::string& id) {
+        return add("imageview", id);
+    });
+
     addFunction("addButton", [this](const std::string& text, const std::string& id) {
         auto button = add("button", id);
         if (button)

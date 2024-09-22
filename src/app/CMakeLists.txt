@@ -349,6 +349,7 @@ add_library(app-lib
   script/api/dialog_script.cpp
   script/api/document_script.cpp
   script/api/image_script.cpp
+  script/api/imageview_script.cpp
   script/api/intentry_script.cpp
   script/api/entry_script.cpp
   script/api/layer_script.cpp
