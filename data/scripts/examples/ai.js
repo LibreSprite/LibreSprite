@@ -774,9 +774,6 @@ Object.assign(AI.prototype, {
 function onEvent(event) {
     if (typeof ai == "undefined")
         ai = new AI();
-    if (typeof ai[event] == "function") {
+    if (typeof ai[event] == "function")
         ai[event]();
-    } else {
-        console.log("Unknown event " + event);
-    }
 }

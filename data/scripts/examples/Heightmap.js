@@ -518,8 +518,6 @@ function onEvent(eventName, ...args) {
     var handler = eventHandlers[eventName];
     if (typeof handler == 'function')
         handler();
-    else
-        console.log(eventName, JSON.stringify(args));
 }
 
 function getMarchingCubes() {
