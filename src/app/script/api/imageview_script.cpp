@@ -13,13 +13,13 @@
 class ImageViewWidgetScriptObject : public WidgetScriptObject {
 public:
   ImageViewWidgetScriptObject() {
-      addMethod("setImageData", &ImageViewWidgetScriptObject::setImageData)
+      addMethod("putImageData", &ImageViewWidgetScriptObject::putImageData)
           .docArg("data", "Image pixel data")
           .docArg("width", "Width of the image in pixels")
           .docArg("height", "Height of the image in pixels");
   }
 
-  void setImageData(script::Value::Buffer& data, int width, int height) {
+  void putImageData(script::Value::Buffer& data, int width, int height) {
       auto view = this->view();
       auto surface = view->getSurface();
       if (!surface || surface->width() != width || surface->height() != height) {
