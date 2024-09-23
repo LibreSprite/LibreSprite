@@ -18,6 +18,7 @@ public:
 
   ConsoleScriptObject() {
     addMethod("log", this, &ConsoleScriptObject::log);
+    addMethod("verbose", this, &ConsoleScriptObject::verbose);
     addMethod("assert", this, &ConsoleScriptObject::conditionalLog);
     makeGlobal("console");
   }
@@ -25,6 +26,18 @@ public:
   void conditionalLog(bool condition, const std::string& msg){
     if (!condition)
       log();
+  }
+
+  void verbose() {
+    bool first = true;
+    for (auto& arg : script::Function::varArgs()) {
+      if (!first) {
+          std::cout << " ";
+      }
+      first = false;
+      std::cout << arg.str();
+    }
+    std::cout << std::endl;
   }
 
   void log() {
