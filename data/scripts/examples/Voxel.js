@@ -10,13 +10,22 @@ class UI {
     voxels = null;
 
     scheduled = false;
+    speedX = 0;
+    speedY = 0;
     rotationY = 0;
+    rotationX = 0;
 
     constructor() {
         onEvent = this.onEvent.bind(this);
 
         this.dlg = app.createDialog("dlgVoxel");
         this.dlg.addButton("Update", "update");
+        this.dlg.addButton("Export", "export");
+        this.dlg.addButton("H", "setH");
+        this.dlg.addButton("M", "setM");
+        this.dlg.addButton("L", "setL");
+        this.dlg.addButton("<", "addY");
+        this.dlg.addButton(">", "subY");
         this.dlg.addBreak();
         this.image = this.dlg.addImageView("image");
         this.framebuffer = new Uint8Array(this.width * this.height * 4);
@@ -24,6 +33,12 @@ class UI {
     }
 
     init(){}
+
+    setH(){this.rotationX = 0.5;}
+    setM(){this.rotationX = 0.0;}
+    setL(){this.rotationX = -0.5;}
+    subY(){this.speedY -= 0.025;}
+    addY(){this.speedY += 0.025;}
 
     dlgVoxel = {
         close(){
@@ -44,6 +59,44 @@ class UI {
                 this.render();
         }
     };
+
+    export(){
+        if (!this.rawMesh)
+            return;
+
+        let {positions, cells, scale} = this.rawMesh;
+        const fileName = `voxel`;
+        storage.set(STLBIN(), 'stl', fileName);
+        let path = storage.save('stl', fileName);
+        this.dlg.title = path ? path : "Could not save " + fileName;
+        if (path) app.launch(path);
+
+        function STLBIN() {
+            const Float = new Float32Array(1);
+            const Uint32 = new Uint32Array(Float.buffer);
+            const Bytes = new Uint8Array(Float.buffer);
+
+            const src = [];
+            for (let i = 0; i < 80; ++i)
+                src.push(0);
+
+            Uint32[0] = cells.length;
+            src.push(...Bytes);
+
+            for (let index of cells) {
+                Float[0] = 0;
+                src.push(...Bytes, ...Bytes, ...Bytes);
+                for (let i of index) {
+                    for (let j of [2, 0, 1]) {
+                        Float[0] = positions[i][j] / scale;
+                        src.push(...Bytes);
+                    }
+                }
+                src.push(0, 0);
+            }
+            return Uint8Array.from(src);
+        }
+    }
 
     update(){
         this.rebuild();
@@ -91,37 +144,9 @@ class UI {
             return [!!c, c];
         });
 
-        this.mesh = makeMesh();
+        this.rawMesh = {positions, cells};
 
-        const fileName = `voxel`;
-        storage.set(STLBIN(), 'stl', fileName);
-        this.dlg.title = storage.save('stl', fileName);
-
-        function STLBIN() {
-            const Float = new Float32Array(1);
-            const Uint32 = new Uint32Array(Float.buffer);
-            const Bytes = new Uint8Array(Float.buffer);
-
-            const src = [];
-            for (let i = 0; i < 80; ++i)
-                src.push(0);
-
-            Uint32[0] = cells.length;
-            src.push(...Bytes);
-
-            for (let index of cells) {
-                Float[0] = 0;
-                src.push(...Bytes, ...Bytes, ...Bytes);
-                for (let i of index) {
-                    for (let j of [2, 0, 1]) {
-                        Float[0] = positions[i][j];
-                        src.push(...Bytes);
-                    }
-                }
-                src.push(0, 0);
-            }
-            return Uint8Array.from(src);
-        }
+        this.mesh = makeMesh.call(this);
 
         function makeMesh() {
             let tris = [];
@@ -145,6 +170,7 @@ class UI {
             let centerY = (maxY - minY) / 2;
             let centerZ = (maxZ - minZ) / 2;
             let scale = 1 / Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+            this.rawMesh.scale = scale;
 
             for (let pos of positions) {
                 let x = pos[0];
@@ -189,9 +215,12 @@ class UI {
     }
 
     render(){
-        const s = Math.sin(this.rotationY);
-        const c = Math.cos(this.rotationY);
-        this.rotationY += 0.05;
+        const sY = Math.sin(this.rotationY);
+        const cY = Math.cos(this.rotationY);
+        this.rotationY += this.speedY;
+        const sX = Math.sin(this.rotationX);
+        const cX = Math.cos(this.rotationX);
+        this.rotationX += this.speedX;
 
         const W = this.width;
         const H = this.height;
@@ -219,28 +248,28 @@ class UI {
                     transform(face.p[2]),
                 ];
 
-                let Ax = p[0][0] - p[1][0];
-                let Ay = p[0][1] - p[1][1];
-                let Bx = p[0][0] - p[2][0];
-                let By = p[0][1] - p[2][1];
+                let Ax = p[1][0] - p[0][0];
+                let Ay = p[1][1] - p[0][1];
+                let Bx = p[2][0] - p[0][0];
+                let By = p[2][1] - p[0][1];
                 let cross = Ax * By - Ay * Bx;
-                // let cross = (p[0][0] - p[1][0]) * (p[0][1] - p[2][1]) - (p[0][1] - p[2][1]) * (p[0][0] - p[2][0]);
-                if (cross > 0)
+                if (cross < 0)
                     continue;
-                let z = p[0][2] + p[1][2] + p[2][2];
+
+                let z = Math.min(p[0][2], p[1][2], p[2][2]);
                 queue.push({p, z, n:face.n, c:face.c});
             }
         }
 
         function transform(v) {
-            let x = (v[0] * c) - (v[2] * s);
-            let y = v[1];
-            let z = (v[0] * s) + (v[2] * c);
+            let xt = (v[0] * cY) - (v[2] * sY);
+            let yt = v[1];
+            let zt = (v[0] * sY) + (v[2] * cY);
 
-            const scale = 1;
-            x *= scale;
-            y *= scale;
-            z *= scale;
+            let x = xt;
+            let y = yt * cX - zt * sX;
+            let z = yt * sX - zt * cX;
+
             z += 100;
 
             let fovz = W * 90 / (90 + z);
@@ -252,10 +281,16 @@ class UI {
 
         function drawQueue(queue) {
             for (let face of queue) {
+                let l = 1 - Math.min(1, Math.max(face.n[1] * 0.5 + 0.5, 0)) * 0.75;
+                let r = (face.c & 0xFF) * l;
+                let g = ((face.c >> 8) & 0xFF) * l;
+                let b = ((face.c >> 16) & 0xFF) * l;
+                let c = 0xFF000000 | (b << 16) | (g << 8) | (r << 0);
+
                 fillTriangle(face.p[0][0]|0,face.p[0][1]|0,
                              face.p[1][0]|0,face.p[1][1]|0,
                              face.p[2][0]|0,face.p[2][1]|0,
-                             face.c
+                             c
                             );
             }
         }
