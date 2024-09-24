@@ -1,7 +1,7 @@
 // LibreSprite
 // Copyright (C) 2024 LibreSprite contributors
 
-let onEvent;
+var onEvent;
 
 class UI {
     width = 320;
@@ -201,8 +201,10 @@ class UI {
                 n[2] /= l;
 
                 let c = p[0][3];
+                if (p[1][3] == p[2][3])
+                    c = p[1][3];
                 if (!c) c = 0xFFFF00FF;
-                tris.push({p, n, c:c});
+                tris.push({p, n, c});
             }
             return tris;
         }
