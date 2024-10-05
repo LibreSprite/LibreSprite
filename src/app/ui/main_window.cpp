@@ -96,14 +96,12 @@ MainWindow::MainWindow()
 
   touchbarParent->addChild(m_touchBar.get());
 
-  bool leftToolbar = false;
+  bool leftToolbar = leftToolbar = Preferences::instance().general.leftToolBar();
   if (!has_config_value("general", "left_tool_bar")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)
     leftToolbar = true;
 #endif
-  } else {
-    leftToolbar = Preferences::instance().general.leftToolBar();
   }
   auto toolbarParent = leftToolbar ? toolBarAltPlaceholder() : this->toolBarPlaceholder();
   toolbarParent->addChild(m_toolBar);
@@ -117,24 +115,22 @@ MainWindow::MainWindow()
   colorBarSplitter()->setPosition(m_colorBar->sizeHint().w);
   timelineSplitter()->setPosition(75);
 
-  bool verticalTimeline = false;
+  bool verticalTimeline = Preferences::instance().general.verticalTimeline();
   if (!has_config_value("general", "vertical_timeline")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)
     verticalTimeline = true;
 #endif
-  } else {
-    verticalTimeline = Preferences::instance().general.verticalTimeline();
   }
   timelineSplitter()->setAlign(verticalTimeline ? HORIZONTAL : VERTICAL);
 
+  bool touchBarVisible = Preferences::instance().touchBar.visible();
   if (!has_config_value("touch_bar", "visible")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)
-    Preferences::instance().touchBar.visible(true);
-#else
-    Preferences::instance().touchBar.visible(false);
+    touchBarVisible = true;
 #endif
+    Preferences::instance().touchBar.visible(touchBarVisible);
   }
 
   // Prepare the window
