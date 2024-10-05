@@ -20,7 +20,7 @@ namespace she {
 FreeTypeFont::FreeTypeFont(const char* filename, int height)
   : m_face(m_ft.open(filename))
 {
-  ASSERT(m_face.isValid());
+  // ASSERT(m_face.isValid());
   if (m_face.isValid())
     m_face.setSize(height);
 }

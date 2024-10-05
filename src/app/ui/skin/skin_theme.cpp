@@ -256,28 +256,32 @@ void SkinTheme::loadFonts(const std::string& skinId)
   TRACE("SkinTheme::loadFonts(%s)\n", skinId.c_str());
 
   Preferences& pref = Preferences::instance();
-  std::vector<std::string> paths;
-
   {
+      std::vector<std::string> paths;
       ResourceFinder rf;
       auto userFont = pref.theme.font();
       if (!userFont.empty())
           rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font.otf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font.ttf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.png").c_str());
-      while (rf.next())
+      while (rf.next()) {
           paths.push_back(rf.filename());
-      m_defaultFont = loadFont(paths, 8);
+      }
+      m_defaultFont = loadFont(paths, 12);
   }
 
   {
+      std::vector<std::string> paths;
       ResourceFinder rf;
       auto userFont = pref.theme.miniFont();
       if (!userFont.empty())
           rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font.otf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font.ttf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/minifont.png").c_str());
       while (rf.next())
           paths.push_back(rf.filename());
-      m_defaultFont = loadFont(paths, 8);
       m_miniFont = loadFont(paths, 8);
   }
 }
@@ -2338,11 +2342,15 @@ void SkinTheme::paintIcon(Widget* widget, Graphics* g, IButtonIcon* iconInterfac
 std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& fonts, std::size_t size)
 {
   std::shared_ptr<she::Font> fallback;
+  std::vector<std::pair<std::string, std::string>> candidates;
 
   for (auto& themeFont : fonts) {
     bool isTrueType = base::get_file_extension(themeFont) != "png";
     if (isTrueType) {
-      std::vector<std::pair<std::string, std::string>> candidates;
+      if (auto f = she::instance()->loadTrueTypeFont(themeFont.c_str(), size)) {
+        f->setAntialias(true);
+        return std::shared_ptr<she::Font>(f);
+      }
       auto themeLower = base::string_to_lower(base::get_file_title(themeFont));
       for (auto& dir : base::get_font_paths()) {
         auto item = FileSystemModule::instance()->getFileItemFromPath(dir);
@@ -2356,23 +2364,24 @@ std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& f
             candidates.emplace_back(shortName, child->fileName());
         }
       }
-      std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b){
-        return a.first.size() > b.first.size();
-      });
-      while (!candidates.empty()) {
-        if (auto f = she::instance()->loadTrueTypeFont(candidates.back().second.c_str(), size)) {
-          return std::shared_ptr<she::Font>(f);
-        }
-        candidates.pop_back();
-      }
     } else {
-        try {
-            auto f = she::instance()->loadSpriteSheetFont(themeFont.c_str(), guiscale());
-            if (f->isScalable())
-                f->setSize(size);
-            return std::shared_ptr<she::Font>(f);
-        } catch(const std::exception&) {} // do nothing
+      try {
+        auto f = she::instance()->loadSpriteSheetFont(themeFont.c_str(), guiscale());
+        if (f->isScalable())
+          f->setSize(size);
+        return std::shared_ptr<she::Font>(f);
+      } catch(const std::exception&) {} // do nothing
     }
+  }
+
+  std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b){
+    return a.first.size() > b.first.size();
+  });
+  while (!candidates.empty()) {
+    if (auto f = she::instance()->loadTrueTypeFont(candidates.back().second.c_str(), size)) {
+      return std::shared_ptr<she::Font>(f);
+    }
+    candidates.pop_back();
   }
 
   return fallback;
