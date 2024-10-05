@@ -386,6 +386,7 @@ set(SRC_FILES
   ${SRC}/app/modules/editors.cpp
   ${SRC}/app/modules/gfx.cpp
   ${SRC}/app/modules/gui.cpp
+  ${SRC}/app/modules/i18n.cpp
   ${SRC}/app/modules/palettes.cpp
   ${SRC}/app/pref/preferences.cpp
   ${SRC}/app/project.cpp

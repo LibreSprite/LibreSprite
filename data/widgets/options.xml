@@ -22,6 +22,12 @@
           <separator text="General" horizontal="true" />
           <hbox>
             <grid columns="2">
+              <label text="Language:" />
+              <combobox id="language">
+                <listitem text="English" value="en" />
+                <listitem text="Spanish" value="es" />
+                <listitem text="Portuguese" value="pt" />
+              </combobox>
               <label text="Screen Scaling:" />
               <combobox id="screen_scale">
                 <listitem text="100%" value="1" />

@@ -386,6 +386,8 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
     if (!widget) {
       const char* text = elem->Attribute("text");
       widget = new Separator(text ? text: "", align);
+      if (text)
+          widget->setI18N(text);
     }
     else
       widget->setAlign(widget->align() | align);
@@ -424,6 +426,8 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
         widget = new Window(Window::WithTitleBar, text);
       else
         widget = new Window(Window::WithoutTitleBar);
+
+      widget->setI18N(text);
     }
   }
   else if (elem_name == "colorpicker") {
@@ -434,6 +438,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
     if (!widget) {
       const char* text = elem->Attribute("text");
       widget = new DropDownButton(text);
+      widget->setI18N(text);
     }
   }
   else if (elem_name == "buttonset") {
@@ -466,8 +471,10 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
           item->setIcon(part);
       }
 
-      if (text)
+      if (text) {
+        item->setI18N(text);
         item->setText(text);
+      }
 
       buttonset->addItem(item, hspan, vspan);
       fillWidgetWithXmlElementAttributes(elem, root, item);
@@ -541,8 +548,10 @@ void WidgetLoader::fillWidgetWithXmlElementAttributes(const tinyxml2::XMLElement
   if (id != NULL)
     widget->setId(id);
 
-  if (text)
+  if (text) {
     widget->setText(text);
+    widget->setI18N(text);
+  }
 
   if (tooltip && root) {
     if (!m_tooltipManager) {

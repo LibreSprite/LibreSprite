@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #define ASSERT_VALID_WIDGET(widget) ASSERT((widget) != NULL)
 
@@ -98,6 +99,8 @@ namespace ui {
     int textInt() const;
     double textDouble() const;
     int textLength() const;
+
+    void setI18N(std::string_view i18n);
     void setText(const std::string& text);
     void setTextf(const char* text, ...);
     void setTextQuiet(const std::string& text);
@@ -400,6 +403,7 @@ namespace ui {
     int m_flags;                 // Special boolean properties (see flags in ui/base.h)
     Theme* m_theme;              // Widget's theme
     std::string m_text;          // Widget text
+    std::string m_i18n;          // Text before translation
     mutable std::shared_ptr<she::Font> m_font;   // Cached font returned by the theme
     gfx::Color m_bgColor;        // Background color
     gfx::Rect m_bounds;

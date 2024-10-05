@@ -41,9 +41,9 @@ if(MSVC)
 endif()
 
 ######################################################################
-# Add C++17
+# Warning flags
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-switch -std=gnu++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-switch")
 
 ######################################################################
 # pthread

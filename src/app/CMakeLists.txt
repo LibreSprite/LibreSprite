@@ -324,6 +324,7 @@ add_library(app-lib
   modules.cpp
   modules/editors.cpp
   modules/gfx.cpp
+  modules/i18n.cpp
   modules/gui.cpp
   modules/palettes.cpp
   pref/preferences.cpp

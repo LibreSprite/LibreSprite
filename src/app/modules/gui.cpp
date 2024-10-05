@@ -19,6 +19,7 @@
 #include "app/modules/editors.h"
 #include "app/modules/gfx.h"
 #include "app/modules/gui.h"
+#include "app/modules/i18n.h"
 #include "app/modules/palettes.h"
 #include "app/pref/preferences.h"
 #include "app/resource_finder.h"
@@ -181,6 +182,8 @@ int init_module_gui()
   // Create the default-manager
   manager = new CustomizedGuiManager();
   manager->setDisplay(main_display);
+
+  setLanguage(Preferences::instance().general.language());
 
   // Setup the GUI theme for all widgets
   gui_theme = new SkinTheme();

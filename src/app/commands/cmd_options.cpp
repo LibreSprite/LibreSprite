@@ -155,6 +155,12 @@ public:
       gridScope()->Change.connect(base::Bind<void>(&OptionsWindow::onChangeGridScope, this));
     }
 
+    // Language
+    language()->setSelectedItemIndex(
+      language()->findItemIndexByValue(m_pref.general.language())
+    );
+
+
     // Screen/UI Scale
     screenScale()->setSelectedItemIndex(
       screenScale()->findItemIndexByValue(
@@ -311,6 +317,13 @@ public:
     if (newScreenScale != m_pref.general.screenScale()) {
       m_pref.general.screenScale(newScreenScale);
       reset_screen = true;
+    }
+
+    std::string newLanguage = language()->getValue();
+    std::string oldLanguage = m_pref.general.language();
+    if (newLanguage != oldLanguage) {
+        m_pref.general.language(newLanguage);
+        warnings += "<<- UI Language " + oldLanguage + " -> " + newLanguage;
     }
 
     bool newGpuAccel = gpuAcceleration()->isSelected();

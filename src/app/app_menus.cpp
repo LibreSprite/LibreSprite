@@ -192,6 +192,8 @@ Widget* AppMenus::convertXmlelemToMenuitem(tinyxml2::XMLElement* elem)
   if (!menuitem)
     return NULL;
 
+  menuitem->setI18N(elem->Attribute("text"));
+
   /* has it a ID? */
   
   if (const char* id = elem->Attribute("id")) {

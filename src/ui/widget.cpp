@@ -12,6 +12,7 @@
 
 #include "ui/widget.h"
 
+#include "app/modules/i18n.h"
 #include "base/memory.h"
 #include "base/string.h"
 #include "she/display.h"
@@ -26,9 +27,9 @@
 #include "ui/message.h"
 #include "ui/move_region.h"
 #include "ui/paint_event.h"
-#include "ui/size_hint_event.h"
 #include "ui/resize_event.h"
 #include "ui/save_layout_event.h"
+#include "ui/size_hint_event.h"
 #include "ui/system.h"
 #include "ui/theme.h"
 #include "ui/view.h"
@@ -178,9 +179,17 @@ void Widget::setTextf(const char *format, ...)
   }
 }
 
+void Widget::setI18N(std::string_view i18n) {
+  if (i18n == m_i18n)
+    return;
+  m_i18n = i18n;
+  std::erase(m_i18n, '&');
+  setText(m_text);
+}
+
 void Widget::setTextQuiet(const std::string& text)
 {
-  m_text = text;
+  m_text = m_i18n.empty() ? text : app::i18n(m_i18n, text);
   enableFlags(HAS_TEXT);
 }
 
