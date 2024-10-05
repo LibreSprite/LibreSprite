@@ -27,6 +27,7 @@
                 <listitem text="English" value="en" />
                 <listitem text="Spanish" value="es" />
                 <listitem text="Portuguese" value="pt" />
+                <listitem text="Japanese" value="jp" />
                 <listitem text="Italian" value="it" />
               </combobox>
               <label text="Screen Scaling:" />
