@@ -184,4 +184,16 @@
 "Alternate Toolbar" : "Toolbar Alternativo",
 "Recent files:" : "Arquivos recentes:",
 "Recent folders:" : "Pastas recentes:"
+"New Sprite" : "Novo Sprite",
+"Size:" : "Tamanho:",
+"Width:" : "Largura:",
+"Height:" : "Altura:",
+"Color Mode:" : "Modo de Cores:",
+"RGBA" : "RGBA",
+"Indexed" : "Indexado",
+"Background:" : "Imagem de Fundo:",
+"Transparent" : "Transparent",
+"White" : "Branco",
+"Black" : "Preto",
+"OK" : "&OK"
 }
