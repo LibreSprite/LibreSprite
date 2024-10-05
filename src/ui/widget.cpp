@@ -179,6 +179,12 @@ void Widget::setTextf(const char *format, ...)
   }
 }
 
+void Widget::setI18N() {
+  m_i18n = m_text;
+  std::erase(m_i18n, '&');
+  setText(m_text);
+}
+
 void Widget::setI18N(std::string_view i18n) {
   if (i18n == m_i18n)
     return;

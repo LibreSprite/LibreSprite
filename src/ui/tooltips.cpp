@@ -9,7 +9,7 @@
 #endif
 
 #include "ui/tooltips.h"
-
+#include "app/modules/i18n.h"
 #include "gfx/size.h"
 #include "ui/graphics.h"
 #include "ui/intern.h"
@@ -48,7 +48,7 @@ TooltipManager::~TooltipManager()
 
 void TooltipManager::addTooltipFor(Widget* widget, const std::string& text, int arrowAlign)
 {
-  m_tips[widget] = TipInfo(text, arrowAlign);
+  m_tips[widget] = TipInfo(app::i18n(text, text), arrowAlign);
 }
 
 void TooltipManager::removeTooltipFor(Widget* widget)

@@ -12,6 +12,7 @@
 #include "app/ui/toolbar.h"
 
 #include "app/app.h"
+#include "app/modules/i18n.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
 #include "app/modules/editors.h"
@@ -500,7 +501,7 @@ void ToolBar::openTipWindow(int group_index, Tool* tool)
     // Tool shortcut
     Key* key = KeyboardShortcuts::instance()->tool(tool);
     if (key && !key->accels().empty()) {
-      tooltip += "\n\nShortcut: ";
+      tooltip += "\n\n" + app::i18n("Shortcut: ");
       tooltip += key->accels().front().toString();
     }
   }

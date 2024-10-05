@@ -125,6 +125,8 @@ void loadLanguage(const std::string& language) {
 
 std::string i18n(const std::string& key, const std::string& src)
 {
+  if (key.empty())
+    return src;
   if (!languageLoaded) {
     language = app::Preferences::instance().general.language();
     loadLanguage(language);

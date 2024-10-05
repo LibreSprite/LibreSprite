@@ -12,6 +12,7 @@
 #include "app/commands/command.h"
 #include "app/commands/params.h"
 #include "app/console.h"
+#include "app/modules/i18n.h"
 
 namespace app {
 
@@ -27,7 +28,7 @@ Command::~Command()
 
 std::string Command::friendlyName() const
 {
-  return onGetFriendlyName();
+  return app::i18n(onGetFriendlyName());
 }
 
 void Command::loadParams(const Params& params)

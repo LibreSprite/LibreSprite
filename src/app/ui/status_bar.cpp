@@ -512,6 +512,7 @@ StatusBar::StatusBar()
     Box* box4 = new Box(HORIZONTAL);
 
     m_frameLabel = new Label("Frame:");
+    m_frameLabel->setI18N();
     m_currentFrame = new GotoFrameEntry();
     m_newFrame = new Button("+");
     m_newFrame->Click.connect(base::Bind<void>(&StatusBar::newFrame, this));

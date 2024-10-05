@@ -10,6 +10,7 @@
 #endif
 
 #include "app/app.h"
+#include "app/modules/i18n.h"
 #include "app/cmd/clear_rect.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
@@ -163,7 +164,7 @@ void NewBrushCommand::createBrush(const Site& site, const Mask* mask)
     CommandId::ChangeBrush, params);
   if (key && !key->accels().empty()) {
     std::string tooltip;
-    tooltip += "Shortcut: ";
+    tooltip += app::i18n("Shortcut: ");
     tooltip += key->accels().front().toString();
     StatusBar::instance()->showTip(2000, tooltip.c_str());
   }

@@ -427,7 +427,7 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
       else
         widget = new Window(Window::WithoutTitleBar);
 
-      widget->setI18N(text);
+      widget->setI18N();
     }
   }
   else if (elem_name == "colorpicker") {
@@ -472,8 +472,8 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
       }
 
       if (text) {
-        item->setI18N(text);
         item->setText(text);
+        item->setI18N();
       }
 
       buttonset->addItem(item, hspan, vspan);
@@ -550,7 +550,7 @@ void WidgetLoader::fillWidgetWithXmlElementAttributes(const tinyxml2::XMLElement
 
   if (text) {
     widget->setText(text);
-    widget->setI18N(text);
+    widget->setI18N();
   }
 
   if (tooltip && root) {

@@ -10,6 +10,7 @@
 #endif
 
 #include "app/app.h"
+#include "app/modules/i18n.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
@@ -138,7 +139,7 @@ std::string AniControls::getTooltipFor(int index) const
 
     Key* key = KeyboardShortcuts::instance()->command(cmd->id().c_str());
     if (key && !key->accels().empty()) {
-      tooltip += "\n\nShortcut: ";
+        tooltip += "\n\n" + app::i18n("Shortcut: ");
       tooltip += key->accels().front().toString();
     }
   }

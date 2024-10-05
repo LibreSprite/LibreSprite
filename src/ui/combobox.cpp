@@ -142,7 +142,9 @@ int ComboBox::addItem(ListItem* item)
 
 int ComboBox::addItem(const std::string& text)
 {
-  return addItem(new ListItem(text));
+  auto item = new ListItem(text);
+  item->setI18N();
+  return addItem(item);
 }
 
 void ComboBox::insertItem(int itemIndex, ListItem* item)

@@ -11,6 +11,7 @@
 
 #include "app/tools/tool_box.h"
 
+#include "app/modules/i18n.h"
 #include "app/gui_xml.h"
 #include "app/tools/controller.h"
 #include "app/tools/ink.h"
@@ -209,7 +210,7 @@ void ToolBox::loadTools()
       const char* tool_tips = xmlTool->FirstChildElement("tooltip") ? ((tinyxml2::XMLElement*)xmlTool->FirstChildElement("tooltip"))->GetText(): "";
       const char* default_brush_size = xmlTool->Attribute("default_brush_size");
 
-      Tool* tool = new Tool(tool_group, tool_id, tool_text, tool_tips,
+      Tool* tool = new Tool(tool_group, tool_id, app::i18n(tool_text, tool_text), app::i18n(tool_tips, tool_tips),
         default_brush_size ? strtol(default_brush_size, NULL, 10): 1);
 
       LOG(" - New tool '%s' in group '%s' found\n", tool_id, group_id);

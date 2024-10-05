@@ -102,6 +102,7 @@ void MaskByColorCommand::onExecute(Context* context)
   box3 = new Box(HORIZONTAL);
   box4 = new Box(HORIZONTAL | HOMOGENEOUS);
   label_color = new Label("Color:");
+  label_color->setI18N();
   m_buttonColor = new ColorButton
    (get_config_color("MaskColor", "Color",
                      ColorBar::instance()->getFgColor()),

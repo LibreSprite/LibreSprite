@@ -1211,9 +1211,15 @@ public:
     m_sample.addItem("All Layers");
     m_sample.addItem("Current Layer");
 
-    addChild(new Label("Pick:"));
+    auto pickLabel = new Label("Pick:");
+    pickLabel->setI18N();
+    addChild(pickLabel);
+
     addChild(&m_channel);
-    addChild(new Label("Sample:"));
+
+    auto sampleLabel = new Label("Sample:");
+    sampleLabel->setI18N();
+    addChild(sampleLabel);
     addChild(&m_sample);
 
     m_channel.Change.connect(base::Bind<void>(&EyedropperField::onChannelChange, this));

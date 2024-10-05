@@ -100,6 +100,7 @@ namespace ui {
     double textDouble() const;
     int textLength() const;
 
+    void setI18N();
     void setI18N(std::string_view i18n);
     void setText(const std::string& text);
     void setTextf(const char* text, ...);

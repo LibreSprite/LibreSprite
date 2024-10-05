@@ -35,6 +35,7 @@ ButtonBase::ButtonBase(const std::string& text,
 {
   setAlign(CENTER | MIDDLE);
   setText(text);
+  setI18N();
   setFocusStop(true);
 
   // Initialize theme
