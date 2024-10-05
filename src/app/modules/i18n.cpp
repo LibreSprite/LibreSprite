@@ -134,10 +134,12 @@ std::string i18n(const std::string& key, const std::string& src)
   auto it = translations.find(key);
   if (it != translations.end())
       return it->second;
-  if (!languageMissing.contains(key)) {
+  #ifdef _DEBUG
+  if (language != "en" && !languageMissing.contains(key)) {
       std::cout << "\"" << key << "\" : \"" << src << "\"," << std::endl;
       languageMissing.insert(key);
   }
+  #endif
   return src;
 }
 

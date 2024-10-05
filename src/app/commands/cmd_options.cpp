@@ -10,6 +10,7 @@
 #endif
 
 #include "app/app.h"
+#include "app/modules/i18n.h"
 #include "app/commands/command.h"
 #include "app/context.h"
 #include "app/ini_file.h"
@@ -335,9 +336,7 @@ public:
     m_pref.save();
 
     if (!warnings.empty()) {
-      ui::Alert::show(PACKAGE
-        "<<You must restart the program to see your changes to:%s"
-        "||&OK", warnings.c_str());
+      ui::Alert::show((PACKAGE "<<" + app::i18n("You must restart the program to see your changes to:") + warnings + "||&OK").c_str());
     }
 
     if (reset_screen) {
