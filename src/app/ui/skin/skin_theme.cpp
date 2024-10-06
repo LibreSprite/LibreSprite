@@ -1951,7 +1951,7 @@ void SkinTheme::paintWindow(PaintEvent& ev)
     if (window->hasText()) {
       styles.window()->paint(g, pos, NULL, Style::State());
       styles.windowTitle()->paint(g,
-        gfx::Rect(cpos.x, pos.y+5*guiscale(), cpos.w, // TODO this hard-coded 5 should be configurable in skin.xml
+        gfx::Rect(cpos.x, pos.y+3*guiscale(), cpos.w, // TODO this hard-coded 3 should be configurable in skin.xml
           window->textHeight()),
         window->text().c_str(), Style::State());
     }
