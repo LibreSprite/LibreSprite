@@ -268,7 +268,7 @@ void SkinTheme::loadFonts(const std::string& skinId)
       while (rf.next()) {
           paths.push_back(rf.filename());
       }
-      m_defaultFont = loadFont(paths, 12);
+      m_defaultFont = loadFont(paths, 7 * guiscale());
   }
 
   {
@@ -282,7 +282,7 @@ void SkinTheme::loadFonts(const std::string& skinId)
       rf.includeDataDir(("skins/" + skinId + "/minifont.png").c_str());
       while (rf.next())
           paths.push_back(rf.filename());
-      m_miniFont = loadFont(paths, 8);
+      m_miniFont = loadFont(paths, 6 * guiscale());
   }
 }
 
