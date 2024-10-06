@@ -17,6 +17,7 @@
 
 #include "app/file_system.h"
 #include "app/modules/gui.h"
+#include "app/modules/i18n.h"
 #include "app/pref/preferences.h"
 #include "app/resource_finder.h"
 #include "app/ui/app_menuitem.h"
@@ -262,13 +263,22 @@ void SkinTheme::loadFonts(const std::string& skinId)
       auto userFont = pref.theme.font();
       if (!userFont.empty())
           rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font-" + app::getLanguage() + ".otf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font-" + app::getLanguage() + ".ttf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font-" + app::getLanguage() + ".png").c_str());
+      rf.includeDataDir(("fonts/font-" + app::getLanguage() + ".otf").c_str());
+      rf.includeDataDir(("fonts/font-" + app::getLanguage() + ".ttf").c_str());
+      rf.includeDataDir(("fonts/font-" + app::getLanguage() + ".png").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.otf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.ttf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.png").c_str());
+      rf.includeDataDir("fonts/font.otf");
+      rf.includeDataDir("fonts/font.ttf");
+      rf.includeDataDir("fonts/font.png");
       while (rf.next()) {
           paths.push_back(rf.filename());
       }
-      m_defaultFont = loadFont(paths, 7 * guiscale());
+      m_defaultFont = loadFont(paths, 8);
   }
 
   {
@@ -277,12 +287,21 @@ void SkinTheme::loadFonts(const std::string& skinId)
       auto userFont = pref.theme.miniFont();
       if (!userFont.empty())
           rf.addPath(userFont.c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font-" + app::getLanguage() + ".otf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/font-" + app::getLanguage() + ".ttf").c_str());
+      rf.includeDataDir(("skins/" + skinId + "/minifont-" + app::getLanguage() + ".png").c_str());
+      rf.includeDataDir(("fonts/font-" + app::getLanguage() + ".otf").c_str());
+      rf.includeDataDir(("fonts/font-" + app::getLanguage() + ".ttf").c_str());
+      rf.includeDataDir(("fonts/minifont-" + app::getLanguage() + ".png").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.otf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/font.ttf").c_str());
       rf.includeDataDir(("skins/" + skinId + "/minifont.png").c_str());
+      rf.includeDataDir("fonts/font.otf");
+      rf.includeDataDir("fonts/font.ttf");
+      rf.includeDataDir("fonts/minifont.png");
       while (rf.next())
           paths.push_back(rf.filename());
-      m_miniFont = loadFont(paths, 6 * guiscale());
+      m_miniFont = loadFont(paths, 8);
   }
 }
 
@@ -2347,9 +2366,12 @@ std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& f
   for (auto& themeFont : fonts) {
     bool isTrueType = base::get_file_extension(themeFont) != "png";
     if (isTrueType) {
-      if (auto f = she::instance()->loadTrueTypeFont(themeFont.c_str(), size)) {
+      if (auto f = she::instance()->loadTrueTypeFont(themeFont.c_str(), size * guiscale())) {
         f->setAntialias(true);
+        // std::cout << "Loaded font: " << themeFont << std::endl;
         return std::shared_ptr<she::Font>(f);
+      // } else {
+      //   std::cout << "Could not load font: " << themeFont << std::endl;
       }
       auto themeLower = base::string_to_lower(base::get_file_title(themeFont));
       for (auto& dir : base::get_font_paths()) {
@@ -2378,7 +2400,9 @@ std::shared_ptr<she::Font> SkinTheme::loadFont(const std::vector<std::string>& f
     return a.first.size() > b.first.size();
   });
   while (!candidates.empty()) {
-    if (auto f = she::instance()->loadTrueTypeFont(candidates.back().second.c_str(), size)) {
+    auto& themeFont = candidates.back().second;
+    if (auto f = she::instance()->loadTrueTypeFont(themeFont.c_str(), size * guiscale())) {
+      // std::cout << "Loaded fallback font: " << themeFont << std::endl;
       return std::shared_ptr<she::Font>(f);
     }
     candidates.pop_back();

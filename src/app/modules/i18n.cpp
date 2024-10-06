@@ -135,7 +135,7 @@ std::string i18n(const std::string& key, const std::string& src)
   if (it != translations.end())
       return it->second;
   #ifdef _DEBUG
-  if (language != "en" && !languageMissing.contains(key)) {
+  if (!languageMissing.contains(key)) {
       std::cout << "\"" << key << "\" : \"" << src << "\"," << std::endl;
       languageMissing.insert(key);
   }
@@ -150,4 +150,8 @@ void setLanguage(const std::string& language)
     languageMissing.clear();
 }
 
+const std::string& getLanguage()
+{
+    return language;
+}
 }
