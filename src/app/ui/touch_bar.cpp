@@ -25,8 +25,9 @@ class Touch {
 public:
   TouchBar& touchbar;
   std::shared_ptr<ui::Button> button;
+  std::string label;
 
-  Touch(TouchBar& touchbar, const std::string& label) : touchbar{touchbar} {
+  Touch(TouchBar& touchbar, const std::string& label) : touchbar{touchbar}, label{label} {
     button = std::make_shared<ui::Button>(label);
     touchbar.addChild(button.get());
     button->Click.connect([&](auto&){activate();});
@@ -39,7 +40,7 @@ public:
   void activate() {
     const Key* key{};
     for (auto candidate : *KeyboardShortcuts::instance()) {
-      if (candidate->label() == button->text()) {
+      if (candidate->label() == label) {
         key = candidate;
         break;
       }
