@@ -18,17 +18,19 @@ public:
   enum Button { None, Left, Middle, Right };
 
   Pointer()
-    : m_point(0, 0), m_button(None) { }
+    : m_point{0, 0}, m_button{None}, m_pressure{0} { }
 
-  Pointer(const gfx::Point& point, Button button)
-    : m_point(point), m_button(button) { }
+  Pointer(const gfx::Point& point, Button button, float pressure)
+    : m_point{point}, m_button{button}, m_pressure{pressure} { }
 
   const gfx::Point& point() const { return m_point; }
   Button button() const { return m_button; }
+  float pressure() const { return m_pressure; }
 
 private:
   gfx::Point m_point;
   Button m_button;
+  float m_pressure;
 };
 
 } // namespace tools

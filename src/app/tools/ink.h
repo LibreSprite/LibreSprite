@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "doc/brush.h"
+
 namespace gfx {
   class Region;
 }

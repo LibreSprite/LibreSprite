@@ -260,7 +260,10 @@ void Manager::generateSetCursorMessage(const gfx::Point& mousePos,
         mousePos,
         pointerType,
         _internal_get_mouse_buttons(),
-        modifiers));
+        modifiers,
+        {0,0},
+        false,
+        -1));
   else
     set_mouse_cursor(kArrowCursor);
 }
@@ -352,7 +355,8 @@ void Manager::generateMessagesFromSheEvents()
           sheEvent.position(),
           m_mouseButtons,
           sheEvent.modifiers(),
-          sheEvent.pointerType());
+          sheEvent.pointerType(),
+          sheEvent.pressure());
         lastMouseMoveEvent = sheEvent;
         break;
       }
@@ -366,7 +370,8 @@ void Manager::generateMessagesFromSheEvents()
           sheEvent.position(),
           pressedButton,
           sheEvent.modifiers(),
-          sheEvent.pointerType());
+          sheEvent.pointerType(),
+          sheEvent.pressure());
         break;
       }
 
@@ -426,7 +431,8 @@ void Manager::generateMessagesFromSheEvents()
 void Manager::handleMouseMove(const gfx::Point& mousePos,
                               MouseButtons mouseButtons,
                               KeyModifiers modifiers,
-                              PointerType pointerType)
+                              PointerType pointerType,
+                              float pressure)
 {
   // Get the list of widgets to send mouse messages.
   mouse_widgets_list.clear();
@@ -456,13 +462,17 @@ void Manager::handleMouseMove(const gfx::Point& mousePos,
       mousePos,
       pointerType,
       mouseButtons,
-      modifiers));
+      modifiers,
+      {0,0},
+      false,
+      pressure));
 }
 
 void Manager::handleMouseDown(const gfx::Point& mousePos,
                               MouseButtons mouseButtons,
                               KeyModifiers modifiers,
-                              PointerType pointerType)
+                              PointerType pointerType,
+                              float pressure)
 {
   handleWindowZOrder();
 
@@ -473,7 +483,10 @@ void Manager::handleMouseDown(const gfx::Point& mousePos,
       mousePos,
       pointerType,
       mouseButtons,
-      modifiers));
+      modifiers,
+      {0,0},
+      false,
+      pressure));
 }
 
 void Manager::handleMouseUp(const gfx::Point& mousePos,
@@ -488,7 +501,10 @@ void Manager::handleMouseUp(const gfx::Point& mousePos,
       mousePos,
       pointerType,
       mouseButtons,
-      modifiers));
+      modifiers,
+      {0,0},
+      false,
+      0.0f));
 }
 
 void Manager::handleMouseDoubleClick(const gfx::Point& mousePos,
@@ -1440,8 +1456,13 @@ Message* Manager::newMouseMessage(
   MouseButtons buttons,
   KeyModifiers modifiers,
   const gfx::Point& wheelDelta,
-  bool preciseWheel)
+  bool preciseWheel,
+  float pressure)
 {
+  static float prevPressure = 0;
+  if (pressure < 0)
+    pressure = prevPressure;
+  prevPressure = pressure;
 #ifdef __APPLE__
   // Convert Ctrl+left click -> right-click
   if (widget &&
@@ -1457,7 +1478,7 @@ Message* Manager::newMouseMessage(
 
   Message* msg = new MouseMessage(
     type, pointerType, buttons, modifiers, mousePos,
-    wheelDelta, preciseWheel);
+    wheelDelta, preciseWheel, pressure);
 
   if (widget)
     msg->addRecipient(widget);

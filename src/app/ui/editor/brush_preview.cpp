@@ -211,7 +211,8 @@ void BrushPreview::show(const gfx::Point& screenPos)
         loop->getPointShape()->transformPoint(
           loop.get(),
           brushBounds.x-origBrushBounds.x,
-          brushBounds.y-origBrushBounds.y);
+          brushBounds.y-origBrushBounds.y,
+          1.0f);
       }
     }
 

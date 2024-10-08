@@ -121,11 +121,13 @@ namespace ui {
     void handleMouseMove(const gfx::Point& mousePos,
                          MouseButtons mouseButtons,
                          KeyModifiers modifiers,
-                         PointerType pointerType);
+                         PointerType pointerType,
+                         float pressure);
     void handleMouseDown(const gfx::Point& mousePos,
                          MouseButtons mouseButtons,
                          KeyModifiers modifiers,
-                         PointerType pointerType);
+                         PointerType pointerType,
+                         float pressure);
     void handleMouseUp(const gfx::Point& mousePos,
                        MouseButtons mouseButtons,
                        KeyModifiers modifiers,
@@ -151,12 +153,15 @@ namespace ui {
     static Widget* findMagneticWidget(Widget* widget);
     static Message* newMouseMessage(
       MessageType type,
-      Widget* widget, const gfx::Point& mousePos,
+      Widget* widget,
+      const gfx::Point& mousePos,
       PointerType pointerType,
       MouseButtons buttons,
       KeyModifiers modifiers,
       const gfx::Point& wheelDelta = gfx::Point(0, 0),
-      bool preciseWheel = false);
+      bool preciseWheel = false,
+      float pressure = 1.0f);
+
     void broadcastKeyMsg(Message* msg);
 
     static Manager* m_defaultManager;

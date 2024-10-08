@@ -14,5 +14,12 @@ namespace doc {
 
     void polygon(int vertices, const int* points, void* data, AlgoHLine proc);
 
+    template<typename Func>
+    void polygon(int vertices, const int* points, Func&& func) {
+      polygon(vertices, points, &func, [](int x, int y, int x2, void* ptr){
+        (*reinterpret_cast<Func*>(ptr))(x, y, x2);
+      });
+    }
+
   }
 }

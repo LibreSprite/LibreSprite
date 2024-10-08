@@ -89,7 +89,7 @@ void ToolLoopManager::pressButton(const Pointer& pointer)
   m_oldPoint = spritePoint;
   snapToGrid(spritePoint);
 
-  m_toolLoop->getController()->pressButton(m_stroke, spritePoint);
+  m_toolLoop->getController()->pressButton(m_stroke, spritePoint, pointer.pressure());
 
   std::string statusText;
   m_toolLoop->getController()->getStatusBarText(m_stroke, statusText);
@@ -133,7 +133,7 @@ void ToolLoopManager::movement(const Pointer& pointer)
   m_oldPoint = spritePoint;
   snapToGrid(spritePoint);
 
-  m_toolLoop->getController()->movement(m_toolLoop, m_stroke, spritePoint);
+  m_toolLoop->getController()->movement(m_toolLoop, m_stroke, spritePoint, pointer.pressure());
 
   std::string statusText;
   m_toolLoop->getController()->getStatusBarText(m_stroke, statusText);

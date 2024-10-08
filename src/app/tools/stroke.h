@@ -17,7 +17,14 @@ namespace app {
 
     class Stroke {
     public:
-      typedef std::vector<gfx::Point> Points;
+      class Point : public gfx::Point {
+      public:
+        Point() = default;
+        Point(int x, int y, float pressure) : gfx::Point{x, y}, pressure{pressure} {}
+        float pressure{};
+      };
+
+      typedef std::vector<Point> Points;
       typedef Points::const_iterator const_iterator;
 
       const_iterator begin() const { return m_points.begin(); }
@@ -26,15 +33,15 @@ namespace app {
       bool empty() const { return m_points.empty(); }
       int size() const { return (int)m_points.size(); }
 
-      const gfx::Point& operator[](int i) const { return m_points[i]; }
-      gfx::Point& operator[](int i) { return m_points[i]; }
+      const Point& operator[](int i) const { return m_points[i]; }
+      Point& operator[](int i) { return m_points[i]; }
 
-      const gfx::Point& firstPoint() const {
+      const Point& firstPoint() const {
         ASSERT(!m_points.empty());
         return m_points[0];
       }
 
-      const gfx::Point& lastPoint() const {
+      const Point& lastPoint() const {
         ASSERT(!m_points.empty());
         return m_points.back();
       }
@@ -43,10 +50,10 @@ namespace app {
       void reset();
 
       // Reset the stroke as "n" points in the given "point" position.
-      void reset(int n, const gfx::Point& point);
+      void reset(int n, const Point& point);
 
       // Adds a new point to the stroke.
-      void addPoint(const gfx::Point& point);
+      void addPoint(const Point& point);
 
       // Displaces all X,Y coordinates the given delta.
       void offset(const gfx::Point& delta);

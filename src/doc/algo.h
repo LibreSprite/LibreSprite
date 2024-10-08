@@ -17,12 +17,44 @@ namespace doc {
   typedef void (*AlgoLine)(int x1, int y1, int x2, int y2, void *data);
 
   void algo_line(int x1, int y1, int x2, int y2, void *data, AlgoPixel proc);
+
+  template<typename Func>
+  void algo_line(int x1, int y1, int x2, int y2, Func&& func) {
+    algo_line(x1, y1, x2, y2, &func, [](int x, int y, void* ptr){
+      (*reinterpret_cast<Func*>(ptr))(x, y);
+    });
+  }
+
   void algo_ellipse(int x1, int y1, int x2, int y2, void *data, AlgoPixel proc);
+
+  template<typename Func>
+  void algo_ellipse(int x1, int y1, int x2, int y2, Func&& func) {
+    algo_ellipse(x1, y1, x2, y2, &func, [](int x, int y, void* ptr){
+      (*reinterpret_cast<Func*>(ptr))(x, y);
+    });
+  }
+
   void algo_ellipsefill(int x1, int y1, int x2, int y2, void *data, AlgoHLine proc);
+
+  template<typename Func>
+  void algo_ellipsefill(int x1, int y1, int x2, int y2, Func&& func) {
+    algo_ellipsefill(x1, y1, x2, y2, &func, [](int x, int y, int x2, void* ptr){
+      (*reinterpret_cast<Func*>(ptr))(x, y, x2);
+    });
+  }
 
   void algo_spline(double x0, double y0, double x1, double y1,
                    double x2, double y2, double x3, double y3,
                    void *data, AlgoLine proc);
+
+  template<typename Func>
+  void algo_spline(double x0, double y0, double x1, double y1,
+                   double x2, double y2, double x3, double y3, Func&& func) {
+    algo_spline(x0, y0, x1, y1, x2, y2, x3, y3, &func, [](int x, int y, int x2, int y2, void* ptr){
+      (*reinterpret_cast<Func*>(ptr))(x, y, x2, y2);
+    });
+  }
+
   double algo_spline_get_y(double x0, double y0, double x1, double y1,
                            double x2, double y2, double x3, double y3,
                            double x);

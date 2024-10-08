@@ -18,7 +18,7 @@ using namespace gfx;
 // using the space bar.
 class MoveOriginCapability : public Controller {
 public:
-  void pressButton(Stroke& stroke, const Point& point) override {
+  void pressButton(Stroke& stroke, const Point& point, float pressure) override {
     m_last = point;
   }
 
@@ -53,16 +53,16 @@ class FreehandController : public Controller {
 public:
   bool isFreehand() override { return true; }
 
-  void pressButton(Stroke& stroke, const Point& point) override {
-    stroke.addPoint(point);
+  void pressButton(Stroke& stroke, const gfx::Point& point, float pressure) override {
+    stroke.addPoint({point.x, point.y, pressure});
   }
 
   bool releaseButton(Stroke& stroke, const Point& point) override {
     return false;
   }
 
-  void movement(ToolLoop* loop, Stroke& stroke, const Point& point) override {
-    stroke.addPoint(point);
+  void movement(ToolLoop* loop, Stroke& stroke, const gfx::Point& point, float pressure) override {
+    stroke.addPoint({point.x, point.y, pressure});
   }
 
   void getStrokeToInterwine(const Stroke& input, Stroke& output) override {
@@ -94,20 +94,19 @@ public:
 // Controls clicks for tools like line
 class TwoPointsController : public MoveOriginCapability {
 public:
-  void pressButton(Stroke& stroke, const Point& point) override {
-    MoveOriginCapability::pressButton(stroke, point);
-
-    m_first = point;
-
-    stroke.addPoint(point);
-    stroke.addPoint(point);
+  void pressButton(Stroke& stroke, const Point& point, float pressure) override {
+    MoveOriginCapability::pressButton(stroke, point, pressure);
+    Stroke::Point strokePoint{point.x, point.y, pressure};
+    m_first = strokePoint;
+    stroke.addPoint(strokePoint);
+    stroke.addPoint(strokePoint);
   }
 
   bool releaseButton(Stroke& stroke, const Point& point) override {
     return false;
   }
 
-  void movement(ToolLoop* loop, Stroke& stroke, const Point& point) override {
+  void movement(ToolLoop* loop, Stroke& stroke, const Point& point, float pressure) override {
     ASSERT(stroke.size() >= 2);
     if (stroke.size() < 2)
       return;
@@ -115,7 +114,7 @@ public:
     if (MoveOriginCapability::isMovingOrigin(loop, stroke, point))
       return;
 
-    stroke[1] = point;
+    stroke[1] = {point.x, point.y, pressure};
 
     if (int(loop->getModifiers()) & int(ToolLoopModifiers::kSquareAspect)) {
       int dx = stroke[1].x - m_first.x;
@@ -220,18 +219,18 @@ private:
     m_first += delta;
   }
 
-  Point m_first;
+  Stroke::Point m_first;
 };
 
 // Controls clicks for tools like polygon
 class PointByPointController : public MoveOriginCapability {
 public:
 
-  void pressButton(Stroke& stroke, const Point& point) override {
-    MoveOriginCapability::pressButton(stroke, point);
+  void pressButton(Stroke& stroke, const Point& point, float pressure) override {
+    MoveOriginCapability::pressButton(stroke, point, pressure);
 
-    stroke.addPoint(point);
-    stroke.addPoint(point);
+    stroke.addPoint({point.x, point.y, pressure});
+    stroke.addPoint({point.x, point.y, pressure});
   }
 
   bool releaseButton(Stroke& stroke, const Point& point) override {
@@ -246,7 +245,7 @@ public:
       return true;              // Continue adding points
   }
 
-  void movement(ToolLoop* loop, Stroke& stroke, const Point& point) override {
+  void movement(ToolLoop* loop, Stroke& stroke, const Point& point, float pressure) override {
     ASSERT(!stroke.empty());
     if (stroke.empty())
       return;
@@ -254,7 +253,7 @@ public:
     if (MoveOriginCapability::isMovingOrigin(loop, stroke, point))
       return;
 
-    stroke[stroke.size()-1] = point;
+    stroke[stroke.size()-1] = {point.x, point.y, pressure};
   }
 
   void getStrokeToInterwine(const Stroke& input, Stroke& output) override {
@@ -283,16 +282,16 @@ public:
   bool canSnapToGrid() override { return false; }
   bool isOnePoint() override { return true; }
 
-  void pressButton(Stroke& stroke, const Point& point) override {
+  void pressButton(Stroke& stroke, const Point& point, float pressure) override {
     if (stroke.size() == 0)
-      stroke.addPoint(point);
+      stroke.addPoint({point.x, point.y, pressure});
   }
 
   bool releaseButton(Stroke& stroke, const Point& point) override {
     return false;
   }
 
-  void movement(ToolLoop* loop, Stroke& stroke, const Point& point) override {
+  void movement(ToolLoop* loop, Stroke& stroke, const Point& point, float pressure) override {
     // Do nothing
   }
 
@@ -315,11 +314,11 @@ public:
 class FourPointsController : public MoveOriginCapability {
 public:
 
-  void pressButton(Stroke& stroke, const Point& point) override {
-    MoveOriginCapability::pressButton(stroke, point);
+  void pressButton(Stroke& stroke, const Point& point, float pressure) override {
+    MoveOriginCapability::pressButton(stroke, point, pressure);
 
     if (stroke.size() == 0) {
-      stroke.reset(4, point);
+      stroke.reset(4, {point.x, point.y, pressure});
       m_clickCounter = 0;
     }
     else
@@ -331,22 +330,22 @@ public:
     return m_clickCounter < 4;
   }
 
-  void movement(ToolLoop* loop, Stroke& stroke, const Point& point) override {
+  void movement(ToolLoop* loop, Stroke& stroke, const Point& point, float pressure) override {
     if (MoveOriginCapability::isMovingOrigin(loop, stroke, point))
       return;
 
     switch (m_clickCounter) {
       case 0:
         for (int i=1; i<stroke.size(); ++i)
-          stroke[i] = point;
+          stroke[i] = {point.x, point.y, pressure};
         break;
       case 1:
       case 2:
-        stroke[1] = point;
-        stroke[2] = point;
+        stroke[1] = {point.x, point.y, pressure};
+        stroke[2] = {point.x, point.y, pressure};
         break;
       case 3:
-        stroke[2] = point;
+        stroke[2] = {point.x, point.y, pressure};
         break;
     }
   }

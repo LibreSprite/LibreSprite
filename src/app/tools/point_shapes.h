@@ -5,16 +5,22 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-namespace app {
-namespace tools {
+#pragma once
+
+#include "app/tools/point_shape.h"
+#include "app/tools/tool_loop.h"
+#include "doc/brush.h"
+#include "doc/compressed_image.h"
+
+namespace app::tools {
 
 class NonePointShape : public PointShape {
 public:
-  void transformPoint(ToolLoop* loop, int x, int y) override {
+  void transformPoint(ToolLoop* loop, int x, int y, float pressure) override {
     // Do nothing
   }
 
-  void getModifiedArea(ToolLoop* loop, int x, int y, Rect& area) override {
+  void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) override {
     // Do nothing
   }
 };
@@ -23,29 +29,38 @@ class PixelPointShape : public PointShape {
 public:
   bool isPixel() override { return true; }
 
-  void transformPoint(ToolLoop* loop, int x, int y) override {
+  void transformPoint(ToolLoop* loop, int x, int y, float pressure) override {
     doInkHline(x, y, x, loop);
   }
 
-  void getModifiedArea(ToolLoop* loop, int x, int y, Rect& area) override {
-    area = Rect(x, y, 1, 1);
+  void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) override {
+    area = gfx::Rect(x, y, 1, 1);
   }
 };
 
 class BrushPointShape : public PointShape {
-  Brush* m_brush;
-  base::SharedPtr<CompressedImage> m_compressedImage;
+  doc::Brush* m_brush;
+  base::SharedPtr<doc::CompressedImage> m_compressedImage;
   bool m_firstPoint;
+  Image* m_srcImage{};
 
 public:
 
   void preparePointShape(ToolLoop* loop) override {
     m_brush = loop->getBrush();
-    m_compressedImage.reset(new CompressedImage(m_brush->image(), false));
     m_firstPoint = true;
   }
 
-  void transformPoint(ToolLoop* loop, int x, int y) override {
+  void transformPoint(ToolLoop* loop, int x, int y, float pressure) override {
+    auto srcImage = m_brush->image(pressure);
+    if (!srcImage)
+      return; // brush size == 0
+
+    if (srcImage != m_srcImage) {
+      m_srcImage = srcImage;
+      m_compressedImage.reset(new CompressedImage(srcImage, false));
+    }
+
     x += m_brush->bounds().x;
     y += m_brush->bounds().y;
 
@@ -71,7 +86,7 @@ public:
     }
   }
 
-  void getModifiedArea(ToolLoop* loop, int x, int y, Rect& area) override {
+  void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) override {
     area = m_brush->bounds();
     area.x += x;
     area.y += y;
@@ -83,7 +98,7 @@ class FloodFillPointShape : public PointShape {
 public:
   bool isFloodFill() override { return true; }
 
-  void transformPoint(ToolLoop* loop, int x, int y) override {
+  void transformPoint(ToolLoop* loop, int x, int y, float pressure) override {
     doc::algorithm::floodfill(
       loop->getFloodFillSrcImage(),
       (loop->useMask() ? loop->getMask(): nullptr),
@@ -94,7 +109,7 @@ public:
       loop, (AlgoHLine)doInkHline);
   }
 
-  void getModifiedArea(ToolLoop* loop, int x, int y, Rect& area) override {
+  void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) override {
     area = floodfillBounds(loop, x, y);
   }
 
@@ -141,7 +156,7 @@ public:
     m_subPointShape.preparePointShape(loop);
   }
 
-  void transformPoint(ToolLoop* loop, int x, int y) override {
+  void transformPoint(ToolLoop* loop, int x, int y, float pressure) override {
     int spray_width = loop->getSprayWidth();
     int spray_speed = loop->getSpraySpeed();
 
@@ -173,17 +188,17 @@ public:
 
       int u = fixmath::fixtoi(fixmath::fixmul(radius, fixmath::fixcos(angle)));
       int v = fixmath::fixtoi(fixmath::fixmul(radius, fixmath::fixsin(angle)));
-      m_subPointShape.transformPoint(loop, x+u, y+v);
+      m_subPointShape.transformPoint(loop, x+u, y+v, pressure);
     }
   }
 
-  void getModifiedArea(ToolLoop* loop, int x, int y, Rect& area) override {
+  void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) override {
     int spray_width = loop->getSprayWidth();
     Point p1(x-spray_width, y-spray_width);
     Point p2(x+spray_width, y+spray_width);
 
-    Rect area1;
-    Rect area2;
+    gfx::Rect area1;
+    gfx::Rect area2;
     m_subPointShape.getModifiedArea(loop, p1.x, p1.y, area1);
     m_subPointShape.getModifiedArea(loop, p2.x, p2.y, area2);
 
@@ -191,5 +206,4 @@ public:
   }
 };
 
-} // namespace tools
-} // namespace app
+} // namespace app::tools

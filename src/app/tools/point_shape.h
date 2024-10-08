@@ -23,7 +23,7 @@ namespace app {
       virtual void preparePointShape(ToolLoop* loop) { }
 
       // The x, y position must be relative to the cel/src/dst image origin.
-      virtual void transformPoint(ToolLoop* loop, int x, int y) = 0;
+      virtual void transformPoint(ToolLoop* loop, int x, int y, float pressure) = 0;
       virtual void getModifiedArea(ToolLoop* loop, int x, int y, gfx::Rect& area) = 0;
 
     protected:

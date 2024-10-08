@@ -107,13 +107,15 @@ namespace ui {
                  KeyModifiers modifiers,
                  const gfx::Point& pos,
                  const gfx::Point& wheelDelta = gfx::Point(0, 0),
-                 bool preciseWheel = false)
+                 bool preciseWheel = false,
+                 float pressure = 0.0f)
       : Message(type, modifiers),
         m_pointerType(pointerType),
         m_buttons(buttons),
         m_pos(pos),
         m_wheelDelta(wheelDelta),
-        m_preciseWheel(preciseWheel) {
+        m_preciseWheel(preciseWheel),
+        m_pressure(pressure) {
     }
 
     PointerType pointerType() const { return m_pointerType; }
@@ -123,6 +125,7 @@ namespace ui {
     bool middle() const { return (m_buttons & kButtonMiddle) == kButtonMiddle; }
     gfx::Point wheelDelta() const { return m_wheelDelta; }
     bool preciseWheel() const { return m_preciseWheel; }
+    float pressure() const { return m_pressure; }
 
     const gfx::Point& position() const { return m_pos; }
 
@@ -132,6 +135,7 @@ namespace ui {
     gfx::Point m_pos;           // Mouse position
     gfx::Point m_wheelDelta;    // Wheel axis variation
     bool m_preciseWheel;
+    float m_pressure;
   };
 
   class TouchMessage : public Message {

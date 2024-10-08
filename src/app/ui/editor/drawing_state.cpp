@@ -79,7 +79,7 @@ void DrawingState::initToolLoop(Editor* editor, MouseMessage* msg)
       (editor->getCustomizationDelegate()
          ->getPressedKeyAction(KeyContext::FreehandTool) & KeyAction::StraightLineFromLastPoint) == KeyAction::StraightLineFromLastPoint &&
       m_lastPoint.x >= 0) {
-    pointer = tools::Pointer(m_lastPoint, button_from_msg(msg));
+    pointer = tools::Pointer(m_lastPoint, button_from_msg(msg), msg->pressure());
     movement = true;
   }
   else {
@@ -163,7 +163,8 @@ bool DrawingState::onMouseMove(Editor* editor, MouseMessage* msg)
   // Infinite scroll
   gfx::Point mousePos = editor->autoScroll(msg, AutoScroll::MouseDir);
   tools::Pointer pointer(editor->screenToEditor(mousePos),
-                         button_from_msg(msg));
+                         button_from_msg(msg),
+                         msg->pressure());
 
   // Notify mouse movement to the tool
   ASSERT(m_toolLoopManager != NULL);

@@ -34,6 +34,7 @@ namespace doc {
     int angle() const { return m_angle; }
     Image* image() const { return m_image.get(); }
     int gen() const { return m_gen; }
+    Image* image(float scale);
 
     BrushPattern pattern() const { return m_pattern; }
     gfx::Point patternOrigin() const { return m_patternOrigin; }
@@ -64,6 +65,7 @@ namespace doc {
     BrushPattern m_pattern;               // How the image should be replicated
     gfx::Point m_patternOrigin;           // From what position the brush was taken
     int m_gen;
+    int m_genSize{};
 
     // Extra data used for setImageColor()
     std::shared_ptr<Image> m_backupImage; // Backup image to avoid losing original brush colors/pattern

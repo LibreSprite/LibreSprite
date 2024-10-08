@@ -19,12 +19,12 @@ void Stroke::reset()
   m_points.clear();
 }
 
-void Stroke::reset(int n, const gfx::Point& point)
+void Stroke::reset(int n, const Point& point)
 {
   m_points.resize(n, point);
 }
 
-void Stroke::addPoint(const gfx::Point& point)
+void Stroke::addPoint(const Point& point)
 {
   m_points.push_back(point);
 }

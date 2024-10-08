@@ -426,6 +426,7 @@ namespace she {
             });
           event.setButton(mouseButtonMapping[sdlEvent.button.button]);
           event.setModifiers(getSheModifiers());
+          event.setPressure(0);
 
           if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
             m_events.push(event);
