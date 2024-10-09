@@ -164,6 +164,8 @@
 #include <windows.h>
 #endif // _WIN32
 
+#include <regex>
+
 typedef enum
 {
     EASYTAB_OK = 0,
@@ -669,11 +671,13 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
     XDeviceInfoPtr Devices = (XDeviceInfoPtr)XListInputDevices(Disp, &Count);
     if (!Devices) { return EASYTAB_X11_ERROR; }
 
+    std::regex isTabletTest {"\\s+(pen|stylus|eraser)(?:\\s+|$)", std::regex::icase};
+
     for (int32_t i = 0; i < Count; i++)
     {
-        if (!strstr(Devices[i].name, " Pen ") &&
-            !strstr(Devices[i].name, "stylus") &&
-            !strstr(Devices[i].name, "eraser")) { continue; }
+	bool match = std::regex_search(Devices[i].name, isTabletTest);
+	/* std::cout << "Tablet? " << Devices[i].name << " = " << match << std::endl; */
+        if (!match) { continue; }
 
         EasyTab->Device = XOpenDevice(Disp, Devices[i].id);
         XAnyClassPtr ClassPtr = Devices[i].inputclassinfo;
@@ -732,7 +736,7 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
     XFreeDeviceList(Devices);
 
     if (EasyTab->Device != 0) { return EASYTAB_OK; }
-    else                      { return EASYTAB_X11_ERROR; }
+    else                      { std::cout << "ERROR2" << std::endl; return EASYTAB_X11_ERROR; }
 }
 
 EasyTabResult EasyTab_HandleEvent(XEvent* Event)

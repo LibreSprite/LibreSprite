@@ -22,9 +22,11 @@
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_syswm.h>
 #else
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_syswm.h>
 #endif
 
 #include <iostream>
@@ -41,12 +43,7 @@
 #include <emscripten/emscripten.h>
 #endif
 
-#if (defined(_WIN32) || defined(__linux__)) && !defined(ANDROID)
-#define EASYTAB_IMPLEMENTATION
-#include <EasyTab/easytab.h>
-#endif
-
-#undef None
+float penPressure = -1;
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
@@ -286,6 +283,8 @@ namespace she {
 
   class SDL2EventQueue : public EventQueue {
   public:
+    PointerType pointerType = PointerType::Mouse;
+
     SDL2EventQueue() {
       if (reverseKeyCodeMapping.empty()) {
         for (auto& entry : keyCodeMapping) {
@@ -337,6 +336,22 @@ namespace she {
           SDL2Surface::textureGen++;
           forceFlip();
           continue;
+
+	case SDL_SYSWMEVENT:
+#if defined(EASYTAB_H)
+#if defined(_WIN32)
+	    auto& win = event.syswm.msg->msg.win;
+	    if (EasyTab_HandleEvent(win.hwnd, win.msg, win.lParam, win.wParam) == EASYTAB_OK) {
+		penPressure = EasyTab->Pressure;
+	    }
+#endif
+#if defined(__linux__)
+	    if (EasyTab_HandleEvent(&sdlEvent.syswm.msg->msg.x11.event) == EASYTAB_OK) {
+		penPressure = EasyTab->Pressure;
+	    }
+#endif
+#endif
+	    continue;
 
         case SDL_WINDOWEVENT:
           switch (sdlEvent.window.event) {
@@ -409,6 +424,9 @@ namespace she {
               sdlEvent.motion.x / unique_display->scale(),
               sdlEvent.motion.y / unique_display->scale()
             });
+
+	  event.setPressure(penPressure);
+	  event.setPointerType(pointerType);
           return;
 
         case SDL_MOUSEWHEEL:
@@ -433,7 +451,16 @@ namespace she {
             });
           event.setButton(mouseButtonMapping[sdlEvent.button.button]);
           event.setModifiers(getSheModifiers());
-          event.setPressure(0);
+
+	  if (penPressure > 0.0f) {
+	    pointerType = PointerType::Pen;
+	    event.setPressure(penPressure);
+	    event.setPointerType(pointerType);
+	  } else {
+	    event.setPressure(sdlEvent.type == SDL_MOUSEBUTTONDOWN ? 1.0f : 0.0f);
+	    event.setPointerType(pointerType);
+	    pointerType = PointerType::Mouse;
+	  }
 
           if (sdlEvent.button.clicks > 1 && sdlEvent.type == SDL_MOUSEBUTTONUP) {
             m_events.push(event);

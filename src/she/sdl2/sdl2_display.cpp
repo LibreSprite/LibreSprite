@@ -9,6 +9,8 @@
 #include "config.h"
 #endif
 
+#define EASYTAB_IMPLEMENTATION
+
 #include "she/she.h"
 #include "she/system.h"
 
@@ -80,6 +82,27 @@ namespace she {
       m_height = height;
 
       SDL_ShowCursor(SDL_DISABLE);
+
+      bool tabletSupport{};
+
+#ifdef EASYTAB_H
+      SDL_SysWMinfo wmInfo;
+      SDL_VERSION(&wmInfo.version);
+      SDL_GetWindowWMInfo(m_window, &wmInfo);
+#if defined(_WIN32)
+      tabletSupport = EasyTab_Load(wmInfo.info.win.window) == EASYTAB_OK;
+#elif defined(__linux__) && !defined(ANDROID)
+      if (wmInfo.subsystem == SDL_SYSWM_X11) {
+	auto error = EasyTab_Load(wmInfo.info.x11.display, wmInfo.info.x11.window);
+	tabletSupport = error == EASYTAB_OK;
+	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+	std::cout << "EasyTab error: " << error << std::endl;
+      } else {
+	  std::cout << "Unsupported wm subsystem for tablets" << std::endl;
+      }
+#endif
+#endif
+      std::cout << "Tablet support: " << (tabletSupport ? "OK" : "FAILED") << std::endl;
     }, true);
 
     setScale(scale);

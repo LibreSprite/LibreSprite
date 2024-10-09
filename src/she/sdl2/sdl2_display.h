@@ -8,6 +8,11 @@
 
 #include "she/display.h"
 
+#if (defined(_WIN32) || defined(__linux__)) && !defined(ANDROID)
+#include <EasyTab/easytab.h>
+#undef None
+#endif
+
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Surface;
