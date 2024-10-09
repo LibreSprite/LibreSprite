@@ -93,6 +93,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 
+set(EASYTAB_DIR         ${CMAKE_SOURCE_DIR}/third_party/EasyTab)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
@@ -247,6 +248,9 @@ include_directories(${CURL_INCLUDE_DIRS})
 endif()
 # simpleini
 include_directories(${SIMPLEINI_DIR})
+
+# easytab
+include_directories(${EASYTAB_DIR})
 
 ######################################################################
 # Platform specific stuff

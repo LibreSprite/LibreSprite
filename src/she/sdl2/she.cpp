@@ -42,6 +42,7 @@
 #endif
 
 #if (defined(_WIN32) || defined(__linux__)) && !defined(ANDROID)
+#define EASYTAB_IMPLEMENTATION
 #include <EasyTab/easytab.h>
 #endif
 
