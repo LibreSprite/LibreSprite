@@ -4,6 +4,7 @@
 set(SHE_SOURCES
   common/freetype_font.cpp)
 
+include_directories(${EASYTAB_DIR})
 
 # Debug C/C++ flags
 if(CMAKE_BUILD_TYPE STREQUAL Debug)

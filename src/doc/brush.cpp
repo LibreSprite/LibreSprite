@@ -18,6 +18,7 @@
 #include "doc/primitives.h"
 
 #include <cmath>
+#include <array>
 
 namespace doc {
 

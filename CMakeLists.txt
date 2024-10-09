@@ -249,9 +249,6 @@ endif()
 # simpleini
 include_directories(${SIMPLEINI_DIR})
 
-# easytab
-include_directories(${EASYTAB_DIR})
-
 ######################################################################
 # Platform specific stuff
 
