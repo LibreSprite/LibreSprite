@@ -26,7 +26,7 @@ inline tools::Pointer pointer_from_msg(Editor* editor, ui::MouseMessage* msg) {
   return
     tools::Pointer(editor->screenToEditor(msg->position()),
                    button_from_msg(msg),
-                   msg->pointerType() == she::PointerType::Pen ?  : 1.0f);
+                   msg->pointerType() == she::PointerType::Pen ? msg->pressure() : 1.0f);
 }
 
 } // namespace app
