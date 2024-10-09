@@ -313,7 +313,7 @@ void Brush::regenerate()
           int y3 =  ca +  sa;
           int x4 = -ca -  sa;
           int y4 = -sa +  ca;
-          std::array points {
+          std::array<std::pair<int,int>, 8> points {
             std::pair<int, int>{x1 + c, y1 + c},
             std::pair<int, int>{x4 + c, y4 + c},
             std::pair<int, int>{x3 + c, y3 + c},

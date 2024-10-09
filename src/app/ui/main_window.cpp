@@ -96,7 +96,7 @@ MainWindow::MainWindow()
 
   touchbarParent->addChild(m_touchBar.get());
 
-  bool leftToolbar = leftToolbar = Preferences::instance().general.leftToolBar();
+  bool leftToolbar = Preferences::instance().general.leftToolBar();
   if (!has_config_value("general", "left_tool_bar")) {
     // TODO: Decide default based on DPI
 #if defined(ANDROID)

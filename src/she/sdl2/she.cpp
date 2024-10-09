@@ -41,6 +41,10 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#if (defined(_WIN32) || defined(__linux__)) && !defined(ANDROID)
+#include <EasyTab/easytab.h>
+#endif
+
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
   {SDL_BUTTON_LEFT, she::Event::LeftButton},
