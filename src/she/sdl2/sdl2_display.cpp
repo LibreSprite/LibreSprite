@@ -90,7 +90,13 @@ namespace she {
       SDL_VERSION(&wmInfo.version);
       SDL_GetWindowWMInfo(m_window, &wmInfo);
 #if defined(_WIN32)
-      tabletSupport = EasyTab_Load(wmInfo.info.win.window) == EASYTAB_OK;
+      {
+	  auto error = EasyTab_Load(wmInfo.info.win.window);
+	  tabletSupport = error == EASYTAB_OK;
+	  if (!tabletSupport) {
+	      std::cout << "EasyTab error: " << error << std::endl;
+	  }
+      }
 #elif defined(__linux__) && !defined(ANDROID)
       if (wmInfo.subsystem == SDL_SYSWM_X11) {
 	auto error = EasyTab_Load(wmInfo.info.x11.display, wmInfo.info.x11.window);

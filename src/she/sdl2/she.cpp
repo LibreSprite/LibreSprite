@@ -340,10 +340,12 @@ namespace she {
 	case SDL_SYSWMEVENT:
 #if defined(EASYTAB_H)
 #if defined(_WIN32)
-	    auto& win = event.syswm.msg->msg.win;
+	  {
+	    auto& win = sdlEvent.syswm.msg->msg.win;
 	    if (EasyTab_HandleEvent(win.hwnd, win.msg, win.lParam, win.wParam) == EASYTAB_OK) {
 		penPressure = EasyTab->Pressure;
 	    }
+	  }
 #endif
 #if defined(__linux__)
 	    if (EasyTab_HandleEvent(&sdlEvent.syswm.msg->msg.x11.event) == EASYTAB_OK) {
