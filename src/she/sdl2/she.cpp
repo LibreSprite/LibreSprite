@@ -46,6 +46,8 @@
 #include <EasyTab/easytab.h>
 #endif
 
+#undef None
+
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
   {SDL_BUTTON_LEFT, she::Event::LeftButton},

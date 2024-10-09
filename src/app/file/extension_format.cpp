@@ -54,7 +54,7 @@ public:
     archive_read_support_format_rar(a);
     archive_read_support_format_tar(a);
     archive_read_support_format_zip(a);
-    if (auto error = archive_read_open_FILE(a, file)) {
+    if (archive_read_open_FILE(a, file)) {
       throw std::runtime_error("Error reading archive");
     }
   }
@@ -68,7 +68,7 @@ public:
       if (r != ARCHIVE_OK)
         throw std::runtime_error("Error reading archive");
       std::string fileName = archive_entry_pathname(entry);
-      bool isDir = archive_entry_filetype(entry) == 16384;
+      bool isDir = archive_entry_filetype(entry) == AE_IFDIR;
       auto out = open_file_with_exception(path + base::path_separator + fileName, "wb");
       for (;;) {
         const void *buff{};

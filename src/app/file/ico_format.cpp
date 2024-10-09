@@ -152,7 +152,7 @@ bool IcoFormat::onLoad(FileOp* fop)
   fseek(f, entry.image_offset, SEEK_SET);
 
   // Read BITMAPINFOHEADER
-  BITMAPINFOHEADER bmpHeader;
+  [[maybe_unused]] BITMAPINFOHEADER bmpHeader;
   bmpHeader.size                 = fgetl(f);
   bmpHeader.width                = fgetl(f);
   bmpHeader.height               = fgetl(f); // XOR height + AND height

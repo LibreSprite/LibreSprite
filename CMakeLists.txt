@@ -302,6 +302,10 @@ if(UNIX AND NOT APPLE AND NOT BEOS AND NOT GEN_ONLY)
     list(APPEND PLATFORM_LIBS Xxf86dga ${X11_LIBRARIES})
   endif()
 
+  if(X11_Xi_FOUND)
+    list(APPEND PLATFORM_LIBS ${X11_Xi_LIB})
+  endif()
+
   if(WITH_GTK_FILE_DIALOG_SUPPORT)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTKMM gtkmm-3.0)
