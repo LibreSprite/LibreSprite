@@ -248,9 +248,18 @@ static void algo_hline(int x1, int y, int x2, void *data)
   draw_hline(reinterpret_cast<Image*>(data), x1, y, x2, BitmapTraits::max_value);
 }
 
+Image* Brush::image() {
+  if (m_genSize != m_size && m_type != kImageBrushType)
+    regenerate();
+  return m_image.get();
+}
+
 Image* Brush::image(float scale)
 {
-  int size = m_size;
+  if (m_type == kImageBrushType)
+    return m_image.get();
+  auto size = m_size;
+  auto bounds = m_bounds;
   m_size *= scale;
   if (m_size <= 0) {
     m_size = size;
@@ -259,7 +268,8 @@ Image* Brush::image(float scale)
   if (m_size != m_genSize)
     regenerate();
   m_size = size;
-  return image();
+  m_bounds = bounds;
+  return m_image.get();
 }
 
 // Regenerates the brush bitmap and its rectangle's region.
@@ -333,6 +343,8 @@ void Brush::regenerate()
   m_bounds = gfx::Rect(
     -m_image->width()/2, -m_image->height()/2,
     m_image->width(), m_image->height());
+
+  m_scaledBounds = m_bounds;
 }
 
 } // namespace doc

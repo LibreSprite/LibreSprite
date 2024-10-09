@@ -49,7 +49,7 @@ public:
     if (loop->getFilled()) {
       algo_line(stroke[0].x, stroke[0].y,
                 stroke[stroke.size()-1].x,
-                stroke[stroke.size()-1].y, [&](int x, int y){doPointshapePoint(x, y, stroke[0].y, loop);});
+                stroke[stroke.size()-1].y, [&](int x, int y){doPointshapePoint(x, y, stroke[0].pressure, loop);});
     }
   }
 

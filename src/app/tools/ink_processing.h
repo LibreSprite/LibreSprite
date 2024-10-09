@@ -945,7 +945,7 @@ private:
   color_t m_fgColor;
   color_t m_bgColor;
   const Palette* m_palette;
-  const Brush* m_brush;
+  Brush* m_brush;
   const Image* m_brushImage;
   int m_opacity;
   int m_u, m_v, m_width, m_height;

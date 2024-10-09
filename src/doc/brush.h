@@ -32,7 +32,7 @@ namespace doc {
     BrushType type() const { return m_type; }
     int size() const { return m_size; }
     int angle() const { return m_angle; }
-    Image* image() const { return m_image.get(); }
+    Image* image();
     int gen() const { return m_gen; }
     Image* image(float scale);
 
@@ -40,6 +40,7 @@ namespace doc {
     gfx::Point patternOrigin() const { return m_patternOrigin; }
 
     const gfx::Rect& bounds() const { return m_bounds; }
+    const gfx::Rect& scaledBounds() const { return m_scaledBounds; }
 
     void setType(BrushType type);
     void setSize(int size);
@@ -62,6 +63,7 @@ namespace doc {
     int m_angle;                          // Angle in degrees 0-360
     ImageRef m_image;                     // Image of the brush
     gfx::Rect m_bounds;
+    gfx::Rect m_scaledBounds;
     BrushPattern m_pattern;               // How the image should be replicated
     gfx::Point m_patternOrigin;           // From what position the brush was taken
     int m_gen;

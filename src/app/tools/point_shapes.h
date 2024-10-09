@@ -42,12 +42,13 @@ class BrushPointShape : public PointShape {
   doc::Brush* m_brush;
   doc::CompressedImage m_compressedImage;
   bool m_firstPoint;
-  Image* m_srcImage{};
+  int m_brushGen;
 
 public:
 
   void preparePointShape(ToolLoop* loop) override {
     m_brush = loop->getBrush();
+    m_brushGen = !m_brush->gen();
     m_firstPoint = true;
   }
 
@@ -56,13 +57,13 @@ public:
     if (!srcImage)
       return; // brush size == 0
 
-    if (srcImage != m_srcImage) {
-      m_srcImage = srcImage;
+    if (m_brushGen != m_brush->gen()) {
+      m_brushGen = m_brush->gen();
       m_compressedImage.update(srcImage, false);
     }
 
-    x += m_brush->bounds().x;
-    y += m_brush->bounds().y;
+    x += m_brush->scaledBounds().x;
+    y += m_brush->scaledBounds().y;
 
     if (m_firstPoint) {
       m_firstPoint = false;
