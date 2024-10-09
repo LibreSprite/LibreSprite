@@ -29,7 +29,7 @@ using namespace gfx;
 /* That could help to adjust intersections  to produce a nice */
 /* interior_extrema. */
 
-void algorithm::polygon(int vertices, const int* points, void* data, AlgoHLine proc)
+void algorithm::polygon(int vertices, const int* points, int pointStride, void* data, AlgoHLine proc)
 {
   int n = vertices;
   if (!n)
@@ -48,8 +48,8 @@ void algorithm::polygon(int vertices, const int* points, void* data, AlgoHLine p
   std::vector<int> polyInts(n);
   std::vector<Point> p(n);
   for (i = 0; (i < n); i++) {
-    p[i].x = points[i*2];
-    p[i].y = points[i*2+1];
+    p[i].x = points[i*pointStride];
+    p[i].y = points[i*pointStride+1];
   }
 
   miny = p[0].y;

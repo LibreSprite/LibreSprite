@@ -260,11 +260,9 @@ Image* Brush::image(float scale)
     return m_image.get();
   auto size = m_size;
   auto bounds = m_bounds;
-  m_size *= scale;
-  if (m_size <= 0) {
-    m_size = size;
-    return nullptr;
-  }
+  m_size = m_size * scale + 0.5f;
+  if (m_size <= 0) m_size = 1;
+  if (m_size > size) m_size = size;
   if (m_size != m_genSize)
     regenerate();
   m_size = size;
@@ -315,14 +313,16 @@ void Brush::regenerate()
           int y3 =  ca +  sa;
           int x4 = -ca -  sa;
           int y4 = -sa +  ca;
-	  int points[8] = {
-	      x1 + c, y1 + c,
-	      x4 + c, y4 + c,
-	      x3 + c, y3 + c,
-	      x2 + c, y2 + c
+          std::array points {
+            std::pair<int, int>{x1 + c, y1 + c},
+            std::pair<int, int>{x4 + c, y4 + c},
+            std::pair<int, int>{x3 + c, y3 + c},
+            std::pair<int, int>{x2 + c, y2 + c}
 	  };
 
-          doc::algorithm::polygon(4, points, m_image.get(), algo_hline);
+          doc::algorithm::polygon(points, [&](int x, int y, int x2){
+            algo_hline(x, y, x2, m_image.get());
+          });
         }
         break;
 

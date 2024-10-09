@@ -65,7 +65,7 @@ public:
     joinStroke(loop, stroke);
 
     // Fill content
-    doc::algorithm::polygon(stroke.size(), (const int*)&stroke[0], [&](int x, int y, int x2){
+    doc::algorithm::polygon(stroke, [&](int x, int y, int x2){
       doPointshapeHline(x, y, x2, stroke[0].pressure, loop);
     });
   }
@@ -286,8 +286,8 @@ public:
     joinStroke(loop, stroke);
 
     // Fill content
-    doc::algorithm::polygon(stroke.size(), (const int*)&stroke[0], [&](int x, int y, int x2){
-      doPointshapeHline(x, y, x2, stroke[0].pressure, loop);
+    doc::algorithm::polygon(stroke, [&](int x, int y, int x2){
+      doPointshapeHline(x, y, x2, 1.0f, loop);
     });
   }
 };
