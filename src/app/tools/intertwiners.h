@@ -40,8 +40,9 @@ public:
         auto p1 = stroke[c].pressure;
         int x2 = stroke[c+1].x;
         int y2 = stroke[c+1].y;
+        auto p2 = stroke[c+1].pressure;
 
-        algo_line(x1, y1, x2, y2, [&](int x, int y){doPointshapePoint(x, y, p1, loop);});
+        algo_line_float(x1, y1, x2, y2, [&](int x, int y, float f){doPointshapePoint(x, y, p1*(1-f) + p2*f, loop);});
       }
     }
 

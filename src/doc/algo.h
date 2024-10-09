@@ -14,14 +14,23 @@ namespace doc {
   class Image;
 
   typedef void (*AlgoPixel)(int x, int y, void *data);
+  typedef void (*AlgoPixelFloat)(int x, int y, float f, void *data);
   typedef void (*AlgoLine)(int x1, int y1, int x2, int y2, void *data);
 
   void algo_line(int x1, int y1, int x2, int y2, void *data, AlgoPixel proc);
+  void algo_line_float(int x1, int y1, int x2, int y2, void *data, AlgoPixelFloat proc);
 
   template<typename Func>
   void algo_line(int x1, int y1, int x2, int y2, Func&& func) {
     algo_line(x1, y1, x2, y2, &func, [](int x, int y, void* ptr){
       (*reinterpret_cast<Func*>(ptr))(x, y);
+    });
+  }
+
+  template<typename Func>
+  void algo_line_float(int x1, int y1, int x2, int y2, Func&& func) {
+    algo_line_float(x1, y1, x2, y2, &func, [](int x, int y, float f, void* ptr){
+      (*reinterpret_cast<Func*>(ptr))(x, y, f);
     });
   }
 

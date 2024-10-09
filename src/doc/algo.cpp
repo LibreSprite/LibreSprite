@@ -100,6 +100,97 @@ void algo_line(int x1, int y1, int x2, int y2, void *data, AlgoPixel proc)
   }
 }
 
+#undef DO_LINE
+
+void algo_line_float(int x1, int y1, int x2, int y2, void *data, AlgoPixelFloat proc)
+{
+  int dx = x2-x1;
+  int dy = y2-y1;
+  int i1, i2;
+  int x, y;
+  float f = 0;
+  float fstep;
+  int dd;
+
+
+  /* worker macro */
+#define DO_LINE(pri_sign, pri_c, pri_cond, sec_sign, sec_c, sec_cond)   \
+  {                                                                     \
+    if (d##pri_c == 0) {                                                \
+      proc(x1, y1, f, data);                                            \
+      return;                                                           \
+    }                                                                   \
+                                                                        \
+    fstep = pri_sign 1.0f / d##pri_c;                                   \
+    i1 = 2 * d##sec_c;                                                  \
+    dd = i1 - (sec_sign (pri_sign d##pri_c));                           \
+    i2 = dd - (sec_sign (pri_sign d##pri_c));                           \
+                                                                        \
+    x = x1;                                                             \
+    y = y1;                                                             \
+                                                                        \
+    while (pri_c pri_cond pri_c##2) {                                   \
+      proc(x, y, f += fstep, data);                                     \
+                                                                        \
+      if (dd sec_cond 0) {                                              \
+        sec_c sec_sign##= 1;                                            \
+        dd += i2;                                                       \
+      }                                                                 \
+      else                                                              \
+        dd += i1;                                                       \
+                                                                        \
+      pri_c pri_sign##= 1;                                              \
+    }                                                                   \
+  }
+
+  if (dx >= 0) {
+    if (dy >= 0) {
+      if (dx >= dy) {
+        /* (x1 <= x2) && (y1 <= y2) && (dx >= dy) */
+        DO_LINE(+, x, <=, +, y, >=);
+      }
+      else {
+        /* (x1 <= x2) && (y1 <= y2) && (dx < dy) */
+        DO_LINE(+, y, <=, +, x, >=);
+      }
+    }
+    else {
+      if (dx >= -dy) {
+        /* (x1 <= x2) && (y1 > y2) && (dx >= dy) */
+        DO_LINE(+, x, <=, -, y, <=);
+      }
+      else {
+        /* (x1 <= x2) && (y1 > y2) && (dx < dy) */
+        DO_LINE(-, y, >=, +, x, >=);
+      }
+    }
+  }
+  else {
+    if (dy >= 0) {
+      if (-dx >= dy) {
+        /* (x1 > x2) && (y1 <= y2) && (dx >= dy) */
+        DO_LINE(-, x, >=, +, y, >=);
+      }
+      else {
+        /* (x1 > x2) && (y1 <= y2) && (dx < dy) */
+        DO_LINE(+, y, <=, -, x, <=);
+      }
+    }
+    else {
+      if (-dx >= -dy) {
+        /* (x1 > x2) && (y1 > y2) && (dx >= dy) */
+        DO_LINE(-, x, >=, -, y, <=);
+      }
+      else {
+        /* (x1 > x2) && (y1 > y2) && (dx < dy) */
+        DO_LINE(-, y, >=, -, x, <=);
+      }
+    }
+  }
+}
+
+#undef DO_LINE
+
 /* Helper function for the ellipse drawing routines. Calculates the
    points of an ellipse which fits onto the rectangle specified by x1,
    y1, x2 and y2, and calls the specified routine for each one. The
