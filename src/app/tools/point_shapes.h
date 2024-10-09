@@ -40,7 +40,7 @@ public:
 
 class BrushPointShape : public PointShape {
   doc::Brush* m_brush;
-  base::SharedPtr<doc::CompressedImage> m_compressedImage;
+  doc::CompressedImage m_compressedImage;
   bool m_firstPoint;
   Image* m_srcImage{};
 
@@ -58,7 +58,7 @@ public:
 
     if (srcImage != m_srcImage) {
       m_srcImage = srcImage;
-      m_compressedImage.reset(new CompressedImage(srcImage, false));
+      m_compressedImage.update(srcImage, false);
     }
 
     x += m_brush->bounds().x;
@@ -80,7 +80,7 @@ public:
       }
     }
 
-    for (auto& scanline : *m_compressedImage) {
+    for (auto& scanline : m_compressedImage) {
       int u = x+scanline.x;
       doInkHline(u, y+scanline.y, u+scanline.w-1, loop);
     }

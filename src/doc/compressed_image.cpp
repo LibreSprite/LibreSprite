@@ -14,10 +14,11 @@
 
 namespace doc {
 
-CompressedImage::CompressedImage(const Image* image, bool diffColors)
-  : m_image(image)
+void CompressedImage::update(const Image* image, bool diffColors)
 {
+  m_image = image;
   color_t c1, c2, mask = image->maskColor();
+  m_scanlines.clear();
 
   for (int y=0; y<image->height(); ++y) {
     Scanline scanline(y);

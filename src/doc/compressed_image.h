@@ -28,7 +28,7 @@ namespace doc {
     // each different color. If it's false, it generates a scanline
     // for each row of consecutive pixels different than the mask
     // color.
-    CompressedImage(const Image* image, bool diffColors);
+    void update(const Image* image, bool diffColors);
 
     const_iterator begin() const { return m_scanlines.begin(); }
     const_iterator end() const { return m_scanlines.end(); }
