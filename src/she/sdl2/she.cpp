@@ -452,6 +452,10 @@ namespace she {
 	  event.setPointerType(pointerType);
           return;
 
+        case SDL_FINGERMOTION:
+          penPressure = sdlEvent.tfinger.pressure;
+          continue;
+
         case SDL_MOUSEWHEEL:
           event.setType(Event::MouseWheel);
           event.setModifiers(getSheModifiers());
@@ -930,6 +934,6 @@ int main(int argc, char* argv[]) {
     std::cerr << "Critical: Could not initialize SDL2_image (" << IMG_GetError() << "). Aborting." << std::endl;
     return -2;
   }
-
+  SDL_EventState(SDL_FINGERMOTION, SDL_ENABLE);
   return app_main(argc, argv);
 }
