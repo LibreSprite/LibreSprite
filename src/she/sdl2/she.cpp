@@ -52,6 +52,7 @@ extern "C" {
 	}
     }
 }
+extern bool cfginit();
 #endif
 
 static she::System* g_instance = nullptr;
@@ -675,24 +676,27 @@ namespace she {
       }
     }
 
+    std::function<int()> m_func;
     int run(std::function<int()>&& func) override {
       gfxThreadId = std::this_thread::get_id();
       #ifndef EMSCRIPTEN
       mainThreadId = gfxThreadId;
       return func();
       #elif defined(EMSCRIPTEN) && !defined(__EMSCRIPTEN__)
+      m_func = std::move(func);
       // like emscripten, but not really
-      mainThread = std::thread{[this, func = std::move(func)]{
+      mainThread = std::thread{[this]{
         mainThreadId = std::this_thread::get_id();
-	func();
+	m_func();
       }};
       while (!shutdown)(
 	refresh();
       }
       #else
+      m_func = std::move(func);
+
       addEventListener("dragenter", cancelEvent);
       addEventListener("dragover", cancelEvent);
-
       addEventListener("drop", [](void*){
 	EM_ASM({
 	  event.stopPropagation();
@@ -722,13 +726,20 @@ namespace she {
 	static_cast<SDL2EventQueue*>(EventQueue::instance())->queueEvent(event);
       });
 
-      mainThread = std::thread{[this, func = std::move(func)]{
-        mainThreadId = std::this_thread::get_id();
-	func();
-      }};
       emscripten_set_main_loop([]{
-	patchEventListeners();
-	static_cast<SDL2System*>(g_instance)->refresh();
+	  if (!cfginit())
+	      return;
+	  auto sys = static_cast<SDL2System*>(g_instance);
+	  sys->mainThread = std::thread{[]{
+	      auto sys = static_cast<SDL2System*>(g_instance);
+	      sys->mainThreadId = std::this_thread::get_id();
+	      sys->m_func();
+	  }};
+	  emscripten_cancel_main_loop();
+	  emscripten_set_main_loop([]{
+	      patchEventListeners();
+	      static_cast<SDL2System*>(g_instance)->refresh();
+	  }, 0, true);
       }, 0, true);
       #endif
       return 0;

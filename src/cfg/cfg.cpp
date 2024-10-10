@@ -17,6 +17,96 @@
 #include <stdlib.h>
 #include "SimpleIni.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#include "she/system.h"
+
+std::string s_cfgdata;
+
+void cfgwrite(){
+    she::instance()->gfx([&]{
+      EM_ASM((
+	self.storage.data = JSON.parse(UTF8ToString($0));
+	self.storage.dirty = true;
+	self.storage.commit();
+      ), s_cfgdata.c_str());
+    });
+}
+
+bool cfginit(){
+  auto data = (char*) EM_ASM_PTR((
+      if (self.storage)
+	return self.storage.data ? stringToNewUTF8(JSON.stringify(self.storage.data)) : 0;
+      self.storage = {
+        data:null,
+	db:null,
+	dirty:false,
+	init(){
+	  if (storage.wasInit)
+	      return;
+	  storage.wasInit = true;
+
+	  Object.assign(indexedDB.open("UserSettings", 1), {
+	    onupgradeneeded(){
+	      storage.db = this.result;
+	      console.log(storage.db);
+	      storage.db.createObjectStore('userSettings', {keyPath: 'key'});
+	    },
+	    onerror(){},
+	    onsuccess(){
+	      storage.db = this.result;
+	      let transaction = storage.db.transaction('userSettings', 'readonly');
+	      let userSettings = transaction.objectStore('userSettings');
+	      Object.assign(userSettings.get('str'), {
+		onsuccess(){
+		  storage.data = (this.result ?? {data:{}}).data;
+		}
+	      });
+	    }
+	  });
+	},
+	commit(){
+	  if (!storage.dirty) return;
+	  let transaction = storage.db.transaction('userSettings', 'readwrite');
+	  let userSettings = transaction.objectStore('userSettings');
+	  Object.assign(userSettings.put({key:'str', data:storage.data}), {
+	    onsuccess(){storage.dirty = false;},
+	    onerror(){}
+	  });
+	},
+	getItem(key){
+	  console.log(key);
+	  return storage.data[key];
+	},
+	setItem(key, value){
+	  console.log(key, value);
+	  storage.dirty = storage.data[key] != value;
+	  storage.data[key] = value;
+	}
+      };
+      storage.init();
+      return 0;
+    ));
+
+  if (!data)
+      return false;
+
+  s_cfgdata = data;
+  free(data);
+  return true;
+}
+
+void thread_init() {
+  EM_ASM((
+    self.storage = {
+    data: JSON.parse(UTF8ToString($0)),
+    getItem(key){ return storage.data[key]; },
+    setItem(key, value){ storage.data[key] = value; }
+    };
+  ), s_cfgdata.c_str());
+}
+#endif
+
 namespace cfg {
 
 class CfgFile::CfgFileImpl {
@@ -69,15 +159,49 @@ public:
       SI_Error err = m_ini.LoadFile(file.get());
       if (err != SI_OK)
         LOG("Error '%d' loading configuration from '%s'.", err, m_filename.c_str());
+    } else {
+      std::string data;
+#ifdef __EMSCRIPTEN__
+      thread_init();
+      auto raw = (char*) EM_ASM_PTR({
+	const value = self.storage.getItem(UTF8ToString($0));
+	if (value === undefined)
+	  return 0;
+	return stringToNewUTF8(value);
+      }, m_filename.c_str());
+      if (raw) {
+	data = raw;
+	free(raw);
+      }
+#endif
+      if (!data.empty())
+	m_ini.LoadData(data);
     }
   }
 
   void save() {
-    base::FileHandle file(base::open_file(m_filename, "wb"));
-    if (file) {
-      SI_Error err = m_ini.SaveFile(file.get());
-      if (err != SI_OK)
-        LOG("Error '%d' saving configuration into '%s'.", err, m_filename.c_str());
+    std::string data;
+    SI_Error err = m_ini.Save(data);
+    if (err != SI_OK) {
+      LOG("Error '%d' saving configuration into '%s'.", err, m_filename.c_str());
+      return;
+    }
+
+#ifdef __EMSCRIPTEN__
+    thread_init();
+    auto cfgdata = (char*) EM_ASM_PTR({
+      self.storage.setItem(UTF8ToString($0), UTF8ToString($1));
+      return stringToNewUTF8(JSON.stringify(self.storage.data));
+    }, m_filename.c_str(), data.c_str());
+    if (cfgdata) {
+	s_cfgdata = cfgdata;
+	free(cfgdata);
+	cfgwrite();
+    }
+#endif
+
+    if (base::FileHandle file = base::open_file(m_filename, "wb")) {
+	std::fwrite(data.c_str(), 1, data.size(), file.get());
     }
   }
 

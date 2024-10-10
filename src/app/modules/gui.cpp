@@ -58,9 +58,9 @@ static struct {
   int width;
   int height;
   int scale;
-} try_resolutions[] = { { 1024, 768, 2 },
-                        {  800, 600, 2 },
-                        {  640, 480, 2 },
+} try_resolutions[] = { { 1024, 768, 1 },
+                        {  800, 600, 1 },
+                        {  640, 480, 1 },
                         {  320, 240, 1 },
                         {  320, 200, 1 },
                         {    0,   0, 0 } };
@@ -103,13 +103,12 @@ static bool create_main_display(bool gpuAccel,
   // Scale is equal to 0 when it's the first time the program is
   // executed.
   int scale = Preferences::instance().general.screenScale();
-
   she::instance()->setGpuAcceleration(gpuAccel);
 
   try {
     if (w > 0 && h > 0) {
       main_display = she::instance()->createDisplay(
-        w, h, (scale == 0 ? 2: MID(1, scale, 4)));
+        w, h, (scale == 0 ? 1 : MID(1, scale, 4)));
     }
   }
   catch (const she::DisplayCreationException& e) {
@@ -123,7 +122,7 @@ static bool create_main_display(bool gpuAccel,
           she::instance()->createDisplay(
             try_resolutions[c].width,
             try_resolutions[c].height,
-            (scale == 0 ? try_resolutions[c].scale: scale));
+            (scale == 0 ? try_resolutions[c].scale : scale));
         break;
       }
       catch (const she::DisplayCreationException& e) {
@@ -191,9 +190,9 @@ int init_module_gui()
       auto uiScale = Preferences::instance().experimental.uiScale();
       if (uiScale < 1) {
 	  #ifdef EMSCRIPTEN
-	  uiScale = 1;
+	  uiScale = 2;
 	  #else
-          uiScale = 1 + (ui::display_h() > 400) + (ui::display_h() > 800);
+          uiScale = 2 + (ui::display_h() > 400) + (ui::display_h() > 800);
 	  #endif
           Preferences::instance().experimental.uiScale(uiScale);
       }
