@@ -39,11 +39,20 @@
 #include <chrono>
 #include <thread>
 
+float penPressure = 0;
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
+extern "C" {
+    void onPointerEvent(int isPen, float pressure) {
+	if (isPen) {
+	    penPressure = pressure > 0 ? pressure : 0.0001;
+	} else {
+	    penPressure = 0;
+	}
+    }
+}
 #endif
-
-float penPressure = -1;
 
 static she::System* g_instance = nullptr;
 static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
@@ -286,6 +295,17 @@ namespace she {
     PointerType pointerType = PointerType::Mouse;
 
     SDL2EventQueue() {
+#if defined(__EMSCRIPTEN__)
+        EM_ASM(
+            const onPointerEvent = Module.cwrap("onPointerEvent", "", ["number", "number"]);
+	    const listener = event => {
+		onPointerEvent((event.pointerType == "pen")|0, event.pressure);
+	    };
+            Module.canvas.addEventListener("pointerdown", listener);
+	    Module.canvas.addEventListener("pointermove", listener);
+	    Module.canvas.addEventListener("pointerup", listener);
+            );
+#endif
       if (reverseKeyCodeMapping.empty()) {
         for (auto& entry : keyCodeMapping) {
           reverseKeyCodeMapping[entry.second.sheModifier] = &entry.second;

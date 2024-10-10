@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 project(LibreSprite C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -45,7 +45,7 @@ set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -flto -fwasm-exceptions -s SUPPORT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
 include_directories(${SDL2_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s EXPORTED_FUNCTIONS=_main,_onPointerEvent -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
 set(CMAKE_EXECUTABLE_SUFFIX .html)
 
 set_source_files_properties(${SRC}/app/file/ase_format.cpp PROPERTIES COMPILE_FLAGS "-s USE_ZLIB=1")
