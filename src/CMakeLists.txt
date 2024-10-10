@@ -23,7 +23,7 @@ if(MSVC)
 endif(MSVC)
 
 # Directories where .h files can be found
-include_directories(. .. ../third_party)
+include_directories(. .. ../third_party ../third_party/observable)
 
 if((UNIX AND NOT APPLE) OR (WIN32 AND NOT MSVC))
   set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
@@ -54,11 +54,6 @@ endif()
 
 ######################################################################
 # Aseprite Libraries (in preferred order to be built)
-
-# Disable observable tests
-set(OBSERVABLE_TESTS OFF CACHE BOOL "Compile observable tests")
-add_subdirectory(observable)
-include_directories(observable)
 
 # Disable clip examples
 set(CLIP_EXAMPLES OFF CACHE BOOL "Compile clip examples")

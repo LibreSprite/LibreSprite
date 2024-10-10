@@ -175,7 +175,7 @@ void PlayState::onPlaybackTick()
       }
       if (atEnd) {
         m_editor->stop();
-        break;
+        return;
       }
     }
 
