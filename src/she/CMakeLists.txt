@@ -39,7 +39,8 @@ endif()
 if(APPLE)
   list(APPEND SHE_SOURCES
     osx/logger.mm
-    osx/native_dialogs.mm)
+    osx/native_dialogs.mm
+    osx/tablet.mm)
 endif()
 
 if(WITH_GTK_FILE_DIALOG_SUPPORT AND UNIX AND NOT APPLE AND NOT BEOS)

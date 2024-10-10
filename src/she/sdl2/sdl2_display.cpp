@@ -37,6 +37,12 @@
 #include <memory>
 #include <vector>
 
+#if __APPLE__
+namespace osx_tablet {
+  int init();
+}
+#endif
+
 namespace she {
 
   SDL2Display* unique_display = NULL;
@@ -107,6 +113,8 @@ namespace she {
 	  std::cout << "Unsupported wm subsystem for tablets" << std::endl;
       }
 #endif
+#elif __APPLE__
+      tabletSupport = osx_tablet::init();
 #endif
       std::cout << "Tablet support: " << (tabletSupport ? "OK" : "FAILED") << std::endl;
     }, true);
