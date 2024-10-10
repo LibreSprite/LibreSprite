@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Copyright (C) 2001-2016  David Capello
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -20,6 +20,8 @@ namespace app {
     EditorStatesHistory();
     ~EditorStatesHistory();
 
+    bool empty() const { return m_states.empty(); }
+
     // Gets the current state.
     EditorStatePtr top();
 
@@ -39,3 +41,5 @@ namespace app {
   };
 
 } // namespace app
+
+//The play once crashing patch is licensed under GPL thanks to @decap permission https://github.com/LibreSprite/LibreSprite/pull/476#issuecomment-2140727827

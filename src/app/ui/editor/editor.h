@@ -264,6 +264,7 @@ namespace app {
 
     // Stack of states. The top element in the stack is the current state (m_state).
     EditorStatesHistory m_statesHistory;
+    EditorStatesHistory m_deletedStates;
 
     // Current editor state (it can be shared between several editors to
     // the same document). This member cannot be NULL.
@@ -338,3 +339,5 @@ namespace app {
   ui::WidgetType editor_type();
 
 } // namespace app
+
+//The play once crashing patch is licensed under GPL thanks to @decap permission https://github.com/LibreSprite/LibreSprite/pull/476#issuecomment-2140727827
