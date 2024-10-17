@@ -3,6 +3,7 @@ const defaultSettings = {
     easydiffusion: {
         endpoint:'http://localhost:9000'
     },
+    HFMID: "nerijs/pixel-art-xl",
     model: '',
     prompt: '',
     negativePrompt: '',
@@ -96,9 +97,8 @@ function postJSON(endpoint, path, body, cb) {
 }
 
 
-const sdxlturboai = {
-    get:getJSON.bind(null, 'https://sd.cuilutech.com'),
-    post:postJSON.bind(null, 'https://sd.cuilutech.com'),
+const lorastudio = {
+    post:postJSON.bind(null, 'https://lorastudio.co'),
 
     logError:function(error) {
         if (!error)
@@ -106,54 +106,52 @@ const sdxlturboai = {
         if (error == "status:0") {
             error = "\n"
                 + "***************************************\n*\n"
-                + "* Could not connect to sdxlturbo.ai at:\n"
-                + "*      https://sd.cuilutech.com \n*\n"
+                + "* Could not connect to lorastudio.co\n*\n"
                 + "***************************************\n\n"
         }
         console.log(error);
     },
 
     render:function(obj, cb) {
-        this.post('/sdapi/turbo/txt2img', JSON.stringify(obj), function(data, error) {
-            if (!error && data && data.msg != "success")
-                error = data.msg;
-            if (!error && !data.data.image_url)
+        this.post('/api/generate', JSON.stringify(obj), function(data, error) {
+
+            if (!error && !data.image)
                 error = JSON.stringify(data);
             if (error) {
-                cb(null, error);
+                cb(null, 'render post error: ' + error);
                 return;
             }
 
-	    if (app.platform == "emscripten") {
-		app.launch(data.data.image_url); // server without CORS, must open in new tab
-		cb(null, null);
-	    } else {
-		get(data.data.image_url, function(obj) {
-                    cb(
-			(obj.status == 200 ? obj.key : null),
-			(obj.status == 200 ? null : JSON.stringify(obj))
-                    );
-		}, 'png', 'ai');
-	    }
+            var fileName = ai.settings.uniqueFilenames ? (Math.random()*0xFFFFFF|0) + '' : 'ai';
+            storage.set(data.image.substr(data.image.indexOf(',') + 1), 'png', fileName);
+            storage.decodeBase64('png', fileName);
+            var path = storage.save('png', fileName);
+            storage.unload('png', fileName);
+	    cb(path, null);
         });
     },
 
     generate:function() {
         ai.view("wait", true);
-        sdxlturboai.render({
-            "prompt": ai.settings.prompt,
-            "negative_prompt": ai.settings.negativePrompt,
-            "source": "sdxlturbo.ai"
-        }, function(key, error){
+        lorastudio.render({
+	    "model":{
+		"instance_prompt":null,
+		"image":"",
+		"id":ai.settings.HFMID,
+		"metadata":null,
+		"isPublic":false,
+		"gallery":[],
+		"infos":{}
+	    },
+	    "inputs":ai.settings.prompt,
+	    "parameters":{"negative_prompt":ai.settings.negativePrompt}
+	}, function(path, error){
             ai.close("wait");
             if (error) {
-                sdxlturboai.logError(error);
+                lorastudio.logError(error);
             }
-            if (key) {
-                var path = storage.save(key, 'ai');
-                storage.unload(key);
-                if (path)
-                    app.open(path);
+            if (path) {
+                app.open(path);
             }
         });
     }
@@ -379,12 +377,12 @@ const views = {
             ]
         },
         {type:"break"},
-        {type:"label", text:"sdxlturbo.ai:"},
+        {type:"label", text:"lorastudio.co:"},
         {type:"break"},
         {
             type:"button",
             text:"Text to Image",
-            click:function(){ai.view("sdxlturboai_T2I");}
+            click:function(){ai.view("lorastudio_T2I");}
         }
     ],
 
@@ -402,8 +400,14 @@ const views = {
         }
     ],
 
-    sdxlturboai_T2I : [
-        {type:"label", text:"Warning: Free public service with no privacy policy."},
+    lorastudio_T2I : [
+        {type:"label", text:"Model:"},
+        {type:"break"},
+        {
+            type:"entry",
+            maxsize:128,
+            bind:"settings.HFMID"
+        },
         {type:"break"},
 
         {type:"label", text:"Prompt:"},
@@ -429,7 +433,7 @@ const views = {
             type:"button",
             text:"Generate",
             click:function(){
-                sdxlturboai.generate();
+                lorastudio.generate();
             }
         }
     ],
