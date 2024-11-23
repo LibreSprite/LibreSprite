@@ -926,6 +926,7 @@ int main(int argc, char* argv[]) {
   #ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
   SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
   #endif
+  SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
