@@ -120,7 +120,8 @@ void remove_directory(const std::string& path)
 std::string get_current_path()
 {
   std::vector<char> path(MAXPATHLEN);
-  getcwd(&path[0], path.size());
+  if (getcwd(&path[0], path.size()) == NULL)
+    return "";
   return std::string(&path[0]);
 }
 
