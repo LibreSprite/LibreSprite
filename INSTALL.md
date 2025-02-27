@@ -12,6 +12,7 @@
   * [Linux details](#linux-details)
   * [Windows details](#windows-details)
   * [MacOS details](#macos-details)
+  * [Android details](#android-details)
 * [Installing](#installing)
 
 ## Platforms
@@ -111,6 +112,15 @@ To compile LibreSprite, run the following commands:
       -G Ninja \
       ..
     ninja libresprite
+
+### Android details
+
+Before you can make an Android build, you must make a native build for your OS,
+so follow the appropriate instructions above. Once that is done, download
+https://github.com/LibreSprite/ls-android-deps as android/ in the LibreSprite
+directory. Now you can open the android subdirectory in Android Studio and build
+LibreSprite for Android.
+
 
 ## Installing
 
