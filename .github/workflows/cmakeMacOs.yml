@@ -98,7 +98,7 @@ jobs:
         hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-arm64
         path: libresprite.dmg
