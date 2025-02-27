@@ -15,6 +15,7 @@
 #include <ctime>
 #include <stdexcept>
 #include <vector>
+#include <filesystem>
 
 #if __APPLE__
 #include <mach-o/dyld.h>
@@ -119,10 +120,7 @@ void remove_directory(const std::string& path)
 
 std::string get_current_path()
 {
-  std::vector<char> path(MAXPATHLEN);
-  if (getcwd(&path[0], path.size()) == NULL)
-    return "";
-  return std::string(&path[0]);
+  return std::filesystem::current_path().string();
 }
 
 std::string get_app_path()
