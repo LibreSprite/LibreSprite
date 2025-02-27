@@ -21,7 +21,7 @@ public:
   }
 
   void putImageData(script::Value::Buffer& data, int width, int height) {
-      if (data.size() != width * height * 4) {
+      if (static_cast<int>(data.size()) != width * height * 4) {
           std::cout << "Error: data size " << data.size() << " does not match " << width << " * " << height << " * 4 (" << (width * height * 4) << ")." << std::endl;
           return;
       }

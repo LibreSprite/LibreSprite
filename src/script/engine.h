@@ -94,7 +94,7 @@ namespace script {
     ScriptObject* registerScriptObject(inject<ScriptObject>&& sobj) {
       ScriptObject* ret = &*sobj;
       auto raw = sobj->m_handle.get<void>();
-      sobj->getInternalScriptObject()->onRelease = [=]{
+      sobj->getInternalScriptObject()->onRelease = [=, this]{
         auto it = m_ObjToScriptObj.find(raw);
         if (it == m_ObjToScriptObj.end())
           return;

@@ -170,7 +170,7 @@ public:
     uiScale()->setSelectedItemIndex(
       uiScale()->findItemIndexByValue(
         base::convert_to<std::string>(m_pref.experimental.uiScale())));
-    uiScale()->Change.connect([=]{updateScale();});
+    uiScale()->Change.connect([this]{updateScale();});
 
     if ((int(she::instance()->capabilities()) &
          int(she::Capabilities::GpuAccelerationSwitch)) == int(she::Capabilities::GpuAccelerationSwitch)) {

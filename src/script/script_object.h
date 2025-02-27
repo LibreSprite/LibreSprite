@@ -184,14 +184,14 @@ namespace script {
 
     template<typename Class, typename Ret, typename ... Args>
     DocumentedFunction& addMethod(const std::string& name, Ret(Class::*method)(Args...)) {
-      return addFunction(name, [=](Args ... args){
+      return addFunction(name, [=, this](Args ... args){
         return (static_cast<Class*>(this)->*method)(std::forward<Args>(args)...);
       });
     }
 
     template<typename Class, typename ... Args>
     DocumentedFunction& addMethod(const std::string& name, void(Class::*method)(Args...)) {
-      return addFunction(name, [=](Args ... args){
+      return addFunction(name, [=, this](Args ... args){
         (static_cast<Class*>(this)->*method)(std::forward<Args>(args)...);
         return Value{};
       });

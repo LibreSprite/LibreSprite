@@ -74,7 +74,7 @@ public:
     fontFace()->Click.connect(base::Bind<void>(&PasteTextWindow::onSelectFontFile, this));
     fontFace()->DropDownClick.connect(base::Bind<void>(&PasteTextWindow::onSelectSystemFont, this));
     fontColor()->setColor(color);
-    this->antialias()->Click.connect([=](ui::Event&){onChangeAntialias();});
+    this->antialias()->Click.connect([this](ui::Event&){onChangeAntialias();});
   }
 
   std::string faceValue() const {
