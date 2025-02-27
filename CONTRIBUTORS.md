@@ -27,5 +27,5 @@ And it uses the following third-party libraries:
 * [pixman](http://www.pixman.org) (MIT)
 * [sdl2](https://www.libsdl.org) (Zlib)
 * [simpleini](https://github.com/aseprite/simpleini) (MIT)
-* [tinyxml](http://www.grinninglizard.com/tinyxml) (Zlib)
+* [tinyxml2](https://github.com/leethomason/tinyxml2) (Zlib)
 * [zlib](https://www.zlib.net) (Zlib)
