@@ -11,7 +11,7 @@ assignees: ''
 bottom left corner when you open the software. If you're on a dev version,
 please specify the commit hash too -->
 
-- [ ] I am using the latest release ir build from latest commits.
+- [ ] I am using the latest release or a build from latest commits.
 - [ ] I am not using the Flatpak. (If you are, please raise an issue [here](https://github.com/flathub/com.github.libresprite.LibreSprite/issues).
 
 ```
