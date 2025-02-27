@@ -36,7 +36,10 @@
 #include "app/ui/toolbar.h"
 #include "app/ui_context.h"
 #include "base/memory.h"
+#include "base/path.h"
+#include "base/string.h"
 #include "doc/sprite.h"
+#include "script/engine.h"
 #include "she/display.h"
 #include "she/error.h"
 #include "she/surface.h"
@@ -362,11 +365,13 @@ bool CustomizedGuiManager::onProcessMessage(Message* msg)
         const DropFilesMessage::Files& files = static_cast<DropFilesMessage*>(msg)->files();
 
         // Open all files
-        Command* cmd_open_file =
-          CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
+        Command* cmd_open_file = CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
+	Command* cmd_install_script = CommandsModule::instance()->getCommandByName(CommandId::InstallScript);
         Params params;
 
         UIContext* ctx = UIContext::instance();
+
+	auto& engines = script::Engine::getRegistry();
 
         for (const auto& fn : files) {
           // If the document is already open, select it.
@@ -378,12 +383,23 @@ bool CustomizedGuiManager::onProcessMessage(Message* msg)
             else {
               ASSERT(false);    // Must be some DocumentView available
             }
+	    continue;
           }
+
+	  auto cmd = cmd_open_file;
+
+	  auto extension = base::string_to_lower(base::get_file_extension(fn));
+	  for (auto& entry : engines) {
+	      std::cout << entry.first << " == " << extension << std::endl;
+	      if (entry.first == extension || entry.second.hasFlag(extension) ) {
+		  cmd = cmd_install_script;
+		  break;
+	      }
+	  }
+
           // Load the file
-          else {
-            params.set("filename", fn.c_str());
-            ctx->executeCommand(cmd_open_file, params);
-          }
+	  params.set("filename", fn.c_str());
+	  ctx->executeCommand(cmd, params);
         }
       }
       break;

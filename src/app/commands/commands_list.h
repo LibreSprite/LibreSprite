@@ -1,6 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2025  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -61,6 +61,7 @@ FOR_EACH_COMMAND(GotoPreviousTab)
 FOR_EACH_COMMAND(GridSettings)
 FOR_EACH_COMMAND(Home)
 FOR_EACH_COMMAND(ImportSpriteSheet)
+FOR_EACH_COMMAND(InstallScript)
 FOR_EACH_COMMAND(InvertColor)
 FOR_EACH_COMMAND(InvertMask)
 FOR_EACH_COMMAND(KeyboardShortcuts)

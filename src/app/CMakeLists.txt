@@ -209,6 +209,7 @@ add_library(app-lib
   commands/cmd_grid.cpp
   commands/cmd_home.cpp
   commands/cmd_import_sprite_sheet.cpp
+  commands/cmd_install_script.cpp
   commands/cmd_invert_mask.cpp
   commands/cmd_keyboard_shortcuts.cpp
   commands/cmd_launch.cpp
