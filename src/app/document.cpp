@@ -226,7 +226,7 @@ void Document::generateMaskBoundaries(const Mask* mask)
 
 void Document::setMask(const Mask* mask)
 {
-  m_mask.reset(new Mask(*mask));
+  m_mask.reset(mask ? new Mask(*mask) : new Mask());
   m_maskVisible = true;
 
   resetTransformation();
