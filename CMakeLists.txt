@@ -271,35 +271,38 @@ if(UNIX AND NOT APPLE AND NOT BEOS AND NOT GEN_ONLY)
   find_package(Threads REQUIRED)
   list(APPEND PLATFORM_LIBS m ${CMAKE_THREAD_LIBS_INIT})
 
-  # X11
-  find_package(X11 REQUIRED)
-  include_directories(SYSTEM ${X11_INCLUDE_DIR})
-  list(APPEND PLATFORM_LIBS ${X11_LIBRARIES})
+  option(USE_X11 "Use X11" on)
+  if(USE_X11)
+    # X11
+    find_package(X11 REQUIRED)
+    include_directories(SYSTEM ${X11_INCLUDE_DIR})
+    list(APPEND PLATFORM_LIBS ${X11_LIBRARIES})
 
-  if(X11_XShm_FOUND)
-    list(APPEND PLATFORM_LIBS ${X11_Xext_LIB})
-  endif()
+    if(X11_XShm_FOUND)
+      list(APPEND PLATFORM_LIBS ${X11_Xext_LIB})
+    endif()
 
-  if(X11_Xcursor_FOUND)
-    list(APPEND PLATFORM_LIBS ${X11_Xcursor_LIB})
-  endif()
+    if(X11_Xcursor_FOUND)
+      list(APPEND PLATFORM_LIBS ${X11_Xcursor_LIB})
+    endif()
 
-  if(X11_Xpm_FOUND)
-    list(APPEND PLATFORM_LIBS ${X11_Xpm_LIB})
-  endif()
+    if(X11_Xpm_FOUND)
+      list(APPEND PLATFORM_LIBS ${X11_Xpm_LIB})
+    endif()
 
-  find_library(X11_Xxf86vm_LIB Xxf86vm ${X11_LIB_SEARCH_PATH})
-  mark_as_advanced(X11_Xxf86vm_LIB)
-  if(X11_xf86vmode_FOUND)
-    list(APPEND PLATFORM_LIBS ${X11_Xxf86vm_LIB})
-  endif()
+    find_library(X11_Xxf86vm_LIB Xxf86vm ${X11_LIB_SEARCH_PATH})
+    mark_as_advanced(X11_Xxf86vm_LIB)
+    if(X11_xf86vmode_FOUND)
+      list(APPEND PLATFORM_LIBS ${X11_Xxf86vm_LIB})
+    endif()
 
-  check_library_exists(X11 XOpenIM "${X11_LIB_SEARCH_PATH}" XIM_FOUND)
-  check_library_exists(Xxf86dga XDGAQueryExtension
-    "${X11_LIB_SEARCH_PATH}" XDGA_FOUND)
+    check_library_exists(X11 XOpenIM "${X11_LIB_SEARCH_PATH}" XIM_FOUND)
+    check_library_exists(Xxf86dga XDGAQueryExtension
+      "${X11_LIB_SEARCH_PATH}" XDGA_FOUND)
 
-  if(XDGA_FOUND)
-    list(APPEND PLATFORM_LIBS Xxf86dga ${X11_LIBRARIES})
+    if(XDGA_FOUND)
+      list(APPEND PLATFORM_LIBS Xxf86dga ${X11_LIBRARIES})
+    endif()
   endif()
 
   if(X11_Xi_FOUND)
