@@ -61,6 +61,7 @@ void InstallScriptCommand::onExecute(Context* ctx)
 {
   std::cout << "Installing " << m_filename << std::endl;
 
+  bool useUserDir = true;
   {
     ResourceFinder rf;
     rf.includeUserDir("scripts");
@@ -70,14 +71,19 @@ void InstallScriptCommand::onExecute(Context* ctx)
         base::make_directory(scriptsDir);
     } catch(...){
       LOG("Could not create scripts directory: %s", scriptsDir.c_str());
+      useUserDir = false;
     }
   }
 
   ResourceFinder rf;
-  rf.includeUserDir(base::join_path("scripts", base::get_file_name(m_filename)).c_str());
+  auto destSearchPath = base::join_path("scripts", base::get_file_name(m_filename));
+  if (useUserDir) {
+      rf.includeUserDir(destSearchPath.c_str());
+  } else {
+      rf.includeDataDir(destSearchPath.c_str());
+  }
   auto dest = rf.getFirstOrCreateDefault();
 
-  std::cout << "Copy " << m_filename << " to " << dest << std::endl;
   base::copy_file(m_filename, dest);
   ctx->executeCommand(CommandId::RescanScripts);
 }

@@ -50,7 +50,7 @@ void move_file(const std::string& src, const std::string& dst)
 
 void copy_file(const std::string& src, const std::string& dst)
 {
-    std::filesystem::copy_file(src, dst);
+    std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing);
 }
 
 void delete_file(const std::string& path)
