@@ -35,11 +35,13 @@ jobs:
     - name: appimage
       run: |
         cd build/bin
+        export ARCH="$(uname -m)"
         sh ../../package_linux.sh
-        mv ./LibreSprite-x86_64.AppImage ../../
+        mv ./LibreSprite-anylinux-$ARCH.AppImage ../../
     - name: Archive production artifacts
+      if: runner.arch == 'X64'
       uses: actions/upload-artifact@v4
       with:
         name: libresprite-development-linux-x86_64
-        path: LibreSprite-x86_64.AppImage
+        path: LibreSprite-anylinux-x86_64.AppImage
         if-no-files-found: error
