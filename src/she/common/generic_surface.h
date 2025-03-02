@@ -147,18 +147,20 @@ public:
         ttFont->face().forEachGlyph(
           str,
           [&](const ft::Glyph& glyph) {
-            gfx::Rect origBmpBounds(x + int(glyph.x),
-                                    y + int(glyph.y),
+            gfx::Rect origBmpBounds(x + int(glyph.x + glyph.bearingX),
+                                    y + int(glyph.y + glyph.offsetY),
                                     int(glyph.bitmap->width),
                                     int(glyph.bitmap->rows));
-	    gfx::Rect origDstBounds(x,
-                                    y,
+            gfx::Rect bmpBounds = origBmpBounds;
+            bmpBounds &= clipBounds;
+
+	    gfx::Rect origDstBounds(x + glyph.x,
+                                    y + glyph.y,
                                     int(glyph.width),
                                     int(glyph.height));
-            gfx::Rect bmpBounds = origBmpBounds;
 	    gfx::Rect dstBounds = origDstBounds;
-            bmpBounds &= clipBounds;
 	    dstBounds &= clipBounds;
+
             if (dstBounds.isEmpty())
               return;
 
@@ -174,15 +176,12 @@ public:
 				    ((backdrop & fd.greenMask) >> fd.greenShift),
 				    ((backdrop & fd.blueMask) >> fd.blueShift),
 				    ((backdrop & fd.alphaMask) >> fd.alphaShift));
-
 			    auto output = blend(backdropColor, bg);
-
 			    *dst_address =
 				((gfx::getr(output) << fd.redShift  ) & fd.redMask  ) |
 				((gfx::getg(output) << fd.greenShift) & fd.greenMask) |
 				((gfx::getb(output) << fd.blueShift ) & fd.blueMask ) |
 				((gfx::geta(output) << fd.alphaShift) & fd.alphaMask);
-
 			    dst_address++;
 			}
 		    }

@@ -25,6 +25,7 @@ namespace ft {
     double bearingY;
     double x;
     double y;
+    double offsetY;
     int width;
     int height;
   };
@@ -121,15 +122,15 @@ namespace ft {
 
         Glyph* glyph = m_cache.loadGlyph(m_face, glyph_index, this->m_antialias);
         if (glyph) {
-          auto width = glyph->ft_glyph->advance.x / double(1 << 16);
           glyph->bitmap = &FT_BitmapGlyph(glyph->ft_glyph)->bitmap;
-          glyph->x = x + glyph->bearingX;
-          glyph->y = y
-            + this->height()
-            + this->descender() // descender is negative
-            - glyph->bearingY;
+          auto width = glyph->ft_glyph->advance.x / double(1 << 16);
+          glyph->x = x;
+          glyph->y = y;
+	  glyph->offsetY = this->height()
+	      + this->descender() // descender is negative
+	      - glyph->bearingY;
 	  glyph->height = static_cast<int>(this->height());
-	  glyph->width = glyph->bearingX + static_cast<int>(width);
+	  glyph->width = std::max<double>(glyph->bearingX + width, glyph->bitmap->width);
 
           callback(*glyph);
 
