@@ -41,6 +41,12 @@
 
 float penPressure = 0;
 
+namespace ui {
+  float get_pen_pressure() {
+    return penPressure;
+  }
+}
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 extern "C" {
@@ -365,13 +371,13 @@ namespace she {
 	  {
 	    auto& win = sdlEvent.syswm.msg->msg.win;
 	    if (EasyTab_HandleEvent(win.hwnd, win.msg, win.lParam, win.wParam) == EASYTAB_OK) {
-		penPressure = EasyTab->Pressure;
+		penPressure = std::max(EasyTab->Pressure, 0.0001f);
 	    }
 	  }
 #endif
 #if defined(__linux__)
 	    if (EasyTab_HandleEvent(&sdlEvent.syswm.msg->msg.x11.event) == EASYTAB_OK) {
-		penPressure = EasyTab->Pressure;
+		penPressure = std::max(EasyTab->Pressure, 0.0001f);
 	    }
 #endif
 #endif
@@ -449,12 +455,20 @@ namespace she {
               sdlEvent.motion.y / unique_display->scale()
             });
 
+	  {
+	      int hasFingerEvent = SDL_PeepEvents(&sdlEvent, 1, SDL_PEEKEVENT, SDL_FINGERMOTION, SDL_FINGERMOTION);
+	      if (hasFingerEvent) {
+		  penPressure = std::max(sdlEvent.tfinger.pressure, 0.0001f);
+	      }
+	  }
+
+
 	  event.setPressure(penPressure);
 	  event.setPointerType(pointerType);
           return;
 
         case SDL_FINGERMOTION:
-          penPressure = sdlEvent.tfinger.pressure;
+          penPressure = std::max(sdlEvent.tfinger.pressure, 0.0001f);
           continue;
 
         case SDL_MOUSEWHEEL:

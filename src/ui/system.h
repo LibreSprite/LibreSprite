@@ -47,5 +47,6 @@ namespace ui {
 
   const gfx::Point& get_mouse_position();
   void set_mouse_position(const gfx::Point& newPos);
+  float get_pen_pressure();
 
 } // namespace ui

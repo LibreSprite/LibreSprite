@@ -33,6 +33,7 @@
 #include "doc/layer.h"
 #include "doc/primitives.h"
 #include "doc/site.h"
+#include "ui/system.h"
 
 namespace app {
 
@@ -141,7 +142,7 @@ void BrushPreview::show(const gfx::Point& screenPos)
   bool usePreview = false;
 
   auto brushPreview = pref.editor.brushPreview();
-  if (!m_editor->docPref().show.brushPreview())
+  if (!m_editor->docPref().show.brushPreview() || ui::get_pen_pressure() != 1.0f)
     brushPreview = app::gen::BrushPreview::NONE;
 
   switch (brushPreview) {
