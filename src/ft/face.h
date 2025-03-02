@@ -25,6 +25,8 @@ namespace ft {
     double bearingY;
     double x;
     double y;
+    int width;
+    int height;
   };
 
   template<typename Cache>
@@ -119,16 +121,19 @@ namespace ft {
 
         Glyph* glyph = m_cache.loadGlyph(m_face, glyph_index, this->m_antialias);
         if (glyph) {
+          auto width = glyph->ft_glyph->advance.x / double(1 << 16);
           glyph->bitmap = &FT_BitmapGlyph(glyph->ft_glyph)->bitmap;
           glyph->x = x + glyph->bearingX;
           glyph->y = y
             + this->height()
             + this->descender() // descender is negative
             - glyph->bearingY;
+	  glyph->height = static_cast<int>(this->height());
+	  glyph->width = glyph->bearingX + static_cast<int>(width);
 
           callback(*glyph);
 
-          x += glyph->ft_glyph->advance.x / double(1 << 16);
+          x += width;
           y += glyph->ft_glyph->advance.y / double(1 << 16);
 
           m_cache.doneGlyph(glyph);

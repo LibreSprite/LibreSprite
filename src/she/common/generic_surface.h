@@ -147,28 +147,64 @@ public:
         ttFont->face().forEachGlyph(
           str,
           [&](const ft::Glyph& glyph) {
-            gfx::Rect origDstBounds(x + int(glyph.x),
+            gfx::Rect origBmpBounds(x + int(glyph.x),
                                     y + int(glyph.y),
                                     int(glyph.bitmap->width),
                                     int(glyph.bitmap->rows));
-            gfx::Rect dstBounds = origDstBounds;
-            dstBounds &= clipBounds;
+	    gfx::Rect origDstBounds(x,
+                                    y,
+                                    int(glyph.width),
+                                    int(glyph.height));
+            gfx::Rect bmpBounds = origBmpBounds;
+	    gfx::Rect dstBounds = origDstBounds;
+            bmpBounds &= clipBounds;
+	    dstBounds &= clipBounds;
             if (dstBounds.isEmpty())
               return;
 
-            int clippedRows = dstBounds.y - origDstBounds.y;
-            int dst_y = dstBounds.y;
+	    if (gfx::geta(bg) > 0) {
+		for (int v=0; v<dstBounds.h; ++v) {
+		    auto dst_address = (uint32_t*)this->getData(dstBounds.x, dstBounds.y+v);
+		    for (int u=0; u<dstBounds.w; ++u) {
+			if (!bmpBounds.contains(gfx::Point(u, v))) {
+			    uint32_t backdrop = *dst_address;
+			    gfx::Color backdropColor =
+				gfx::rgba(
+				    ((backdrop & fd.redMask) >> fd.redShift),
+				    ((backdrop & fd.greenMask) >> fd.greenShift),
+				    ((backdrop & fd.blueMask) >> fd.blueShift),
+				    ((backdrop & fd.alphaMask) >> fd.alphaShift));
+
+			    auto output = blend(backdropColor, bg);
+
+			    *dst_address =
+				((gfx::getr(output) << fd.redShift  ) & fd.redMask  ) |
+				((gfx::getg(output) << fd.greenShift) & fd.greenMask) |
+				((gfx::getb(output) << fd.blueShift ) & fd.blueMask ) |
+				((gfx::geta(output) << fd.alphaShift) & fd.alphaMask);
+
+			    dst_address++;
+			}
+		    }
+		}
+	    }
+
+	    if (bmpBounds.isEmpty())
+	      return;
+
+            int clippedRows = bmpBounds.y - origBmpBounds.y;
+            int dst_y = bmpBounds.y;
             int t;
-            for (int v=0; v<dstBounds.h; ++v, ++dst_y) {
+            for (int v=0; v<bmpBounds.h; ++v, ++dst_y) {
               int bit = 0;
               const uint8_t* p = glyph.bitmap->buffer
                 + (v+clippedRows)*glyph.bitmap->pitch;
-              int dst_x = dstBounds.x;
+              int dst_x = bmpBounds.x;
               uint32_t* dst_address =
                 (uint32_t*)this->getData(dst_x, dst_y);
 
               // Skip first clipped pixels
-              for (int u=0; u<dstBounds.x-origDstBounds.x; ++u) {
+              for (int u=0; u<bmpBounds.x-origBmpBounds.x; ++u) {
                 if (antialias) {
                   ++p;
                 }
@@ -180,7 +216,7 @@ public:
                 }
               }
 
-              for (int u=0; u<dstBounds.w; ++u, ++dst_x) {
+              for (int u=0; u<bmpBounds.w; ++u, ++dst_x) {
                 ASSERT(clipBounds.contains(gfx::Point(dst_x, dst_y)));
 
                 int alpha;
