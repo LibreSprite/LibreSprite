@@ -33,8 +33,7 @@ namespace doc {
     typedef ReferenceType                 reference;
     typedef std::forward_iterator_tag     iterator_category;
 
-    ImageIteratorT() : m_ptr(NULL) {
-    }
+    ImageIteratorT() = default;
 
     ImageIteratorT(const ImageIteratorT& other) :
       m_image(other.m_image),
@@ -123,11 +122,11 @@ namespace doc {
     reference operator*() { return *m_ptr; }
 
   private:
-    Image* m_image;
-    pointer m_ptr;
-    int m_x, m_y;
-    int m_xbegin;
-    int m_xend;
+    Image* m_image{};
+    pointer m_ptr{};
+    int m_x{}, m_y{};
+    int m_xbegin{};
+    int m_xend{};
   };
 
   template<typename ImageTraits>

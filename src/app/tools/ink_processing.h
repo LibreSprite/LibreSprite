@@ -181,7 +181,7 @@ public:
 
   void processPixel(int x, int y) {
     color_t c = *m_srcAddress;
-    if (c == m_maskIndex)
+    if (c == static_cast<color_t>(m_maskIndex))
       c = m_palette->getEntry(c) & rgba_rgb_mask;  // Alpha = 0
     else
       c = m_palette->getEntry(c);
@@ -246,7 +246,7 @@ public:
 
   void processPixel(int x, int y) {
     color_t c = *m_srcAddress;
-    if (c == m_maskIndex)
+    if (c == static_cast<color_t>(m_maskIndex))
       c = m_palette->getEntry(c) & rgba_rgb_mask;  // Alpha = 0
     else
       c = m_palette->getEntry(c);
@@ -305,14 +305,14 @@ public:
     m_rgbmap(loop->getRgbMap()),
     m_opacity(loop->getOpacity()),
     m_maskIndex(loop->getLayer()->isBackground() ? -1: loop->sprite()->transparentColor()),
-    m_color(loop->getPrimaryColor() == m_maskIndex ?
+    m_color(loop->getPrimaryColor() == static_cast<color_t>(m_maskIndex) ?
             (m_palette->getEntry(loop->getPrimaryColor()) & rgba_rgb_mask):
             (m_palette->getEntry(loop->getPrimaryColor()))) {
   }
 
   void processPixel(int x, int y) {
     color_t c = *m_srcAddress;
-    if (c == m_maskIndex)
+    if (c == static_cast<color_t>(m_maskIndex))
       c = m_palette->getEntry(c) & rgba_rgb_mask;  // Alpha = 0
     else
       c = m_palette->getEntry(c);

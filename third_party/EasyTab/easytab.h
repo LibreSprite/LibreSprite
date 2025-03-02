@@ -696,7 +696,7 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
                     // X
                     if (Info->num_axes > 0)
                     {
-                        int32_t min     = Info->axes[0].min_value;
+                        /* int32_t min     = Info->axes[0].min_value; */
                         EasyTab->RangeX = Info->axes[0].max_value;
                         //printf("Max/min x values: %d, %d\n", min, EasyTab->RangeX); // TODO: Platform-print macro
                     }
@@ -704,7 +704,7 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
                     // Y
                     if (Info->num_axes > 1)
                     {
-                        int32_t min     = Info->axes[1].min_value;
+                        /* int32_t min     = Info->axes[1].min_value; */
                         EasyTab->RangeY = Info->axes[1].max_value;
                         //printf("Max/min y values: %d, %d\n", min, EasyTab->RangeY);
                     }
@@ -712,7 +712,7 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
                     // Pressure
                     if (Info->num_axes > 2)
                     {
-                        int32_t min          = Info->axes[2].min_value;
+                        /* int32_t min          = Info->axes[2].min_value; */
                         EasyTab->MaxPressure = Info->axes[2].max_value;
                         //printf("Max/min pressure values: %d, %d\n", min, EasyTab->MaxPressure);
                     }
@@ -741,7 +741,7 @@ EasyTabResult EasyTab_Load(Display* Disp, Window Win)
 
 EasyTabResult EasyTab_HandleEvent(XEvent* Event)
 {
-    if (Event->type != EasyTab->MotionType) { return EASYTAB_EVENT_NOT_HANDLED; }
+    if (static_cast<uint32_t>(Event->type) != EasyTab->MotionType) { return EASYTAB_EVENT_NOT_HANDLED; }
 
     XDeviceMotionEvent* MotionEvent = (XDeviceMotionEvent*)(Event);
     EasyTab->PosX     = MotionEvent->x;

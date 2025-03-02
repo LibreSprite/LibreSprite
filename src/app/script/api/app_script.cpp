@@ -118,7 +118,7 @@ public:
 
   void yield(const std::string& event, int cycles) {
     auto fileName = app::AppScripting::getFileName();
-    TaskManager::instance().delayed([=] {
+    TaskManager::instance().delayed([=, this] {
       if (cycles > 0) {
         yield(event, cycles - 1);
         return;

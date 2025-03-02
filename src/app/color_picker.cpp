@@ -77,6 +77,8 @@ void ColorPicker::pickColor(const doc::Site& site,
         case IMAGE_GRAYSCALE:
           m_alpha = doc::graya_geta(imageColor);
           break;
+        default:
+	  break;
       }
 
       m_color = app::Color::fromImage(image->pixelFormat(), imageColor);

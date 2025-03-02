@@ -51,7 +51,7 @@ public:
       if (needIncrement)
           return;
       needIncrement = true;
-      getEngine()->afterEval([=](bool success){
+      getEngine()->afterEval([=, this](bool success){
         auto pal = palette();
         if (pal) {
           pal->incrementVersion();
