@@ -82,7 +82,7 @@
       <key command="NewFrame" shortcut="Alt+Shift+D">
         <param name="content" value="cel" />
       </key>
-      <key command="RemoveFrame" shortcut="Alt+C" />
+      <key command="RemoveFrame" shortcut="Alt+Shift+C" />
       <key command="FrameProperties" shortcut="P">
         <param name="frame" value="current" />
       </key>
