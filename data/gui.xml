@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Aseprite    | Copyright (C) 2001-2016  David Capello -->
-<!-- LibreSprite | Copyright (C) 2017-2021  LibreSprite contributors -->
+<!-- LibreSprite | Copyright (C) 2017-2025  LibreSprite contributors -->
 <gui version="1.2-dev">
   <!-- Keyboard shortcuts -->
   <keyboard version="1">
@@ -82,7 +82,7 @@
       <key command="NewFrame" shortcut="Alt+Shift+D">
         <param name="content" value="cel" />
       </key>
-      <key command="RemoveFrame" shortcut="Alt+C" />
+      <key command="RemoveFrame" shortcut="Alt+Shift+C" />
       <key command="FrameProperties" shortcut="P">
         <param name="frame" value="current" />
       </key>
