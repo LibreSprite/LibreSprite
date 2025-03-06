@@ -168,7 +168,7 @@ void Preferences::serializeDocPref(const app::Document* doc, app::DocumentPrefer
       set_config_file(docConfigFileName(doc).c_str());
       specific_file = true;
     }
-    else if (save)
+    else // if (save)
       return;
   }
 

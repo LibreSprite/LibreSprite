@@ -295,6 +295,7 @@
       <option id="auto_scroll" type="bool" default="true" />
     </section>
     <section id="show">
+      <option id="show_extras" type="bool" default="true" />
       <option id="layer_edges" type="bool" default="false" />
       <option id="selection_edges" type="bool" default="true" />
       <option id="grid" type="bool" default="false" migrate="grid.visible" />
