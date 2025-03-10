@@ -21,7 +21,7 @@ export ARCH="$(uname -m)" # Just to be double sure
 cd LibreSprite
 wget "https://raw.githubusercontent.com/VHSgunzo/sharun/refs/heads/main/lib4bin" -O ./lib4bin
 chmod +x ./lib4bin
-xvfb-run -a -- ./lib4bin -p -v -e -r -k -w \
+xvfb-run -a -- ./lib4bin -p -v -e -k -w \
   ../libresprite \
   /usr/lib/libpthread.so* \
   /usr/lib/librt.so* \
