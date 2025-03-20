@@ -23,7 +23,7 @@
       crops the sprite to the specified dimensions.
 
    - `saveAs(fileName, asCopy)`:
-     - fileName: String. The new name of the file
+     - fileName: String. The new name of the file.
      - asCopy: If true, the file is saved as a copy. Requires fileName to be specified.
       returns: Nothing
       saves the sprite.
@@ -43,7 +43,7 @@
       commits the current transaction.
 
    - `layer(layerNumber)`:
-     - layerNumber: The number of they layer, starting with zero from the bottom.
+     - layerNumber: The number of the layer, starting with zero from the bottom.
       returns: a Layer object or null if invalid.
       allows you to access a given layer.
 
@@ -529,7 +529,7 @@
 
    - `GotoPreviousFrameWithSameTag()`:
       returns: Nothing
-      Go to Previous Frame with same tag
+      Go to Previous Frame with the same tag
 
    - `GotoPreviousFrame()`:
       returns: Nothing
@@ -561,7 +561,7 @@
 
    - `GotoNextFrameWithSameTag()`:
       returns: Nothing
-      Go to Next Frame with same tag
+      Go to Next Frame with the same tag
 
    - `CropSprite()`:
       returns: Nothing
@@ -975,7 +975,7 @@
       commits the current transaction.
 
    - `layer(layerNumber)`:
-     - layerNumber: The number of they layer, starting with zero from the bottom.
+     - layerNumber: The number of the layer, starting with zero from the bottom.
       returns: a Layer object or null if invalid.
       allows you to access a given layer.
 
@@ -1040,7 +1040,7 @@
 
    - `graya(gray, alpha)`:
      - gray: The luminance of color
-     - alpha: The alpha (opacity) of the color)
+     - alpha: The alpha (opacity) of the color
       returns: The color with the given luminance/opacity
 
    - `rgba(r, g, b, a)`:
