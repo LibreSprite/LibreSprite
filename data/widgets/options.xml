@@ -28,14 +28,15 @@
                 <listitem text="Chinese" value="zh" />
                 <listitem text="French" value="fr" />
                 <listitem text="German" value="de" />
+                <listitem text="Hindi" value="hi" />
+                <listitem text="Indonesian" value="id" />
                 <listitem text="Italian" value="it" />
                 <listitem text="Japanese" value="jp" />
                 <listitem text="Korean" value="kr" />
+                <listitem text="Polish" value="pl" />
                 <listitem text="Portuguese" value="pt" />
-                <listitem text="Spanish" value="es" />
-                <listitem text="Hindi" value="hi" />
-                <listitem text="Indonesian" value="id" />
                 <listitem text="Russian" value="ru" />
+                <listitem text="Spanish" value="es" />
               </combobox>
               <label text="Screen Scaling:" />
               <combobox id="screen_scale">
