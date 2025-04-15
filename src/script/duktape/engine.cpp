@@ -183,6 +183,17 @@ public:
       void* buffer = duk_get_buffer_data(ctx, id, &size);
       if (buffer)
         return {buffer, size, false};
+
+      auto objptr = new std::unordered_map<std::string, Value>[1];
+      auto& obj = objptr[0];
+      duk_enum(ctx, id, 0);
+      while (duk_next(ctx, -1, 1)) {
+	auto key = duk_get_string(ctx, -2);
+	obj[key] = getValue(ctx, -1);
+	duk_pop_2(ctx);
+      }
+      duk_pop(ctx);
+      return {objptr, true};
     } else if (type == DUK_TYPE_BUFFER) {
       duk_size_t size = 0;
       void* buffer = duk_get_buffer_data(ctx, id, &size);
