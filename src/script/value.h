@@ -6,8 +6,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <string>
+#include <iostream>
 
 namespace script {
   class ScriptObject;
@@ -20,43 +23,66 @@ namespace script {
       DOUBLE,
       STRING,
       OBJECT,
-      BUFFER
+      BUFFER,
+      MAP
     } type = Type::UNDEFINED;
 
-    class Buffer {
-    public:
-      uint8_t* _data = nullptr;
-      std::size_t _size = 0;
+    template<typename Data_t>
+    struct RefCount {
+      Data_t* _data = nullptr;
       std::shared_ptr<uint32_t> refCount;
+      using data_t = Data_t;
 
-      Buffer(uint8_t* _data, std::size_t size, bool own) : _data(_data), _size(size) {
+      RefCount(Data_t* data, bool own) : _data{data} {
         if (own)
           refCount = std::make_shared<uint32_t>(1);
       }
 
-      Buffer(const Buffer& other) : _data(other._data),
-                                    _size(other._size),
-                                    refCount(other.refCount) {
-        hold();
+      RefCount(const RefCount& other) : _data{other._data}, refCount{other.refCount} {
+	hold();
       }
 
-      ~Buffer() {release();}
+      virtual ~RefCount() {release();}
 
       bool canSteal() {
         return refCount && *refCount == 1;
       }
 
-      template <typename Type = uint8_t>
+      template <typename Type = Data_t>
       Type* steal() {
         if (!canSteal()) return nullptr;
         refCount.reset();
         return reinterpret_cast<Type*>(_data);
       }
 
-      template <typename Type = uint8_t>
+      template <typename Type = Data_t>
       Type* data() {
         return reinterpret_cast<Type*>(_data);
       }
+
+      void hold() {
+        if (refCount)
+          ++*refCount;
+      }
+
+      void release() {
+        if (!refCount)
+          return;
+        --*refCount;
+	if (!*refCount) {
+	    delete[] _data;
+	    _data = nullptr;
+	}
+      }
+    };
+
+    class Buffer : public RefCount<uint8_t> {
+    public:
+      std::size_t _size = 0;
+
+      Buffer(uint8_t* _data, std::size_t size, bool own) : RefCount<uint8_t>{_data, own}, _size{size} {}
+
+      Buffer(const Buffer& other) : RefCount(other), _size(other._size) {}
 
       template <typename Type = uint8_t>
       Type* end() {
@@ -74,18 +100,17 @@ namespace script {
       std::size_t size() const {
         return _size;
       }
+    };
 
-      void hold() {
-        if (refCount)
-          ++*refCount;
-      }
+    class Map : public RefCount<std::unordered_map<std::string, Value>> {
+    public:
 
-      void release() {
-        if (!refCount)
-          return;
-        --*refCount;
-        if (!*refCount)
-          delete _data;
+      Map(data_t* _data, bool own) : RefCount{_data, own} {}
+
+      Map(const Map& other) : RefCount(other) {}
+
+      bool empty() const {
+        return !_data;
       }
     };
 
@@ -95,6 +120,7 @@ namespace script {
       std::string* string_v;
       Buffer* buffer_v;
       ScriptObject* object_v;
+      Map* map_v;
     } data;
 
     Value() = default;
@@ -109,7 +135,8 @@ namespace script {
         data.string_v = new std::string(*other.data.string_v);
       } else if (type == Type::BUFFER) {
         data.buffer_v = new Buffer {*other.data.buffer_v};
-        data.buffer_v->hold();
+      } else if (type == Type::MAP) {
+	data.map_v = new Map {*other.data.map_v};
       } else {
         data = other.data;
       }
@@ -129,8 +156,10 @@ namespace script {
     void makeUndefined() {
       if (type == Type::STRING)
         delete data.string_v;
-      if (type == Type::BUFFER)
+      else if (type == Type::BUFFER)
         delete data.buffer_v;
+      else if (type == Type::MAP)
+	delete data.map_v;
       type = Type::UNDEFINED;
     }
 
@@ -150,6 +179,8 @@ namespace script {
         return data.object_v != 0;
       case Type::BUFFER:
         return !data.buffer_v->empty();
+      case Type::MAP:
+	return !data.map_v->empty();
       default:
         return false;
       }
@@ -236,6 +267,7 @@ namespace script {
       if (type == Type::INT) return std::to_string(data.int_v);
       if (type == Type::DOUBLE) return std::to_string(data.double_v);
       if (type == Type::BUFFER) return std::string(data.buffer_v->data(), data.buffer_v->end());
+      if (type == Type::MAP) return "[Object object]";
       return type == Type::STRING ? *data.string_v : std::string{};
     }
 
@@ -283,6 +315,16 @@ namespace script {
     Buffer& buffer() const {
       static Buffer empty{nullptr, 0, false};
       return type == Type::BUFFER ? *data.buffer_v : empty;
+    }
+
+// MAP
+    Value(Map::data_t* ptr, bool own) {
+      type = Type::MAP;
+      data.map_v = new Map {ptr, own};
+    }
+
+    operator Map::data_t* () const {
+      return type == Type::MAP ? data.map_v->data() : nullptr;
     }
 
 // OBJECT
