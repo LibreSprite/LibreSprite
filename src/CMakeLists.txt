@@ -43,7 +43,10 @@ endif()
 ######################################################################
 # Warning flags
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-switch")
+if(MSVC)
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-switch")
+endif()
 
 ######################################################################
 # pthread

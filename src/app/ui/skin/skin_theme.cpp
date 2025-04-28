@@ -354,16 +354,16 @@ void SkinTheme::loadThemeXml(const std::string& filename) {
 
     for (;xmlDim; xmlDim = xmlDim->NextSiblingElement()) {
       std::string id = xmlDim->Attribute("id");
-      std::string file = xmlDim->Attribute("file") ?: "";
-      std::string name = xmlDim->Attribute("name") ?: "";
-      std::string fontattr = xmlDim->Attribute("font") ?: "";
+      std::string file = xmlDim->Attribute("file", "");
+      std::string name = xmlDim->Attribute("name", "");
+      std::string fontattr = xmlDim->Attribute("font", "");
       std::string user;
       std::shared_ptr<she::Font> font{};
       auto it = known.find(fontattr);
       if (it != known.end()) {
         font = it->second;
       } else if (!file.empty()) {
-        uint32_t size = strtol(xmlDim->Attribute("size") ?: "", NULL, 10) ?: 8;
+        uint32_t size = strtol(xmlDim->Attribute("size", "8"), NULL, 10);
         font = loadFont({file}, size);
         if (!font) {
           std::cerr << "Could not load font " << file << std::endl;
