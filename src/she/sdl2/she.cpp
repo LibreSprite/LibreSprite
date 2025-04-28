@@ -371,7 +371,7 @@ namespace she {
 	  {
 	    auto& win = sdlEvent.syswm.msg->msg.win;
 	    if (EasyTab_HandleEvent(win.hwnd, win.msg, win.lParam, win.wParam) == EASYTAB_OK) {
-		penPressure = std::max(EasyTab->Pressure, 0.0001f);
+		penPressure = std::max<>(EasyTab->Pressure, 0.0001f);
 	    }
 	  }
 #endif
@@ -458,7 +458,7 @@ namespace she {
 	  {
 	      int hasFingerEvent = SDL_PeepEvents(&sdlEvent, 1, SDL_PEEKEVENT, SDL_FINGERMOTION, SDL_FINGERMOTION);
 	      if (hasFingerEvent) {
-		  penPressure = std::max(sdlEvent.tfinger.pressure, 0.0001f);
+		  penPressure = std::max<>(sdlEvent.tfinger.pressure, 0.0001f);
 	      }
 	  }
 
@@ -468,7 +468,7 @@ namespace she {
           return;
 
         case SDL_FINGERMOTION:
-          penPressure = std::max(sdlEvent.tfinger.pressure, 0.0001f);
+          penPressure = std::max<>(sdlEvent.tfinger.pressure, 0.0001f);
           continue;
 
         case SDL_MOUSEWHEEL:

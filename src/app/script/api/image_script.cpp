@@ -87,7 +87,7 @@ public:
     auto h = img()->height();
     std::shared_ptr<she::Surface> surface{
       she::instance()->createRgbaSurface(w, h),
-      [](auto s) {s->dispose();}
+      [](she::Surface* s) {s->dispose();}
     };
     if (!surface)
       return "";

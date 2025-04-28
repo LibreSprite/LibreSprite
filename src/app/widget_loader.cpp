@@ -250,8 +250,8 @@ Widget* WidgetLoader::convertXmlElementToWidget(const tinyxml2::XMLElement* elem
       throw std::runtime_error("<entry> element found without 'maxsize' attribute");
   }
   else if (elem_name == "intentry") {
-    auto maxValue = strtol(elem->Attribute("max") ?: "", nullptr, 10);
-    auto minValue = strtol(elem->Attribute("min") ?: "", nullptr, 10);
+    auto maxValue = strtol(elem->Attribute("max", ""), nullptr, 10);
+    auto minValue = strtol(elem->Attribute("min", ""), nullptr, 10);
     const char* suffix = elem->Attribute("suffix");
     widget = new IntEntry(minValue, maxValue);
     if (suffix)
