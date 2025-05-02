@@ -5,6 +5,7 @@
 # Common definitions for all Aseprite libraries/projects
 
 add_definitions(-DHAVE_CONFIG_H)
+add_definitions(-DHAVE_CONFIG_H -DCLIP_ENABLE_IMAGE)
 
 if(ENABLE_MEMLEAK)
   add_definitions(-DMEMLEAK)
