@@ -1,7 +1,7 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2022  LibreSprite contributors
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.5)
 
 enable_testing()
 
