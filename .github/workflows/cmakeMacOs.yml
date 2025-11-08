@@ -95,6 +95,7 @@ jobs:
 
     - name: Create DMG
       run: |
+        codesign --force --deep -s - ./bundle/libresprite.app
         hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
 
     - name: Upload Artifacts
