@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C) 2021-2025  LibreSprite contributors
 
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
@@ -28,6 +28,12 @@ include_directories(. .. ../third_party ../third_party/observable)
 if((UNIX AND NOT APPLE) OR (WIN32 AND NOT MSVC))
   set(KEEP_INJECTIONS_BEGIN "-Wl,--whole-archive")
   set(KEEP_INJECTIONS_END "-Wl,--no-whole-archive")
+
+  # Required for compiling with gcc/g++ under MSYS2 UCRT64
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:CXX>:-include;cstdint>"
+    "$<$<COMPILE_LANGUAGE:C>:-include;stdint.h>"
+  )
 endif()
 
 if(APPLE)
