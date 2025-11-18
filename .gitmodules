@@ -7,9 +7,3 @@
 [submodule "src/flic"]
 	path = src/flic
 	url = https://github.com/aseprite/flic.git
-[submodule "src/clip"]
-	path = src/clip
-	url = https://github.com/aseprite/clip.git
-[submodule "src/undo"]
-	path = src/undo
-	url = https://github.com/aseprite/undo.git

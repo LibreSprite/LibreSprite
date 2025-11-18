@@ -3,6 +3,7 @@
 # LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
 include_directories(${DUKTAPE_DIR})
+include_directories(${QUICKJS_DIR})
 
 # Debug C/C++ flags
 if(CMAKE_BUILD_TYPE STREQUAL Debug)

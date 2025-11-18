@@ -20,11 +20,14 @@ jobs:
         distribution: 'temurin'
     - name: Setup SDK
       uses: android-actions/setup-android@v3
+      with:
+        cmdline-tools-version: 13114758
     - name: Setup tools
       run: |
         # sudo apt-get install cmake g++ libtinyxml2-dev ninja-build
         sudo apt-get update
-        sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libarchive-dev
+        sudo apt-get install g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libarchive-dev
+        pip install cmake
         mkdir build
         cd build
         cmake -G Ninja -DGEN_ONLY=ON ..
@@ -35,6 +38,8 @@ jobs:
     - name: Build Application
       run: |
         cd android
+        CMAKEPATH=$(dirname $(dirname $(which cmake)))
+        echo "cmake.dir=$CMAKEPATH" > local.properties
         sh ./gradlew --no-daemon --parallel build
         cd ..
 #        ls -R android/app/build

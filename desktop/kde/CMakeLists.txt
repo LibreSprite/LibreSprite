@@ -3,7 +3,7 @@
 #
 # Licensed under the the MIT License (https://opensource.org/licenses/MIT).
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 4.1)
 set(QT_MIN_VERSION "5.2.0")
 project(librespritethumbnail)
 find_package(ECM REQUIRED NO_MODULE)

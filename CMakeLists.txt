@@ -1,7 +1,7 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2022  LibreSprite contributors
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 4.1)
 
 enable_testing()
 
@@ -97,6 +97,7 @@ set(EASYTAB_DIR         ${CMAKE_SOURCE_DIR}/third_party/EasyTab)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
 set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
+set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
 

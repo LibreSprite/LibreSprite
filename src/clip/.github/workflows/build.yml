@@ -1,0 +1,57 @@
+name: build
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: runner.os == 'Windows'
+    - name: Generating Makefiles
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Windows" ]] ; then
+          cmake . -G "NMake Makefiles"
+        else
+          cmake . -G "Unix Makefiles"
+        fi
+    - name: Compiling
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Windows" ]] ; then
+          nmake
+        else
+          make
+        fi
+    - name: Running Tests
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Linux" ]] ; then
+          export XVFB=xvfb-run
+        fi
+        $XVFB ctest --output-on-failure
+  mingw:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        sys: [ mingw64, mingw32, ucrt64, clang64 ]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: ${{matrix.sys}}
+        pacboy: cc:p cmake:p ninja:p
+    - uses: actions/checkout@v2
+    - name: Generating Makefiles
+      run: cmake .
+    - name: Compiling
+      run: cmake --build .
+    - name: Test
+      run: ctest --output-on-failure

@@ -18,7 +18,7 @@ jobs:
 
     - name: install deps
       run: |
-        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 tinyxml libarchive v8 ninja zlib xmlto dylibbundler
+        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler
 
     - name: git
       run: |
@@ -34,9 +34,9 @@ jobs:
         ./configure
         sudo make install -j4
 
-    - name: Build & Install libpng v1.4.12
+    - name: Build & Install libpng v1.6.50
       run: |
-        git clone https://github.com/glennrp/libpng -b v1.4.12 --recursive
+        git clone https://github.com/glennrp/libpng -b v1.6.50 --recursive
         cd libpng/
         ./configure
         make all -j4
