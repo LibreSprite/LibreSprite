@@ -375,7 +375,7 @@ namespace she {
 	    }
 	  }
 #endif
-#if defined(__linux__)
+#if defined(USE_X11)
 	    if (EasyTab_HandleEvent(&sdlEvent.syswm.msg->msg.x11.event) == EASYTAB_OK) {
 		penPressure = std::max(EasyTab->Pressure, 0.0001f);
 	    }
