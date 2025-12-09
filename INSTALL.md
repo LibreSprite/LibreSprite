@@ -105,11 +105,12 @@ Run the following in mingw32.exe:
 
 To compile LibreSprite, run the following commands:
 ```
-    cmake \
-      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
-      -G Ninja \
-      ..
-    ninja libresprite
+    export LDFLAGS="-L/opt/homebrew/lib $LDFLAGS"
+    export CPPFLAGS="-I/opt/homebrew/include $CPPFLAGS"
+
+    ARCH=$(uname -m) # arm64 or x86_64
+
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$ARCH
 ```
 ### Android details
 
