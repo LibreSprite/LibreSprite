@@ -1645,6 +1645,10 @@ void ContextBar::updateForTool(tools::Tool* tool)
     ((isPaint && (hasInkWithOpacity || hasImageBrush)) ||
      (isEffect));
 
+  bool showZoomButtons =
+    (tool->getInk(0)->isZoom() ||
+     tool->getInk(1)->isZoom());
+
   // Show/Hide fields
   m_brushType->setVisible(supportOpacity && (!isFloodfill || (isFloodfill && hasImageBrush)));
   m_brushSize->setVisible(supportOpacity && !isFloodfill && !hasImageBrush);
@@ -1667,6 +1671,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
   m_pivot->setVisible(true);
   m_dropPixels->setVisible(false);
   m_selectBoxHelp->setVisible(false);
+  m_zoomToolsBox->setVisible(showZoomButtons);
 
   m_symmetry->setVisible(
     Preferences::instance().symmetryMode.enabled() &&
