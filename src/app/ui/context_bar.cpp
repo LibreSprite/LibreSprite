@@ -1320,6 +1320,60 @@ private:
   }
 };
 
+class ContextBar::ZoomField : public HBox {
+public:
+  ZoomField() : HBox() {
+    m_resetButton = new Button("100%");
+    m_centerButton = new Button("Center");
+    m_fitScreenButton = new Button("Fit Screen");
+
+    addChild(m_resetButton);
+    addChild(m_centerButton);
+    addChild(m_fitScreenButton);
+
+    m_resetButton->Click.connect([&]{resetZoom();});
+    m_centerButton->Click.connect([&]{centerViewToSprite();});
+    m_fitScreenButton->Click.connect([&]{fitScreenToSprite();});
+  }
+
+private:
+  ui::Button* m_resetButton;
+  ui::Button* m_centerButton;
+  ui::Button* m_fitScreenButton;
+
+  void resetZoom() {
+    if (!current_editor) return;
+    current_editor->setEditorZoom(render::Zoom(1, 1));
+  }
+
+  void centerViewToSprite() {
+    if (!current_editor) return;
+    Sprite* sprite = current_editor->sprite();
+    if (!sprite) return;
+
+    const Point spriteCenter = sprite->bounds().center();
+    current_editor->centerInSpritePoint(spriteCenter);
+  }
+
+  void fitScreenToSprite() {
+    if (!current_editor) return;
+    Sprite* sprite = current_editor->sprite();
+    View* view = View::getView(current_editor);
+    if (!(sprite && view)) return;
+
+    const gfx::Rect viewport = view->viewportBounds();
+    const gfx::Rect sprrect = sprite->bounds();
+
+    const float scaleX = viewport.w / (float)sprrect.w;
+    const float scaleY = viewport.h / (float)sprrect.h;
+    const float scale = MIN(scaleX, scaleY);
+    current_editor->setEditorZoom(render::Zoom(scale, 1));
+    
+    const Point spriteCenter = sprite->bounds().center();
+    current_editor->centerInSpritePoint(spriteCenter);
+  }
+};
+
 ContextBar::ContextBar()
   : Box(HORIZONTAL)
 {
@@ -1382,45 +1436,7 @@ ContextBar::ContextBar()
   addChild(m_symmetry = new SymmetryField());
   m_symmetry->setVisible(Preferences::instance().symmetryMode.enabled());
 
-  addChild(m_zoomToolsBox = new HBox());
-  m_zoomToolsBox->addChild(m_zoomToolResetButton = new Button("100%"));
-  m_zoomToolsBox->addChild(m_zoomToolCenterButton = new Button("Center"));
-  m_zoomToolsBox->addChild(m_zoomToolFitScreenButton = new Button("Fit Screen"));
-
-  m_zoomToolResetButton->Click.connect([&](){
-    if (current_editor) {
-      current_editor->setEditorZoom(render::Zoom(1, 1));
-    }
-  });
-
-  m_zoomToolCenterButton->Click.connect([&](){
-    if (current_editor) {
-      Sprite* sprite = current_editor->sprite();
-      if (sprite) { 
-        Point spriteCenter = sprite->bounds().center();
-        current_editor->centerInSpritePoint(spriteCenter);
-      }
-    }
-  });
-
-  m_zoomToolFitScreenButton->Click.connect([&](){
-    if (current_editor) {
-      Sprite* sprite = current_editor->sprite();
-      View* view = View::getView(current_editor);
-      if (sprite && view) {
-        const gfx::Rect viewport = view->viewportBounds();
-        const gfx::Rect sprrect = sprite->bounds();
-
-        const float scaleX = viewport.w / (float)sprrect.w;
-        const float scaleY = viewport.h / (float)sprrect.h;
-        const float scale = MIN(scaleX, scaleY);
-        current_editor->setEditorZoom(render::Zoom(scale, 1));
-        
-        const Point spriteCenter = sprite->bounds().center();
-        current_editor->centerInSpritePoint(spriteCenter);
-      }
-    }
-  });
+  addChild(m_zoom = new ZoomField());
 
   TooltipManager* tooltipManager = new TooltipManager();
   addChild(tooltipManager);
@@ -1701,7 +1717,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
   m_pivot->setVisible(true);
   m_dropPixels->setVisible(false);
   m_selectBoxHelp->setVisible(false);
-  m_zoomToolsBox->setVisible(showZoomButtons);
+  m_zoom->setVisible(showZoomButtons);
 
   m_symmetry->setVisible(
     Preferences::instance().symmetryMode.enabled() &&

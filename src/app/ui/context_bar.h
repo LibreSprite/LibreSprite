@@ -106,6 +106,7 @@ namespace app {
     class DropPixelsField;
     class AutoSelectLayerField;
     class SymmetryField;
+    class ZoomField;
 
     BrushTypeField* m_brushType;
     BrushAngleField* m_brushAngle;
@@ -140,12 +141,7 @@ namespace app {
     base::ScopedConnection m_angleConn;
     base::ScopedConnection m_opacityConn;
     base::ScopedConnection m_freehandAlgoConn;
-
-    // Zoom tools
-    ui::Box* m_zoomToolsBox;
-    ui::Button* m_zoomToolResetButton;
-    ui::Button* m_zoomToolCenterButton;
-    ui::Button* m_zoomToolFitScreenButton;
+    ZoomField* m_zoom;
   };
 
 } // namespace app
