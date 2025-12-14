@@ -1385,6 +1385,7 @@ ContextBar::ContextBar()
   addChild(m_zoomToolsBox = new HBox());
   m_zoomToolsBox->addChild(m_zoomToolResetButton = new Button("100%"));
   m_zoomToolsBox->addChild(m_zoomToolCenterButton = new Button("Center"));
+  m_zoomToolsBox->addChild(m_zoomToolFitScreenButton = new Button("Fit Screen"));
 
   m_zoomToolResetButton->Click.connect([&](){
     if (current_editor) {
@@ -1397,6 +1398,25 @@ ContextBar::ContextBar()
       Sprite* sprite = current_editor->sprite();
       if (sprite) { 
         Point spriteCenter = sprite->bounds().center();
+        current_editor->centerInSpritePoint(spriteCenter);
+      }
+    }
+  });
+
+  m_zoomToolFitScreenButton->Click.connect([&](){
+    if (current_editor) {
+      Sprite* sprite = current_editor->sprite();
+      View* view = View::getView(current_editor);
+      if (sprite && view) {
+        const gfx::Rect viewport = view->viewportBounds();
+        const gfx::Rect sprrect = sprite->bounds();
+
+        const float scaleX = viewport.w / (float)sprrect.w;
+        const float scaleY = viewport.h / (float)sprrect.h;
+        const float scale = MIN(scaleX, scaleY);
+        current_editor->setEditorZoom(render::Zoom(scale, 1));
+        
+        const Point spriteCenter = sprite->bounds().center();
         current_editor->centerInSpritePoint(spriteCenter);
       }
     }
