@@ -1334,6 +1334,8 @@ public:
     m_resetButton->Click.connect([&]{resetZoom();});
     m_centerButton->Click.connect([&]{centerViewToSprite();});
     m_fitScreenButton->Click.connect([&]{fitScreenToSprite();});
+
+    setChildSpacing(0);
   }
 
 private:
