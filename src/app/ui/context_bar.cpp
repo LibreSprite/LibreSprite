@@ -1693,10 +1693,15 @@ void ContextBar::updateForTool(tools::Tool* tool)
     ((isPaint && (hasInkWithOpacity || hasImageBrush)) ||
      (isEffect));
 
-  bool showZoomButtons =
-    (tool->getInk(0)->isZoom() ||
-     tool->getInk(1)->isZoom());
-
+  // True if the current tool needs zoom buttons
+  // Includes: Zoom tool (Z), Hand tool (H) and Quick hand (Space)
+  bool showZoomButtons = (
+     tool->getInk(0)->isZoom() ||
+     tool->getInk(1)->isZoom() ||
+     tool->getInk(0)->isScrollMovement() ||
+     tool->getInk(1)->isScrollMovement()
+    );
+     
   // Show/Hide fields
   m_brushType->setVisible(supportOpacity && (!isFloodfill || (isFloodfill && hasImageBrush)));
   m_brushSize->setVisible(supportOpacity && !isFloodfill && !hasImageBrush);
