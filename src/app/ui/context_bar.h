@@ -144,6 +144,7 @@ namespace app {
     // Zoom tools
     ui::Box* m_zoomToolsBox;
     ui::Button* m_zoomToolResetButton;
+    ui::Button* m_zoomToolCenterButton;
   };
 
 } // namespace app

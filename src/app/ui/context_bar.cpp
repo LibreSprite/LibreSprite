@@ -1384,11 +1384,21 @@ ContextBar::ContextBar()
 
   addChild(m_zoomToolsBox = new HBox());
   m_zoomToolsBox->addChild(m_zoomToolResetButton = new Button("100%"));
+  m_zoomToolsBox->addChild(m_zoomToolCenterButton = new Button("Center"));
 
   m_zoomToolResetButton->Click.connect([&](){
-    
     if (current_editor) {
       current_editor->setEditorZoom(render::Zoom(1, 1));
+    }
+  });
+
+  m_zoomToolCenterButton->Click.connect([&](){
+    if (current_editor) {
+      Sprite* sprite = current_editor->sprite();
+      if (sprite) { 
+        Point spriteCenter = sprite->bounds().center();
+        current_editor->centerInSpritePoint(spriteCenter);
+      }
     }
   });
 
