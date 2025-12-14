@@ -140,6 +140,10 @@ namespace app {
     base::ScopedConnection m_angleConn;
     base::ScopedConnection m_opacityConn;
     base::ScopedConnection m_freehandAlgoConn;
+
+    // Zoom tools
+    ui::Box* m_zoomToolsBox;
+    ui::Button* m_zoomToolResetButton;
   };
 
 } // namespace app

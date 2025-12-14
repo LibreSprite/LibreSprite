@@ -57,6 +57,9 @@
 #include "ui/theme.h"
 #include "ui/tooltips.h"
 
+#include "app/ui/editor/editor.h"
+#include "app/modules/editors.h"
+
 #include <memory>
 
 namespace app {
@@ -1378,6 +1381,16 @@ ContextBar::ContextBar()
 
   addChild(m_symmetry = new SymmetryField());
   m_symmetry->setVisible(Preferences::instance().symmetryMode.enabled());
+
+  addChild(m_zoomToolsBox = new HBox());
+  m_zoomToolsBox->addChild(m_zoomToolResetButton = new Button("100%"));
+
+  m_zoomToolResetButton->Click.connect([&](){
+    
+    if (current_editor) {
+      current_editor->setEditorZoom(render::Zoom(1, 1));
+    }
+  });
 
   TooltipManager* tooltipManager = new TooltipManager();
   addChild(tooltipManager);
