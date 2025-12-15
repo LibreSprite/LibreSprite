@@ -1695,7 +1695,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
 
   // True if the current tool needs zoom buttons
   // Includes: Zoom tool (Z), Hand tool (H) and Quick hand (Space)
-  bool showZoomButtons = (
+  bool showZoomButtons = tool && (
      tool->getInk(0)->isZoom() ||
      tool->getInk(1)->isZoom() ||
      tool->getInk(0)->isScrollMovement() ||
