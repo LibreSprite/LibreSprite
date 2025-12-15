@@ -1369,7 +1369,7 @@ private:
     const float scaleX = viewport.w / (float)sprrect.w;
     const float scaleY = viewport.h / (float)sprrect.h;
     const float scale = MIN(scaleX, scaleY);
-    current_editor->setEditorZoom(render::Zoom(scale, 1));
+    current_editor->setEditorZoom(render::Zoom::fromScale(scale));
     
     const Point spriteCenter = sprite->bounds().center();
     current_editor->centerInSpritePoint(spriteCenter);
