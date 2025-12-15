@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2025       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -21,6 +21,7 @@
 #include "app/modules/gfx.h"
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
+#include "app/modules/editors.h"
 #include "app/tools/active_tool.h"
 #include "app/tools/controller.h"
 #include "app/tools/ink.h"
@@ -35,6 +36,7 @@
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/skin/style.h"
 #include "app/ui_context.h"
+#include "app/ui/editor/editor.h"
 #include "base/bind.h"
 #include "base/scoped_value.h"
 #include "doc/conversion_she.h"
@@ -57,8 +59,6 @@
 #include "ui/theme.h"
 #include "ui/tooltips.h"
 
-#include "app/ui/editor/editor.h"
-#include "app/modules/editors.h"
 
 #include <memory>
 
