@@ -72,7 +72,7 @@ To install the required dependencies with msys2, run the following in mingw32:
 On MacOS you will need Mac OS X 11.0 SDK and the corresponding Xcode.
 In a terminal, install the dependencies using brew:
 
-    brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler cmake
+    brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler cmake create-dmg
 
 ## Compiling
 
@@ -103,13 +103,57 @@ Run the following in mingw32.exe:
 
 ### MacOS details
 
-To compile LibreSprite, run the following commands:
+To compile LibreSprite, run the following commands from the project root:
 ```
-    cmake \
-      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
-      -G Ninja \
-      ..
-    ninja libresprite
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+ninja -C build
+```
+
+To create a distributable DMG:
+```
+# Create app bundle structure
+mkdir -p bundle/libresprite.app/Contents/{MacOS,Resources,libs}
+cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
+cp -r build/bin/data bundle/libresprite.app/Contents/MacOS/
+cp desktop/Info.plist bundle/libresprite.app/Contents/
+
+# Generate icon
+mkdir -p bundle/libresprite.iconset
+sips -z 16 16 data/icons/ase64.png --out bundle/libresprite.iconset/icon_16x16.png
+sips -z 32 32 data/icons/ase64.png --out bundle/libresprite.iconset/icon_16x16@2x.png
+sips -z 32 32 data/icons/ase64.png --out bundle/libresprite.iconset/icon_32x32.png
+sips -z 64 64 data/icons/ase64.png --out bundle/libresprite.iconset/icon_32x32@2x.png
+sips -z 128 128 data/icons/ase64.png --out bundle/libresprite.iconset/icon_128x128.png
+sips -z 256 256 data/icons/ase64.png --out bundle/libresprite.iconset/icon_128x128@2x.png
+sips -z 256 256 data/icons/ase64.png --out bundle/libresprite.iconset/icon_256x256.png
+sips -z 512 512 data/icons/ase64.png --out bundle/libresprite.iconset/icon_256x256@2x.png
+sips -z 512 512 data/icons/ase64.png --out bundle/libresprite.iconset/icon_512x512.png
+sips -z 512 512 data/icons/ase64.png --out bundle/libresprite.iconset/icon_512x512@2x.png
+iconutil -c icns bundle/libresprite.iconset -o bundle/libresprite.app/Contents/Resources/libresprite.icns
+
+# Bundle dynamic libraries
+dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite \
+  -d ./bundle/libresprite.app/Contents/libs/
+
+# Sign all components (inside-out)
+for lib in ./bundle/libresprite.app/Contents/libs/*.dylib; do
+  codesign --force -s - "$lib"
+done
+codesign --force -s - ./bundle/libresprite.app/Contents/MacOS/libresprite
+codesign --force -s - ./bundle/libresprite.app
+
+# Create DMG (requires: brew install create-dmg)
+create-dmg \
+  --volname "LibreSprite" \
+  --window-pos 200 120 \
+  --window-size 600 400 \
+  --icon-size 100 \
+  --icon "libresprite.app" 150 185 \
+  --app-drop-link 450 185 \
+  "libresprite.dmg" \
+  "./bundle/libresprite.app"
 ```
 ### Android details
 
