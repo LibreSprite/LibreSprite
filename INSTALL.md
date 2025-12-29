@@ -113,10 +113,16 @@ ninja -C build
 
 To create a distributable DMG:
 ```
+# Clean up any previous bundle
+rm -rf bundle libresprite.dmg
+
 # Create app bundle structure
+# IMPORTANT: Data goes in Resources (NOT MacOS) with a symlink back.
+# macOS 15+ code signing fails if non-code files are in Contents/MacOS.
 mkdir -p bundle/libresprite.app/Contents/{MacOS,Resources,libs}
 cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
-cp -r build/bin/data bundle/libresprite.app/Contents/MacOS/
+cp -r build/bin/data bundle/libresprite.app/Contents/Resources/
+cd bundle/libresprite.app/Contents/MacOS && ln -s ../Resources/data data && cd -
 cp desktop/Info.plist bundle/libresprite.app/Contents/
 
 # Generate icon
@@ -137,7 +143,11 @@ iconutil -c icns bundle/libresprite.iconset -o bundle/libresprite.app/Contents/R
 dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite \
   -d ./bundle/libresprite.app/Contents/libs/
 
-# Sign all components (inside-out)
+# Sign all components (inside-out order is CRITICAL)
+# 1. Sign each dylib individually
+# 2. Sign the executable
+# 3. Sign the bundle
+# DO NOT use --deep, it does not work on macOS 15+
 for lib in ./bundle/libresprite.app/Contents/libs/*.dylib; do
   codesign --force -s - "$lib"
 done

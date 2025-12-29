@@ -471,17 +471,28 @@ namespace she {
           penPressure = std::max<>(sdlEvent.tfinger.pressure, 0.0001f);
           continue;
 
-        case SDL_MOUSEWHEEL:
+        case SDL_MOUSEWHEEL: {
           event.setType(Event::MouseWheel);
           event.setModifiers(getSheModifiers());
-          event.setWheelDelta({-sdlEvent.wheel.x, -sdlEvent.wheel.y});
+          event.setWheelDelta({sdlEvent.wheel.x, -sdlEvent.wheel.y});
           int x, y;
           SDL_GetMouseState(&x, &y);
           event.setPosition({
               x / unique_display->scale(),
               y / unique_display->scale()
             });
+          // On macOS, always treat scroll as "precise" (trackpad-style panning)
+          // since pinch-to-zoom is handled separately via native magnify gesture
+#ifdef __APPLE__
+          event.setPreciseWheel(true);
+#elif SDL_VERSION_ATLEAST(2, 0, 18)
+          // On other platforms, detect trackpad by checking precise values
+          bool isPrecise = (sdlEvent.wheel.preciseX != (float)sdlEvent.wheel.x) ||
+                           (sdlEvent.wheel.preciseY != (float)sdlEvent.wheel.y);
+          event.setPreciseWheel(isPrecise);
+#endif
           return;
+        }
 
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEBUTTONDOWN: {

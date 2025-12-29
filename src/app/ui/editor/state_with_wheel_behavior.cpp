@@ -144,7 +144,12 @@ bool StateWithWheelBehavior::onMouseWheel(Editor* editor, MouseMessage* msg)
       View* view = View::getView(editor);
       gfx::Point scroll = view->viewScroll();
 
-      if (!msg->preciseWheel()) {
+      if (msg->preciseWheel()) {
+        // Trackpad scrolling - multiply delta for faster panning
+        delta.x *= 6;
+        delta.y *= 6;
+      }
+      else {
         gfx::Rect vp = view->viewportBounds();
 
         if (wheelAction == WHEEL_HSCROLL) {
