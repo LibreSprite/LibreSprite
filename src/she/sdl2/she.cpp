@@ -477,19 +477,32 @@ namespace she {
           event.setWheelDelta({sdlEvent.wheel.x, -sdlEvent.wheel.y});
           int x, y;
           SDL_GetMouseState(&x, &y);
-          event.setPosition({
-              x / unique_display->scale(),
-              y / unique_display->scale()
-            });
-          // On macOS, always treat scroll as "precise" (trackpad-style panning)
-          // since pinch-to-zoom is handled separately via native magnify gesture
+          int scale = unique_display->scale();
+          event.setPosition({x / scale, y / scale});
+
+          // Set precise wheel delta for smooth scrolling
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+          // SDL 2.0.18+ provides floating-point precise scroll values
+          event.setPreciseWheelDelta(gfx::PointT<double>(
+              sdlEvent.wheel.preciseX / scale,
+              -sdlEvent.wheel.preciseY / scale));
 #ifdef __APPLE__
+          // On macOS, always treat as precise (trackpad-style panning)
           event.setPreciseWheel(true);
-#elif SDL_VERSION_ATLEAST(2, 0, 18)
-          // On other platforms, detect trackpad by checking precise values
+#else
+          // Detect trackpad by checking if precise values differ from integer
           bool isPrecise = (sdlEvent.wheel.preciseX != (float)sdlEvent.wheel.x) ||
                            (sdlEvent.wheel.preciseY != (float)sdlEvent.wheel.y);
           event.setPreciseWheel(isPrecise);
+#endif
+#else
+          // Older SDL: use integer values as fallback
+          event.setPreciseWheelDelta(gfx::PointT<double>(
+              sdlEvent.wheel.x / (double)scale,
+              -sdlEvent.wheel.y / (double)scale));
+#ifdef __APPLE__
+          event.setPreciseWheel(true);
+#endif
 #endif
           return;
         }

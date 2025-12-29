@@ -145,9 +145,20 @@ bool StateWithWheelBehavior::onMouseWheel(Editor* editor, MouseMessage* msg)
       gfx::Point scroll = view->viewScroll();
 
       if (msg->preciseWheel()) {
-        // Trackpad scrolling - multiply delta for faster panning
-        delta.x *= 6;
-        delta.y *= 6;
+        // Use precise floating-point delta for smooth trackpad panning
+        gfx::PointT<double> preciseDelta = msg->preciseWheelDelta();
+
+        // Scale for responsive panning
+        preciseDelta.x *= 6.0;
+        preciseDelta.y *= 6.0;
+
+        // Use LERP-based smooth scrolling if preference is enabled (default: true)
+        if (Preferences::instance().editor.smoothPanning()) {
+          editor->addScrollDelta(preciseDelta);
+        }
+        else {
+          editor->setEditorScroll(scroll + gfx::Point(int(preciseDelta.x), int(preciseDelta.y)));
+        }
       }
       else {
         gfx::Rect vp = view->viewportBounds();
@@ -165,9 +176,9 @@ bool StateWithWheelBehavior::onMouseWheel(Editor* editor, MouseMessage* msg)
         else {
           delta /= 10;
         }
-      }
 
-      editor->setEditorScroll(scroll+delta);
+        editor->setEditorScroll(scroll+delta);
+      }
       break;
     }
 

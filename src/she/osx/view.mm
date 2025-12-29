@@ -401,8 +401,12 @@ bool is_key_pressed(KeyScancode scancode)
 
   if (event.hasPreciseScrollingDeltas) {
     ev.setPointerType(she::PointerType::Multitouch);
+    // Store integer delta for backward compatibility
     ev.setWheelDelta(gfx::Point(-event.scrollingDeltaX / scale,
                                 -event.scrollingDeltaY / scale));
+    // Store precise floating-point delta for smooth scrolling
+    ev.setPreciseWheelDelta(gfx::PointT<double>(-event.scrollingDeltaX / scale,
+                                                 -event.scrollingDeltaY / scale));
     ev.setPreciseWheel(true);
   }
   else {

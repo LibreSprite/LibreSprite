@@ -71,6 +71,7 @@ namespace she {
     int repeat() const { return m_repeat; }
     gfx::Point position() const { return m_position; }
     gfx::Point wheelDelta() const { return m_wheelDelta; }
+    gfx::PointT<double> preciseWheelDelta() const { return m_preciseWheelDelta; }
 
     // We suppose that if we are receiving precise scrolling deltas,
     // it means that the user is using a touch-like surface (trackpad,
@@ -93,6 +94,7 @@ namespace she {
     void setRepeat(int repeat) { m_repeat = repeat; }
     void setPosition(const gfx::Point& pos) { m_position = pos; }
     void setWheelDelta(const gfx::Point& delta) { m_wheelDelta = delta; }
+    void setPreciseWheelDelta(const gfx::PointT<double>& delta) { m_preciseWheelDelta = delta; }
     void setPreciseWheel(bool precise) { m_preciseWheel = precise; }
     void setPointerType(PointerType pointerType) { m_pointerType = pointerType; }
     void setButton(MouseButton button) { m_button = button; }
@@ -109,6 +111,7 @@ namespace she {
     int m_repeat; // repeat=0 means the first time the key is pressed
     gfx::Point m_position;
     gfx::Point m_wheelDelta;
+    gfx::PointT<double> m_preciseWheelDelta;
     bool m_preciseWheel;
     PointerType m_pointerType;
     MouseButton m_button;

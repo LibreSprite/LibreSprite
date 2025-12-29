@@ -108,14 +108,16 @@ namespace ui {
                  const gfx::Point& pos,
                  const gfx::Point& wheelDelta = gfx::Point(0, 0),
                  bool preciseWheel = false,
-                 float pressure = 0.0f)
+                 float pressure = 0.0f,
+                 const gfx::PointT<double>& preciseWheelDelta = gfx::PointT<double>(0.0, 0.0))
       : Message(type, modifiers),
         m_pointerType(pointerType),
         m_buttons(buttons),
         m_pos(pos),
         m_wheelDelta(wheelDelta),
         m_preciseWheel(preciseWheel),
-        m_pressure(pressure) {
+        m_pressure(pressure),
+        m_preciseWheelDelta(preciseWheelDelta) {
     }
 
     PointerType pointerType() const { return m_pointerType; }
@@ -124,6 +126,7 @@ namespace ui {
     bool right() const { return (m_buttons & kButtonRight) == kButtonRight; }
     bool middle() const { return (m_buttons & kButtonMiddle) == kButtonMiddle; }
     gfx::Point wheelDelta() const { return m_wheelDelta; }
+    gfx::PointT<double> preciseWheelDelta() const { return m_preciseWheelDelta; }
     bool preciseWheel() const { return m_preciseWheel; }
     float pressure() const { return m_pressure; }
 
@@ -133,9 +136,10 @@ namespace ui {
     PointerType m_pointerType;
     MouseButtons m_buttons;     // Pressed buttons
     gfx::Point m_pos;           // Mouse position
-    gfx::Point m_wheelDelta;    // Wheel axis variation
+    gfx::Point m_wheelDelta;    // Wheel axis variation (integer)
     bool m_preciseWheel;
     float m_pressure;
+    gfx::PointT<double> m_preciseWheelDelta; // Wheel axis variation (float for smooth scrolling)
   };
 
   class TouchMessage : public Message {

@@ -65,6 +65,12 @@ namespace app {
                , public IColorSource
                , public tools::ActiveToolObserver {
   public:
+    // Smooth scroll for trackpad panning - uses LERP for fluid motion
+    void addScrollDelta(const gfx::PointT<double>& delta);
+    void updateSmoothScroll();  // Called by timer to animate toward target
+    void stopSmoothScroll();    // Stop the smooth scroll animation
+
+  public:
     enum EditorFlags {
       kNoneFlag = 0,
       kShowGrid = 1,
@@ -327,6 +333,12 @@ namespace app {
 
     // Animation speed multiplier.
     double m_aniSpeed;
+
+    // Smooth scroll for trackpad panning (LERP-based animation)
+    ui::Timer m_smoothScrollTimer;
+    gfx::PointT<double> m_scrollTarget;      // Target scroll position (accumulated)
+    gfx::PointT<double> m_scrollCurrent;     // Current interpolated position
+    bool m_smoothScrollActive;
 
     static doc::ImageBufferPtr m_renderBuffer;
 

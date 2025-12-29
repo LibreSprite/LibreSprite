@@ -168,6 +168,10 @@ Editor::Editor(Document* document, EditorFlags flags)
   , m_flags(flags)
   , m_secondaryButton(false)
   , m_aniSpeed(1.0)
+  , m_smoothScrollTimer(8, this)  // ~120 FPS for smooth animation
+  , m_scrollTarget(0.0, 0.0)
+  , m_scrollCurrent(0.0, 0.0)
+  , m_smoothScrollActive(false)
 {
   // Add the first state into the history.
   m_statesHistory.push(m_state);
@@ -393,6 +397,65 @@ void Editor::setDefaultScroll()
 void Editor::setEditorScroll(const gfx::Point& scroll)
 {
   View::getView(this)->setViewScroll(scroll);
+}
+
+// Smooth scroll for trackpad - adds delta to target and starts LERP animation
+void Editor::addScrollDelta(const gfx::PointT<double>& delta)
+{
+  // Initialize current position from actual scroll if not active
+  if (!m_smoothScrollActive) {
+    View* view = View::getView(this);
+    gfx::Point scroll = view->viewScroll();
+    m_scrollCurrent.x = scroll.x;
+    m_scrollCurrent.y = scroll.y;
+    m_scrollTarget = m_scrollCurrent;
+    m_smoothScrollActive = true;
+    m_smoothScrollTimer.start();
+  }
+
+  // Add delta to target position
+  m_scrollTarget.x += delta.x;
+  m_scrollTarget.y += delta.y;
+}
+
+// Called by timer to animate scroll position toward target using LERP
+void Editor::updateSmoothScroll()
+{
+  if (!m_smoothScrollActive)
+    return;
+
+  // LERP factor - higher = snappier, lower = smoother
+  // 0.25 provides a good balance of responsiveness and smoothness
+  const double lerpFactor = 0.25;
+
+  // Calculate distance to target
+  double dx = m_scrollTarget.x - m_scrollCurrent.x;
+  double dy = m_scrollTarget.y - m_scrollCurrent.y;
+
+  // If we're very close to target, snap to it and stop
+  if (std::abs(dx) < 0.5 && std::abs(dy) < 0.5) {
+    m_scrollCurrent = m_scrollTarget;
+    setEditorScroll(gfx::Point(
+      static_cast<int>(std::round(m_scrollCurrent.x)),
+      static_cast<int>(std::round(m_scrollCurrent.y))));
+    stopSmoothScroll();
+    return;
+  }
+
+  // LERP toward target
+  m_scrollCurrent.x += dx * lerpFactor;
+  m_scrollCurrent.y += dy * lerpFactor;
+
+  // Apply the scroll position
+  setEditorScroll(gfx::Point(
+    static_cast<int>(std::round(m_scrollCurrent.x)),
+    static_cast<int>(std::round(m_scrollCurrent.y))));
+}
+
+void Editor::stopSmoothScroll()
+{
+  m_smoothScrollActive = false;
+  m_smoothScrollTimer.stop();
 }
 
 void Editor::setEditorZoom(const render::Zoom& zoom)
@@ -1164,6 +1227,9 @@ bool Editor::onProcessMessage(Message* msg)
         else if (m_antsTimer.isRunning()) {
           m_antsTimer.stop();
         }
+      }
+      else if (static_cast<TimerMessage*>(msg)->timer() == &m_smoothScrollTimer) {
+        updateSmoothScroll();
       }
       break;
 
