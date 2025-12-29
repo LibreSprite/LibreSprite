@@ -31,6 +31,14 @@ namespace app {
       Key* shortcut;
     };
 
+    struct PreferenceEntry {
+      std::string settingName;    // "Grid Color"
+      std::string sectionName;    // "Grid & Background"
+      std::string sectionId;      // "grid" (for Options command param)
+      std::string displayName;    // "Edit > Preferences > Grid & Background > Grid Color"
+      std::string searchText;     // lowercase keywords for matching
+    };
+
     MenuSearch();
     ~MenuSearch();
 
@@ -43,6 +51,7 @@ namespace app {
 
     void onSearchChange();
     void buildCommandIndex();
+    void buildPreferenceIndex();
     void filterCommands(const std::string& query);
     void showResults();
     void hideResults();
@@ -55,6 +64,8 @@ namespace app {
     ui::ListBox* m_resultsList;
     std::vector<CommandEntry> m_allCommands;
     std::vector<CommandEntry*> m_filteredCommands;
+    std::vector<PreferenceEntry> m_allPreferences;
+    std::vector<PreferenceEntry*> m_filteredPreferences;
   };
 
 } // namespace app

@@ -111,6 +111,7 @@ public:
   MenuSearchResultItem(MenuSearch::CommandEntry* entry, bool enabled)
     : ListItem("")
     , m_entry(entry)
+    , m_prefEntry(nullptr)
     , m_commandEnabled(enabled) {
     std::string text = entry->displayName;
     if (entry->shortcut && !entry->shortcut->accels().empty()) {
@@ -123,8 +124,18 @@ public:
     // Don't call setEnabled - we want selection to work, just visual difference
   }
 
+  MenuSearchResultItem(MenuSearch::PreferenceEntry* entry)
+    : ListItem("")
+    , m_entry(nullptr)
+    , m_prefEntry(entry)
+    , m_commandEnabled(true) {
+    setText(entry->displayName);
+  }
+
   MenuSearch::CommandEntry* entry() const { return m_entry; }
+  MenuSearch::PreferenceEntry* prefEntry() const { return m_prefEntry; }
   bool isCommandEnabled() const { return m_commandEnabled; }
+  bool isPreference() const { return m_prefEntry != nullptr; }
 
 protected:
   void onPaint(PaintEvent& ev) override {
@@ -165,6 +176,7 @@ protected:
 
 private:
   MenuSearch::CommandEntry* m_entry;
+  MenuSearch::PreferenceEntry* m_prefEntry;
   bool m_commandEnabled;
 };
 
@@ -238,6 +250,7 @@ MenuSearch::MenuSearch()
   });
 
   buildCommandIndex();
+  buildPreferenceIndex();
 }
 
 MenuSearch::~MenuSearch()
@@ -311,6 +324,74 @@ void MenuSearch::buildCommandIndex()
   }
 }
 
+void MenuSearch::buildPreferenceIndex()
+{
+  m_allPreferences.clear();
+
+  // Helper to add a preference entry
+  auto addPref = [this](const std::string& settingName,
+                        const std::string& sectionName,
+                        const std::string& sectionId,
+                        const std::string& keywords) {
+    PreferenceEntry entry;
+    entry.settingName = settingName;
+    entry.sectionName = sectionName;
+    entry.sectionId = sectionId;
+    entry.displayName = "Edit > Preferences > " + sectionName + " > " + settingName;
+    entry.searchText = toLower(entry.displayName + " " + keywords);
+    m_allPreferences.push_back(entry);
+  };
+
+  // General section (index 0)
+  addPref("Language", "General", "general", "language locale");
+  addPref("Screen Scaling", "General", "general", "screen scaling scale display resolution");
+  addPref("UI Elements Scaling", "General", "general", "ui elements scaling interface");
+  addPref("GPU Acceleration", "General", "general", "gpu acceleration hardware graphics");
+  addPref("Expand Menubar on Mouseover", "General", "general", "menubar expand mouseover hover");
+  addPref("Data Recovery", "General", "general", "data recovery autosave backup auto save");
+  addPref("Show Full Path", "General", "general", "path filename full show");
+  addPref("Show Keyboard Shortcuts", "General", "general", "keyboard shortcuts toolbar icons badges");
+
+  // Editor section (index 1)
+  addPref("Zoom with Scroll Wheel", "Editor", "editor", "zoom scroll wheel mouse");
+  addPref("Zoom Sliding Two Fingers", "Editor", "editor", "zoom slide fingers trackpad");
+  addPref("Zoom from Center with Wheel", "Editor", "editor", "zoom center wheel");
+  addPref("Zoom from Center with Keys", "Editor", "editor", "zoom center keys keyboard");
+  addPref("Show Scrollbars", "Editor", "editor", "scrollbars scroll bars editor");
+  addPref("Right-click Behavior", "Editor", "editor", "right click behavior mouse button");
+  addPref("Auto Opaque", "Editor", "editor", "opaque transparent selection auto");
+  addPref("Keep Selection After Clear", "Editor", "editor", "selection clear keep delete");
+
+  // Timeline section (index 2)
+  addPref("Show Timeline Automatically", "Timeline", "timeline", "timeline auto automatic show");
+  addPref("Rewind on Stop", "Timeline", "timeline", "rewind stop animation playback");
+
+  // Cursors section (index 3)
+  addPref("Native Mouse Cursor", "Cursors", "cursors", "native mouse cursor system pointer");
+  addPref("Cursor Color", "Cursors", "cursors", "cursor color precise painting");
+  addPref("Brush Preview", "Cursors", "cursors", "brush preview cursor painting");
+
+  // Grid & Background section (index 4)
+  addPref("Grid Color", "Grid & Background", "grid", "grid color");
+  addPref("Grid Opacity", "Grid & Background", "grid", "grid opacity transparency");
+  addPref("Pixel Grid Color", "Grid & Background", "grid", "pixel grid color");
+  addPref("Pixel Grid Opacity", "Grid & Background", "grid", "pixel grid opacity transparency");
+  addPref("Checked Background Size", "Grid & Background", "grid", "checked background size checkerboard");
+  addPref("Checked Background Colors", "Grid & Background", "grid", "checked background colors checkerboard");
+
+  // Undo section (index 5)
+  addPref("Undo Limit", "Undo", "undo", "undo limit memory size");
+  addPref("Go to Modified Frame", "Undo", "undo", "undo modified frame layer goto");
+  addPref("Non-linear History", "Undo", "undo", "undo nonlinear history allow");
+
+  // Theme section (index 6)
+  addPref("Theme Selection", "Theme", "theme", "theme skin appearance select");
+
+  // Experimental section (index 7)
+  addPref("Native File Dialog", "Experimental", "experimental", "native file dialog open save");
+  addPref("Flash Layer", "Experimental", "experimental", "flash layer highlight blink");
+}
+
 void MenuSearch::onSearchChange()
 {
   std::string query = m_searchEntry->text();
@@ -335,6 +416,7 @@ void MenuSearch::onSearchChange()
 void MenuSearch::filterCommands(const std::string& query)
 {
   m_filteredCommands.clear();
+  m_filteredPreferences.clear();
 
   std::string lowerQuery = toLower(query);
 
@@ -355,7 +437,7 @@ void MenuSearch::filterCommands(const std::string& query)
     queryWords.push_back(word);
   }
 
-  // First pass: exact substring matching
+  // First pass: exact substring matching for commands
   for (auto& entry : m_allCommands) {
     bool matches = true;
     for (const auto& qw : queryWords) {
@@ -370,7 +452,22 @@ void MenuSearch::filterCommands(const std::string& query)
     }
   }
 
-  // Second pass: fuzzy matching if no exact matches found
+  // First pass: exact substring matching for preferences
+  for (auto& entry : m_allPreferences) {
+    bool matches = true;
+    for (const auto& qw : queryWords) {
+      if (entry.searchText.find(qw) == std::string::npos) {
+        matches = false;
+        break;
+      }
+    }
+
+    if (matches) {
+      m_filteredPreferences.push_back(&entry);
+    }
+  }
+
+  // Second pass: fuzzy matching if no exact matches found for commands
   if (m_filteredCommands.empty()) {
     for (auto& entry : m_allCommands) {
       bool matches = true;
@@ -388,22 +485,64 @@ void MenuSearch::filterCommands(const std::string& query)
     }
   }
 
-  // Sort by display name length (shorter = better match)
+  // Second pass: fuzzy matching if no exact matches found for preferences
+  if (m_filteredPreferences.empty()) {
+    for (auto& entry : m_allPreferences) {
+      bool matches = true;
+      for (const auto& qw : queryWords) {
+        if (!fuzzyMatchWord(qw, entry.searchText)) {
+          matches = false;
+          break;
+        }
+      }
+
+      if (matches) {
+        m_filteredPreferences.push_back(&entry);
+      }
+    }
+  }
+
+  // Sort commands by display name length (shorter = better match)
   std::sort(m_filteredCommands.begin(), m_filteredCommands.end(),
     [](const CommandEntry* a, const CommandEntry* b) {
       return a->displayName.length() < b->displayName.length();
     });
 
-  // Limit results
-  if (m_filteredCommands.size() > 15) {
-    m_filteredCommands.resize(15);
+  // Sort preferences by display name length (shorter = better match)
+  std::sort(m_filteredPreferences.begin(), m_filteredPreferences.end(),
+    [](const PreferenceEntry* a, const PreferenceEntry* b) {
+      return a->displayName.length() < b->displayName.length();
+    });
+
+  // Limit results - split between commands and preferences
+  size_t totalResults = m_filteredCommands.size() + m_filteredPreferences.size();
+  if (totalResults > 15) {
+    // Prioritize keeping both types if both have matches
+    if (!m_filteredCommands.empty() && !m_filteredPreferences.empty()) {
+      size_t cmdLimit = std::min(m_filteredCommands.size(), (size_t)10);
+      size_t prefLimit = std::min(m_filteredPreferences.size(), (size_t)5);
+      // Adjust if one type has fewer results
+      if (m_filteredCommands.size() < 10) {
+        prefLimit = std::min(m_filteredPreferences.size(), 15 - m_filteredCommands.size());
+      } else if (m_filteredPreferences.size() < 5) {
+        cmdLimit = std::min(m_filteredCommands.size(), 15 - m_filteredPreferences.size());
+      }
+      m_filteredCommands.resize(std::min(m_filteredCommands.size(), cmdLimit));
+      m_filteredPreferences.resize(std::min(m_filteredPreferences.size(), prefLimit));
+    } else if (m_filteredCommands.size() > 15) {
+      m_filteredCommands.resize(15);
+    } else if (m_filteredPreferences.size() > 15) {
+      m_filteredPreferences.resize(15);
+    }
   }
 }
 
 void MenuSearch::showResults()
 {
-  if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: showResults, %d filtered commands\n", (int)m_filteredCommands.size());
-  if (m_filteredCommands.empty()) {
+  size_t totalResults = m_filteredCommands.size() + m_filteredPreferences.size();
+  if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: showResults, %d commands, %d preferences\n",
+                                  (int)m_filteredCommands.size(), (int)m_filteredPreferences.size());
+  if (totalResults == 0) {
     hideResults();
     return;
   }
@@ -435,9 +574,16 @@ void MenuSearch::showResults()
 
 
   UIContext* ctx = UIContext::instance();
+
+  // Add command entries
   for (auto* entry : m_filteredCommands) {
     bool enabled = entry->command && ctx && entry->command->isEnabled(ctx);
     m_resultsList->addChild(new MenuSearchResultItem(entry, enabled));
+  }
+
+  // Add preference entries
+  for (auto* entry : m_filteredPreferences) {
+    m_resultsList->addChild(new MenuSearchResultItem(entry));
   }
 
   // Select first item
@@ -449,7 +595,7 @@ void MenuSearch::showResults()
   gfx::Rect searchBounds = m_searchEntry->bounds();
   int itemHeight = 22;
   gfx::Size popupSize(std::max(searchBounds.w, 400),
-                      std::min((int)m_filteredCommands.size() * itemHeight + 8, 350));
+                      std::min((int)totalResults * itemHeight + 8, 350));
 
   gfx::Rect popupBounds(searchBounds.x, searchBounds.y + searchBounds.h,
                         popupSize.w, popupSize.h);
@@ -493,13 +639,10 @@ void MenuSearch::executeSelected()
   }
 
   MenuSearchResultItem* item = dynamic_cast<MenuSearchResultItem*>(selected);
-  if (!item || !item->entry()) {
+  if (!item) {
     if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: invalid item\n");
     return;
   }
-
-  CommandEntry* entry = item->entry();
-  if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: executing %s\n", entry->displayName.c_str());
 
   hideResults();
   m_searchEntry->setText("");
@@ -509,6 +652,34 @@ void MenuSearch::executeSelected()
   m_searchEntry->setSuffix("Ctrl+Shift+P");
 #endif
   m_searchEntry->releaseFocus();
+
+  // Handle preference entry
+  if (item->isPreference()) {
+    PreferenceEntry* prefEntry = item->prefEntry();
+    if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: executing preference %s\n", prefEntry->displayName.c_str());
+
+    // Execute Options command with section parameter
+    UIContext* context = UIContext::instance();
+    if (context) {
+      Command* optionsCmd = CommandsModule::instance()->getCommandByName(CommandId::Options);
+      if (optionsCmd) {
+        Params params;
+        params.set("section", prefEntry->sectionId.c_str());
+        optionsCmd->loadParams(params);
+        context->executeCommand(optionsCmd, params);
+      }
+    }
+    return;
+  }
+
+  // Handle command entry
+  CommandEntry* entry = item->entry();
+  if (!entry) {
+    if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: no entry\n");
+    return;
+  }
+
+  if (MENU_SEARCH_DEBUG) fprintf(stderr, "MenuSearch: executing %s\n", entry->displayName.c_str());
 
   if (entry->command) {
     UIContext* context = UIContext::instance();
