@@ -26,6 +26,7 @@
 #include "app/ui/editor/editor_view.h"
 #include "app/ui/home_view.h"
 #include "app/ui/main_menu_bar.h"
+#include "app/ui/menu_search.h"
 #include "app/ui/notifications.h"
 #include "app/ui/preview_editor.h"
 #include "app/ui/skin/skin_property.h"
@@ -90,6 +91,8 @@ MainWindow::MainWindow()
 
   // Add the widgets in the boxes
   menuBarPlaceholder()->addChild(m_menuBar);
+  m_menuSearch = new MenuSearch();
+  menuBarPlaceholder()->addChild(m_menuSearch);
   menuBarPlaceholder()->addChild(m_notifications);
   contextBarPlaceholder()->addChild(m_contextBar);
   colorBarPlaceholder()->addChild(m_colorBar);
