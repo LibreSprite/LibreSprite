@@ -160,6 +160,7 @@ SkinTheme::SkinTheme()
 {
   m_defaultFont = nullptr;
   m_miniFont = nullptr;
+  m_tinyFont = nullptr;
 
   // Initialize all graphics in NULL (these bitmaps are loaded from the skin)
   m_sheet = NULL;
@@ -302,6 +303,7 @@ void SkinTheme::loadFonts(const std::string& skinId)
       while (rf.next())
           paths.push_back(rf.filename());
       m_miniFont = loadFont(paths, 8);
+      m_tinyFont = loadFont(paths, 4);
   }
 }
 

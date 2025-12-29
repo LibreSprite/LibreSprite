@@ -94,6 +94,7 @@
       <option id="data_recovery" type="bool" default="true" />
       <option id="data_recovery_period" type="int" default="2" />
       <option id="show_full_path" type="bool" default="true" />
+      <option id="show_tool_shortcuts" type="bool" default="true" />
     </section>
     <section id="undo" text="Undo">
       <option id="size_limit" type="int" default="64" />

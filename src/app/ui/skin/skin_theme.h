@@ -48,6 +48,7 @@ namespace app {
       std::shared_ptr<she::Font> getDefaultFont() const override { return m_defaultFont; }
       std::shared_ptr<she::Font> getWidgetFont(const ui::Widget* widget) const override;
       std::shared_ptr<she::Font> getMiniFont() const { return m_miniFont; }
+      std::shared_ptr<she::Font> getTinyFont() const { return m_tinyFont; }
 
       ui::Cursor* getCursor(ui::CursorType type) override;
       void initWidget(ui::Widget* widget) override;
@@ -141,6 +142,7 @@ namespace app {
       StyleSheet m_stylesheet;
       std::shared_ptr<she::Font> m_defaultFont;
       std::shared_ptr<she::Font> m_miniFont;
+      std::shared_ptr<she::Font> m_tinyFont;
     };
 
     inline SkinPartPtr get_part_by_id(const std::string& id) {

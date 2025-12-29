@@ -120,6 +120,9 @@ public:
     if (m_pref.general.showFullPath())
       showFullPath()->setSelected(true);
 
+    if (m_pref.general.showToolShortcuts())
+      showToolShortcuts()->setSelected(true);
+
     dataRecoveryPeriod()->setSelectedItemIndex(
       dataRecoveryPeriod()->findItemIndexByValue(
         base::convert_to<std::string>(m_pref.general.dataRecoveryPeriod())));
@@ -258,6 +261,7 @@ public:
     m_pref.general.autoshowTimeline(autotimeline()->isSelected());
     m_pref.general.rewindOnStop(rewindOnStop()->isSelected());
     m_pref.general.showFullPath(showFullPath()->isSelected());
+    m_pref.general.showToolShortcuts(showToolShortcuts()->isSelected());
 
     bool expandOnMouseover = expandMenubarOnMouseover()->isSelected();
     m_pref.general.expandMenubarOnMouseover(expandOnMouseover);
