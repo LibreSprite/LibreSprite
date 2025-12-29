@@ -28,3 +28,6 @@ build
 # macOS build artifacts
 bundle/
 *.dmg
+
+# Git worktrees
+.worktrees/
