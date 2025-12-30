@@ -1,4 +1,7 @@
 # EasyTab
+
+*Last updated: 2025-12-30*
+
 Single-header multi-platform tablet library, for easy integration of drawing tablets (e.g. Wacom) into your code.
 
 ## Features

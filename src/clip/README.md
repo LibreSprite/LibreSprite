@@ -1,4 +1,7 @@
 # Clip Library
+
+*Last updated: 2025-12-30*
+
 *Copyright (c) 2015-2023 David Capello*
 
 [![build](https://github.com/dacap/clip/workflows/build/badge.svg)](https://github.com/dacap/clip/actions?query=workflow%3Abuild)

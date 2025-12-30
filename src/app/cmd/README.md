@@ -1,5 +1,7 @@
 ## Shared pointers
 
+*Last updated: 2025-12-30*
+
 Do not keep `ImageRef` or any kind of smart pointer to `doc::`
 entities. As several `cmd` can persist in parallel with other `cmd`
 (due the tree structure of the [undo history](../../undo/undo_history.h))
