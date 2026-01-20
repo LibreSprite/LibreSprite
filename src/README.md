@@ -1,6 +1,6 @@
 # LibreSprite Source Code
 
-If you are here is because you want to learn about LibreSprite source
+If you are here, it's because you want to learn about LibreSprite source
 code. We'll try to write in these `README.md` files a summary of each
 module/library.
 
@@ -10,7 +10,7 @@ LibreSprite is separated in the following layers/modules:
 
 ## Level 0: Completely independent modules
 
-These libraries are easy to be used and embedded in other software
+These libraries are easy to use and embed in other software
 because they don't depend on any other component.
 
   * [base](base/): Core/basic stuff, multithreading, utf8, sha1, file system, memory, etc.
@@ -20,7 +20,7 @@ because they don't depend on any other component.
   * [flic](https://github.com/aseprite/flic): Library to load/save FLI/FLC files.
   * [gfx](gfx/): Abstract graphics structures like point, size, rectangle, region, color, etc.
   * [observable](https://github.com/dacap/observable): Signal/slot functions.
-  * [scripting](scripting/): JavaScript engine.
+  * [script](script/): JavaScript engine.
   * [undo](https://github.com/aseprite/undo): Generic library to manage a history of undoable commands.
   * [wacom](wacom/): Wacom definitions to use Wintab API.
 
@@ -52,4 +52,4 @@ because they don't depend on any other component.
 
 On Windows, you can use F5 to show the amount of used memory. Also
 `Ctrl+Shift+Q` crashes the application in case that you want to test
-the anticrash feature or your need a memory dump file.
+the anticrash feature or you need a memory dump file.
