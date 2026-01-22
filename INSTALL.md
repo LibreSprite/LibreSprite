@@ -11,7 +11,7 @@
 * [Compiling](#compiling)
   * [Linux details](#linux-details)
   * [Windows details](#windows-details)
-  * [MacOS details](#macos-details)
+  * [MacOS details](#macos-details) - **Includes automated build script**
   * [Android details](#android-details)
 * [Installing](#installing)
 
@@ -103,7 +103,24 @@ Run the following in mingw32.exe:
 
 ### MacOS details
 
-To compile LibreSprite, run the following commands:
+#### Quick build (automated)
+
+For a simplified, automated build process, use the provided build script:
+
+    bash build_libresprite_macos.sh
+
+This script will:
+- Verify Homebrew installation
+- Check for required build tools (git, cmake, ninja)
+- Install all dependencies via Homebrew
+- Clone or update the repository
+- Configure and build LibreSprite automatically
+
+The built application will be located at `./LibreSprite/build/bin/libresprite`
+
+#### Manual build
+
+To compile LibreSprite manually, run the following commands:
 ```
     cmake \
       -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
