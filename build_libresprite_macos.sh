@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (C) 2026  LibreSprite contributors
 
 set -e  # Exit immediately on error
 

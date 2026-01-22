@@ -1,3 +1,5 @@
+<!-- Copyright (C) 2026  LibreSprite contributors -->
+
 # Installation
 
 ## Table of contents
