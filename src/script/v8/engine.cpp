@@ -1,5 +1,5 @@
 // LibreSprite Scripting Library
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -68,8 +68,12 @@ public:
       if (rf.findFirst()) {
 	v8::V8::InitializeExternalStartupData(rf.filename().c_str());
       } else {
-	v8::V8::InitializeICU();
+	// When snapshot_blob.bin is not available, try to initialize from default location
+	// If that fails, V8 will use slower initialization without snapshot
+	v8::V8::InitializeExternalStartupData(nullptr);
       }
+      
+      v8::V8::InitializeICU();
 
       m_platform = v8::platform::NewDefaultPlatform();
       v8::V8::InitializePlatform(m_platform.get());
