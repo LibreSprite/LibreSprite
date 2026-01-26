@@ -1,5 +1,5 @@
 // SHE library
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -446,6 +446,15 @@ namespace she {
             Event ev;
             ev.setType(Event::MouseEnter);
             m_events.push(ev);
+          }
+
+          // Drain excess SDL_MOUSEMOTION events, keeping only the most recent
+          {
+            SDL_Event nextEvent;
+            while (SDL_PeepEvents(&nextEvent, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION) > 0) {
+              // Use the newer event, discarding the current one
+              sdlEvent = nextEvent;
+            }
           }
 
           event.setType(Event::MouseMove);
