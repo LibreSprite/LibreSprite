@@ -1,5 +1,6 @@
-// Aseprite Base Library
-// Copyright (c) 2001-2016 David Capello
+// Base Library
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2026       LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -51,5 +52,9 @@ namespace base {
   bool has_file_extension(const std::string& filename, const std::string& csv_extensions);
 
   int compare_filenames(const std::string& a, const std::string& b);
+
+  // Does platform-specific filename pre-validation to avoid any unexpected edge-case
+  // behaviors caused by feeding garbage parameters to file APIs.
+  void verify_filename(const std::string& filename);
 
 }
