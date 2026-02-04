@@ -244,11 +244,12 @@ int compare_filenames(const std::string& a, const std::string& b)
     return 1;
 }
 
+#ifdef _WIN32
 std::string win32_verify_filename(const std::string& filename)
 {
   // In general, _wfopen() would fail for most of these characters *except slashes and colon*,
   // but returning a meaningful error message to the user is always a nice practice.
-  const std::string invalidChars = "\\/:?\"<>|*";
+  const std::string invalidChars = ":?\"<>|*";
 
   for (const char c : filename) {
     if (invalidChars.find(c) != std::string::npos) {
@@ -258,26 +259,6 @@ std::string win32_verify_filename(const std::string& filename)
   }
   return {};
 }
-
-std::string posix_verify_filename(const std::string& filename)
-{
-  return filename.find('/') != std::string::npos
-    ? "The filename contains an invalid '/' character."
-    : std::string{};
-}
-
-void verify_filename(const std::string& filename)
-{
-  std::string err;
-  // In general, filenames with path separators would be appended just fine to the selected folder,
-  // but we'd rather not let user do that to avoid confusion.
-#ifdef _WIN32
-  err = win32_verify_filename(const_cast<std::string&>(filename));
-#else
-  err = posix_verify_filename(const_cast<std::string&>(filename));
 #endif
-  if (!err.empty())
-    throw std::runtime_error(err);
-}
 
 } // namespace base
