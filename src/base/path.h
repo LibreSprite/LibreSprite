@@ -53,8 +53,10 @@ namespace base {
 
   int compare_filenames(const std::string& a, const std::string& b);
 
+#ifdef _WIN32
   // Does platform-specific filename pre-validation to avoid any unexpected edge-case
   // behaviors caused by feeding garbage parameters to file APIs.
-  void verify_filename(const std::string& filename);
+  std::string win32_verify_filename(const std::string& filename);
+#endif
 
 }
