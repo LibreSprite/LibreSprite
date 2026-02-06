@@ -1,5 +1,5 @@
 // SHE library
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -21,10 +21,12 @@
 #undef HAVE_STDINT_H
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_syswm.h>
 #else
 #include <SDL.h>
+#include <SDL_hints.h>
 #include <SDL_image.h>
 #include <SDL_syswm.h>
 #endif
@@ -38,6 +40,8 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+
+#define SDL_HINT_WINDOWS_DPI_AWARENESS "SDL_WINDOWS_DPI_AWARENESS"
 
 float penPressure = 0;
 
@@ -943,11 +947,17 @@ namespace she {
 // It must be defined by the user program code.
 extern int app_main(int argc, char* argv[]);
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
   #ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
   SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
   #endif
   SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+
+  // If the requested DPI awareness is not available on the currently running OS,
+  // SDL will try to request the best available match.
+  // https://wiki.libsdl.org/SDL2/SDL_HINT_WINDOWS_DPI_AWARENESS
+  SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
     std::cerr << "Critical: Could not initialize SDL2. Aborting." << std::endl;
     return -1;
