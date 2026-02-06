@@ -26,6 +26,7 @@ namespace app {
   class HomeView;
   class INotificationDelegate;
   class MainMenuBar;
+  class MenuSearch;
   class Notifications;
   class PreviewEditorWindow;
   class StatusBar;
@@ -113,6 +114,7 @@ namespace app {
     HomeView* m_homeView;
     DevConsoleView* m_devConsoleView;
     Notifications* m_notifications;
+    MenuSearch* m_menuSearch;
   };
 
 }

@@ -1,5 +1,7 @@
 # LibreSprite Source Code
 
+*Last updated: 2025-12-30*
+
 If you are here is because you want to learn about LibreSprite source
 code. We'll try to write in these `README.md` files a summary of each
 module/library.

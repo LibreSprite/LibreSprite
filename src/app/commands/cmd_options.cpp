@@ -120,6 +120,9 @@ public:
     if (m_pref.general.showFullPath())
       showFullPath()->setSelected(true);
 
+    if (m_pref.general.showToolShortcuts())
+      showToolShortcuts()->setSelected(true);
+
     dataRecoveryPeriod()->setSelectedItemIndex(
       dataRecoveryPeriod()->findItemIndexByValue(
         base::convert_to<std::string>(m_pref.general.dataRecoveryPeriod())));
@@ -258,6 +261,7 @@ public:
     m_pref.general.autoshowTimeline(autotimeline()->isSelected());
     m_pref.general.rewindOnStop(rewindOnStop()->isSelected());
     m_pref.general.showFullPath(showFullPath()->isSelected());
+    m_pref.general.showToolShortcuts(showToolShortcuts()->isSelected());
 
     bool expandOnMouseover = expandMenubarOnMouseover()->isSelected();
     m_pref.general.expandMenubarOnMouseover(expandOnMouseover);
@@ -544,7 +548,12 @@ public:
   Command* clone() const override { return new OptionsCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
   void onExecute(Context* context) override;
+
+private:
+  static int sectionNameToIndex(const std::string& name);
+  std::string m_section;
 };
 
 OptionsCommand::OptionsCommand()
@@ -558,9 +567,30 @@ OptionsCommand::OptionsCommand()
     preferences.general.expandMenubarOnMouseover());
 }
 
+int OptionsCommand::sectionNameToIndex(const std::string& name) {
+  if (name == "general") return 0;
+  if (name == "editor") return 1;
+  if (name == "timeline") return 2;
+  if (name == "cursors") return 3;
+  if (name == "grid") return 4;
+  if (name == "undo") return 5;
+  if (name == "theme") return 6;
+  if (name == "experimental") return 7;
+  return 0;  // Default to general
+}
+
+void OptionsCommand::onLoadParams(const Params& params) {
+  m_section = params.get("section");
+}
+
 void OptionsCommand::onExecute(Context* context)
 {
   static int curSection = 0;
+
+  // If a section was specified via params, use it
+  if (!m_section.empty()) {
+    curSection = sectionNameToIndex(m_section);
+  }
 
   OptionsWindow window(context, curSection);
   window.openWindowInForeground();

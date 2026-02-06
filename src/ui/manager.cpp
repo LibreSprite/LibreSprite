@@ -403,7 +403,8 @@ void Manager::generateMessagesFromSheEvents()
                          sheEvent.modifiers(),
                          sheEvent.pointerType(),
                          sheEvent.wheelDelta(),
-                         sheEvent.preciseWheel());
+                         sheEvent.preciseWheel(),
+                         sheEvent.preciseWheelDelta());
         break;
       }
 
@@ -527,13 +528,14 @@ void Manager::handleMouseWheel(const gfx::Point& mousePos,
                                KeyModifiers modifiers,
                                PointerType pointerType,
                                const gfx::Point& wheelDelta,
-                               bool preciseWheel)
+                               bool preciseWheel,
+                               const gfx::PointT<double>& preciseWheelDelta)
 {
   enqueueMessage(newMouseMessage(
       kMouseWheelMessage,
       (capture_widget ? capture_widget: mouse_widget),
       mousePos, pointerType, mouseButtons, modifiers,
-      wheelDelta, preciseWheel));
+      wheelDelta, preciseWheel, 1.0f, preciseWheelDelta));
 }
 
 void Manager::handleTouchMagnify(const gfx::Point& mousePos,
@@ -1457,7 +1459,8 @@ Message* Manager::newMouseMessage(
   KeyModifiers modifiers,
   const gfx::Point& wheelDelta,
   bool preciseWheel,
-  float pressure)
+  float pressure,
+  const gfx::PointT<double>& preciseWheelDelta)
 {
   static float prevPressure = 0;
   if (pressure < 0)
@@ -1478,7 +1481,7 @@ Message* Manager::newMouseMessage(
 
   Message* msg = new MouseMessage(
     type, pointerType, buttons, modifiers, mousePos,
-    wheelDelta, preciseWheel, pressure);
+    wheelDelta, preciseWheel, pressure, preciseWheelDelta);
 
   if (widget)
     msg->addRecipient(widget);

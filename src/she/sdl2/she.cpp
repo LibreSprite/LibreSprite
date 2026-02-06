@@ -471,17 +471,41 @@ namespace she {
           penPressure = std::max<>(sdlEvent.tfinger.pressure, 0.0001f);
           continue;
 
-        case SDL_MOUSEWHEEL:
+        case SDL_MOUSEWHEEL: {
           event.setType(Event::MouseWheel);
           event.setModifiers(getSheModifiers());
-          event.setWheelDelta({-sdlEvent.wheel.x, -sdlEvent.wheel.y});
+          event.setWheelDelta({sdlEvent.wheel.x, -sdlEvent.wheel.y});
           int x, y;
           SDL_GetMouseState(&x, &y);
-          event.setPosition({
-              x / unique_display->scale(),
-              y / unique_display->scale()
-            });
+          int scale = unique_display->scale();
+          event.setPosition({x / scale, y / scale});
+
+          // Set precise wheel delta for smooth scrolling
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+          // SDL 2.0.18+ provides floating-point precise scroll values
+          event.setPreciseWheelDelta(gfx::PointT<double>(
+              sdlEvent.wheel.preciseX / scale,
+              -sdlEvent.wheel.preciseY / scale));
+#ifdef __APPLE__
+          // On macOS, always treat as precise (trackpad-style panning)
+          event.setPreciseWheel(true);
+#else
+          // Detect trackpad by checking if precise values differ from integer
+          bool isPrecise = (sdlEvent.wheel.preciseX != (float)sdlEvent.wheel.x) ||
+                           (sdlEvent.wheel.preciseY != (float)sdlEvent.wheel.y);
+          event.setPreciseWheel(isPrecise);
+#endif
+#else
+          // Older SDL: use integer values as fallback
+          event.setPreciseWheelDelta(gfx::PointT<double>(
+              sdlEvent.wheel.x / (double)scale,
+              -sdlEvent.wheel.y / (double)scale));
+#ifdef __APPLE__
+          event.setPreciseWheel(true);
+#endif
+#endif
           return;
+        }
 
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEBUTTONDOWN: {

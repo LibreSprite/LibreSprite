@@ -12,6 +12,7 @@
 #include "app/ui/toolbar.h"
 
 #include "app/app.h"
+#include "app/pref/preferences.h"
 #include "app/modules/i18n.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
@@ -39,6 +40,65 @@ using namespace app::skin;
 using namespace gfx;
 using namespace ui;
 using namespace tools;
+
+// Helper function to draw keyboard shortcut badge on tool icons
+static void drawShortcutBadge(Graphics* g, SkinTheme* theme, Tool* tool, const Rect& toolrc)
+{
+  // Check if preference is enabled
+  if (!Preferences::instance().general.showToolShortcuts())
+    return;
+
+  // Get keyboard shortcut for this tool
+  Key* key = KeyboardShortcuts::instance()->tool(tool);
+  if (!key || key->accels().empty())
+    return;
+
+  // Get the shortcut string and extract just the key letter
+  std::string accelStr = key->accels().front().toString();
+  std::string keyLetter;
+
+  // Find the last character (the actual key, not modifiers)
+  // For "Shift+M" we want "M", for "B" we want "B"
+  size_t plusPos = accelStr.rfind('+');
+  if (plusPos != std::string::npos && plusPos + 1 < accelStr.length()) {
+    keyLetter = accelStr.substr(plusPos + 1);
+  } else {
+    keyLetter = accelStr;
+  }
+
+  // Only show single character shortcuts
+  if (keyLetter.length() != 1)
+    return;
+
+  // Use tiny font for the badge (half the size of mini font)
+  auto tinyFont = theme->getTinyFont();
+  if (!tinyFont)
+    return;
+
+  auto oldFont = g->font();
+  g->setFont(tinyFont);
+
+  // Measure the text to size the badge
+  gfx::Size textSize = g->measureUIString(keyLetter);
+
+  // Position text in bottom-right area, offset from edge for breathing room
+  // Split difference between corner and center
+  int offsetX = (toolrc.w - textSize.w) / 4;
+  int offsetY = (toolrc.h - textSize.h) / 4;
+  int textX = toolrc.x + toolrc.w - textSize.w - offsetX;
+  int textY = toolrc.y + toolrc.h - textSize.h - offsetY;
+
+  // Draw shadow (dark text offset by 1 pixel)
+  gfx::Color shadowColor = gfx::rgba(0, 0, 0, 200);
+  g->drawString(keyLetter, shadowColor, gfx::ColorNone, gfx::Point(textX + 1, textY + 1));
+
+  // Draw white text on top
+  gfx::Color textColor = gfx::rgba(255, 255, 255, 255);
+  g->drawString(keyLetter, textColor, gfx::ColorNone, gfx::Point(textX, textY));
+
+  // Restore original font
+  g->setFont(oldFont);
+}
 
 // Class to show a group of tools (horizontally)
 // This widget is inside the ToolBar::m_popupWindow
@@ -332,6 +392,9 @@ void ToolBar::onPaint(ui::PaintEvent& ev)
         toolrc.x+toolrc.w/2-icon->width()/2,
         toolrc.y+toolrc.h/2-icon->height()/2);
     }
+
+    // Draw keyboard shortcut badge
+    drawShortcutBadge(g, theme, tool, toolrc);
   }
 
   // Draw button to show/hide preview
@@ -716,6 +779,9 @@ void ToolBar::ToolStrip::onPaint(PaintEvent& ev)
           toolrc.x+toolrc.w/2-icon->width()/2,
           toolrc.y+toolrc.h/2-icon->height()/2);
       }
+
+      // Draw keyboard shortcut badge
+      drawShortcutBadge(g, theme, tool, toolrc);
     }
   }
 }

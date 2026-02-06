@@ -39,6 +39,7 @@ endif()
 if(APPLE)
   list(APPEND SHE_SOURCES
     osx/logger.mm
+    osx/magnify_gesture.mm
     osx/native_dialogs.mm
     osx/tablet.mm)
 endif()

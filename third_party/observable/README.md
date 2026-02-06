@@ -1,6 +1,8 @@
 Observable Library
 ==================
 
+*Last updated: 2025-12-30*
+
 *Copyright (C) 2016-2021 David Capello*
 
 [![build](https://github.com/dacap/observable/actions/workflows/build.yml/badge.svg)](https://github.com/dacap/observable/actions/workflows/build.yml)

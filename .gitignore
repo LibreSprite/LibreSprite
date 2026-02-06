@@ -24,3 +24,10 @@ build
 /.cache/
 *~
 /android/
+
+# macOS build artifacts
+bundle/
+*.dmg
+
+# Git worktrees
+.worktrees/

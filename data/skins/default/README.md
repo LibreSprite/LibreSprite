@@ -1,5 +1,7 @@
-
 # Neutral Dark
+
+*Last updated: 2025-12-30*
+
 by BlackRaven#7273(Discord)
 
 *A Dark Theme for LibreSprite based in than_dark_theme_libresprite theme Made by @Maujin111 for LibreSprite
