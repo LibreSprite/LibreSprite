@@ -244,21 +244,20 @@ int compare_filenames(const std::string& a, const std::string& b)
     return 1;
 }
 
-#ifdef _WIN32
-std::string win32_verify_filename(const std::string& filename)
+size_t verify_filename(const std::string& filename)
 {
+#ifdef _WIN32
   // In general, _wfopen() would fail for most of these characters *except slashes and colon*,
   // but returning a meaningful error message to the user is always a nice practice.
   const std::string invalidChars = ":?\"<>|*";
 
-  for (const char c : filename) {
-    if (invalidChars.find(c) != std::string::npos) {
-      return "The filename contains an invalid '"
-        + std::string(1,c) + "' character.";
+  for (size_t it=0; it<filename.size(); ++it) {
+    if (invalidChars.find(filename[it]) != std::string::npos) {
+      return it;
     }
   }
-  return {};
-}
 #endif
+  return std::string::npos;
+}
 
 } // namespace base

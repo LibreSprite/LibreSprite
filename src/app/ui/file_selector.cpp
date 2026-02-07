@@ -547,19 +547,17 @@ again:
     }
     // else file-name specified in the entry is really a file to open...
 
-#ifdef _WIN32
     if (m_type == FileSelectorType::Save) {
       std::string finalFilename = base::get_file_name(buf);
-      std::string fver = base::win32_verify_filename(finalFilename);
-      if (!fver.empty())
+      if (const size_t fver = base::verify_filename(finalFilename); fver != std::string::npos)
       {
-        Alert::show("Error<<Invalid filename: \"%s\"<<%s||&Go back", finalFilename.c_str(), fver.c_str());
+        Alert::show("Error<<Invalid filename: \"%s\"<<The name contains an invalid '%c' character.||&Go back",
+          finalFilename.c_str(), finalFilename[fver]);
 
         setVisible(true);
         goto again;
       }
     }
-#endif
 
     // does it not have extension? ...we should add the extension
     // selected in the filetype combo-box
@@ -755,18 +753,16 @@ void FileSelector::onNewFolder()
     if (currentFolder) {
       std::string dirname = window.name()->text();
 
-#ifdef _WIN32
       if (m_type == FileSelectorType::Save) {
-        std::string fver = base::win32_verify_filename(dirname);
-        if (!fver.empty())
+        if (const size_t fver = base::verify_filename(dirname); fver != std::string::npos)
         {
-          Alert::show("Error<<Invalid folder name: \"%s\"<<%s||&OK", dirname.c_str(), fver.c_str());
+          Alert::show("Error<<Invalid folder name: \"%s\"<<The name contains an invalid '%c' character.||&OK",
+            dirname.c_str(), dirname[fver]);
 
           setVisible(true);
           return;
         }
       }
-#endif
 
       // Create the new directory
       try {
