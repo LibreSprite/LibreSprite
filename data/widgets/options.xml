@@ -79,6 +79,8 @@
           <check text="Zoom sliding two fingers up or down" id="slide_zoom" />
           <check text="Zoom from center with scroll wheel" id="zoom_from_center_with_wheel" />
           <check text="Zoom from center with keys" id="zoom_from_center_with_keys" />
+          <check text="Invert horizontal scroll" id="invert_horizontal_scroll" />
+          <check text="Invert vertical scroll" id="invert_vertical_scroll" />
           <check text="Show scroll-bars in sprite editor" id="show_scrollbars" tooltip="Show scroll-bars in all sprite editors." />
           <hbox>
             <label text="Right-click:" />

@@ -130,6 +130,12 @@ public:
     if (m_pref.editor.zoomFromCenterWithKeys())
       zoomFromCenterWithKeys()->setSelected(true);
 
+    if (m_pref.editor.invertHorizontalScroll())
+      invertHorizontalScroll()->setSelected(true);
+
+    if (m_pref.editor.invertVerticalScroll())
+      invertVerticalScroll()->setSelected(true);
+
     if (m_pref.selection.autoOpaque())
       autoOpaque()->setSelected(true);
 
@@ -276,6 +282,8 @@ public:
 
     m_pref.editor.zoomFromCenterWithWheel(zoomFromCenterWithWheel()->isSelected());
     m_pref.editor.zoomFromCenterWithKeys(zoomFromCenterWithKeys()->isSelected());
+    m_pref.editor.invertHorizontalScroll(invertHorizontalScroll()->isSelected());
+    m_pref.editor.invertVerticalScroll(invertVerticalScroll()->isSelected());
     m_pref.editor.showScrollbars(showScrollbars()->isSelected());
     m_pref.editor.zoomWithWheel(wheelZoom()->isSelected());
 #if __APPLE__

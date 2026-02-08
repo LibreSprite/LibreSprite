@@ -162,6 +162,13 @@ bool StateWithWheelBehavior::onMouseWheel(Editor* editor, MouseMessage* msg)
         }
       }
 
+      if (Preferences::instance().editor.invertHorizontalScroll()) {
+        delta.x = -delta.x;
+      }
+      if (Preferences::instance().editor.invertVerticalScroll()) {
+        delta.y = -delta.y;
+      }
+
       editor->setEditorScroll(scroll+delta);
       break;
     }
