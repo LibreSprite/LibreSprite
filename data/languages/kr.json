@@ -281,6 +281,8 @@
   "Invert": "&반전",
   "Invert Color": "색상 반전",
   "Invert Mask": "마스크 반전",
+  "Invert horizontal scroll": "수평 스크롤 반전",
+  "Invert vertical scroll": "수직 스크롤 반전",
   "Italian": "이탈리아어",
   "JSON Data": "JSON 데이터",
   "Japanese": "일본어",
