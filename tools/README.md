@@ -110,7 +110,7 @@ For cases where strings are passed indirectly (variables or function returns), u
 
 For C++ files, the tool uses this regex pattern:
 ```python
-app::i18n\s*\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*(?:,|\))
+app::i18n\s*\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*[,)]
 ```
 
 This pattern:
