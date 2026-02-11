@@ -118,6 +118,7 @@ bool Splitter::onProcessMessage(Message* msg)
 
         limitPos();
         layout();
+        flushRedraw();
         return true;
       }
       break;
