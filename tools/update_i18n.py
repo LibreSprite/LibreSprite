@@ -20,13 +20,13 @@ class I18nExtractor:
         self.strings: Set[str] = set()
     
     def extract_from_cpp(self) -> Set[str]:
-        """Extract strings from app::i18n() calls in C++ files."""
+        """Extract strings from i18n() calls in C++ files."""
         strings = set()
         
-        # Pattern to match app::i18n("string") - direct string literals
+        # Pattern to match i18n("string") - direct string literals
         # This handles both single and double quotes, and escaped quotes
         direct_pattern = re.compile(
-            r'app::i18n\s*\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*[,)]',
+            r'(app::)?i18n\s*\(\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*[,)]',
             re.MULTILINE
         )
         
