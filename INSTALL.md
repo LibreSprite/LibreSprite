@@ -106,7 +106,7 @@ Run the following in mingw32.exe:
 To compile LibreSprite, run the following commands:
 ```
     cmake \
-      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk \
+      -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DWITH_WEBP_SUPPORT=ON \
       -G Ninja \
       ..
     ninja libresprite
