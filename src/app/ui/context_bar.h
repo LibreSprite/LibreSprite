@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2025       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -106,6 +106,7 @@ namespace app {
     class DropPixelsField;
     class AutoSelectLayerField;
     class SymmetryField;
+    class ZoomField;
 
     BrushTypeField* m_brushType;
     BrushAngleField* m_brushAngle;
@@ -140,6 +141,7 @@ namespace app {
     base::ScopedConnection m_angleConn;
     base::ScopedConnection m_opacityConn;
     base::ScopedConnection m_freehandAlgoConn;
+    ZoomField* m_zoom;
   };
 
 } // namespace app
