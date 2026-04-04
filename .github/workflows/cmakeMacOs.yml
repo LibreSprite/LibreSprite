@@ -84,7 +84,7 @@ jobs:
         mkdir bundle/libresprite.app/Contents/MacOS
         mkdir bundle/libresprite.app/Contents/Resources
         cp ./build/bin/libresprite ./bundle/libresprite.app/Contents/MacOS/
-        cp -r ./build/bin/data/ ./bundle/libresprite.app/Contents/MacOS/data/
+        cp -r ./build/bin/data/ ./bundle/libresprite.app/Contents/Resources/data/
         cp ./libresprite.icns ./bundle/libresprite.app/Contents/Resources/
         cp ./desktop/Info.plist ./bundle/libresprite.app/Contents/
         chmod +x ./bundle/libresprite.app/Contents/MacOS/libresprite
@@ -93,9 +93,84 @@ jobs:
       run: |
         dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite -d ./bundle/libresprite.app/Contents/libs/
 
+        # Check current RPATH entries after dylibbundler
+        echo "RPATH entries after dylibbundler:"
+        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
+        
+        # Clean up any duplicate RPATH entries from the main executable
+        echo "Cleaning up RPATH entries from main executable..."
+        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
+            if [ ! -z "$rpath" ]; then
+                echo "Removing RPATH: $rpath"
+                install_name_tool -delete_rpath "$rpath" ./bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "Could not remove $rpath (may not exist)"
+            fi
+        done
+        
+        # Add our RPATH cleanly
+        echo "Adding single RPATH: @executable_path/../libs/"
+        install_name_tool -add_rpath "@executable_path/../libs/" ./bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "RPATH may already exist"
+        
+        # Verify final RPATH
+        echo "Final RPATH entries:"
+        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
+        
+        # Clean up RPATH entries in ALL bundled libraries to be thorough
+        echo "Cleaning RPATH entries from all bundled libraries:"
+        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" -type f | while read -r dylib; do
+            echo "Processing: $(basename "$dylib")"
+            otool -l "$dylib" | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
+                if [ ! -z "$rpath" ]; then
+                    echo "  Removing RPATH: $rpath"
+                    install_name_tool -delete_rpath "$rpath" "$dylib" 2>/dev/null || echo "  Could not remove $rpath from $(basename "$dylib")"
+                fi
+            done
+        done
+
+        echo "RPATH cleanup complete"
+
     - name: Create DMG
       run: |
-        codesign --force --deep -s - ./bundle/libresprite.app
+        # Create an entitlements file to disable library validation for ad-hoc signed apps
+        cat > ./bundle_entitlements.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>com.apple.security.cs.disable-library-validation</key>
+            <true/>
+        </dict>
+        </plist>
+        EOF
+        
+        # Remove all existing signatures completely
+        find ./bundle/libresprite.app -type f \( -name "*.dylib" -o -name "libresprite" \) -exec codesign --remove-signature {} \; 2>/dev/null || true
+        
+        # Create a temporary signing script to ensure identical codesign parameters
+        cat > ./sign_component.sh << 'EOF'
+        #!/bin/bash
+        COMPONENT="$1"
+        echo "Signing: $COMPONENT"
+        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - "$COMPONENT"
+        if [ $? -eq 0 ]; then
+            echo "Successfully signed: $COMPONENT"
+        else
+            echo "Failed to sign: $COMPONENT"
+        fi
+        EOF
+        chmod +x ./sign_component.sh
+        
+        # Sign all dylib files first using the same exact process
+        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" -exec ./sign_component.sh {} \;
+        
+        # Sign the main executable
+        ./sign_component.sh "./bundle/libresprite.app/Contents/MacOS/libresprite"
+        
+        # Sign the app bundle itself (without --deep since components are already signed)
+        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - ./bundle/libresprite.app
+        
+        # Clean up
+        rm ./bundle_entitlements.plist ./sign_component.sh
+        
         hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
 
     - name: Upload Artifacts
