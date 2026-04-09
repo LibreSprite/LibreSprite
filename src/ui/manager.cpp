@@ -1,5 +1,6 @@
-// Aseprite UI Library
-// Copyright (C) 2001-2016  David Capello
+// UI Library
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2016-2026  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -92,6 +93,8 @@ Manager::Manager()
   , m_eventQueue(NULL)
   , m_lockedWindow(NULL)
   , m_mouseButtons(kButtonNone)
+  , m_redrawRequested(false)
+  , m_lastFlipTime(0.0)
 {
   if (!m_defaultManager) {
     // Empty lists
@@ -177,6 +180,26 @@ void Manager::flipDisplay()
   if (!m_display)
     return;
 
+  // Frame-rate limiter: only flip at most 120 times per second
+  double currentTime = base::current_tick() / 1000.0; // Convert milliseconds to seconds
+  double timeSinceLastFlip = currentTime - m_lastFlipTime;
+  
+  if (timeSinceLastFlip < MIN_FRAME_INTERVAL) {
+    // Not enough time has passed, skip this flip but keep the redraw request
+    return;
+  }
+
+  // Only proceed with flip if there's something to draw
+  if (m_dirtyRegion.isEmpty()) {
+    // No dirty regions means nothing to draw, but we should still clear the flag
+    // since we've processed the redraw request
+    m_redrawRequested = false;
+    return;
+  }
+
+  // Update last flip time before drawing
+  m_lastFlipTime = currentTime;
+
   OverlayManager* overlays = OverlayManager::instance();
 
   update_cursor_overlay();
@@ -191,14 +214,20 @@ void Manager::flipDisplay()
       m_dirtyRegion,
       gfx::Region(gfx::Rect(0, 0, ui::display_w(), ui::display_h())));
 
-    for (auto& rc : m_dirtyRegion)
-      m_display->flip(rc);
-    m_display->present();
+    // Coalesce dirty regions into a single bounding rectangle
+    if (!m_dirtyRegion.isEmpty()) {
+      gfx::Rect boundingRect = m_dirtyRegion.bounds();
+      m_display->flip(boundingRect);
+      m_display->present();
+    }
 
     m_dirtyRegion.clear();
   }
 
   overlays->restoreOverlappedAreas();
+
+  // Reset redraw request flag after successful flip
+  m_redrawRequested = false;
 }
 
 bool Manager::generateMessages()
@@ -602,7 +631,8 @@ void Manager::handleWindowZOrder()
 void Manager::dispatchMessages()
 {
   pumpQueue();
-  flipDisplay();
+  // Request a redraw after dispatching messages
+  m_redrawRequested = true;
 }
 
 void Manager::addToGarbage(Widget* widget)

@@ -452,6 +452,15 @@ namespace she {
             m_events.push(ev);
           }
 
+          // Drain excess SDL_MOUSEMOTION events, keeping only the most recent
+          {
+            SDL_Event nextEvent;
+            while (SDL_PeepEvents(&nextEvent, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION) > 0) {
+              // Use the newer event, discarding the current one
+              sdlEvent = nextEvent;
+            }
+          }
+
           event.setType(Event::MouseMove);
           event.setModifiers(getSheModifiers());
           event.setPosition({
