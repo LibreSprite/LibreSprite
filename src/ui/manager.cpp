@@ -180,7 +180,8 @@ void Manager::flipDisplay()
   if (!m_display)
     return;
 
-  // Frame-rate limiter: only flip at most 120 times per second
+  // Frame-rate limiter: we want to limit the number of flips to avoid
+  // consuming 100% CPU on too frequent document canvas redraws
   double currentTime = base::current_tick() / 1000.0; // Convert milliseconds to seconds
   double timeSinceLastFlip = currentTime - m_lastFlipTime;
   
