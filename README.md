@@ -28,7 +28,7 @@ The work has been branched-out from the [last Aseprite commit](https://github.co
 and is now developed independently of Aseprite.
 
 In 2026 [Nidrax](https://github.com/Nidrax) forked the project under the [Veritaware](https://github.com/veritaware)
-organization to create his own opinionated version of the editor independently of LibreSprite's team design decisions
+organization to create his own opinionated version of the editor independently of LibreSprite's team design decisions, allowing himself a faster, more experimental development cycle,
 and thus Besprited was born.
 
 ### And why *Besprited*?
