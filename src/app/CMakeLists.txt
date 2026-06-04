@@ -468,6 +468,7 @@ add_library(app-lib
   util/new_image_from_mask.cpp
   util/pic_file.cpp
   util/range_utils.cpp
+  util/expr_parser.cpp
   widget_loader.cpp
   xml_document.cpp
   ${data_recovery_files}
