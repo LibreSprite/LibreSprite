@@ -63,9 +63,9 @@ Fedora:
 
 ### Windows dependencies
 
-To install the required dependencies with msys2, run the following in mingw32:
+To install the required dependencies with msys2, run the following in mingw64:
 
-    pacman -S base-devel mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-make mingw-w64-i686-curl mingw-w64-i686-freetype mingw-w64-i686-giflib mingw-w64-i686-libjpeg-turbo mingw-w64-i686-libpng mingw-w64-i686-libwebp mingw-w64-i686-pixman mingw-w64-i686-SDL2 mingw-w64-i686-SDL2_image mingw-w64-i686-tinyxml2 mingw-w64-i686-v8 mingw-w64-i686-zlib mingw-w64-i686-libarchive
+    pacman -S base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-make mingw-w64-x86_64-curl mingw-w64-x86_64-freetype mingw-w64-x86_64-giflib mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-pixman mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image mingw-w64-x86_64-tinyxml2 mingw-w64-x86_64-zlib mingw-w64-x86_64-libarchive
 
 ### MacOS dependencies
 
