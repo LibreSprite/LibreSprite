@@ -31,53 +31,205 @@
 #include <cstdlib>
 #include <memory>
 
+#include "app/console.h"
+#include <cmath>
+#include <cctype>
+#include <stdexcept>
+#include <algorithm>
+
+class ExprParser {
+  std::string src;
+  std::size_t pos;
+  double baseValue;
+  bool hasError;
+  std::string errorMsg;
+
+  void skipWhitespace() {
+    while (pos < src.size() && std::isspace(static_cast<unsigned char>(src[pos]))) {
+      pos++;
+    }
+  }
+
+  bool matchStr(const std::string& s) {
+    if (pos + s.size() > src.size()) return false;
+    for (std::size_t i = 0; i < s.size(); ++i) {
+      if (std::tolower(static_cast<unsigned char>(src[pos + i])) != std::tolower(static_cast<unsigned char>(s[i]))) {
+        return false;
+      }
+    }
+    pos += s.size();
+    return true;
+  }
+
+public:
+  ExprParser(const std::string& input, double baseVal)
+      : src(input), pos(0), baseValue(baseVal), hasError(false) {
+    skipWhitespace();
+    if (pos < src.size()) {
+      char c = src[pos];
+      if (c == '+' || c == '-' || c == '*' || c == '/') {
+        src = std::to_string(baseValue) + src.substr(pos);
+        pos = 0;
+      }
+    }
+  }
+
+  double parseExpression() {
+    double val = parseTerm();
+    while (true) {
+      skipWhitespace();
+      if (pos >= src.size()) break;
+      char op = src[pos];
+      if (op == '+' || op == '-') {
+        pos++;
+        double rhs = parseTerm();
+        if (op == '+') val += rhs;
+        else val -= rhs;
+      } else {
+        break;
+      }
+    }
+    return val;
+  }
+
+  double parseTerm() {
+    double val = parseFactor();
+    while (true) {
+      skipWhitespace();
+      if (pos >= src.size()) break;
+      char op = src[pos];
+      if (op == '*' || op == '/') {
+        pos++;
+        double rhs = parseFactor();
+        if (op == '*') {
+          val *= rhs;
+        } else {
+          if (rhs == 0.0) {
+            hasError = true;
+            errorMsg = "Division by zero";
+            val = 0.0;
+          } else {
+            val /= rhs;
+          }
+        }
+      } else {
+        break;
+      }
+    }
+    return val;
+  }
+
+  double parseFactor() {
+    skipWhitespace();
+    if (pos >= src.size()) {
+      hasError = true;
+      errorMsg = "Unexpected end of expression";
+      return 0.0;
+    }
+
+    bool negative = false;
+    if (src[pos] == '+') {
+      pos++;
+      skipWhitespace();
+    } else if (src[pos] == '-') {
+      pos++;
+      negative = true;
+      skipWhitespace();
+    }
+
+    double val = 0.0;
+    if (src[pos] == '(') {
+      pos++;
+      val = parseExpression();
+      skipWhitespace();
+      if (pos < src.size() && src[pos] == ')') {
+        pos++;
+      } else {
+        hasError = true;
+        errorMsg = "Missing closing parenthesis";
+      }
+    } else if (std::isdigit(static_cast<unsigned char>(src[pos])) || src[pos] == '.') {
+      std::size_t nextPos = 0;
+      try {
+        val = std::stod(src.substr(pos), &nextPos);
+        pos += nextPos;
+      } catch (...) {
+        hasError = true;
+        errorMsg = "Invalid number format";
+      }
+    } else {
+      hasError = true;
+      errorMsg = std::string("Unexpected character: '") + src[pos] + "'";
+      pos++;
+    }
+
+    if (negative) {
+      val = -val;
+    }
+
+    while (true) {
+      skipWhitespace();
+      if (pos >= src.size()) break;
+      if (src[pos] == '%') {
+        val *= 0.01;
+        pos++;
+      } else if (matchStr("px")) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return val;
+  }
+
+  bool getResult(double& outResult) {
+    try {
+      outResult = parseExpression();
+      skipWhitespace();
+      if (pos < src.size()) {
+        if (matchStr("px")) {
+          skipWhitespace();
+        }
+        if (pos < src.size()) {
+          hasError = true;
+          errorMsg = std::string("Unexpected trailing characters: '") + src.substr(pos) + "'";
+        }
+      }
+    } catch (const std::exception& e) {
+      hasError = true;
+      errorMsg = e.what();
+    }
+    return !hasError;
+  }
+
+  std::string getError() const { return errorMsg; }
+};
+
 // Evaluate an arithmetic expression relative to a base value.
 // Supports binary expressions (e.g. 16*5, 100+50, 200/2) and
 // prefix operators (+N, -N, *N, /N — relative to base).
 // Trailing suffixes like "px" or "%" are stripped automatically.
-static int evalExpr(const std::string& rawText, int base) {
-  // Strip trailing non-numeric suffix (e.g. "px", "%")
-  std::string text = rawText;
-  while (!text.empty() && text.back() != '.' &&
-         !(text.back() >= '0' && text.back() <= '9'))
-    text.pop_back();
-  // Trim leading whitespace
-  auto i0 = text.find_first_not_of(' ');
-  if (i0 == std::string::npos || text.empty()) return base;
-  if (i0 > 0) text = text.substr(i0);
-  // Scan right-to-left for a binary operator (skip index 0 to allow prefix form)
-  for (int i = (int)text.size() - 1; i > 0; --i) {
-    char c = text[i];
-    if (c == '+' || c == '-' || c == '*' || c == '/') {
-      double rhs = std::atof(text.c_str() + i + 1);
-      int lhs = std::atoi(text.c_str());  // atoi stops at the operator char
-      switch (c) {
-        case '+': return lhs + (int)rhs;
-        case '-': return lhs - (int)rhs;
-        case '*': return (int)(lhs * rhs);
-        case '/': return rhs != 0.0 ? (int)(lhs / rhs) : lhs;
-      }
+static int evalExpr(const std::string& rawText, int base, bool reportError = false) {
+  double result = 0.0;
+  ExprParser parser(rawText, base);
+  if (parser.getResult(result)) {
+    return (int)std::round(result);
+  } else {
+    if (reportError) {
+      app::Console console;
+      console.printf("Error evaluating expression '%s': %s\n", rawText.c_str(), parser.getError().c_str());
     }
+    return base;
   }
-  // Prefix operator: relative to base
-  const char* s = text.c_str();
-  if (*s == '+') return base + (int)std::atof(s + 1);
-  if (*s == '-') return base - (int)std::atof(s + 1);
-  if (*s == '*') { double f = std::atof(s+1); return f != 0.0 ? (int)(base * f) : base; }
-  if (*s == '/') { double f = std::atof(s+1); return f != 0.0 ? (int)(base / f) : base; }
-  return std::atoi(s);
 }
+
 // Returns true if 'rawText' contains an arithmetic operator (binary or prefix).
 static bool isExpr(const std::string& rawText) {
-  std::string text = rawText;
-  while (!text.empty() && text.back() != '.' &&
-         !(text.back() >= '0' && text.back() <= '9'))
-    text.pop_back();
-  auto i0 = text.find_first_not_of(' ');
-  if (i0 == std::string::npos || text.empty()) return false;
-  for (std::size_t i = i0; i < text.size(); ++i) {
-    char c = text[i];
-    if (c == '+' || c == '-' || c == '*' || c == '/') return true;
+  for (char c : rawText) {
+    if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '(' || c == ')' || c == '.') {
+      return true;
+    }
   }
   return false;
 }
@@ -137,8 +289,8 @@ public:
 
   bool pressedOk() { return closer() == ok(); }
 
-  int getWidth()  { return evalExpr(width()->text(),  m_editor->sprite()->width()); }
-  int getHeight() { return evalExpr(height()->text(), m_editor->sprite()->height()); }
+  int getWidth(bool report = false)  { return evalExpr(width()->text(),  m_editor->sprite()->width(), report); }
+  int getHeight(bool report = false) { return evalExpr(height()->text(), m_editor->sprite()->height(), report); }
   int getLeft()   { return left()->textInt(); }
   int getRight()  { return right()->textInt(); }
   int getTop()    { return top()->textInt(); }
@@ -199,11 +351,11 @@ protected:
         if (sc == kKeyTab || sc == kKeyEnter) {
           Widget* f = manager()->getFocus();
           if (f == width() && isExpr(width()->text())) {
-            width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width())));
+            width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width(), true)));
             onSizeChange();
           }
           else if (f == height() && isExpr(height()->text())) {
-            height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height())));
+            height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height(), true)));
             onSizeChange();
           }
         }
@@ -215,11 +367,11 @@ protected:
         if (!mgr) break;
         Widget* cur = mgr->getFocus();
         if (cur != width() && isExpr(width()->text())) {
-          width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width())));
+          width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width(), true)));
           onSizeChange();
         }
         if (cur != height() && isExpr(height()->text())) {
-          height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height())));
+          height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height(), true)));
           onSizeChange();
         }
         break;
