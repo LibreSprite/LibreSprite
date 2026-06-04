@@ -33,8 +33,54 @@
 
 #include "sprite_size.xml.h"
 
+#include <cstdlib>
 #include <memory>
 
+// Evaluate an arithmetic expression relative to a base value.
+// Supports binary expressions (e.g. 16*5, 100+50, 200/2) and
+// prefix operators (+N, -N, *N, /N — relative to base).
+// Trailing suffixes like "px" or "%" are stripped automatically.
+static int evalExpr(const std::string& rawText, int base) {
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return base;
+  if (i0 > 0) text = text.substr(i0);
+  for (int i = (int)text.size() - 1; i > 0; --i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+      double rhs = std::atof(text.c_str() + i + 1);
+      int lhs = std::atoi(text.c_str());
+      switch (c) {
+        case '+': return lhs + (int)rhs;
+        case '-': return lhs - (int)rhs;
+        case '*': return (int)(lhs * rhs);
+        case '/': return rhs != 0.0 ? (int)(lhs / rhs) : lhs;
+      }
+    }
+  }
+  const char* s = text.c_str();
+  if (*s == '+') return base + (int)std::atof(s + 1);
+  if (*s == '-') return base - (int)std::atof(s + 1);
+  if (*s == '*') { double f = std::atof(s+1); return f != 0.0 ? (int)(base * f) : base; }
+  if (*s == '/') { double f = std::atof(s+1); return f != 0.0 ? (int)(base / f) : base; }
+  return std::atoi(s);
+}
+static bool isExpr(const std::string& rawText) {
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return false;
+  for (std::size_t i = i0; i < text.size(); ++i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') return true;
+  }
+  return false;
+}
 #define PERC_FORMAT     "%.1f"
 
 namespace app {
@@ -159,7 +205,10 @@ protected:
 
 class SpriteSizeWindow : public app::gen::SpriteSize {
 public:
-  SpriteSizeWindow(Context* ctx, int new_width, int new_height) : m_ctx(ctx) {
+  SpriteSizeWindow(Context* ctx, int new_width, int new_height)
+    : m_ctx(ctx)
+    , m_baseWidth(new_width)
+    , m_baseHeight(new_height) {
     lockRatio()->Click.connect(base::Bind<void>(&SpriteSizeWindow::onLockRatioClick, this));
     widthPx()->Change.connect(base::Bind<void>(&SpriteSizeWindow::onWidthPxChange, this));
     heightPx()->Change.connect(base::Bind<void>(&SpriteSizeWindow::onHeightPxChange, this));
@@ -181,6 +230,55 @@ public:
                      doc::algorithm::RESIZE_METHOD_NEAREST_NEIGHBOR));
   }
 
+  ~SpriteSizeWindow() {
+    if (m_filterManager)
+      m_filterManager->removeMessageFilterFor(this);
+  }
+
+  // Return the evaluated pixel width/height (handles expressions like *2, +50).
+  int evalWidthPx()  const { return evalExpr(widthPx()->text(),  m_baseWidth); }
+  int evalHeightPx() const { return evalExpr(heightPx()->text(), m_baseHeight); }
+
+  bool onProcessMessage(Message* msg) override {
+    switch (msg->type()) {
+      case kOpenMessage:
+        m_filterManager = manager();
+        m_filterManager->addMessageFilter(kKeyDownMessage, this);
+        m_filterManager->addMessageFilter(kFocusLeaveMessage, this);
+        break;
+      case kKeyDownMessage: {
+        auto sc = static_cast<KeyMessage*>(msg)->scancode();
+        if (sc == kKeyTab || sc == kKeyEnter) {
+          Widget* f = manager()->getFocus();
+          if (f == widthPx() && isExpr(widthPx()->text())) {
+            widthPx()->setTextf("%d", std::max(1, evalExpr(widthPx()->text(), m_baseWidth)));
+            onWidthPxChange();
+          }
+          else if (f == heightPx() && isExpr(heightPx()->text())) {
+            heightPx()->setTextf("%d", std::max(1, evalExpr(heightPx()->text(), m_baseHeight)));
+            onHeightPxChange();
+          }
+        }
+        break;
+      }
+      case kFocusLeaveMessage: {
+        Manager* mgr = manager();
+        if (!mgr) break;
+        Widget* cur = mgr->getFocus();
+        if (cur != widthPx() && isExpr(widthPx()->text())) {
+          widthPx()->setTextf("%d", std::max(1, evalExpr(widthPx()->text(), m_baseWidth)));
+          onWidthPxChange();
+        }
+        if (cur != heightPx() && isExpr(heightPx()->text())) {
+          heightPx()->setTextf("%d", std::max(1, evalExpr(heightPx()->text(), m_baseHeight)));
+          onHeightPxChange();
+        }
+        break;
+      }
+    }
+    return Window::onProcessMessage(msg);
+  }
+
 private:
 
   void onLockRatioClick() {
@@ -191,7 +289,7 @@ private:
   void onWidthPxChange() {
     const ContextReader reader(m_ctx);
     const Sprite* sprite(reader.sprite());
-    int width = widthPx()->textInt();
+    int width = evalExpr(widthPx()->text(), m_baseWidth);
     double perc = 100.0 * width / sprite->width();
 
     widthPerc()->setTextf(PERC_FORMAT, perc);
@@ -205,7 +303,7 @@ private:
   void onHeightPxChange() {
     const ContextReader reader(m_ctx);
     const Sprite* sprite(reader.sprite());
-    int height = heightPx()->textInt();
+    int height = evalExpr(heightPx()->text(), m_baseHeight);
     double perc = 100.0 * height / sprite->height();
 
     heightPerc()->setTextf(PERC_FORMAT, perc);
@@ -243,6 +341,9 @@ private:
   }
 
   Context* m_ctx;
+  int m_baseWidth;
+  int m_baseHeight;
+  Manager* m_filterManager = nullptr;
 };
 
 SpriteSizeCommand::SpriteSizeCommand()
@@ -322,8 +423,8 @@ void SpriteSizeCommand::onExecute(Context* context)
     if (window.closer() != window.ok())
       return;
 
-    new_width = window.widthPx()->textInt();
-    new_height = window.heightPx()->textInt();
+    new_width  = window.evalWidthPx();
+    new_height = window.evalHeightPx();
     resize_method = (ResizeMethod)window.method()->getSelectedItemIndex();
 
     set_config_int("SpriteSize", "Method", resize_method);

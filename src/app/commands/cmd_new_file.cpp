@@ -32,11 +32,116 @@
 
 #include "new_sprite.xml.h"
 
+#include <cstdlib>
 #include <memory>
 
 using namespace ui;
 
+// Evaluate an arithmetic expression relative to a base value.
+// Supports binary expressions (e.g. 16*5, 100+50, 200/2) and
+// prefix operators (+N, -N, *N, /N — relative to base).
+// Trailing suffixes like "px" or "%" are stripped automatically.
+static int evalExpr(const std::string& rawText, int base) {
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return base;
+  if (i0 > 0) text = text.substr(i0);
+  for (int i = (int)text.size() - 1; i > 0; --i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+      double rhs = std::atof(text.c_str() + i + 1);
+      int lhs = std::atoi(text.c_str());
+      switch (c) {
+        case '+': return lhs + (int)rhs;
+        case '-': return lhs - (int)rhs;
+        case '*': return (int)(lhs * rhs);
+        case '/': return rhs != 0.0 ? (int)(lhs / rhs) : lhs;
+      }
+    }
+  }
+  const char* s = text.c_str();
+  if (*s == '+') return base + (int)std::atof(s + 1);
+  if (*s == '-') return base - (int)std::atof(s + 1);
+  if (*s == '*') { double f = std::atof(s+1); return f != 0.0 ? (int)(base * f) : base; }
+  if (*s == '/') { double f = std::atof(s+1); return f != 0.0 ? (int)(base / f) : base; }
+  return std::atoi(s);
+}
+
+static bool isExpr(const std::string& rawText) {
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return false;
+  for (std::size_t i = i0; i < text.size(); ++i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') return true;
+  }
+  return false;
+}
+
 namespace app {
+
+class NewSpriteWindow : public app::gen::NewSprite {
+public:
+  NewSpriteWindow(int defaultWidth, int defaultHeight)
+    : m_baseWidth(defaultWidth)
+    , m_baseHeight(defaultHeight) {
+  }
+
+  ~NewSpriteWindow() {
+    if (m_filterManager)
+      m_filterManager->removeMessageFilterFor(this);
+  }
+
+  int getWidth()  const { return evalExpr(width()->text(),  m_baseWidth); }
+  int getHeight() const { return evalExpr(height()->text(), m_baseHeight); }
+
+  bool onProcessMessage(Message* msg) override {
+    switch (msg->type()) {
+      case kOpenMessage:
+        m_filterManager = manager();
+        m_filterManager->addMessageFilter(kKeyDownMessage, this);
+        m_filterManager->addMessageFilter(kFocusLeaveMessage, this);
+        break;
+      case kKeyDownMessage: {
+        auto sc = static_cast<KeyMessage*>(msg)->scancode();
+        if (sc == kKeyTab || sc == kKeyEnter) {
+          Widget* f = manager()->getFocus();
+          if (f == width() && isExpr(width()->text())) {
+            width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_baseWidth)));
+          }
+          else if (f == height() && isExpr(height()->text())) {
+            height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_baseHeight)));
+          }
+        }
+        break;
+      }
+      case kFocusLeaveMessage: {
+        Manager* mgr = manager();
+        if (!mgr) break;
+        Widget* cur = mgr->getFocus();
+        if (cur != width() && isExpr(width()->text())) {
+          width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_baseWidth)));
+        }
+        if (cur != height() && isExpr(height()->text())) {
+          height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_baseHeight)));
+        }
+        break;
+      }
+    }
+    return Window::onProcessMessage(msg);
+  }
+
+private:
+  int m_baseWidth;
+  int m_baseHeight;
+  Manager* m_filterManager = nullptr;
+};
 
 class NewFileCommand : public Command {
 public:
@@ -70,9 +175,6 @@ void NewFileCommand::onExecute(Context* context)
     app::Color::fromRgb(0, 0, 0),
   };
 
-  // Load the window widget
-  app::gen::NewSprite window;
-
   // Default values: Indexed, 320x240, Background color
   PixelFormat format = pref.newFile.colorMode();
   // Invalid format in config file.
@@ -94,6 +196,9 @@ void NewFileCommand::onExecute(Context* context)
     h = clipboardSize.h;
   }
 
+  // Load the window widget using our custom NewSpriteWindow class
+  NewSpriteWindow window(w, h);
+
   window.width()->setTextf("%d", MAX(1, w));
   window.height()->setTextf("%d", MAX(1, h));
 
@@ -111,8 +216,8 @@ void NewFileCommand::onExecute(Context* context)
 
     // Get the options
     format = (doc::PixelFormat)window.colorMode()->selectedItem();
-    w = window.width()->textInt();
-    h = window.height()->textInt();
+    w = window.getWidth();
+    h = window.getHeight();
     bg = window.bgColor()->selectedItem();
 
     static_assert(IMAGE_RGB == 0, "RGB pixel format should be 0");

@@ -28,7 +28,59 @@
 
 #include "canvas_size.xml.h"
 
+#include <cstdlib>
 #include <memory>
+
+// Evaluate an arithmetic expression relative to a base value.
+// Supports binary expressions (e.g. 16*5, 100+50, 200/2) and
+// prefix operators (+N, -N, *N, /N — relative to base).
+// Trailing suffixes like "px" or "%" are stripped automatically.
+static int evalExpr(const std::string& rawText, int base) {
+  // Strip trailing non-numeric suffix (e.g. "px", "%")
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  // Trim leading whitespace
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return base;
+  if (i0 > 0) text = text.substr(i0);
+  // Scan right-to-left for a binary operator (skip index 0 to allow prefix form)
+  for (int i = (int)text.size() - 1; i > 0; --i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+      double rhs = std::atof(text.c_str() + i + 1);
+      int lhs = std::atoi(text.c_str());  // atoi stops at the operator char
+      switch (c) {
+        case '+': return lhs + (int)rhs;
+        case '-': return lhs - (int)rhs;
+        case '*': return (int)(lhs * rhs);
+        case '/': return rhs != 0.0 ? (int)(lhs / rhs) : lhs;
+      }
+    }
+  }
+  // Prefix operator: relative to base
+  const char* s = text.c_str();
+  if (*s == '+') return base + (int)std::atof(s + 1);
+  if (*s == '-') return base - (int)std::atof(s + 1);
+  if (*s == '*') { double f = std::atof(s+1); return f != 0.0 ? (int)(base * f) : base; }
+  if (*s == '/') { double f = std::atof(s+1); return f != 0.0 ? (int)(base / f) : base; }
+  return std::atoi(s);
+}
+// Returns true if 'rawText' contains an arithmetic operator (binary or prefix).
+static bool isExpr(const std::string& rawText) {
+  std::string text = rawText;
+  while (!text.empty() && text.back() != '.' &&
+         !(text.back() >= '0' && text.back() <= '9'))
+    text.pop_back();
+  auto i0 = text.find_first_not_of(' ');
+  if (i0 == std::string::npos || text.empty()) return false;
+  for (std::size_t i = i0; i < text.size(); ++i) {
+    char c = text[i];
+    if (c == '+' || c == '-' || c == '*' || c == '/') return true;
+  }
+  return false;
+}
 
 namespace app {
 
@@ -78,13 +130,15 @@ public:
   }
 
   ~CanvasSizeWindow() {
+    if (m_filterManager)
+      m_filterManager->removeMessageFilterFor(this);
     m_editor->backToPreviousState();
   }
 
   bool pressedOk() { return closer() == ok(); }
 
-  int getWidth()  { return width()->textInt(); }
-  int getHeight() { return height()->textInt(); }
+  int getWidth()  { return evalExpr(width()->text(),  m_editor->sprite()->width()); }
+  int getHeight() { return evalExpr(height()->text(), m_editor->sprite()->height()); }
   int getLeft()   { return left()->textInt(); }
   int getRight()  { return right()->textInt(); }
   int getTop()    { return top()->textInt(); }
@@ -130,6 +184,48 @@ protected:
 
     // Add the editor as receptor of mouse events too.
     targets.push_back(View::getView(m_editor));
+  }
+
+  bool onProcessMessage(Message* msg) override {
+    switch (msg->type()) {
+      case kOpenMessage:
+        m_filterManager = manager();
+        m_filterManager->addMessageFilter(kKeyDownMessage, this);
+        m_filterManager->addMessageFilter(kFocusLeaveMessage, this);
+        break;
+      case kKeyDownMessage: {
+        // Commit an expression when Tab or Enter is pressed
+        auto sc = static_cast<KeyMessage*>(msg)->scancode();
+        if (sc == kKeyTab || sc == kKeyEnter) {
+          Widget* f = manager()->getFocus();
+          if (f == width() && isExpr(width()->text())) {
+            width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width())));
+            onSizeChange();
+          }
+          else if (f == height() && isExpr(height()->text())) {
+            height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height())));
+            onSizeChange();
+          }
+        }
+        break;
+      }
+      case kFocusLeaveMessage: {
+        // Commit an expression when the user clicks to another field
+        Manager* mgr = manager();
+        if (!mgr) break;
+        Widget* cur = mgr->getFocus();
+        if (cur != width() && isExpr(width()->text())) {
+          width()->setTextf("%d", std::max(1, evalExpr(width()->text(), m_editor->sprite()->width())));
+          onSizeChange();
+        }
+        if (cur != height() && isExpr(height()->text())) {
+          height()->setTextf("%d", std::max(1, evalExpr(height()->text(), m_editor->sprite()->height())));
+          onSizeChange();
+        }
+        break;
+      }
+    }
+    return Window::onProcessMessage(msg);
   }
 
 private:
@@ -258,8 +354,8 @@ private:
     }
   }
 
-  void setWidth(int v)  { width()->setTextf("%d", v); }
-  void setHeight(int v) { height()->setTextf("%d", v); }
+  void setWidth(int v)  { if (!isExpr(width()->text()))  width()->setTextf("%d", v); }
+  void setHeight(int v) { if (!isExpr(height()->text())) height()->setTextf("%d", v); }
   void setLeft(int v)   { left()->setTextf("%d", v); }
   void setRight(int v)  { right()->setTextf("%d", v); }
   void setTop(int v)    { top()->setTextf("%d", v); }
@@ -268,6 +364,7 @@ private:
   Editor* m_editor;
   gfx::Rect m_rect;
   EditorStatePtr m_selectBoxState;
+  Manager* m_filterManager = nullptr;
 };
 
 class CanvasSizeCommand : public Command {
