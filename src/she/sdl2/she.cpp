@@ -437,6 +437,16 @@ namespace she {
               break;
             }
           }
+          //silence 'Unknown windowevent' console spam for common SDL window events
+          case SDL_WINDOWEVENT_SHOWN:
+          case SDL_WINDOWEVENT_HIDDEN:
+          case SDL_WINDOWEVENT_MOVED:
+          case SDL_WINDOWEVENT_ENTER:
+          case SDL_WINDOWEVENT_FOCUS_GAINED:
+          case SDL_WINDOWEVENT_FOCUS_LOST:
+          case SDL_WINDOWEVENT_CLOSE: 
+          //closing the app is handled elsewhere so we can ignore it here
+            continue;
 
           default:
             std::cout << "Unknown windowevent: " << (int) sdlEvent.window.event << std::endl;
