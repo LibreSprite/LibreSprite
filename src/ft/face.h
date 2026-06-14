@@ -148,8 +148,8 @@ namespace ft {
       gfx::Rect bounds(0, 0, 0, 0);
 
       forEachGlyph(str, [&](Glyph& glyph) {
-        bounds |= gfx::Rect(int(glyph.x),
-                            int(glyph.y),
+        bounds |= gfx::Rect(int(glyph.x + glyph.bearingX),
+                            int(glyph.y + glyph.offsetY),
                             glyph.ft_glyph->advance.x / double(1 << 16),
                             glyph.bitmap->rows);
       });

@@ -49,11 +49,11 @@ doc::Image* render_text(const std::string& fontfile, int fontsize,
       face.forEachGlyph(
         text,
         [&bounds, &image, color, antialias](const ft::Glyph& glyph) {
-          int t, yimg = - bounds.y + int(glyph.y);
+          int t, yimg = - bounds.y + int(glyph.y + glyph.offsetY);
 
           for (int v=0; v<int(glyph.bitmap->rows); ++v, ++yimg) {
             const uint8_t* p = glyph.bitmap->buffer + v*glyph.bitmap->pitch;
-            int ximg = - bounds.x + int(glyph.x);
+            int ximg = - bounds.x + int(glyph.x + glyph.bearingX);
             int bit = 0;
 
             for (int u=0; u<int(glyph.bitmap->width); ++u, ++ximg) {
