@@ -93,6 +93,7 @@ enum {
   PART_HEADER_ONIONSKIN,
   PART_HEADER_ONIONSKIN_RANGE_LEFT,
   PART_HEADER_ONIONSKIN_RANGE_RIGHT,
+  PART_HEADER_NEW_LAYER,
   PART_HEADER_LAYER,
   PART_HEADER_FRAME,
   PART_HEADER_FRAME_TAGS,
@@ -620,6 +621,11 @@ bool Timeline::onProcessMessage(Message* msg)
 
           case PART_HEADER_ONIONSKIN: {
             docPref().onionskin.active(!docPref().onionskin.active());
+            break;
+          }
+
+          case PART_HEADER_NEW_LAYER: {
+            m_context->executeCommand("NewLayer");
             break;
           }
 
@@ -1339,6 +1345,12 @@ void Timeline::drawHeader(ui::Graphics* g)
     m_hot.part == PART_HEADER_ONIONSKIN,
     m_clk.part == PART_HEADER_ONIONSKIN);
 
+  drawPart(g, getPartBounds(Hit(PART_HEADER_NEW_LAYER)),
+    NULL, styles.timelineNewLayer(),
+    false,
+    m_hot.part == PART_HEADER_NEW_LAYER,
+    m_clk.part == PART_HEADER_NEW_LAYER);
+
   // Empty header space.
   drawPart(g, getPartBounds(Hit(PART_HEADER_LAYER)),
     NULL, styles.timelineBox(), false, false, false);
@@ -1792,9 +1804,12 @@ gfx::Rect Timeline::getPartBounds(const Hit& hit) const
     case PART_HEADER_ONIONSKIN:
       return gfx::Rect(bounds.x + FRMSIZE*4, bounds.y + y, FRMSIZE, HDRSIZE);
 
+    case PART_HEADER_NEW_LAYER:
+      return gfx::Rect(bounds.x + FRMSIZE*5, bounds.y + y, FRMSIZE, HDRSIZE);
+
     case PART_HEADER_LAYER:
-      return gfx::Rect(bounds.x + FRMSIZE*5, bounds.y + y,
-        m_separator_x - FRMSIZE*5, HDRSIZE);
+      return gfx::Rect(bounds.x + FRMSIZE*6, bounds.y + y,
+        m_separator_x - FRMSIZE*6, HDRSIZE);
 
     case PART_HEADER_FRAME:
       return gfx::Rect(
@@ -2030,6 +2045,8 @@ Timeline::Hit Timeline::hitTest(ui::Message* msg, const gfx::Point& mousePos)
           hit.part = PART_HEADER_GEAR;
         else if (getPartBounds(Hit(PART_HEADER_ONIONSKIN)).contains(mousePos))
           hit.part = PART_HEADER_ONIONSKIN;
+        else if (getPartBounds(Hit(PART_HEADER_NEW_LAYER)).contains(mousePos))
+          hit.part = PART_HEADER_NEW_LAYER;
         else if (getPartBounds(Hit(PART_HEADER_LAYER)).contains(mousePos))
           hit.part = PART_HEADER_LAYER;
       }
