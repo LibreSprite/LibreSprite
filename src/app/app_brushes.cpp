@@ -180,7 +180,12 @@ AppBrushes::AppBrushes()
 
 AppBrushes::~AppBrushes()
 {
-  save(userBrushesFilename());
+  try {
+    save(userBrushesFilename());
+  }
+  catch (const std::exception& ex) {
+    LOG("Error saving user brushes: %s", ex.what());
+  }
 }
 
 AppBrushes::slot_id AppBrushes::addBrushSlot(const BrushSlot& brush)
