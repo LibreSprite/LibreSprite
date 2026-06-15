@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -865,7 +865,7 @@ void Editor::flashCurrentLayer()
       m_document->setExtraCel(extraCel);
       drawSpriteClipped(gfx::Region(
                           gfx::Rect(0, 0, m_sprite->width(), m_sprite->height())));
-      manager()->flipDisplay();
+      manager()->requestRedraw();
       m_document->setExtraCel(oldExtraCel);
     }
 
