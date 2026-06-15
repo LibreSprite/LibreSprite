@@ -34,7 +34,6 @@ jobs:
           mingw-w64-x86_64-SDL2
           mingw-w64-x86_64-SDL2_image
           mingw-w64-x86_64-tinyxml2
-          mingw-w64-x86_64-v8
           mingw-w64-x86_64-zlib
           mingw-w64-x86_64-libarchive
 
@@ -45,7 +44,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_V8_SANDBOX=ON ..
+        cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
         make -j 4
         cd ..
         rm build/bin/gen.exe

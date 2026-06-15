@@ -2,7 +2,6 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
 # LibreSprite  | Copyright (C)      2021  LibreSprite contributors
 
-include_directories(${DUKTAPE_DIR})
 include_directories(${QUICKJS_DIR})
 
 # Debug C/C++ flags
@@ -18,14 +17,5 @@ else()
   endif()
 endif()
 
-add_library(duktape ${DUKTAPE_DIR}/duktape.c)
 add_library(script-lib
-  duktape/engine.cpp
-  v8/engine.cpp
   cout_delegate.cpp)
-
-if(UNIX)
-  target_link_libraries(duktape m)
-endif()
-
-target_link_libraries(script-lib duktape)

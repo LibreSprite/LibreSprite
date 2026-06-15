@@ -43,7 +43,6 @@ option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-option(USE_V8_SANDBOX "Use V8 Sandbox" off)
 
 ######################################################################
 # Profile build type
@@ -96,7 +95,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 set(EASYTAB_DIR         ${CMAKE_SOURCE_DIR}/third_party/EasyTab)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
-set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
 set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
@@ -199,50 +197,6 @@ include_directories(${GIF_INCLUDE_DIRS})
 
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
-
-# v8
-find_package(V8 QUIET)
-if(V8_FOUND)
-  include_directories(${V8_INCLUDE_DIR})
-  add_definitions(-DSCRIPT_ENGINE_V8=1)
-
-  include(CheckCXXSourceRuns)
-  set(CMAKE_REQUIRED_LIBRARIES ${V8_LIBRARY} ${V8_LIBBASE_LIBRARY} ${V8_LIBPLATFORM_LIBRARY})
-  set(CMAKE_REQUIRED_INCLUDES ${V8_INCLUDE_DIR})
-  message(STATUS ${V8_POINTER_COMPRESSION_OUTPUT})
-  # Since V8_COMPRESS_POINTERS is not defined here, the resulting program would
-  # die if the system v8 library had enabled pointer compression.
-  check_cxx_source_runs("
-    #include <v8.h>
-    #include <libplatform/libplatform.h>
-    int main(void) {
-      v8::V8::InitializeICU();
-      static std::unique_ptr<v8::Platform> m_platform;
-      m_platform = v8::platform::NewDefaultPlatform();
-      v8::V8::InitializePlatform(m_platform.get());
-      v8::V8::Initialize();
-      return 0;
-    }
-	" DISABLE_POINTER_COMPRESSION)
-
-  # pointers compression doesn't work on 32bit machines
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    if(DISABLE_POINTER_COMPRESSION EQUAL 1)
-      message(STATUS "Disabling V8 pointer compression")
-    else()
-      message(STATUS "Enabling V8 pointer compression")
-      add_definitions(-DV8_COMPRESS_POINTERS)
-    endif()
-  endif()
-
-  if (USE_V8_SANDBOX)
-    add_definitions(-DV8_ENABLE_SANDBOX)
-  endif()
-
-  message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
-else()
-  message(STATUS "Optional V8 library NOT found. Disabling V8 scripting engine.")
-endif()
 
 
 find_package(CURL REQUIRED)

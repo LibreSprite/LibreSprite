@@ -18,7 +18,7 @@ jobs:
 
     - name: install deps
       run: |
-        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler
+        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
 
     - name: git
       run: |
@@ -50,7 +50,6 @@ jobs:
     - name: Generate Makefiles
       run: |
         cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-          -DUSE_V8_SANDBOX=ON \
           -DCMAKE_OSX_ARCHITECTURES=arm64 \
           -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 

@@ -12,7 +12,6 @@ set(USE_SDL2_BACKEND on)
 
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/../third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/../third_party/simpleini)
-set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/../third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/../third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/../third_party/qoi)
 
@@ -22,7 +21,6 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/pixman
         ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman
         ${SIMPLEINI_DIR}
-        ${DUKTAPE_DIR}
         ${MODP_B64_DIR}
         ${QOI_DIR}
 )
@@ -61,7 +59,6 @@ set_source_files_properties(${SRC}/she/sdl2/she.cpp PROPERTIES COMPILE_FLAGS "-s
 
 set(SRC_FILES
   ${GENSRC}/app/pref.xml.cpp
-  ${DUKTAPE_DIR}/duktape.c
   # ${SRC}/app/color_tests.cpp
   # ${SRC}/app/document_api_tests.cpp
   # ${SRC}/app/document_range_tests.cpp
@@ -121,7 +118,6 @@ set(SRC_FILES
   # ${SRC}/render/ordered_dither_tests.cpp
   # ${SRC}/render/render_tests.cpp
   # ${SRC}/script/lua/engine.cpp
-  # ${SRC}/script/v8/engine.cpp
   # ${SRC}/she/alleg4/alleg_display.cpp
   # ${SRC}/she/alleg4/alleg_surface.cpp
   # ${SRC}/she/alleg4/display_events.cpp
@@ -648,7 +644,6 @@ set(SRC_FILES
   ${SRC}/render/render.cpp
   ${SRC}/render/zoom.cpp
   ${SRC}/script/cout_delegate.cpp
-  ${SRC}/script/duktape/engine.cpp
   ${SRC}/she/common/freetype_font.cpp
   ${SRC}/she/sdl2/sdl2_display.cpp
   ${SRC}/she/sdl2/sdl2_surface.cpp
