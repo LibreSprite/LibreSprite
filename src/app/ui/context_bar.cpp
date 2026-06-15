@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2025       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -21,6 +21,7 @@
 #include "app/modules/gfx.h"
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
+#include "app/modules/editors.h"
 #include "app/tools/active_tool.h"
 #include "app/tools/controller.h"
 #include "app/tools/ink.h"
@@ -35,6 +36,7 @@
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/skin/style.h"
 #include "app/ui_context.h"
+#include "app/ui/editor/editor.h"
 #include "base/bind.h"
 #include "base/scoped_value.h"
 #include "doc/conversion_she.h"
@@ -56,6 +58,7 @@
 #include "ui/system.h"
 #include "ui/theme.h"
 #include "ui/tooltips.h"
+
 
 #include <memory>
 
@@ -1317,6 +1320,62 @@ private:
   }
 };
 
+class ContextBar::ZoomField : public HBox {
+public:
+  ZoomField() : HBox() {
+    m_resetButton = new Button("100%");
+    m_centerButton = new Button("Center");
+    m_fitScreenButton = new Button("Fit Screen");
+
+    addChild(m_resetButton);
+    addChild(m_centerButton);
+    addChild(m_fitScreenButton);
+
+    m_resetButton->Click.connect([&]{resetZoom();});
+    m_centerButton->Click.connect([&]{centerViewToSprite();});
+    m_fitScreenButton->Click.connect([&]{fitScreenToSprite();});
+
+    setChildSpacing(0);
+  }
+
+private:
+  ui::Button* m_resetButton;
+  ui::Button* m_centerButton;
+  ui::Button* m_fitScreenButton;
+
+  void resetZoom() {
+    if (!current_editor) return;
+    current_editor->setEditorZoom(render::Zoom(1, 1));
+  }
+
+  void centerViewToSprite() {
+    if (!current_editor) return;
+    Sprite* sprite = current_editor->sprite();
+    if (!sprite) return;
+
+    const Point spriteCenter = sprite->bounds().center();
+    current_editor->centerInSpritePoint(spriteCenter);
+  }
+
+  void fitScreenToSprite() {
+    if (!current_editor) return;
+    Sprite* sprite = current_editor->sprite();
+    View* view = View::getView(current_editor);
+    if (!(sprite && view)) return;
+
+    const gfx::Rect viewport = view->viewportBounds();
+    const gfx::Rect sprrect = sprite->bounds();
+
+    const float scaleX = viewport.w / (float)sprrect.w;
+    const float scaleY = viewport.h / (float)sprrect.h;
+    const float scale = MIN(scaleX, scaleY);
+    current_editor->setEditorZoom(render::Zoom::fromScale(scale));
+    
+    const Point spriteCenter = sprite->bounds().center();
+    current_editor->centerInSpritePoint(spriteCenter);
+  }
+};
+
 ContextBar::ContextBar()
   : Box(HORIZONTAL)
 {
@@ -1378,6 +1437,8 @@ ContextBar::ContextBar()
 
   addChild(m_symmetry = new SymmetryField());
   m_symmetry->setVisible(Preferences::instance().symmetryMode.enabled());
+
+  addChild(m_zoom = new ZoomField());
 
   TooltipManager* tooltipManager = new TooltipManager();
   addChild(tooltipManager);
@@ -1632,6 +1693,15 @@ void ContextBar::updateForTool(tools::Tool* tool)
     ((isPaint && (hasInkWithOpacity || hasImageBrush)) ||
      (isEffect));
 
+  // True if the current tool needs zoom buttons
+  // Includes: Zoom tool (Z), Hand tool (H) and Quick hand (Space)
+  bool showZoomButtons = tool && (
+     tool->getInk(0)->isZoom() ||
+     tool->getInk(1)->isZoom() ||
+     tool->getInk(0)->isScrollMovement() ||
+     tool->getInk(1)->isScrollMovement()
+    );
+     
   // Show/Hide fields
   m_brushType->setVisible(supportOpacity && (!isFloodfill || (isFloodfill && hasImageBrush)));
   m_brushSize->setVisible(supportOpacity && !isFloodfill && !hasImageBrush);
@@ -1654,6 +1724,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
   m_pivot->setVisible(true);
   m_dropPixels->setVisible(false);
   m_selectBoxHelp->setVisible(false);
+  m_zoom->setVisible(showZoomButtons);
 
   m_symmetry->setVisible(
     Preferences::instance().symmetryMode.enabled() &&
