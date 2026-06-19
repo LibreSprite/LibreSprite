@@ -42,10 +42,10 @@ jobs:
         make all -j4
         sudo make install
 
-    - name: Download & Lint Info.plist
+    - name: Lint Info.plist
       run: |
-        curl -L https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
         plutil desktop/Info.plist
+        test "$(plutil -extract CFBundleExecutable raw desktop/Info.plist)" = "libresprite"
 
     - name: Generate Makefiles
       run: |
