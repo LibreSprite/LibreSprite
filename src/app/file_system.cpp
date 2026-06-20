@@ -396,8 +396,8 @@ const FileItemList& FileItem::children()
 
         /* get the interface to enumerate subitems */
         hr = pFolder->EnumObjects(reinterpret_cast<HWND>(she::instance()->defaultDisplay()->nativeHandle()),
-          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnum);
-
+          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &pEnum);
+          
         if (hr == S_OK && pEnum != NULL) {
           LPITEMIDLIST itempidl[256];
           SFGAOF attribs[256];
