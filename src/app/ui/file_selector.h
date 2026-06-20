@@ -44,6 +44,7 @@ namespace app {
     void updateLocation();
     void updateNavigationButtons();
     void addInNavigationHistory(IFileItem* folder);
+    void onShowHiddenFiles();
     void onGoBack();
     void onGoForward();
     void onGoUp();

@@ -293,6 +293,7 @@ FileSelector::FileSelector(FileSelectorType type, FileSelectorDelegate* delegate
   newFolderButton()->Click.connect(base::Bind<void>(&FileSelector::onNewFolder, this));
   location()->CloseListBox.connect(base::Bind<void>(&FileSelector::onLocationCloseListBox, this));
   fileType()->Change.connect(base::Bind<void>(&FileSelector::onFileTypeChange, this));
+  showHiddenFiles()->Click.connect(base::Bind<void>(&FileSelector::onShowHiddenFiles, this));
   m_fileList->FileSelected.connect(base::Bind<void>(&FileSelector::onFileListFileSelected, this));
   m_fileList->FileAccepted.connect(base::Bind<void>(&FileSelector::onFileListFileAccepted, this));
   m_fileList->CurrentFolderChanged.connect(base::Bind<void>(&FileSelector::onFileListCurrentFolderChanged, this));
@@ -736,6 +737,12 @@ void FileSelector::onGoForward()
       m_navigationLocked = false;
     }
   }
+}
+
+void FileSelector::onShowHiddenFiles()
+{
+  m_fileList->m_showHiddenFiles = showHiddenFiles()->isSelected();
+  m_fileList->refresh();
 }
 
 void FileSelector::onGoUp()

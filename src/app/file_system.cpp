@@ -449,6 +449,7 @@ const FileItemList& FileItem::children()
       if (dir) {
         dirent* entry;
         while ((entry = readdir(dir)) != NULL) {
+          printf(entry->d_name);
           FileItem* child;
           std::string fn = entry->d_name;
           std::string fullfn = base::join_path(m_filename, fn);
