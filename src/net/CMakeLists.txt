@@ -5,5 +5,10 @@ add_library(net-lib
   http_request.cpp
   http_response.cpp)
 
-target_link_libraries(net-lib
-  ${CURL_LIBRARIES})
+if(TARGET CURL::libcurl)
+  target_link_libraries(net-lib
+    PUBLIC CURL::libcurl)
+else()
+  target_link_libraries(net-lib
+    PUBLIC ${CURL_LIBRARIES})
+endif()
