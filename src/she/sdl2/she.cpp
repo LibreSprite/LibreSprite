@@ -73,6 +73,7 @@ static std::unordered_map<int, she::Event::MouseButton> mouseButtonMapping = {
 };
 static she::KeyScancode lastScancode;
 static int lastScancodeSDL;
+static bool syntheticSpacePressed = false;
 struct Modifier {
   const int sheModifier;
   int ascii;
@@ -81,6 +82,7 @@ struct Modifier {
 };
 
 static std::unordered_map<int, Modifier*> reverseKeyCodeMapping;
+static std::unordered_map<int, SDL_Keycode> reverseSDLKeyCodeMapping;
 
 static std::unordered_map<SDL_Keycode, Modifier> keyCodeMapping = {
   {SDLK_UNKNOWN, she::kKeyNil},
@@ -234,10 +236,28 @@ std::unordered_map<SDL_Keycode, Modifier> modifiers = {
 she::KeyModifiers getSheModifiers() {
   int mod = 0;
   for (auto& entry : modifiers) {
-    if (entry.second.isPressed)
+    const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
+    SDL_Scancode scancode = SDL_GetScancodeFromKey(entry.first);
+    if (entry.second.isPressed ||
+        (scancode != SDL_SCANCODE_UNKNOWN && keyboardState[scancode]))
       mod |= entry.second.sheModifier;
   }
+  if (syntheticSpacePressed)
+    mod |= she::kKeySpaceModifier;
   return (she::KeyModifiers) mod;
+}
+
+static void setSyntheticSpacePressed(bool pressed)
+{
+  syntheticSpacePressed = pressed;
+
+  auto keyIt = keyCodeMapping.find(SDLK_SPACE);
+  if (keyIt != keyCodeMapping.end())
+    keyIt->second.isPressed = pressed;
+
+  auto modIt = modifiers.find(SDLK_SPACE);
+  if (modIt != modifiers.end())
+    modIt->second.isPressed = pressed;
 }
 
 #ifdef __EMSCRIPTEN__
@@ -321,6 +341,7 @@ namespace she {
       if (reverseKeyCodeMapping.empty()) {
         for (auto& entry : keyCodeMapping) {
           reverseKeyCodeMapping[entry.second.sheModifier] = &entry.second;
+          reverseSDLKeyCodeMapping[entry.second.sheModifier] = entry.first;
           entry.second.ascii = entry.first;
         }
       }
@@ -443,7 +464,10 @@ namespace she {
           case SDL_WINDOWEVENT_MOVED:
           case SDL_WINDOWEVENT_ENTER:
           case SDL_WINDOWEVENT_FOCUS_GAINED:
+            continue;
           case SDL_WINDOWEVENT_FOCUS_LOST:
+            setSyntheticSpacePressed(false);
+            continue;
           case SDL_WINDOWEVENT_CLOSE: 
           //closing the app is handled elsewhere so we can ignore it here
             continue;
@@ -499,6 +523,10 @@ namespace she {
 
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEBUTTONDOWN: {
+          if (sdlEvent.type == SDL_MOUSEBUTTONUP && syntheticSpacePressed) {
+            setSyntheticSpacePressed(false);
+          }
+
           auto type = sdlEvent.type == SDL_MOUSEBUTTONDOWN ? Event::MouseDown : Event::MouseUp;
           event.setType(type);
           event.setPosition({
@@ -550,12 +578,17 @@ namespace she {
             continue;
           }
 
+          const bool textInputWasActive = SDL_IsTextInputActive();
           event.setType(isPressed ? Event::KeyDown : Event::KeyUp);
           auto modifiers = getSheModifiers();
           event.setModifiers(modifiers);
           it->second.isPressed = isPressed;
           auto scancode = static_cast<she::KeyScancode>(it->second.sheModifier);
           event.setScancode(scancode);
+          if (scancode == she::kKeySpace) {
+            if (!isPressed)
+              syntheticSpacePressed = false;
+          }
           if (isPressed) {
             lastScancode = scancode;
             lastScancodeSDL = sdlEvent.key.keysym.scancode;
@@ -567,7 +600,7 @@ namespace she {
           if (modifiers & (she::kKeyCtrlModifier | she::kKeyCmdModifier)) {
             SDL_StopTextInput();
             break;
-          } else if (!SDL_IsTextInputActive()) {
+          } else if (!textInputWasActive && scancode != she::kKeySpace) {
             SDL_StartTextInput();
           }
           continue;
@@ -594,8 +627,24 @@ namespace she {
           continue;
 
         case SDL_TEXTINPUT: {
-          keybuffer.clear();
           std::string textString = sdlEvent.text.text;
+          if (lastScancode == she::kKeySpace && textString == " ") {
+            lastScancodeSDL = SDL_SCANCODE_UNKNOWN;
+            continue;
+          }
+
+          if (textString == " ") {
+            setSyntheticSpacePressed(true);
+
+            Event event;
+            event.setType(Event::KeyDown);
+            event.setModifiers(getSheModifiers());
+            event.setScancode(she::kKeySpace);
+            keybuffer.push_back(event);
+            continue;
+          }
+
+          keybuffer.clear();
           base::utf8_const_iterator begin{textString.begin()};
           base::utf8_const_iterator end{textString.end()};
           Event event;
@@ -928,7 +977,15 @@ namespace she {
   bool is_key_pressed(KeyScancode scancode) {
     auto it = reverseKeyCodeMapping.find(scancode);
     if (it != reverseKeyCodeMapping.end()) {
-      return it->second->isPressed;
+      if (it->second->isPressed)
+        return true;
+
+      auto sdlIt = reverseSDLKeyCodeMapping.find(scancode);
+      if (sdlIt != reverseSDLKeyCodeMapping.end()) {
+        const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
+        SDL_Scancode sdlScancode = SDL_GetScancodeFromKey(sdlIt->second);
+        return (sdlScancode != SDL_SCANCODE_UNKNOWN && keyboardState[sdlScancode]);
+      }
     }
     return false;
   }
