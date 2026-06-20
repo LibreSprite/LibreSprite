@@ -22,6 +22,7 @@
 #include "app/tools/ink.h"
 #include "app/tools/pick_ink.h"
 #include "app/tools/tool.h"
+#include "app/tools/tool_box.h"
 #include "app/ui/document_view.h"
 #include "app/ui/editor/drawing_state.h"
 #include "app/ui/editor/editor.h"
@@ -35,6 +36,7 @@
 #include "app/ui/editor/tool_loop_impl.h"
 #include "app/ui/editor/transform_handles.h"
 #include "app/ui/editor/zooming_state.h"
+#include "app/ui/keyboard_shortcuts.h"
 #include "app/ui/main_window.h"
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/status_bar.h"
@@ -48,6 +50,7 @@
 #include "doc/sprite.h"
 #include "fixmath/fixmath.h"
 #include "gfx/rect.h"
+#include "she/keys.h"
 #include "she/surface.h"
 #include "ui/alert.h"
 #include "ui/message.h"
@@ -126,9 +129,28 @@ void StandbyState::onActiveToolChange(Editor* editor, tools::Tool* tool)
 bool StandbyState::checkForScroll(Editor* editor, MouseMessage* msg)
 {
   tools::Ink* clickedInk = editor->getCurrentEditorInk().get();
+  tools::Tool* handTool = App::instance()->toolBox()->getToolById(
+    tools::WellKnownTools::Hand);
+  Key* handQuicktool = KeyboardShortcuts::instance()->quicktool(handTool);
+  const bool handQuicktoolPressed = handQuicktool && handQuicktool->isPressed();
+  const bool handQuicktoolHasSpace =
+    handQuicktool &&
+    (handQuicktool->hasAccel(ui::Accelerator(ui::kKeySpaceModifier,
+                                             ui::kKeyNil,
+                                             0)) ||
+     handQuicktool->hasAccel(ui::Accelerator(ui::kKeyNoneModifier,
+                                             ui::kKeySpace,
+                                             0)));
+  const bool spacePressed =
+    editor->isSpacePressed() ||
+    (msg->modifiers() & ui::kKeySpaceModifier) ||
+    she::is_key_pressed(ui::kKeySpace);
 
   // Start scroll loop
-  if (msg->middle() || clickedInk->isScrollMovement()) { // TODO msg->middle() should be customizable
+  if (msg->middle() ||
+      clickedInk->isScrollMovement() ||
+      (handQuicktool && (handQuicktoolPressed ||
+                         (spacePressed && handQuicktoolHasSpace)))) { // TODO msg->middle() should be customizable
     EditorStatePtr newState(new ScrollingState());
     editor->setState(newState);
 
