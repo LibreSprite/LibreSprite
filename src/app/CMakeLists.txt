@@ -281,6 +281,7 @@ add_library(app-lib
   commands/cmd_undo.cpp
   commands/cmd_undo_history.cpp
   commands/cmd_unlink_cel.cpp
+  commands/cmd_write_real_path.cpp
   commands/cmd_zoom.cpp
   commands/command.cpp
   commands/commands.cpp

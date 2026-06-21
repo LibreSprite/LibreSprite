@@ -18,6 +18,7 @@
 #include "app/ini_file.h"
 #include "app/modules/gfx.h"
 #include "app/modules/gui.h"
+#include "app/commands/cmd_write_real_path.h"
 #include "app/recent_files.h"
 #include "app/ui/file_list.h"
 #include "app/ui/file_list_view.h"
@@ -608,6 +609,8 @@ again:
 
 // Updates the content of the combo-box that shows the current
 // location in the file-system.
+
+
 void FileSelector::updateLocation()
 {
   IFileItem* currentFolder = m_fileList->getCurrentFolder();
@@ -663,6 +666,8 @@ void FileSelector::updateLocation()
     location()->getEntryWidget()->setText(currentFolder->displayName().c_str());
     location()->getEntryWidget()->deselectText();
   }
+
+  location()->addItem(WRITE_YOUR_OWN_PATH_NAME);
 }
 
 void FileSelector::updateNavigationButtons()
@@ -793,8 +798,19 @@ void FileSelector::onNewFolder()
 // Hook for the 'location' combo-box
 void FileSelector::onLocationCloseListBox()
 {
-  // When the user change the location we have to set the
-  // current-folder in the 'fileview' widget
+
+  if(location()->getSelectedItem()->text() == WRITE_YOUR_OWN_PATH_NAME)
+  {
+      WriteRealPath::createAndShowDialog(m_fileList->getCurrentFolder()->fileName(), [this](const std::string& path){
+        IFileItem* fileItem = FileSystemModule::instance()->getFileItemFromPath(path);
+        if (fileItem) {
+          m_fileList->setCurrentFolder(fileItem);
+          manager()->setFocus(m_fileList);
+        }
+      });
+      return;
+  }
+
   CustomFileNameItem* comboFileItem = dynamic_cast<CustomFileNameItem*>(location()->getSelectedItem());
   IFileItem* fileItem = (comboFileItem != NULL ? comboFileItem->getFileItem(): NULL);
 
