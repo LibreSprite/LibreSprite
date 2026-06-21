@@ -40,10 +40,13 @@ namespace app {
                      const std::string& initialPath,
                      const std::string& showExtensions);
 
+    FileList* fileList() {return m_fileList;}
+
   private:
     void updateLocation();
     void updateNavigationButtons();
     void addInNavigationHistory(IFileItem* folder);
+    void onShowHiddenFiles();
     void onGoBack();
     void onGoForward();
     void onGoUp();
@@ -54,6 +57,7 @@ namespace app {
     void onFileListFileAccepted();
     void onFileListCurrentFolderChanged();
     std::string getSelectedExtension() const;
+    std::string WRITE_YOUR_OWN_PATH_NAME = "WRITE YOUR OWN PATH";
 
     FileSelectorType m_type;
     FileSelectorDelegate* m_delegate;
