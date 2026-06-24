@@ -6,7 +6,11 @@
 
 #include "base/string.h"
 
-#ifdef HAVE_DLFCN_H
+// HAVE_DLFCN_H comes from the host-generated config.h, which may be produced on
+// a platform without dlfcn.h (e.g. the Windows codegen host) even when the
+// actual target (Android/Linux/macOS) always provides it. Fall back to the
+// known-present header on those targets.
+#if defined(HAVE_DLFCN_H) || defined(__ANDROID__) || defined(__unix__) || defined(__linux__) || defined(__APPLE__)
   #include <dlfcn.h>
 #else
   #error dlfcn.h is needed or include a file that defines dlopen/dlclose

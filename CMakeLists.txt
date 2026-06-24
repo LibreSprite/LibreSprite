@@ -113,14 +113,18 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 # Debug C/C++ flags
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   add_definitions(-DDEBUGMODE -D_DEBUG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 -g")
+  if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 -g")
+  endif()
 else()
   add_definitions(-DNDEBUG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3")
+  if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3")
+  endif()
 endif()
 
 # Fix to compile gtest with VC11 (2012)
@@ -142,6 +146,17 @@ include_directories(${QOI_DIR})
 # tinyxml2
 find_library(TINYXML2_LIBRARY NAMES tinyxml2)
 find_path(TINYXML2_INCLUDE_DIR NAMES tinyxml2.h)
+if((NOT TINYXML2_INCLUDE_DIR OR NOT TINYXML2_LIBRARY) AND EXISTS "${CMAKE_SOURCE_DIR}/android/tinyxml2/tinyxml2.cpp")
+  # No system tinyxml2 (e.g. the Windows host codegen build): compile the copy
+  # bundled in the Android deps so gen has something to link against. Built by
+  # CMake itself so it shares the same MSVC runtime as the rest of the build.
+  message(STATUS "System tinyxml2 not found; building bundled android/tinyxml2")
+  add_library(tinyxml2_bundled STATIC ${CMAKE_SOURCE_DIR}/android/tinyxml2/tinyxml2.cpp)
+  set_target_properties(tinyxml2_bundled PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  target_include_directories(tinyxml2_bundled PUBLIC ${CMAKE_SOURCE_DIR}/android/tinyxml2)
+  set(TINYXML2_LIBRARY tinyxml2_bundled)
+  set(TINYXML2_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/android/tinyxml2)
+endif()
 include_directories(${TINYXML2_INCLUDE_DIR})
 
 if(NOT GEN_ONLY)
@@ -260,10 +275,14 @@ set(PLATFORM_LIBS)
 if(USE_SDL2_BACKEND)
   add_definitions(-DUSE_SDL2_BACKEND)
 
-  find_package(SDL2 REQUIRED)
-  include_directories(${SDL2_INCLUDE_DIRS})
-  find_package(SDL2_IMAGE REQUIRED)
-  include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+  # SDL2 is only needed to build the actual app; the GEN_ONLY codegen pass
+  # (which produces C++ from XML) does not link against it.
+  if(NOT GEN_ONLY)
+    find_package(SDL2 REQUIRED)
+    include_directories(${SDL2_INCLUDE_DIRS})
+    find_package(SDL2_IMAGE REQUIRED)
+    include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+  endif()
 endif()
 
 # -- Unix --
