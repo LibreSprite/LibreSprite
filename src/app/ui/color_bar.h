@@ -58,6 +58,10 @@ namespace app {
     ColorBar(int align);
     ~ColorBar();
 
+    // Discards the cached "Available palettes" popup so it is rebuilt (and the
+    // palette list re-scanned) the next time it is opened.
+    void invalidatePalettePopup();
+
     void setPixelFormat(PixelFormat pixelFormat);
 
     app::Color getFgColor();

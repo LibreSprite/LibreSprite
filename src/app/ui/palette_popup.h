@@ -30,6 +30,8 @@ namespace app {
   protected:
     void onPalChange(doc::Palette* palette);
     void onLoadPal();
+    void onRenamePal();
+    void onDeletePal();
     void onOpenFolder();
 
   private:
