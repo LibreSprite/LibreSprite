@@ -472,4 +472,26 @@ add_library(app-lib
   xml_document.cpp
   ${data_recovery_files}
   ${generated_files})
+
+#used for test
+target_link_libraries(app-lib 
+  base-lib
+  cfg-lib
+  css-lib
+  doc-lib
+  filters-lib
+  fixmath-lib
+  flic-lib
+  render-lib
+  net-lib
+  ui-lib
+  undo
+  ${LibArchive_LIBRARY}
+  ${TINYXML2_LIBRARY}
+  ${JPEG_LIBRARIES}
+  ${GIF_LIBRARIES}
+  ${PNG_LIBRARIES}
+  ${WEBP_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
 endif()
