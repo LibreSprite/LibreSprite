@@ -39,15 +39,22 @@ async function writeRasterAs(
   }
 }
 
-/** Get a source sprite's pixels, converting through PNG when needed. */
-async function readSourceRaster(src: AssetPath) {
+/**
+ * Get a source sprite's pixels, converting through PNG when needed.
+ *
+ * For a layered .ase this yields the flattened composite, and hidden layers are
+ * excluded unless allLayers is set — both verified against data/splash.ase, a
+ * 54-layer indexed sprite with three hidden layers.
+ */
+async function readSourceRaster(src: AssetPath, allLayers = false) {
   if (src.host.toLowerCase().endsWith('.png')) {
     return decodePng(await readFile(src.host));
   }
   const tmp = tempAsset('.png');
   await mkdir(dirname(tmp.host), { recursive: true });
   try {
-    await runNative([src.container, '--save-as', tmp.container]);
+    const args = allLayers ? ['--all-layers'] : [];
+    await runNative([...args, src.container, '--save-as', tmp.container]);
     return decodePng(await readFile(tmp.host));
   } finally {
     await rm(dirname(tmp.host), { recursive: true, force: true });
@@ -94,6 +101,8 @@ export function registerCreateTools(server: McpServer): void {
       description:
         'Convert an ordinary drawing or photo into a small, palette-limited sprite: resample down, ' +
         'then snap every colour to a master palette. Writes a NEW file and never touches the source. ' +
+        'A layered source is flattened to its composite (hidden layers excluded unless allLayers), ' +
+        'so the output always has a single layer. ' +
         'This produces a mechanically correct sprite, not hand-quality pixel art — treat the result ' +
         'as a draft or colour blockout, not a finished asset.',
       inputSchema: z.object({
@@ -126,6 +135,13 @@ export function registerCreateTools(server: McpServer): void {
           .max(255)
           .default(128)
           .describe('Pixels below this alpha become fully transparent. Kills soft edges.'),
+        allLayers: z
+          .boolean()
+          .default(false)
+          .describe(
+            'Include hidden layers. A layered source is flattened to its composite either way; ' +
+              'by default hidden layers are left out, matching what you see in the editor.',
+          ),
       }),
     },
     guard(async (a): Promise<ToolResult> => {
@@ -135,7 +151,7 @@ export function registerCreateTools(server: McpServer): void {
         throw new Error('`out` must differ from `file`; this tool will not overwrite the source.');
       }
 
-      const source = await readSourceRaster(src);
+      const source = await readSourceRaster(src, a.allLayers);
 
       let width = a.width ?? 0;
       let height = a.height ?? 0;
@@ -169,6 +185,8 @@ export function registerCreateTools(server: McpServer): void {
         source: { width: source.width, height: source.height, colors: countColors(source) },
         result: { width, height, colors: countColors(final) },
         resample: a.resample,
+        allLayers: a.allLayers,
+        sourceLayersFlattened: true,
         paletteSize,
         note: paletteSize
           ? undefined

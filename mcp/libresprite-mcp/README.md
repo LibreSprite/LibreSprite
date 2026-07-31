@@ -67,6 +67,10 @@ time through Duktape takes ~20 s. `src/png.ts` is a dependency-free PNG codec (v
 byte-identical on round-trip); the container is used only for the `.ase` format, which is the one
 thing it uniquely provides.
 
+A layered `.ase` source is composited on the way in — verified against `data/splash.ase` (54 layers,
+three hidden): the conversion reads the true composite, not the bottom layer, and excludes hidden
+layers unless `allLayers: true`. The output always has one layer.
+
 **This produces a mechanically correct sprite, not hand-quality pixel art.** Good pixel art is drawn
 pixel by pixel. Treat the output as a draft, a colour blockout, or a reference — not a finished
 asset.

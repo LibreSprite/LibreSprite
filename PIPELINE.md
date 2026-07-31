@@ -123,9 +123,16 @@ script one.
 
 ### Quality and scope
 
-- **`convert_to_pixel_art` flattens.** It routes through a PNG, so a multi-layer `.ase` source loses
-  its layers in the output. This is fine for the intended use (turning a drawing into a sprite) but
-  it has **not been tested against a multi-layer `.ase`** — the most significant remaining test gap.
+- **`convert_to_pixel_art` flattens the source.** A layered `.ase` is composited on the way in, so
+  the output always has exactly one layer. Verified against `data/splash.ase` — 320x160, INDEXED,
+  54 layers, three of them hidden: the conversion reads the true composite (byte-identical to an
+  independently reconstructed downscale of the CLI's own composite export), not just the bottom
+  layer. Hidden layers are excluded by default, matching what you see in the editor; pass
+  `allLayers: true` to include them.
+
+  Flattening is inherent to the operation, not a defect — but it does mean this tool cannot be used
+  to rework a layered sprite in place. Use it to bring outside art *in*, then keep the layered
+  `.ase` as the source of truth.
 - **Converted art is a draft, not a finished asset.** The pipeline produces a mechanically correct
   sprite: right size, right palette. Good pixel art is drawn pixel by pixel. Present converted output
   as a blockout or reference. The tool descriptions and `skills/sprite-skills/SKILL.md` say this
