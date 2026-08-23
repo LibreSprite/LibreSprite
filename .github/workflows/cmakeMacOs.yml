@@ -130,13 +130,19 @@ jobs:
 
     - name: Create DMG
       run: |
-        # Create an entitlements file to disable library validation for ad-hoc signed apps
+        # Create an entitlements file for the ad-hoc signed app:
+        #  - disable-library-validation: ad-hoc signatures carry no Team ID, so
+        #    library validation would reject the bundled dylibs in Contents/libs.
+        #  - allow-jit: the hardened runtime (--options=runtime) denies MAP_JIT
+        #    without it, and V8 cannot reserve its CodeRange -> scripting aborts.
         cat > ./bundle_entitlements.plist << EOF
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
             <key>com.apple.security.cs.disable-library-validation</key>
+            <true/>
+            <key>com.apple.security.cs.allow-jit</key>
             <true/>
         </dict>
         </plist>
