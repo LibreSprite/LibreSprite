@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -195,7 +195,18 @@ int init_module_gui()
 	  #ifdef EMSCRIPTEN
 	  uiScale = 2;
 	  #else
-          uiScale = 2 + (ui::display_h() > 400) + (ui::display_h() > 800);
+	  // Guess a sensible UI scale on the first run from the primary
+	  // display's resolution, keeping the post-scale (logical) screen
+	  // height usable for the editor (~400px is the practical minimum).
+	  // The initial window is only a small fallback size, so prefer the
+	  // real desktop height and only fall back to the window height when
+	  // it's unavailable. Note: on Hi-DPI setups SDL may report either
+	  // pixels or points depending on the platform, so the thresholds are
+	  // deliberately conservative.
+	  int screenH = she::instance()->desktopSize().h;
+	  if (screenH <= 0)
+	      screenH = ui::display_h();
+	  uiScale = MID(1, 1 + (screenH >= 720) + (screenH >= 1200) + (screenH >= 1800), 4);
 	  #endif
           Preferences::instance().experimental.uiScale(uiScale);
       }

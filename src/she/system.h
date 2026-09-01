@@ -1,5 +1,6 @@
 // SHE library
-// Copyright (C) 2012-2016  David Capello
+// Aseprite    | Copyright (C) 2012-2016  David Capello
+// LibreSpreie | Copyright (C) 2026       LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -42,6 +43,8 @@ namespace she {
     virtual bool gpuAcceleration() const = 0;
     virtual void setGpuAcceleration(bool state) = 0;
     virtual gfx::Size defaultNewDisplaySize() = 0;
+    // Primary display resolution in pixels, or (0,0) if it can't be determined.
+    virtual gfx::Size desktopSize() = 0;
     virtual Display* defaultDisplay() = 0;
     virtual Display* createDisplay(int width, int height, int scale) = 0;
     virtual Surface* createSurface(int width, int height) = 0;

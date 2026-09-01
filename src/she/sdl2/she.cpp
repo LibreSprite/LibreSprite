@@ -850,6 +850,19 @@ namespace she {
       return gfx::Size(0, 0);
     }
 
+    gfx::Size desktopSize() override {
+      // Reports the primary display's resolution in pixels (or in points on
+      // platforms where the window is not created high-DPI aware, e.g. macOS
+      // without SDL_WINDOW_ALLOW_HIGHDPI). Returns (0, 0) when SDL can't
+      // determine it or the video subsystem isn't up yet.
+      if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+        return gfx::Size(0, 0);
+      SDL_DisplayMode mode;
+      if (SDL_GetDesktopDisplayMode(0, &mode) != 0)
+        return gfx::Size(0, 0);
+      return gfx::Size(mode.w, mode.h);
+    }
+
     Display* defaultDisplay() override {
       return unique_display;
     }
