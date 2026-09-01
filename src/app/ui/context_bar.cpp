@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -1265,17 +1265,27 @@ protected:
 
 class ContextBar::SymmetryField : public ButtonSet {
 public:
-  SymmetryField() : ButtonSet(2) {
+  SymmetryField() : ButtonSet(7) {
     setMultipleSelection(true);
 
     SkinTheme* theme = SkinTheme::instance();
+    addItem(theme->parts.noSymmetry());
     addItem(theme->parts.horizontalSymmetry());
     addItem(theme->parts.verticalSymmetry());
+    addItem(theme->parts.diagonalSymmetry45());
+    addItem(theme->parts.diagonalSymmetry135());
+    addItem(theme->parts.rotationalSymmetry180());
+    addItem(theme->parts.rotationalSymmetry90());
   }
 
   void setupTooltips(TooltipManager* tooltipManager) {
-    tooltipManager->addTooltipFor(at(0), "Horizontal Symmetry", BOTTOM);
-    tooltipManager->addTooltipFor(at(1), "Vertical Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(0), "No Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(1), "Horizontal Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(2), "Vertical Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(3), "45\xc2\xb0 Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(4), "-45\xc2\xb0 Symmetry", BOTTOM);
+    tooltipManager->addTooltipFor(at(5), "Rotational Symmetry (180\xc2\xb0)", BOTTOM);
+    tooltipManager->addTooltipFor(at(6), "Rotational Symmetry (90\xc2\xb0)", BOTTOM);
   }
 
   void updateWithCurrentDocument() {
@@ -1284,12 +1294,15 @@ public:
       return;
 
     DocumentPreferences& docPref = Preferences::instance().document(doc);
-    app::gen::SymmetryMode symmetryMode = docPref.symmetry.mode();
+    int mode = (int)docPref.symmetry.mode();
 
-    at(0)->setSelected(symmetryMode == app::gen::SymmetryMode::HORIZONTAL
-                        || symmetryMode == app::gen::SymmetryMode::BOTH);
-    at(1)->setSelected(symmetryMode == app::gen::SymmetryMode::VERTICAL
-                        || symmetryMode == app::gen::SymmetryMode::BOTH);
+    at(0)->setSelected(mode == (int)app::gen::SymmetryMode::NONE);
+    at(1)->setSelected((mode & (int)app::gen::SymmetryMode::HORIZONTAL) != 0);
+    at(2)->setSelected((mode & (int)app::gen::SymmetryMode::VERTICAL) != 0);
+    at(3)->setSelected((mode & (int)app::gen::SymmetryMode::DIAGONAL_45) != 0);
+    at(4)->setSelected((mode & (int)app::gen::SymmetryMode::DIAGONAL_135) != 0);
+    at(5)->setSelected(mode == (int)app::gen::SymmetryMode::ROTATIONAL_180);
+    at(6)->setSelected(mode == (int)app::gen::SymmetryMode::ROTATIONAL_90);
   }
 
 private:
@@ -1303,19 +1316,85 @@ private:
     DocumentPreferences& docPref =
       Preferences::instance().document(doc);
 
-    if (selectedItem() == -1)
-      docPref.symmetry.mode(app::gen::SymmetryMode::NONE);
-    else if (at(0)->isSelected() && at(1)->isSelected())
-      docPref.symmetry.mode(app::gen::SymmetryMode::BOTH);
-    else if (at(0)->isSelected())
-      docPref.symmetry.mode(app::gen::SymmetryMode::HORIZONTAL);
-    else
-      docPref.symmetry.mode(app::gen::SymmetryMode::VERTICAL);
+    int mode;
+    if (item == at(0)) {
+      // "No Symmetry" clears every other flag.
+      mode = (int)app::gen::SymmetryMode::NONE;
+    }
+    else if (item == at(5)) {
+      // Rotational symmetry is exclusive: it replaces every other flag.
+      mode = at(5)->isSelected() ? (int)app::gen::SymmetryMode::ROTATIONAL_180
+                                  : (int)app::gen::SymmetryMode::NONE;
+    }
+    else if (item == at(6)) {
+      // Also exclusive: it replaces every other flag.
+      mode = at(6)->isSelected() ? (int)app::gen::SymmetryMode::ROTATIONAL_90
+                                  : (int)app::gen::SymmetryMode::NONE;
+    }
+    else {
+      mode = (int)app::gen::SymmetryMode::NONE;
+      if (at(1)->isSelected()) mode |= (int)app::gen::SymmetryMode::HORIZONTAL;
+      if (at(2)->isSelected()) mode |= (int)app::gen::SymmetryMode::VERTICAL;
+      if (at(3)->isSelected()) mode |= (int)app::gen::SymmetryMode::DIAGONAL_45;
+      if (at(4)->isSelected()) mode |= (int)app::gen::SymmetryMode::DIAGONAL_135;
+    }
+
+    docPref.symmetry.mode((app::gen::SymmetryMode)mode);
+
+    // Bring the buttons back in sync (clears the stale selection of
+    // whichever buttons the new mode no longer includes).
+    updateWithCurrentDocument();
 
     // Redraw symmetry rules
     doc->notifyGeneralUpdate();
   }
 };
+
+class ContextBar::SymmetryOptionsField : public ButtonSet {
+public:
+  SymmetryOptionsField() : ButtonSet(1) {
+    addItem(SkinTheme::instance()->parts.symmetryOptions());
+  }
+
+  void setupTooltips(TooltipManager* tooltipManager) {
+    tooltipManager->addTooltipFor(at(0), "Symmetry Options", BOTTOM);
+  }
+
+private:
+  void onItemChange(Item* item) override {
+    ButtonSet::onItemChange(item);
+
+    gfx::Rect bounds = this->bounds();
+
+    Menu menu;
+    MenuItem resetToCenter("Reset Symmetry to Center");
+    MenuItem resetToViewCenter("Reset Symmetry to View Center");
+    menu.addChild(&resetToCenter);
+    menu.addChild(&resetToViewCenter);
+
+    resetToCenter.Click.connect(
+      [] {
+        Params params;
+        params.set("target", "center");
+        UIContext::instance()->executeCommand(
+          CommandsModule::instance()->getCommandByName(CommandId::ResetSymmetry),
+          params);
+      });
+    resetToViewCenter.Click.connect(
+      [] {
+        Params params;
+        params.set("target", "view");
+        UIContext::instance()->executeCommand(
+          CommandsModule::instance()->getCommandByName(CommandId::ResetSymmetry),
+          params);
+      });
+
+    menu.showPopup(gfx::Point(bounds.x, bounds.y+bounds.h));
+
+    deselectItems();
+  }
+};
+
 
 ContextBar::ContextBar()
   : Box(HORIZONTAL)
@@ -1379,6 +1458,9 @@ ContextBar::ContextBar()
   addChild(m_symmetry = new SymmetryField());
   m_symmetry->setVisible(Preferences::instance().symmetryMode.enabled());
 
+  addChild(m_symmetryOptions = new SymmetryOptionsField());
+  m_symmetryOptions->setVisible(Preferences::instance().symmetryMode.enabled());
+
   TooltipManager* tooltipManager = new TooltipManager();
   addChild(tooltipManager);
 
@@ -1401,6 +1483,7 @@ ContextBar::ContextBar()
   m_dropPixels->setupTooltips(tooltipManager);
   m_freehandAlgo->setupTooltips(tooltipManager);
   m_symmetry->setupTooltips(tooltipManager);
+  m_symmetryOptions->setupTooltips(tooltipManager);
 
   App::instance()->activeToolManager()->addObserver(this);
 
@@ -1655,10 +1738,11 @@ void ContextBar::updateForTool(tools::Tool* tool)
   m_dropPixels->setVisible(false);
   m_selectBoxHelp->setVisible(false);
 
-  m_symmetry->setVisible(
-    Preferences::instance().symmetryMode.enabled() &&
-    (isPaint || isEffect || hasSelectOptions));
+  bool showSymmetry = Preferences::instance().symmetryMode.enabled() &&
+    (isPaint || isEffect || hasSelectOptions);
+  m_symmetry->setVisible(showSymmetry);
   m_symmetry->updateWithCurrentDocument();
+  m_symmetryOptions->setVisible(showSymmetry);
 
   // Update ink shades with the current selected palette entries
   if (updateShade)

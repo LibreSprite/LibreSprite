@@ -1,5 +1,5 @@
 // SHE library
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -13,6 +13,7 @@
 #include "base/string.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
+#include <cstdlib>
 #include <iostream>
 #if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
@@ -409,7 +410,26 @@ namespace she {
       return;
     }
 
-    printf("Unsupported line: %d,%d -> %d,%d\n", a.x, a.y, b.x, b.y);
+    // General case: Bresenham's line algorithm. putPixel() already clips
+    // against the surface's clip rect, so no bounds checking is needed here.
+    int dx = std::abs(b.x - a.x), sx = (a.x < b.x) ? 1 : -1;
+    int dy = -std::abs(b.y - a.y), sy = (a.y < b.y) ? 1 : -1;
+    int err = dx + dy;
+    int x = a.x, y = a.y;
+    while (true) {
+      putPixel(color, x, y);
+      if (x == b.x && y == b.y)
+        break;
+      int e2 = 2 * err;
+      if (e2 >= dy) {
+        err += dy;
+        x += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        y += sy;
+      }
+    }
   }
 
   void SDL2Surface::drawRect(gfx::Color color, const gfx::Rect& rc)

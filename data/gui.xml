@@ -766,6 +766,14 @@
           </item>
         </menu>
         <item command="SymmetryMode" text="S&amp;ymmetry Options" />
+        <menu text="Symmetry &amp;Axes">
+          <item command="ResetSymmetry" text="Reset Symmetry to &amp;Center">
+            <param name="target" value="center" />
+          </item>
+          <item command="ResetSymmetry" text="Reset Symmetry to &amp;View Center">
+            <param name="target" value="view" />
+          </item>
+        </menu>
         <separator />
         <item command="SetLoopSection" text="Set &amp;Loop Section" />
         <item command="ShowOnionSkin" text="Show &amp;Onion Skin" />

@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -37,6 +37,7 @@
 #include "app/ui/editor/moving_pixels_state.h"
 #include "app/ui/editor/pixels_movement.h"
 #include "app/ui/editor/play_state.h"
+#include "app/ui/editor/symmetry_handles.h"
 #include "app/ui/editor/standby_state.h"
 #include "app/ui/main_window.h"
 #include "app/ui/skin/skin_theme.h"
@@ -651,24 +652,62 @@ void Editor::drawSpriteUnclippedRect(ui::Graphics* g, const gfx::Rect& _rc)
       Preferences::instance().symmetryMode.enabled()) {
 
     auto symmetryMode = (int)m_docPref.symmetry.mode();
-    if (symmetryMode & (int)app::gen::SymmetryMode::HORIZONTAL) {
-      int x = m_docPref.symmetry.xAxis();
+    int x = m_docPref.symmetry.xAxis();
+    int y = m_docPref.symmetry.yAxis();
+    gfx::Point origin(spriteRect.x + m_zoom.apply(x), spriteRect.y + m_zoom.apply(y));
+
+    // Rotational-90 and rotational-180 both render as a horizontal + vertical
+    // guide line pair, since their quadrants/point reflection pivot around
+    // the point where those lines cross. For rotational-180 the two lines are
+    // given different colors (vertical=green, horizontal=blue) to distinguis it
+    // from the 90deg case and to hint that only one apparent stroke copy will be
+    // generated along 'either one' of the two axes.
+    if (symmetryMode & ((int)app::gen::SymmetryMode::HORIZONTAL |
+                         (int)app::gen::SymmetryMode::ROTATIONAL_90 |
+                         (int)app::gen::SymmetryMode::ROTATIONAL_180)) {
       if (x > 0) {
-        gfx::Color color = color_utils::color_for_ui(m_docPref.grid.color());
+        gfx::Color color = (symmetryMode & (int)app::gen::SymmetryMode::ROTATIONAL_180)
+          ? gfx::rgba(0, 255, 0)
+          : color_utils::color_for_ui(m_docPref.grid.color());
         g->drawVLine(color,
-                     spriteRect.x + m_zoom.apply(x),
+                     origin.x,
                      enclosingRect.y,
                      enclosingRect.h);
       }
     }
-    if (symmetryMode & (int)app::gen::SymmetryMode::VERTICAL) {
-      int y = m_docPref.symmetry.yAxis();
+    if (symmetryMode & ((int)app::gen::SymmetryMode::VERTICAL |
+                         (int)app::gen::SymmetryMode::ROTATIONAL_90 |
+                         (int)app::gen::SymmetryMode::ROTATIONAL_180)) {
       if (y > 0) {
         gfx::Color color = color_utils::color_for_ui(m_docPref.grid.color());
         g->drawHLine(color,
                      enclosingRect.x,
-                     spriteRect.y + m_zoom.apply(y),
+                     origin.y,
                      enclosingRect.w);
+      }
+    }
+    if (symmetryMode & (int)app::gen::SymmetryMode::DIAGONAL_45) {
+      if (x > 0 || y > 0) {
+        gfx::Color color = color_utils::color_for_ui(m_docPref.grid.color());
+        gfx::Point p1, p2;
+        if (clip_diagonal_symmetry_line(origin, -1, enclosingRect, p1, p2))
+          g->drawLine(color, p1, p2);
+      }
+    }
+    if (symmetryMode & (int)app::gen::SymmetryMode::DIAGONAL_135) {
+      if (x > 0 || y > 0) {
+        gfx::Color color = color_utils::color_for_ui(m_docPref.grid.color());
+        gfx::Point p1, p2;
+        if (clip_diagonal_symmetry_line(origin, +1, enclosingRect, p1, p2))
+          g->drawLine(color, p1, p2);
+      }
+    }
+    if (symmetryMode & (int)app::gen::SymmetryMode::ROTATIONAL_180) {
+      if (x > 0 || y > 0) {
+        gfx::Color color = color_utils::color_for_ui(m_docPref.grid.color());
+        const int r = 6;
+        g->drawLine(color, gfx::Point(origin.x-r, origin.y-r), gfx::Point(origin.x+r, origin.y+r));
+        g->drawLine(color, gfx::Point(origin.x-r, origin.y+r), gfx::Point(origin.x+r, origin.y-r));
       }
     }
   }

@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -154,23 +154,22 @@ public:
 
     // Symmetry mode
     if (Preferences::instance().symmetryMode.enabled()) {
-      switch (m_docPref.symmetry.mode()) {
+      int mode = (int)m_docPref.symmetry.mode();
 
-        case app::gen::SymmetryMode::NONE:
-          ASSERT(m_symmetry == nullptr);
-          break;
-
-        case app::gen::SymmetryMode::HORIZONTAL:
-          m_symmetry.reset(new app::tools::HorizontalSymmetry(m_docPref.symmetry.xAxis()));
-          break;
-
-        case app::gen::SymmetryMode::VERTICAL:
-          m_symmetry.reset(new app::tools::VerticalSymmetry(m_docPref.symmetry.yAxis()));
-          break;
-
-        case app::gen::SymmetryMode::BOTH:
-          m_symmetry.reset(new app::tools::DoubleSymmetry(m_docPref.symmetry.xAxis(), m_docPref.symmetry.yAxis()));
-          break;
+      if (mode & (int)app::gen::SymmetryMode::ROTATIONAL_180) {
+        // Rotational symmetry is exclusive: ignore any other bit that might
+        // be set alongside it.
+        m_symmetry.reset(new app::tools::Rotational180Symmetry(
+          m_docPref.symmetry.xAxis(), m_docPref.symmetry.yAxis()));
+      }
+      else if (mode & (int)app::gen::SymmetryMode::ROTATIONAL_90) {
+        // Also exclusive: ignore any other bit set alongside it.
+        m_symmetry.reset(new app::tools::Rotational90Symmetry(
+          m_docPref.symmetry.xAxis(), m_docPref.symmetry.yAxis()));
+      }
+      else if (mode != (int)app::gen::SymmetryMode::NONE) {
+        m_symmetry.reset(new app::tools::CompositeSymmetry(
+          mode, m_docPref.symmetry.xAxis(), m_docPref.symmetry.yAxis()));
       }
     }
 

@@ -397,6 +397,11 @@
     <part id="no_symmetry"                      x="144" y="240" w="13" h="13" />
     <part id="horizontal_symmetry"              x="160" y="240" w="13" h="13" />
     <part id="vertical_symmetry"                x="176" y="240" w="13" h="13" />
+    <part id="diagonal_symmetry_45"             x="192" y="240" w="13" h="13" />
+    <part id="diagonal_symmetry_135"            x="208" y="240" w="13" h="13" />
+    <part id="rotational_symmetry_180"          x="224" y="240" w="13" h="13" />
+    <part id="rotational_symmetry_90"           x="240" y="240" w="13" h="13" />
+    <part id="symmetry_options"                 x="256" y="240" w="13" h="13" />
     <part id="icon_arrow_down"                  x="144" y="256" w="7" h="4" />
     <part id="icon_close"                       x="152" y="256" w="7" h="7" />
     <part id="icon_search"                      x="160" y="256" w="8" h="8" />
