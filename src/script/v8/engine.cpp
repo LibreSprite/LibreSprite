@@ -29,6 +29,16 @@
 #include <v8.h>
 #include <libplatform/libplatform.h>
 
+// V8 12+ requires an explicit external pointer tag for External::New/Value
+// Keep legacy path for older V8 versions to avoid breaking Linux/distro builds.
+#if V8_MAJOR_VERSION >= 12
+#define LS_V8_EXTERNAL_NEW(isolate, ptr) v8::External::New(isolate, ptr, v8::kExternalPointerTypeTagDefault)
+#define LS_V8_EXTERNAL_VALUE(ext) ext->Value(v8::kExternalPointerTypeTagDefault)
+#else
+#define LS_V8_EXTERNAL_NEW(isolate, ptr) v8::External::New(isolate, ptr)
+#define LS_V8_EXTERNAL_VALUE(ext) ext->Value()
+#endif
+
 using namespace script;
 
 template<typename Inner>
@@ -254,7 +264,7 @@ public:
     auto isolate = args.GetIsolate();
     v8::HandleScope handle_scope(isolate);
     auto data = args.Data().As<v8::External>();
-    auto& func = *reinterpret_cast<script::Function*>(data->Value());
+    auto& func = *reinterpret_cast<script::Function*>(LS_V8_EXTERNAL_VALUE(data));
 
     for (int i = 0; i < args.Length(); i++) {
       func.arguments.push_back(getValue(isolate, args[i]));
@@ -274,7 +284,7 @@ public:
     auto isolate = m_engine.get<V8Engine>()->m_isolate;
     auto context = m_engine.get<V8Engine>()->context();
     for (auto& entry : functions) {
-      auto tpl = v8::FunctionTemplate::New(isolate, callFunc, v8::External::New(isolate, &entry.second));
+      auto tpl = v8::FunctionTemplate::New(isolate, callFunc, LS_V8_EXTERNAL_NEW(isolate, &entry.second));
       auto func = tpl->GetFunction(context).ToLocalChecked();
       Check(object->Set(context,
                   ToLocal(v8::String::NewFromUtf8(isolate, entry.first.c_str())),
@@ -287,10 +297,10 @@ public:
     auto context = m_engine.get<V8Engine>()->context();
 
     for (auto& entry : properties) {
-      auto getterTpl = v8::FunctionTemplate::New(isolate, callFunc, v8::External::New(isolate, &entry.second.getter));
+      auto getterTpl = v8::FunctionTemplate::New(isolate, callFunc, LS_V8_EXTERNAL_NEW(isolate, &entry.second.getter));
       auto getter = getterTpl->GetFunction(context).ToLocalChecked();
 
-      auto setterTpl = v8::FunctionTemplate::New(isolate, callFunc, v8::External::New(isolate, &entry.second.setter));
+      auto setterTpl = v8::FunctionTemplate::New(isolate, callFunc, LS_V8_EXTERNAL_NEW(isolate, &entry.second.setter));
       auto setter = setterTpl->GetFunction(context).ToLocalChecked();
 
       v8::PropertyDescriptor descriptor(getter, setter);
