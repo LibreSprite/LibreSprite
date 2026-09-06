@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2015  David Capello
+// LibreSprite | Copyright (C) 2016-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -88,7 +88,7 @@ void UndoCommand::onExecute(Context* context)
       current_editor->drawSpriteClipped(
         gfx::Region(gfx::Rect(0, 0, sprite->width(), sprite->height())));
 
-      current_editor->manager()->flipDisplay();
+      current_editor->manager()->requestRedraw();
       base::this_thread::sleep_for(0.01);
     }
   }

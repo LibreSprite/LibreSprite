@@ -904,7 +904,7 @@ void Editor::flashCurrentLayer()
       m_document->setExtraCel(extraCel);
       drawSpriteClipped(gfx::Region(
                           gfx::Rect(0, 0, m_sprite->width(), m_sprite->height())));
-      manager()->flipDisplay();
+      manager()->requestRedraw();
       m_document->setExtraCel(oldExtraCel);
     }
 
