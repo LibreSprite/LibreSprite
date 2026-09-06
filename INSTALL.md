@@ -72,7 +72,7 @@ To install the required dependencies with msys2, run the following in mingw32:
 On MacOS you will need Mac OS X 11.0 SDK and the corresponding Xcode.
 In a terminal, install the dependencies using brew:
 
-    brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler cmake
+    brew install pkgconf gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive v8 ninja zlib xmlto dylibbundler cmake
 
 ## Compiling
 
