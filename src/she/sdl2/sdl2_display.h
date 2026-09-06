@@ -8,7 +8,7 @@
 
 #include "she/display.h"
 
-#if (defined(_WIN32) || defined(__linux__)) && !defined(ANDROID)
+#if (defined(_WIN32) || defined(USE_X11))
 #include <EasyTab/easytab.h>
 #undef None
 #endif
