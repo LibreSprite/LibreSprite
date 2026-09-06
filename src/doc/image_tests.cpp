@@ -69,7 +69,7 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
 
     // Read-only iterator (whole image)
     {
-      const LockImageBits<ImageTraits> bits((const Image*)image);
+      const LockImageBits<ImageTraits> bits(image.get());
       typename LockImageBits<ImageTraits>::const_iterator
         begin = bits.begin(),
         it = begin,
@@ -87,7 +87,7 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
       if (bounds.w <= 0 || bounds.h <= 0)
         break;
 
-      const LockImageBits<ImageTraits> bits((const Image*)image, bounds);
+      const LockImageBits<ImageTraits> bits(image.get(), bounds);
       typename LockImageBits<ImageTraits>::const_iterator
         begin = bits.begin(),
         it = begin,
@@ -108,7 +108,7 @@ TYPED_TEST(ImageAllTypes, PutGetAndIterators)
 
     // Write iterator (whole image)
     {
-      LockImageBits<ImageTraits> bits(image, Image::WriteLock);
+      LockImageBits<ImageTraits> bits(image.get(), Image::WriteLock);
       typename LockImageBits<ImageTraits>::iterator
         begin = bits.begin(),
         it = begin,
