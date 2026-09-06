@@ -42,10 +42,10 @@ jobs:
         make all -j4
         sudo make install
 
-    - name: Download & Lint Info.plist
+    - name: Lint Info.plist
       run: |
-        curl -L https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
         plutil desktop/Info.plist
+        test "$(plutil -extract CFBundleExecutable raw desktop/Info.plist)" = "libresprite"
 
     - name: Generate Makefiles
       run: |
@@ -130,47 +130,26 @@ jobs:
 
     - name: Create DMG
       run: |
-        # Create an entitlements file to disable library validation for ad-hoc signed apps
-        cat > ./bundle_entitlements.plist << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>com.apple.security.cs.disable-library-validation</key>
-            <true/>
-        </dict>
-        </plist>
-        EOF
-        
-        # Remove all existing signatures completely
+        # Remove all existing signatures before re-signing
         find ./bundle/libresprite.app -type f \( -name "*.dylib" -o -name "libresprite" \) -exec codesign --remove-signature {} \; 2>/dev/null || true
-        
-        # Create a temporary signing script to ensure identical codesign parameters
-        cat > ./sign_component.sh << 'EOF'
-        #!/bin/bash
-        COMPONENT="$1"
-        echo "Signing: $COMPONENT"
-        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - "$COMPONENT"
-        if [ $? -eq 0 ]; then
-            echo "Successfully signed: $COMPONENT"
-        else
-            echo "Failed to sign: $COMPONENT"
-        fi
-        EOF
-        chmod +x ./sign_component.sh
-        
-        # Sign all dylib files first using the same exact process
-        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" -exec ./sign_component.sh {} \;
-        
-        # Sign the main executable
-        ./sign_component.sh "./bundle/libresprite.app/Contents/MacOS/libresprite"
-        
-        # Sign the app bundle itself (without --deep since components are already signed)
-        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - ./bundle/libresprite.app
-        
-        # Clean up
-        rm ./bundle_entitlements.plist ./sign_component.sh
-        
+
+        # Ad-hoc sign without hardened runtime (--options=runtime triggers CS_RUNTIME which
+        # causes macOS 27's code signing monitor to enforce strict page-level validation on
+        # every loaded dylib — validation that ad-hoc signatures produced by older runners
+        # fail. Without CS_RUNTIME, library validation is not kernel-enforced and all dylibs
+        # load freely. This also allows V8's JIT, which requires writable+executable memory
+        # that hardened runtime blocks.)
+        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" | while read -r dylib; do
+          echo "Signing: $dylib"
+          codesign --force -s - "$dylib" && echo "✓ $dylib" || echo "✗ $dylib"
+        done
+
+        codesign --force -s - ./bundle/libresprite.app/Contents/MacOS/libresprite && \
+          echo "✓ Signed: libresprite" || echo "✗ Failed: libresprite"
+
+        codesign --force -s - ./bundle/libresprite.app && \
+          echo "✓ Signed: libresprite.app" || echo "✗ Failed: libresprite.app"
+
         hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
 
     - name: Upload Artifacts

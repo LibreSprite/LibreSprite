@@ -17,6 +17,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>libresprite.libresprite.github</string>
 
+	<key>CFBundleExecutable</key>
+	<string>libresprite</string>
+
  	<key>CFBundleIconFile</key>
 	<string>libresprite.icns</string>
 
