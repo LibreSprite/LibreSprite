@@ -1,70 +1,58 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "ui/int_entry.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
 #include "app/script/api/widget_script.h"
-#include "app/script/app_scripting.h"
 
-namespace script {
-  void setStorage(const script::Value& value, const std::string& key, const std::string& domain);
-}
+#include <memory>
+#include <string>
 
-class CustomIntEntry : public ui::IntEntry {
-  std::string m_fileName;
+class IntEntryExtension : public Extension {
 public:
+  IntEntryExtension() {
+    auto& cls = addClass<void, IntEntryObject>("IntEntry");
+    // The int entry is created by DialogObject::addIntEntry() (C++), not
+    // `new IntEntry()` in JS, but delta requires a non-null constructor.
+    cls.setConstructor() = []() -> std::shared_ptr<IntEntryObject> {
+      return std::make_shared<IntEntryObject>();
+    };
 
-  CustomIntEntry(const std::string& fileName) : ui::IntEntry(0, 100), m_fileName(fileName) {}
+    addWidgetId<IntEntryObject>(cls);
 
-  bool canRaiseEvent = true;
+    // min: the minimum value.
+    cls.addGetter("min") = [](IntEntryObject& self) -> JSON::Value {
+      return self.intEntry() ? (double)self.intEntry()->min() : (double)0;
+    };
+    cls.addSetter("min") = [](IntEntryObject& self, JSON::Value& v) {
+      if (self.intEntry())
+        self.intEntry()->setMin((int)v.number());
+    };
 
-  void setValueSilent(int value) {
-    canRaiseEvent = false;
-    setValue(value);
-    canRaiseEvent = true;
-  }
+    // max: the maximum value.
+    cls.addGetter("max") = [](IntEntryObject& self) -> JSON::Value {
+      return self.intEntry() ? (double)self.intEntry()->max() : (double)100;
+    };
+    cls.addSetter("max") = [](IntEntryObject& self, JSON::Value& v) {
+      if (self.intEntry())
+        self.intEntry()->setMax((int)v.number());
+    };
 
-  void onValueChange() override {
-    script::setStorage(getValue(), id(), m_fileName);
-    if (canRaiseEvent)
-      app::AppScripting::raiseEvent(m_fileName, {id() + "_change"});
+    // value: the integer value. Setting it does not raise the change event
+    // (setValueSilent); user edits do.
+    cls.addGetter("value") = [](IntEntryObject& self) -> JSON::Value {
+      return self.intEntry() ? (double)self.intEntry()->getValue() : (double)0;
+    };
+    cls.addSetter("value") = [](IntEntryObject& self, JSON::Value& v) {
+      if (self.intEntry())
+        self.intEntry()->setValueSilent((int)v.number());
+    };
   }
 };
 
-class IntEntryWidgetScriptObject : public WidgetScriptObject {
-public:
-  IntEntryWidgetScriptObject() {
-    addProperty("min",
-                [this]{return entry()->min();},
-                [this](int min){entry()->setMin(min); return min;});
-
-    addProperty("max",
-                [this]{return entry()->max();},
-                [this](int max){entry()->setMax(max); return max;});
-
-    addProperty("value",
-                [this]{return entry()->getValue();},
-                [this](int value){entry()->setValueSilent(value); return value;});
-  }
-
-
-  CustomIntEntry* entry() {
-    auto entry = getWidget<CustomIntEntry>();
-    if (!entry)
-      throw script::ObjectDestroyedException{};
-    return entry;
-  }
-
-  DisplayType getDisplayType() override {return DisplayType::Block;}
-
-  Handle build() override {
-    return new CustomIntEntry(app::AppScripting::getFileName());
-  }
-};
-
-static script::ScriptObject::Regular<IntEntryWidgetScriptObject> _SO("IntentryWidgetScriptObject", {
-    "widget" + std::to_string(ui::kEntryWidget)
-  });
+static di::provide<Extension, IntEntryExtension> intEntryExt{"intentry"};

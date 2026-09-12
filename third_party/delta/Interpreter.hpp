@@ -7,11 +7,14 @@
 
 class Interpreter {
 public:
+    enum class EvalType { Module, Script };
+
     virtual ~Interpreter() {}
-    virtual JSON::Value eval(const std::string& script, const std::string& path) = 0;
+    virtual JSON::Value eval(const std::string& script, const std::string& path, EvalType type = EvalType::Module) = 0;
     virtual void tick() = 0;
     virtual void addGlobalValue(const std::string& name, JSON::Value& value) = 0;
     virtual void addAPIFunction(const std::string& name, const std::function<JSON::Value(JSON::Array&)>& func) = 0;
+    virtual void addModuleSearchPath(const std::string& dir) = 0;
     virtual void reportError(const std::exception& e) = 0;
 
     using ClassCtor = std::function<std::shared_ptr<void>(JSON::Array&)>;

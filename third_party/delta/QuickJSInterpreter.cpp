@@ -1,10 +1,12 @@
 #include "Interpreter.hpp"
 #include "Shared.hpp"
 #include "di.hpp"
+#include <cstdio>
 #include <iostream>
 #include <list>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
 #include <typeindex>
 #include <unordered_map>
 #include <sstream>
@@ -23,6 +25,49 @@ static void clearQueue() {
         }
         queue.clear();
     };
+}
+
+// Unhandled promise rejections, buffered instead of handled by
+// js_std_promise_rejection_tracker: the std tracker feeds
+// js_std_promise_rejection_check, which prints and calls exit(1) inside
+// js_std_loop() — fatal for an embedded app. Entries are drained (and
+// reported to stderr) by eval()/tick() and cleared at teardown.
+static std::vector<std::tuple<JSContext*, JSValue, JSValue>> unhandledRejections;
+
+static void rejectionTracker(JSContext* ctx, JSValueConst promise, JSValueConst reason, bool is_handled, void* opaque) {
+    if (is_handled) {
+        for (auto it = unhandledRejections.begin(); it != unhandledRejections.end(); ++it) {
+            auto& [c, p, r] = *it;
+            if (JS_IsSameValue(ctx, p, promise)) {
+                JS_FreeValue(c, p);
+                JS_FreeValue(c, r);
+                unhandledRejections.erase(it);
+                break;
+            }
+        }
+        return;
+    }
+    for (auto& [c, p, r] : unhandledRejections) {
+        if (JS_IsSameValue(ctx, p, promise))
+            return;
+    }
+    unhandledRejections.emplace_back(ctx, JS_DupValue(ctx, promise), JS_DupValue(ctx, reason));
+}
+
+// Reports and frees the buffered unhandled rejections.
+static void drainUnhandledRejections() {
+    for (auto& [ctx, promise, reason] : unhandledRejections) {
+        fprintf(stderr, "Possibly unhandled promise rejection: ");
+        const char* msg = JS_ToCString(ctx, reason);
+        if (msg) {
+            fputs(msg, stderr);
+            JS_FreeCString(ctx, msg);
+        }
+        fputs("\n", stderr);
+        JS_FreeValue(ctx, promise);
+        JS_FreeValue(ctx, reason);
+    }
+    unhandledRejections.clear();
 }
 
 struct JSHandle {
@@ -136,6 +181,7 @@ public:
     std::shared_ptr<JSContext> ctx;
     JSClassID firstClassId{0};
     std::size_t classIdCount{0};
+    std::vector<std::string> moduleSearchPaths;
 
     static inline std::unordered_map<JSContext*, QuickJSInterpreter*> contextMap;
 
@@ -148,7 +194,7 @@ public:
             throw std::runtime_error{"Failed to create JSRuntime"};
 
         js_std_init_handlers(rt.get());
-        JS_SetHostPromiseRejectionTracker(rt.get(), js_std_promise_rejection_tracker, NULL);
+        JS_SetHostPromiseRejectionTracker(rt.get(), rejectionTracker, NULL);
 
         ctx = std::shared_ptr<JSContext>{JS_NewContext(rt.get()), [](auto* ctx){
             if (ctx)
@@ -166,7 +212,26 @@ public:
     static JSModuleDef *module_loader(JSContext *ctx, const char *module_name, void *opaque) {
         JSModuleDef *m;
 
-        std::ifstream fstr{module_name};
+        std::string path{module_name};
+        std::ifstream fstr{path};
+        if (!fstr) {
+            // Unresolved (bare) specifiers: search the configured module
+            // paths in order.
+            if (auto it = contextMap.find(ctx); it != contextMap.end()) {
+                for (auto& dir : it->second->moduleSearchPaths) {
+                    std::string candidate = dir + "/" + module_name;
+                    for (auto& tryPath : {candidate, candidate + ".js"}) {
+                        fstr.open(tryPath);
+                        if (fstr) {
+                            path = tryPath;
+                            break;
+                        }
+                    }
+                    if (fstr)
+                        break;
+                }
+            }
+        }
         if (!fstr) {
             JS_ThrowReferenceError(ctx, "could not read module filename '%s'", module_name);
             return NULL;
@@ -179,8 +244,10 @@ public:
         auto buf = fileString.data();
         JSValue func_val;
 
-        /* compile the module */
-        func_val = JS_Eval(ctx, buf, buf_len, module_name, JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+        /* compile the module with the resolved path as its name, so its
+           own relative imports resolve against it and stack traces show
+           the real file */
+        func_val = JS_Eval(ctx, buf, buf_len, path.c_str(), JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
         if (JS_IsException(func_val))
             return NULL;
         if (js_module_set_import_meta(ctx, func_val, false, false) < 0) {
@@ -196,6 +263,9 @@ public:
 
     ~QuickJSInterpreter() {
         clearQueue();
+        // Drop the buffered rejections (their dup refs would otherwise
+        // keep objects alive and trip JS_FreeRuntime's gc assertion).
+        drainUnhandledRejections();
         for (auto& [_, wrapper] : wrappers) {
             wrapper->weak.reset();
         }
@@ -331,7 +401,6 @@ public:
             }
             JS_FreeValue(ctx, stack);
             value["exception"] = std::string("JavaScript exception: ") + errmsg;
-            std::cout << "EX:" << value["exception"].string() << std::endl;
             return;
         }
 
@@ -430,7 +499,7 @@ public:
     }
 
     struct JSFunctionData {
-        const std::function<JSON::Value(JSON::Array&)>& func;
+        std::function<JSON::Value(JSON::Array&)> func;
         QuickJSInterpreter& q;
     };
     std::list<JSFunctionData> functionDataList;
@@ -504,9 +573,9 @@ public:
         std::string name;
         JSHandle proto;
 
-        struct MListElement { const std::function<JSON::Value(void* self, JSON::Array&)>& method; QJSClassDef& def; };
-        struct GListElement { const std::function<JSON::Value(void* self)>& method; QJSClassDef& def; };
-        struct SListElement { const std::function<void(void* self, JSON::Value&)>& method; QJSClassDef& def; };
+        struct MListElement { std::function<JSON::Value(void* self, JSON::Array&)> method; QJSClassDef& def; };
+        struct GListElement { std::function<JSON::Value(void* self)> method; QJSClassDef& def; };
+        struct SListElement { std::function<void(void* self, JSON::Value&)> method; QJSClassDef& def; };
 
         std::list<MListElement> methods;
         std::list<GListElement> getters;
@@ -730,19 +799,68 @@ public:
         return *def;
     }
     
-    JSON::Value eval(const std::string& script, const std::string& path) override {
+    static std::string errorToString(JSContext* ctx, JSValueConst err) {
+        std::string errmsg{"JavaScript exception"};
+        JSString msg {ctx, JS_ToCString(ctx, err)};
+        if (msg.value)
+            errmsg = msg.value;
+        JSHandle stack {ctx, JS_GetPropertyStr(ctx, err, "stack")};
+        if (!JS_IsException(stack) && !JS_IsUndefined(stack) && !JS_IsNull(stack)) {
+            JSString stackStr {ctx, JS_ToCString(ctx, stack)};
+            if (stackStr.value)
+                errmsg += "\n" + std::string{stackStr.value};
+        }
+        return errmsg;
+    }
+
+    JSON::Value eval(const std::string& script, const std::string& path, EvalType type) override {
+        int evalType = (type == EvalType::Module) ? JS_EVAL_TYPE_MODULE : JS_EVAL_TYPE_GLOBAL;
         JSHandle result {
             ctx.get(),
-            JS_Eval(ctx.get(), script.c_str(), script.size(), path.c_str(), JS_EVAL_TYPE_MODULE)
+            JS_Eval(ctx.get(), script.c_str(), script.size(), path.c_str(), evalType)
         };
+
+        // Synchronous error (e.g. compile failure).
+        if (JS_IsException(result)) {
+            JSHandle exc {ctx.get(), JS_GetException(ctx.get())};
+            throw std::runtime_error{errorToString(ctx.get(), exc)};
+        }
+
+        if (type == EvalType::Module) {
+            // JS_Eval returns the module's promise; a top-level throw
+            // rejects it asynchronously. Attach a no-op catch so the
+            // host's rejection tracker doesn't report it, then surface
+            // the error via the promise state below.
+            JSHandle catchFn {ctx.get(), JS_GetPropertyStr(ctx.get(), result.value, "catch")};
+            if (!JS_IsException(catchFn) && JS_IsFunction(ctx.get(), catchFn)) {
+                JSValue noop = JS_NewCFunction(ctx.get(),
+                    +[](JSContext*, JSValueConst, int, JSValueConst*) { return JS_UNDEFINED; },
+                    "onModuleSettled", 1);
+                JSHandle ignored {ctx.get(), JS_Call(ctx.get(), catchFn, result.value, 1, &noop)};
+                JS_FreeValue(ctx.get(), noop);
+            }
+        }
 
         js_std_loop(ctx.get());
 
-        // Basic error handling
-        if (JS_IsException(result)) {
-            js_std_dump_error(ctx.get());
-            throw std::runtime_error{"JavaScript execution failed"};
+        // Asynchronous error: a top-level throw in a module rejects its
+        // promise.
+        if (type == EvalType::Module &&
+            JS_IsPromise(result.value) &&
+            JS_PromiseState(ctx.get(), result.value) == JS_PROMISE_REJECTED) {
+            JSHandle reason {ctx.get(), JS_PromiseResult(ctx.get(), result.value)};
+            // The module's failure chain may have left other unhandled
+            // rejections buffered (e.g. the module's internal promise);
+            // they are the same error, so drop them without reporting.
+            for (auto& [c, p, r] : unhandledRejections) {
+                JS_FreeValue(c, p);
+                JS_FreeValue(c, r);
+            }
+            unhandledRejections.clear();
+            throw std::runtime_error{errorToString(ctx.get(), reason)};
         }
+
+        drainUnhandledRejections();
 
         JSON::Value ret;
         std::unordered_map<void*, JSON::Value*> map;
@@ -751,10 +869,15 @@ public:
         return ret;
     }
 
+    void addModuleSearchPath(const std::string& dir) override {
+        moduleSearchPaths.push_back(dir);
+    }
+
     void tick() override {
         if (js_std_loop(ctx.get()) < 0) {
             js_std_dump_error(ctx.get());
         }
+        drainUnhandledRejections();
         clearQueue();
     }
 };

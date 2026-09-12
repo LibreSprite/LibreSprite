@@ -117,7 +117,6 @@ set(SRC_FILES
   # ${SRC}/observable/tests/signals.cpp
   # ${SRC}/render/ordered_dither_tests.cpp
   # ${SRC}/render/render_tests.cpp
-  # ${SRC}/script/lua/engine.cpp
   # ${SRC}/she/alleg4/alleg_display.cpp
   # ${SRC}/she/alleg4/alleg_surface.cpp
   # ${SRC}/she/alleg4/display_events.cpp
@@ -411,9 +410,10 @@ set(SRC_FILES
   ${SRC}/app/script/api/pixelcolor_script.cpp
   ${SRC}/app/script/api/selection_script.cpp
   ${SRC}/app/script/api/sprite_script.cpp
+  ${SRC}/app/script/api/storage_internal.cpp
+  ${SRC}/app/script/api/timer_script.cpp
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp
-  ${SRC}/app/script/console_delegate.cpp
   ${SRC}/app/script/script_menu.cpp
   ${SRC}/app/send_crash.cpp
   ${SRC}/app/shade.cpp
@@ -643,7 +643,6 @@ set(SRC_FILES
   ${SRC}/render/quantization.cpp
   ${SRC}/render/render.cpp
   ${SRC}/render/zoom.cpp
-  ${SRC}/script/cout_delegate.cpp
   ${SRC}/she/common/freetype_font.cpp
   ${SRC}/she/sdl2/sdl2_display.cpp
   ${SRC}/she/sdl2/sdl2_surface.cpp
@@ -706,4 +705,5 @@ target_link_libraries( libresprite
                         pixman
                         modp_b64
                         simpleini
+                        delta
                       )

@@ -1,116 +1,100 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+
 #include "base/base64.h"
-#include "script/script_object.h"
 #include "doc/image.h"
 #include "she/surface.h"
 #include "she/system.h"
 #include "ui/manager.h"
+
 #include <cstring>
+#include <iostream>
+#include <memory>
+#include <vector>
 
-class ImageScriptObject : public script::ScriptObject {
+class ImageExtension : public Extension {
 public:
-  ImageScriptObject() {
-    addProperty("width", [this]{return img()->width();})
-      .doc("read-only. The width of the image.");
-
-    addProperty("height", [this]{return img()->height();})
-      .doc("read-only. The height of the image.");
-
-    addProperty("stride", [this]{return img()->getRowStrideSize();})
-      .doc("read-only. The number of bytes per image row.");
-
-    addProperty("format", [this]{return (int) img()->pixelFormat();})
-      .doc("read-only. The PixelFormat of the image.");
-
-    addFunction("getPixel", [this](int x, int y){return img()->getPixel(x, y);})
-      .doc("reads a color from the given coordinate of the image.")
-      .docArg("x", "integer")
-      .docArg("y", "integer")
-      .docReturns("a color value");
-
-    addMethod("putPixel", &ImageScriptObject::putPixel)
-      .doc("writes the color onto the image at the the given coordinate.")
-      .docArg("x", "integer")
-      .docArg("y", "integer")
-      .docArg("color", "a 32-bit color in 8888 RGBA format.");
-
-    addMethod("clear", &ImageScriptObject::clear)
-      .doc("clears the image with the specified color.")
-      .docArg("color", "a 32-bit color in 8888 RGBA format.");
-
-    addMethod("putImageData", &ImageScriptObject::putImageData)
-      .doc("writes the given pixels onto the image. Must be the same size as the image.")
-      .docArg("data", "All of the pixels in the image.");
-
-    addMethod("getImageData", &ImageScriptObject::getImageData)
-      .doc("creates an array containing all of the image's pixels.")
-      .docReturns("All pixels in a Uint8Array");
-
-    addMethod("getPNGData", &ImageScriptObject::getPNGData)
-      .doc("Encodes the image as a PNG.")
-      .docReturns("The image as a Base64-encoded PNG string.");
-  }
-
-  doc::Image* img() {
-    auto img = handle<doc::Object, doc::Image>();
-    if (!img)
-      throw script::ObjectDestroyedException{};
-    return img;
-  }
-
-  void putImageData(script::Value::Buffer& data) {
-    auto image = img();
-    if (data.size() != std::size_t(image->getRowStrideSize()*image->height())) {
-      std::cout << "Data size mismatch: " << data.size() << std::endl;
-      return;
-    }
-    std::memcpy(image->getPixelAddress(0, 0), data.data(), data.size());
-    ui::Manager::getDefault()->invalidate();
-  }
-
-  script::Value getImageData() {
-    return {
-      img()->getPixelAddress(0, 0),
-      std::size_t(img()->getRowStrideSize()*img()->height()),
-      false
+  ImageExtension() {
+    auto& clazz = addClass<void, doc::Image>("Image");
+    clazz.setConstructor() = []() -> std::shared_ptr<void> {
+      throw std::runtime_error{"Image cannot be constructed directly"};
     };
-  }
 
-  std::string getPNGData() {
-    auto w = img()->width();
-    auto h = img()->height();
-    std::shared_ptr<she::Surface> surface{
-      she::instance()->createRgbaSurface(w, h),
-      [](she::Surface* s) {s->dispose();}
+    clazz.addGetter("width") = [](doc::Image& img) -> JSON::Value {
+      return (double)img.width();
     };
-    if (!surface)
-      return "";
+    clazz.addGetter("height") = [](doc::Image& img) -> JSON::Value {
+      return (double)img.height();
+    };
+    clazz.addGetter("stride") = [](doc::Image& img) -> JSON::Value {
+      return (double)img.getRowStrideSize();
+    };
+    clazz.addGetter("format") = [](doc::Image& img) -> JSON::Value {
+      return (double)img.pixelFormat();
+    };
 
-    for (auto y = 0; y < h; ++y) {
-      for (auto x = 0; x < w; ++x) {
-        surface->putPixel(img()->getPixel(x, y), x, y);
+    clazz.addMethod("getPixel") = [](doc::Image& img, double x, double y) -> JSON::Value {
+      return (double)img.getPixel((int)x, (int)y);
+    };
+
+    clazz.addMethod("putPixel") = [](doc::Image& img, double x, double y, double color) -> JSON::Value {
+      if ((unsigned)x < (unsigned)img.width() && (unsigned)y < (unsigned)img.height())
+        img.putPixel((int)x, (int)y, (doc::color_t)color);
+      return {};
+    };
+
+    clazz.addMethod("clear") = [](doc::Image& img, double color) -> JSON::Value {
+      img.clear((doc::color_t)color);
+      return {};
+    };
+
+    clazz.addMethod("putImageData") = [](doc::Image& img, JSON::Value& data) -> JSON::Value {
+      auto& bytes = data.byteArray();
+      if (bytes.size() != std::size_t(img.getRowStrideSize() * img.height())) {
+        std::cout << "Data size mismatch: " << bytes.size() << std::endl;
+        return {};
       }
-    }
+      std::memcpy(img.getPixelAddress(0, 0), bytes.data(), bytes.size());
+      if (auto* mgr = ui::Manager::getDefault())
+        mgr->invalidate();
+      return {};
+    };
 
-    std::string encoded;
-    base::encode_base64(she::instance()->encodeSurfaceAsPNG(surface.get()), encoded);
-    return "data:image/png;base64," + encoded;
-  }
+    clazz.addMethod("getImageData") = [](doc::Image& img) -> JSON::Value {
+      auto* addr = img.getPixelAddress(0, 0);
+      std::size_t size = std::size_t(img.getRowStrideSize() * img.height());
+      auto vec = std::make_shared<std::vector<uint8_t>>(addr, addr + size);
+      return JSON::Value{vec};
+    };
 
-  void putPixel(int x, int y, int color) {
-    if (unsigned(x) < unsigned(img()->width()) && unsigned(y) < unsigned(img()->height()))
-      img()->putPixel(x, y, color);
-  }
+    clazz.addMethod("getPNGData") = [](doc::Image& img) -> JSON::Value {
+      auto w = img.width();
+      auto h = img.height();
+      std::shared_ptr<she::Surface> surface{
+        she::instance()->createRgbaSurface(w, h),
+        [](she::Surface* s) { s->dispose(); }
+      };
+      if (!surface)
+        return std::string{};
 
-  void clear(int color) {
-    img()->clear(color);
+      for (auto y = 0; y < h; ++y)
+        for (auto x = 0; x < w; ++x)
+          surface->putPixel(img.getPixel(x, y), x, y);
+
+      std::string encoded;
+      base::encode_base64(she::instance()->encodeSurfaceAsPNG(surface.get()), encoded);
+      return std::string{"data:image/png;base64,"} + encoded;
+    };
   }
 };
 
-static script::ScriptObject::Regular<ImageScriptObject> imageSO(typeid(doc::Image*).name());
+static di::provide<Extension, ImageExtension> x{"image"};

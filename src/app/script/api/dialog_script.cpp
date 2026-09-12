@@ -1,198 +1,95 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2023-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "base/string.h"
-#include "script/script_object.h"
-#include "ui/base.h"
-#include "ui/close_event.h"
-#include "ui/widget.h"
-#include "ui/window.h"
-#include <iostream>
-
-#include "base/bind.h"
-#include "base/memory.h"
-#include "ui/ui.h"
-
-#include "app/app.h"
-#include "app/context.h"
-#include "app/modules/gui.h"
-#include "app/script/app_scripting.h"
-#include "app/task_manager.h"
-#include "app/ui/status_bar.h"
-#include "app/ui/dialog.h"
-#include "widget_script.h"
-#include "script/engine.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/widget_script.h"
 
 #include <memory>
-#include <list>
+#include <string>
 
-namespace ui {
-class Dialog;
-}
-
-class DialogScriptObject : public WidgetScriptObject {
-  std::unordered_map<std::string, inject<script::ScriptObject>> m_widgets;
-
-  Handle build() {
-    auto dialog = new ui::Dialog();
-
-    // Scripting engine has finished working, build and show the Window
-    getEngine()->afterEval([handle = dialog->handle()](bool success){
-      if (auto dialog = handle.get<ui::Widget, ui::Dialog>())
-        dialog->build();
-    });
-
-    return dialog;
-  }
-
+class DialogExtension : public Extension {
 public:
-  DialogScriptObject() {
-    addProperty("title",
-                [this] {return dialog()->text();},
-                [this](const std::string& title){
-                  dialog()->setText(title);
-                  return title;
-                })
-      .doc("read+write. Sets the title of the dialog window.");
+  DialogExtension() {
+    auto& cls = addClass<void, DialogObject>("Dialog");
+    // The dialog is created by app.createDialog() (C++), not `new Dialog()` in
+    // JS, but delta requires a non-null constructor. This makes `new Dialog()`
+    // also work (and is never used by scripts).
+    cls.setConstructor() = []() -> std::shared_ptr<DialogObject> {
+      return std::make_shared<DialogObject>();
+    };
 
-    addProperty("width",[this] {return dialog()->size().w;})
-      .doc("read only. Gets the width of the dialog window.");
-    addProperty("height",[this] {return dialog()->size().h;})
-      .doc("read only. Gets the height of the dialog window.");
+    cls.addGetter("title") = [](DialogObject& self) -> JSON::Value {
+      return self.dialog() ? std::string{self.dialog()->text()} : std::string{};
+    };
+    cls.addSetter("title") = [](DialogObject& self, JSON::Value& v) {
+      if (self.dialog())
+        self.dialog()->setText(v.toString());
+    };
 
-    addProperty("canClose",
-                []{return true;},
-                [this](bool canClose){
-                  if (!canClose) {
-                    dialog()->removeDecorativeWidgets();
-                  }
-                  return canClose;
-                })
-      .doc("write only. Determines if the user can close the dialog window.");
+    cls.addGetter("width") = [](DialogObject& self) -> JSON::Value {
+      return self.dialog() ? (double)self.dialog()->size().w : (double)0;
+    };
+    cls.addGetter("height") = [](DialogObject& self) -> JSON::Value {
+      return self.dialog() ? (double)self.dialog()->size().h : (double)0;
+    };
 
-    addMethod("add", &DialogScriptObject::add);
+    // write only: when false, strip the window decorations (the X button).
+    cls.addGetter("canClose") = [](DialogObject&) -> JSON::Value { return true; };
+    cls.addSetter("canClose") = [](DialogObject& self, JSON::Value& v) {
+      if (self.dialog() && !v.boolean())
+        self.dialog()->removeDecorativeWidgets();
+    };
 
-    addMethod("get", &DialogScriptObject::get);
+    // addLabel(text, id) -> the Label object (same instance as get(id)).
+    cls.addMethod("addLabel") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addLabel(text, id));
+    };
+    // addButton(text, id) -> the Button object.
+    cls.addMethod("addButton") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addButton(text, id));
+    };
+    // addEntry(text, id) -> the Entry object (also adds a label with text if
+    // non-empty). Matches the old Aseprite API.
+    cls.addMethod("addEntry") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addEntry(text, id));
+    };
+    // addIntEntry(text, id, min, max) -> the IntEntry object (also adds a label
+    // with text if non-empty). Matches the old Aseprite API.
+    cls.addMethod("addIntEntry") = [](DialogObject& self, const std::string& text, const std::string& id, int min, int max) -> JSON::Value {
+      return widgetToNative(self.addIntEntry(text, id, min, max));
+    };
+    // addImageView(id) -> the ImageView object.
+    cls.addMethod("addImageView") = [](DialogObject& self, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addImageView(id));
+    };
+    // addPaletteListBox(id) -> the PaletteListBox object.
+    cls.addMethod("addPaletteListBox") = [](DialogObject& self, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addPaletteListBox(id));
+    };
+    // addBreak() -> end the current row so the next add*() starts a new one.
+    cls.addMethod("addBreak") = [](DialogObject& self) -> JSON::Value {
+      self.addBreak();
+      return JSON::Value{true};
+    };
 
-    addFunction("close", [this]{
-      dialog()->closeWindow(false, true);
-      setWrapped({}, false);
-      return true;
-    });
+    // get(id) -> the child widget object, or null.
+    cls.addMethod("get") = [](DialogObject& self, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.get(id));
+    };
 
-    addFunction("addDropDown", [this](const std::string& id) {
-        auto dropdown = add("dropdown", id);
-        return dropdown;
-    });
-
-    addFunction("addLabel", [this](const std::string& text, const std::string& id) {
-        auto label = add("label", id);
-        if (label)
-            label->set("text", text);
-        return label;
-    });
-
-    addFunction("addImageView", [this](const std::string& id) {
-        return add("imageview", id);
-    });
-
-    addFunction("addButton", [this](const std::string& text, const std::string& id) {
-        auto button = add("button", id);
-        if (button)
-            button->set("text", text);
-        return button;
-    });
-
-    addFunction("addPaletteListBox", [this](const std::string& id) {
-        return add("palettelistbox", id);
-    });
-
-    addFunction("addIntEntry", [this](const std::string& text, const std::string& id, int min, int max) {
-        auto label = add("label", id + "-label");
-        if (label)
-            label->set("text", text);
-        auto intentry = add("intentry", id);
-        if (intentry) {
-            intentry->set("min", min);
-            intentry->set("max", max);
-        }
-        return intentry;
-    });
-
-    addFunction("addEntry", [this](const std::string& text, const std::string& id) {
-        if (!text.empty()) {
-            auto label = add("label", id + "-label");
-            if (label)
-                label->set("text", text);
-        }
-        return add("entry", id);
-    });
-
-    addFunction("addBreak", [this]{
-      dialog()->addBreak();
-      return true;
-    });
+    // close() -> hide + remove from the manager (the DialogObject still owns
+    // the ui::Dialog and deletes it on destruction).
+    cls.addMethod("close") = [](DialogObject& self) -> JSON::Value {
+      self.close();
+      return JSON::Value{JSON::Special::Undefined};
+    };
   }
-
-  ~DialogScriptObject() {
-    auto dialog = getWidget<ui::Dialog>();
-    if (!dialog)
-      return;
-    if (!dialog->isVisible())
-      dialog->closeWindow(false, false);
-  }
-
-  ui::Dialog* dialog() {
-    auto dialog = handle<ui::Widget, ui::Dialog>();
-    if (!dialog)
-      throw script::ObjectDestroyedException{};
-    return dialog;
-  }
-
-  ScriptObject* get(const std::string& id) {
-    auto it = m_widgets.find(id);
-    return it != m_widgets.end() ? it->second.get() : nullptr;
-  }
-
-  ScriptObject* add(const std::string& type, const std::string& id) {
-    auto dialog = this->dialog();
-    if (!dialog)
-      return nullptr;
-
-    if (type.empty() || get(id))
-      return nullptr;
-
-    auto cleanType = base::string_to_lower(type); // "lAbEl" -> "label"
-    auto unprefixedType = cleanType;
-    cleanType[0] = toupper(cleanType[0]);         // "label" -> "Label"
-    cleanType += "WidgetScriptObject";            // "Label" -> "LabelWidgetScriptObject"
-
-    auto sobj = getEngine()->create(cleanType);
-    if (!sobj) {
-      return nullptr;
-    }
-
-    auto widget = sobj->handle<ui::Widget>();
-    if (!widget)
-      return nullptr;
-
-    dialog->add(widget);
-
-    auto cleanId = !id.empty() ? id : unprefixedType + std::to_string(m_nextWidgetId++);
-    sobj->set("id", cleanId);
-
-    return sobj;
-  }
-
-  uint32_t m_nextWidgetId = 0;
 };
 
-static script::ScriptObject::Regular<DialogScriptObject> dialogSO(typeid(ui::Dialog*).name());
+static di::provide<Extension, DialogExtension> dialogExt{"dialog"};

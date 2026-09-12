@@ -1,88 +1,81 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+#include "app/script/app_scripting.h"
+
 #include "app/modules/palettes.h"
-#include "doc/object.h"
+#include "doc/color.h"
 #include "doc/palette.h"
-#include "doc/image.h"
-#include "doc/sprite.h"
 #include "ui/manager.h"
-#include "script/script_object.h"
-#include "script/engine.h"
 
-class PaletteScriptObject : public script::ScriptObject {
+#include <memory>
+
+class PaletteExtension : public Extension {
 public:
-  PaletteScriptObject() {
-    addProperty("length",
-                [this]{
-                  if (auto pal = palette())
-                    return pal->size();
-                  return 0;
-                },
-                [this](int s){
-                  if (auto pal = palette()) {
-                    pal->resize(s);
-                    modify();
-                  }
-                  return s;
-                });
+  PaletteExtension() {
+    auto& clazz = addClass<void, doc::Palette>("Palette");
+    clazz.setConstructor() = []() -> std::shared_ptr<void> {
+      throw std::runtime_error{"Palette cannot be constructed directly"};
+    };
 
-    addFunction("get", [this](int i){
-      if (auto pal = palette())
-        return pal->getEntry(i);
-      return doc::color_t{};
+    clazz.addGetter("length") = [](doc::Palette& pal) -> JSON::Value {
+      return (double)pal.size();
+    };
+    clazz.addSetter("length") = [](doc::Palette& pal, JSON::Value& v) {
+      pal.resize(static_cast<int>(v));
+      schedulePaletteUpdate(&pal);
+    };
+
+    clazz.addMethod("get") = [](doc::Palette& pal, double i) -> JSON::Value {
+      return (double)pal.getEntry((int)i);
+    };
+
+    // `set` is variadic: `set(i, color)`, `set(i, r, g, b)`, or `set(i, r, g, b, a)`.
+    // Missing trailing args are padded with `undefined`; the form is disambiguated
+    // by which trailing args are defined.
+    clazz.addMethod("set") = [](doc::Palette& pal, int i,
+                                JSON::Value& a, JSON::Value& b, JSON::Value& c, JSON::Value& d) -> JSON::Value {
+      if (i < 0 || i >= pal.size())
+        return {};
+      doc::color_t color;
+      if (b.isUndefined()) {
+        // set(i, color)
+        color = (doc::color_t)static_cast<int>(a);
+      } else if (d.isUndefined()) {
+        // set(i, r, g, b)
+        color = doc::rgba((uint8_t)static_cast<int>(a), (uint8_t)static_cast<int>(b),
+                          (uint8_t)static_cast<int>(c), 0xFF);
+      } else {
+        // set(i, r, g, b, a)
+        color = doc::rgba((uint8_t)static_cast<int>(a), (uint8_t)static_cast<int>(b),
+                          (uint8_t)static_cast<int>(c), (uint8_t)static_cast<int>(d));
+      }
+      pal.setEntry(i, color);
+      schedulePaletteUpdate(&pal);
+      return {};
+    };
+  }
+
+private:
+  // Defer the version increment until after the script's eval so that several
+  // palette changes in one run coalesce into a single UI refresh (matching the
+  // old engine's afterEval behavior).
+  static void schedulePaletteUpdate(doc::Palette* pal) {
+    app::AppScripting::afterEval([pal] {
+      pal->incrementVersion();
+      app::set_current_palette(pal, true);
+      if (auto* mgr = ui::Manager::getDefault())
+        mgr->invalidate();
     });
-
-    addMethod("set", &PaletteScriptObject::set);
   }
-
-  doc::Palette* palette() {
-    auto pal = handle<doc::Object, doc::Palette>();
-    if (!pal)
-      throw script::ObjectDestroyedException{};
-    return pal;
-  }
-
-  void modify() {
-      if (needIncrement)
-          return;
-      needIncrement = true;
-      getEngine()->afterEval([=, this](bool success){
-        auto pal = palette();
-        if (pal) {
-          pal->incrementVersion();
-          app::set_current_palette(pal, true);
-          ui::Manager::getDefault()->invalidate();
-        }
-        needIncrement = false;
-      });
-  }
-
-  void set(int i){
-        auto pal = palette();
-    if (!pal)
-      return;
-    if (i >= pal->size())
-      return;
-    auto& args = script::Function::varArgs();
-    int c;
-    if (args.size() == 2) {
-      c = args[1];
-    } else if(args.size() == 4) {
-      c = doc::rgba(args[1], args[2], args[3], 0xFF);
-    } else if(args.size() == 5) {
-      c = doc::rgba(args[1], args[2], args[3], args[4]);
-    } else
-      return;
-    pal->setEntry(i, c);
-    modify();
-  }
-
-  bool needIncrement = false;
 };
 
-static script::ScriptObject::Regular<PaletteScriptObject> palSO(typeid(doc::Palette*).name());
+static di::provide<Extension, PaletteExtension> x{"palette"};

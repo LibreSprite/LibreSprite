@@ -1,184 +1,167 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+
 #include "app/cmd/set_sprite_size.h"
 #include "app/commands/commands.h"
+#include "app/commands/params.h"
 #include "app/document.h"
 #include "app/document_api.h"
 #include "app/file/palette_file.h"
 #include "app/transaction.h"
 #include "app/ui_context.h"
-#include "doc/document_observer.h"
+#include "doc/document.h"
 #include "doc/layer.h"
-#include "doc/layers_range.h"
-#include "doc/mask.h"
 #include "doc/palette.h"
 #include "doc/sprite.h"
-#include "script/engine.h"
-#include "script/script_object.h"
+
 #include <memory>
+#include <stdexcept>
+#include <string>
 
-class SpriteScriptObject : public script::ScriptObject {
-  std::unique_ptr<app::Transaction> m_transaction;
+// `Sprite` is a stateless *proxy*: every access re-resolves the active
+// document's sprite (mirroring the old `AppScriptObject::updateSite()`), so
+// the `sprite` global always tracks the active document rather than a
+// snapshot. Sub-objects (`layer`, `palette`, `cel`, `image`) are wrapped
+// snapshots of the specific doc objects.
+namespace {
+  app::Document* activeDocument() {
+    return app::UIContext::instance()->activeDocument();
+  }
+  doc::Sprite* activeSprite() {
+    auto* doc = activeDocument();
+    if (!doc)
+      throw std::runtime_error{"No active document"};
+    return doc->sprite();
+  }
+} // namespace
 
+class SpriteExtension : public Extension {
 public:
-  SpriteScriptObject() {
-    addProperty("layerCount", [this]{return (int) sprite()->countLayers();})
-      .doc("read-only. Returns the amount of layers in the sprite.");
+  SpriteExtension() {
+    using namespace script_api;
+    auto& clazz = addClass<void, SpriteSite>("Sprite");
+    clazz.setConstructor() = []() -> std::shared_ptr<SpriteSite> {
+      static std::shared_ptr<SpriteSite> site = std::make_shared<SpriteSite>();
+      return site;
+    };
 
-    addProperty("filename", [this]{return doc()->filename();})
-      .doc("read-only. Returns the file name of the sprite.");
+    clazz.addGetter("layerCount") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->countLayers();
+    };
 
-    addProperty("width",
-                [this]{return sprite()->width();},
-                [this](int width){
-                  transaction().execute(new app::cmd::SetSpriteSize(sprite(), width, sprite()->height()));
-                  return 0;
-                })
-      .doc("read+write. Returns and sets the width of the sprite.");
+    clazz.addGetter("filename") = [](SpriteSite&) -> JSON::Value {
+      return std::string{activeSprite()->document()->filename()};
+    };
 
-    addProperty("height",
-                [this]{return sprite()->height();},
-                [this](int height){
-                  transaction().execute(new app::cmd::SetSpriteSize(sprite(), sprite()->width(), height));
-                  return 0;
-                })
-      .doc("read+write. Returns and sets the height of the sprite.");
+    clazz.addGetter("width") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->width();
+    };
+    clazz.addSetter("width") = [](SpriteSite&, JSON::Value& v) {
+      auto* spr = activeSprite();
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::SetSpriteSize(spr, static_cast<int>(v), spr->height()));
+      tx.commit();
+    };
 
-    addProperty("colorMode", [this]{ return sprite()->pixelFormat();})
-      .doc("read-only. Returns the sprite's ColorMode.");
+    clazz.addGetter("height") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->height();
+    };
+    clazz.addSetter("height") = [](SpriteSite&, JSON::Value& v) {
+      auto* spr = activeSprite();
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::SetSpriteSize(spr, spr->width(), static_cast<int>(v)));
+      tx.commit();
+    };
 
-    addProperty("selection", [this]{ return this; })
-      .doc("Placeholder. Do not use.");
+    clazz.addGetter("colorMode") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->pixelFormat();
+    };
 
-    addProperty("palette", [this]{
-      return getEngine()->getScriptObject(sprite()->palette(0));
-    }).doc("read-only. Returns the sprite's palette.");
+    clazz.addGetter("selection") = [](SpriteSite&) -> JSON::Value {
+      return JSON::makeNative(std::make_shared<SelectionSite>());
+    };
 
-    addMethod("layer", &SpriteScriptObject::layer)
-      .doc("allows you to access a given layer.")
-      .docArg("layerNumber", "The number of they layer, starting with zero from the bottom.")
-      .docReturns("a Layer object or null if invalid.");
+    clazz.addGetter("palette") = [](SpriteSite&) -> JSON::Value {
+      return JSON::makeNative(wrap(activeSprite()->palette(0)));
+    };
 
-    addMethod("commit", &SpriteScriptObject::commit)
-      .doc("commits the current transaction.");
+    clazz.addMethod("layer") = [](SpriteSite&, double i) -> JSON::Value {
+      auto* layer = activeSprite()->indexToLayer(doc::LayerIndex((int)i));
+      return JSON::makeNative(wrap(layer));
+    };
 
-    addMethod("resize", &SpriteScriptObject::resize)
-      .doc("resizes the sprite.")
-      .docArg("width", "The new width.")
-      .docArg("height", "The new height.");
+    // In the proxy model each mutation commits its own transaction, so there
+    // is no persistent transaction to commit here. Kept as a no-op for
+    // backward compatibility with the old API.
+    clazz.addMethod("commit") = [](SpriteSite&) -> JSON::Value {
+      return {};
+    };
 
-    addMethod("crop", &SpriteScriptObject::crop)
-      .doc("crops the sprite to the specified dimensions.")
-      .docArg("x", "The left-most edge of the crop.")
-      .docArg("y", "The top-most edge of the crop.")
-      .docArg("width", "The width of the cropped area.")
-      .docArg("height", "The height of the cropped area.");
+    clazz.addMethod("resize") = [](SpriteSite&, double w, double h) -> JSON::Value {
+      auto* spr = activeSprite();
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::SetSpriteSize(spr, (int)w, (int)h));
+      tx.commit();
+      return {};
+    };
 
-    addMethod("save", &SpriteScriptObject::save)
-      .doc("saves the sprite.");
+    // The old implementation was disabled (its body was commented out); kept
+    // as a no-op for API compatibility.
+    clazz.addMethod("crop") = [](SpriteSite&, double, double, double, double) -> JSON::Value {
+      return {};
+    };
 
-    addMethod("saveAs", &SpriteScriptObject::saveAs)
-      .doc("saves the sprite.")
-      .docArg("fileName", "String. The new name of the file")
-      .docArg("asCopy", "If true, the file is saved as a copy. Requires fileName to be specified.");
+    clazz.addMethod("save") = [](SpriteSite&) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto* uiCtx = app::UIContext::instance();
+      uiCtx->setActiveDocument(doc);
+      auto* saveCommand = app::CommandsModule::instance()->getCommandByName(app::CommandId::SaveFile);
+      uiCtx->executeCommand(saveCommand);
+      return {};
+    };
 
-    addMethod("loadPalette", &SpriteScriptObject::loadPalette)
-      .doc("loads a palette file.")
-      .docArg("fileName", "The name of the palette file to load");
+    clazz.addMethod("saveAs") = [](SpriteSite&, const std::string& fileName, bool asCopy) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto* uiCtx = app::UIContext::instance();
+      uiCtx->setActiveDocument(doc);
+      auto commandName = asCopy ? app::CommandId::SaveFileCopyAs : app::CommandId::SaveFile;
+      auto* saveCommand = app::CommandsModule::instance()->getCommandByName(commandName);
+      app::Params params;
+      if (asCopy) {
+        params.set("filename", fileName.c_str());
+      } else if (!fileName.empty()) {
+        doc->setFilename(fileName);
+      }
+      uiCtx->executeCommand(saveCommand, params);
+      return {};
+    };
+
+    clazz.addMethod("loadPalette") = [](SpriteSite&, const std::string& fileName) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto palette = app::load_palette(fileName.c_str());
+      if (palette) {
+        app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+        doc->getApi(tx).setPalette(activeSprite(), 0, palette.get());
+        tx.commit();
+      }
+      return {};
+    };
   }
 
-  ~SpriteScriptObject() {
-    commit();
-  }
-
-  doc::Sprite* sprite() {
-    auto sprite = handle<doc::Object, doc::Sprite>();
-    if (!sprite)
-      throw script::ObjectDestroyedException{};
-    return sprite;
-  }
-
-  app::Document* doc() {
-    return static_cast<app::Document*>(sprite()->document());
-  }
-
-  app::Transaction& transaction() {
-    if (!m_transaction) {
-      m_transaction.reset(new app::Transaction(app::UIContext::instance(),
-                                               "Script Execution",
-                                               app::ModifyDocument));
-    }
-    return *m_transaction;
-  }
-
-  void commit() {
-    if (m_transaction) {
-      m_transaction->commit();
-      m_transaction.reset();
-    }
-  }
-
-  script::ScriptObject* layer(int i) {
-    return getEngine()->getScriptObject(sprite()->indexToLayer(doc::LayerIndex(i)));
-  }
-
-  void resize(int w, int h) {
-    app::DocumentApi api(doc(), transaction());
-    api.setSpriteSize(sprite(), w, h);
-  }
-
-  void crop(script::Value x, script::Value y, script::Value w, script::Value h){
-    gfx::Rect bounds;
-    commit();
-
-    if (doc()->isMaskVisible())
-      bounds = doc()->mask()->bounds();
-    else
-      bounds = sprite()->bounds();
-
-    // if (x.type != script::Value::Type::UNDEFINED) bounds.x = x;
-    // if (y.type != script::Value::Type::UNDEFINED) bounds.y = y;
-    // if (w.type != script::Value::Type::UNDEFINED) bounds.w = w;
-    // if (h.type != script::Value::Type::UNDEFINED) bounds.h = h;
-
-    // if (!bounds.isEmpty()) {
-    //   app::DocumentApi{doc(), transaction()}.cropSprite(sprite(), bounds);
-    // }
-  }
-
-  void save() {
-    commit();
-    auto uiCtx = app::UIContext::instance();
-    uiCtx->setActiveDocument(doc());
-    auto saveCommand = app::CommandsModule::instance()->getCommandByName(app::CommandId::SaveFile);
-    uiCtx->executeCommand(saveCommand);
-  }
-
-  void saveAs(const std::string& fileName, bool asCopy) {
-    commit();
-    if (fileName.empty()) asCopy = false;
-    auto uiCtx = app::UIContext::instance();
-    uiCtx->setActiveDocument(doc());
-    auto commandName = asCopy ? app::CommandId::SaveFileCopyAs : app::CommandId::SaveFile;
-    auto saveCommand = app::CommandsModule::instance()->getCommandByName(commandName);
-    app::Params params;
-    if (asCopy) params.set("filename", fileName.c_str());
-    else if(!fileName.empty()) doc()->setFilename(fileName);
-    uiCtx->executeCommand(saveCommand, params);
-  }
-
-  void loadPalette(const std::string& fileName){
-    auto palette = app::load_palette(fileName.c_str());
-    if (palette) {
-      // TODO Merge this with the code in LoadPaletteCommand
-      doc()->getApi(transaction()).setPalette(sprite(), 0, palette.get());
-    }
+  std::string init(const std::string& language, JSON::Value& settings) override {
+    if (language != "js")
+      return "";
+    return "globalThis.sprite = new Sprite();";
   }
 };
 
-static script::ScriptObject::Regular<SpriteScriptObject> spriteSO(typeid(doc::Sprite*).name());
+static di::provide<Extension, SpriteExtension> x{"sprite"};

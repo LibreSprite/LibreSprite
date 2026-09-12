@@ -14,7 +14,6 @@
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
 #include "base/path.h"
-#include "script/engine.h"
 #include "script/engine_delegate.h"
 #include "ui/manager.h"
 

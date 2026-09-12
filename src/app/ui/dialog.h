@@ -1,5 +1,5 @@
 // LibreSprite
-// Copyright (C) 2023 LibreSprite contributors
+// Copyright (C) 2023-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -27,8 +27,15 @@ public:
 
   ~Dialog() {
     if (m_grid) {
-      m_grid->removeAllChildren();
-      // m_grid might have been removed if the dialog was already closed
+      // Detach the grid from the dialog so ~Widget (below) doesn't also try
+      // to delete it (it's owned by the m_grid shared_ptr). Do NOT call
+      // removeAllChildren() here: the grid still owns its child widgets (the
+      // script's Entry/IntEntry, etc.) and ~Widget will delete them. Calling
+      // removeAllChildren() detaches them (removeChild only unparents + frees
+      // from the manager, it does not delete), and nothing else owns those
+      // widgets (the WidgetObject wrappers hold non-owning pointers), so they
+      // leaked — their ui::Timer members stayed registered and tripped
+      // ui::Timer::checkNoTimers() on shutdown.
       if (m_grid->parent())
         removeChild(m_grid.get());
     }
@@ -82,13 +89,19 @@ public:
     openWindow();
   }
 
-  void onWindowResize() override {
-    app::AppScripting::raiseEvent(m_scriptFileName, {id() + "_resize", size().w, size().h});
-  }
+    void onWindowResize() override {
+      script::Value event;
+      event.push_back(id() + "_resize");
+      event.push_back((double)size().w);
+      event.push_back((double)size().h);
+      app::AppScripting::raiseEvent(m_scriptFileName, event);
+    }
 
   void closeWindow(bool raiseEvent, bool notifyManager){
     if (raiseEvent) {
-      app::AppScripting::raiseEvent(m_scriptFileName, {id() + "_close"});
+      script::Value event;
+      event.push_back(id() + "_close");
+      app::AppScripting::raiseEvent(m_scriptFileName, event);
     }
     if (notifyManager) {
       manager()->_closeWindow(this, true);

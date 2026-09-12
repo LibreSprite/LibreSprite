@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C) 2021-2026  LibreSprite contributors
 
 # Generate a ui::Widget for each widget in a XML file
 file(GLOB widget_files ${CMAKE_SOURCE_DIR}/data/widgets/*.xml)
@@ -338,10 +338,7 @@ add_library(app-lib
   resource_finder.cpp
 
   script/app_scripting.cpp
-  script/app_scripting.h
-  script/console_delegate.cpp
   script/script_menu.cpp
-  script/script_menu.h
 
   script/api/app_script.cpp
   script/api/button_script.cpp
@@ -351,10 +348,10 @@ add_library(app-lib
   script/api/console_script.cpp
   script/api/dialog_script.cpp
   script/api/document_script.cpp
+  script/api/entry_script.cpp
   script/api/image_script.cpp
   script/api/imageview_script.cpp
   script/api/intentry_script.cpp
-  script/api/entry_script.cpp
   script/api/layer_script.cpp
   script/api/label_script.cpp
   script/api/pixelcolor_script.cpp
@@ -363,6 +360,8 @@ add_library(app-lib
   script/api/storage_script.cpp
   script/api/sprite_script.cpp
   script/api/selection_script.cpp
+  script/api/storage_internal.cpp
+  script/api/timer_script.cpp
 
   send_crash.cpp
   shade.cpp

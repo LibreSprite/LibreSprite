@@ -39,7 +39,6 @@
 #include "base/path.h"
 #include "base/string.h"
 #include "doc/sprite.h"
-#include "script/engine.h"
 #include "she/display.h"
 #include "she/error.h"
 #include "she/surface.h"
@@ -382,8 +381,6 @@ bool CustomizedGuiManager::onProcessMessage(Message* msg)
 
         UIContext* ctx = UIContext::instance();
 
-	auto& engines = script::Engine::getRegistry();
-
         for (const auto& fn : files) {
           // If the document is already open, select it.
           Document* doc = static_cast<Document*>(ctx->documents().getByFileName(fn));
@@ -397,16 +394,12 @@ bool CustomizedGuiManager::onProcessMessage(Message* msg)
 	    continue;
           }
 
-	  auto cmd = cmd_open_file;
+ 	  auto cmd = cmd_open_file;
 
-	  auto extension = base::string_to_lower(base::get_file_extension(fn));
-	  for (auto& entry : engines) {
-	      std::cout << entry.first << " == " << extension << std::endl;
-	      if (entry.first == extension || entry.second.hasFlag(extension) ) {
-		  cmd = cmd_install_script;
-		  break;
-	      }
-	  }
+ 	  auto extension = base::string_to_lower(base::get_file_extension(fn));
+ 	  if (extension == "js") {
+ 		  cmd = cmd_install_script;
+ 	  }
 
           // Load the file
 	  params.set("filename", fn.c_str());

@@ -1,77 +1,81 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "script/script_object.h"
-#include "doc/layer.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+
 #include "doc/cel.h"
-#include "script/engine.h"
+#include "doc/layer.h"
 
-class LayerScriptObject : public script::ScriptObject {
+#include <memory>
+
+// `Layer` wraps a `doc::Layer` (a snapshot of a specific layer, obtained via
+// `sprite.layer(i)`).
+class LayerExtension : public Extension {
 public:
-  LayerScriptObject() {
-    addProperty("name",
-                [this]{return layer()->name();},
-                [this](const std::string& name){
-                  layer()->setName(name);
-                  return name;
-                })
-      .doc("read+write. The name of the layer.");
+  LayerExtension() {
+    auto& clazz = addClass<void, doc::Layer>("Layer");
+    clazz.setConstructor() = []() -> std::shared_ptr<void> {
+      throw std::runtime_error{"Layer cannot be constructed directly"};
+    };
 
-    addProperty("isImage", [this]{return layer()->isImage();})
-      .doc("read-only. Returns true if the layer is an image, false if it is a folder.");
+    clazz.addGetter("name") = [](doc::Layer& layer) -> JSON::Value {
+      return std::string{layer.name()};
+    };
+    clazz.addSetter("name") = [](doc::Layer& layer, JSON::Value& v) {
+      layer.setName(static_cast<std::string>(v));
+    };
 
-    addProperty("isBackground", [this]{return layer()->isBackground();})
-      .doc("read-only. Returns true if the layer is a background layer.");
+    clazz.addGetter("isImage") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isImage();
+    };
+    clazz.addGetter("isBackground") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isBackground();
+    };
+    clazz.addGetter("isTransparent") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isTransparent();
+    };
 
-    addProperty("isTransparent", [this]{return layer()->isTransparent();})
-      .doc("read-only. Returns true if the layer is a non-background image layer.");
+    clazz.addGetter("isVisible") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isVisible();
+    };
+    clazz.addSetter("isVisible") = [](doc::Layer& layer, JSON::Value& v) {
+      layer.setVisible(static_cast<bool>(v));
+    };
 
-    addProperty("isVisible",
-                [this]{return layer()->isVisible();},
-                [this](bool i){
-                  layer()->setVisible(i);
-                  return i;
-                })
-      .doc("read+write. Gets/sets whether the layer is visible or not.");
+    clazz.addGetter("isEditable") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isEditable();
+    };
+    clazz.addSetter("isEditable") = [](doc::Layer& layer, JSON::Value& v) {
+      layer.setEditable(static_cast<bool>(v));
+    };
 
-    addProperty("isEditable",
-                [this]{return layer()->isEditable();},
-                [this](bool i){
-                  layer()->setEditable(i);
-                  return i;
-                })
-      .doc("read+write. Gets/sets whether the layer is editable (unlocked) or not (locked).");
+    clazz.addGetter("isMovable") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isMovable();
+    };
+    clazz.addGetter("isContinuous") = [](doc::Layer& layer) -> JSON::Value {
+      return layer.isContinuous();
+    };
+    clazz.addGetter("flags") = [](doc::Layer& layer) -> JSON::Value {
+      return (double)static_cast<int>(layer.flags());
+    };
 
-    addProperty("isMovable", [this]{return layer()->isMovable();})
-      .doc("read-only. Returns true if the layer is movable.");
+    clazz.addGetter("celCount") = [](doc::Layer& layer) -> JSON::Value {
+      if (layer.isImage())
+        return (double)static_cast<doc::LayerImage*>(&layer)->getCelsCount();
+      return 0.0;
+    };
 
-    addProperty("isContinuous", [this]{return layer()->isContinuous();})
-      .doc("read-only. Prefer to link cels when the user copies them.");
-
-    addProperty("flags", [this]{return (int) layer()->flags();})
-      .doc("read-only. Returns all flags OR'd together as an int");
-
-    addProperty("celCount", [this]{
-      return layer()->isImage() ? static_cast<doc::LayerImage*>(layer())->getCelsCount() : 0;
-    }).doc("read-only. Returns the number of cels.");
-
-    addFunction("cel", [this](int i){
-      return getEngine()->getScriptObject(layer()->cel(i).get());
-    }).doc("retrieves a Cel")
-      .docArg("index", "The number of the Cel")
-      .docReturns("A Cel object or null if an invalid index is passed");
-  }
-
-  doc::Layer* layer() {
-    auto layer = handle<doc::Object, doc::Layer>();
-    if (!layer)
-      throw script::ObjectDestroyedException{};
-    return layer;
+    clazz.addMethod("cel") = [](doc::Layer& layer, double i) -> JSON::Value {
+      return JSON::makeNative(layer.cel((doc::frame_t)i));
+    };
   }
 };
 
-static script::ScriptObject::Regular<LayerScriptObject> layerSO(typeid(doc::Layer*).name());
+static di::provide<Extension, LayerExtension> x{"layer"};

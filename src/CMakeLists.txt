@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C) 2021-2026  LibreSprite contributors
 
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
@@ -36,7 +36,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:delta")
+  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:delta>")
   set(KEEP_INJECTIONS_END "")
 endif()
 

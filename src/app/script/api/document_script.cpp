@@ -1,28 +1,44 @@
 // LibreSprite
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+
 #include "doc/document.h"
-#include "script/engine.h"
-#include "app/document.h"
-#include "app/ui_context.h"
 
-class DocumentScriptObject : public script::ScriptObject {
+#include <memory>
+#include <stdexcept>
+
+// `Document` wraps a `doc::Document`. It is not constructible from JS (the
+// constructor throws); instances are produced by the app-level API
+// (`app.activeDocument`, `app.open`).
+//
+// `document.sprite` returns the `Sprite` proxy (active-document semantics,
+// matching the `sprite` global) rather than a per-document snapshot
+
+class DocumentExtension : public Extension {
 public:
-  DocumentScriptObject() {
-    addProperty("sprite", [this]{return getEngine()->getScriptObject(doc()->sprite());});
-    addFunction("close", [this]{doc()->close(); return true;});
-  }
+  DocumentExtension() {
+    auto& clazz = addClass<void, doc::Document>("Document");
+    clazz.setConstructor() = []() -> std::shared_ptr<void> {
+      throw std::runtime_error{"Document cannot be constructed directly"};
+    };
 
-  doc::Document* doc() {
-    auto doc = handle<doc::Object, doc::Document>();
-    if (!doc)
-      throw script::ObjectDestroyedException{};
-    return doc;
+    clazz.addGetter("sprite") = [](doc::Document&) -> JSON::Value {
+      return JSON::makeNative(std::make_shared<script_api::SpriteSite>());
+    };
+
+    clazz.addMethod("close") = [](doc::Document& doc) -> JSON::Value {
+      doc.close();
+      return true;
+    };
   }
 };
 
-static script::ScriptObject::Regular<DocumentScriptObject> reg(typeid(doc::Document*).name());
+static di::provide<Extension, DocumentExtension> x{"document"};

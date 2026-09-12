@@ -1,3 +1,5 @@
+let ai;
+
 const defaultSettings = {
     serverType:"easydiffusion",
     easydiffusion: {

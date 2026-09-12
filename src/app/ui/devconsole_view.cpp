@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -15,7 +15,6 @@
 #include "app/ui/skin/skin_style_property.h"
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/workspace.h"
-#include "script/engine.h"
 #include "ui/button.h"
 #include "ui/entry.h"
 #include "ui/message.h"
@@ -70,16 +69,8 @@ DevConsoleView::DevConsoleView()
   addChild(&m_view);
   addChild(&m_bottomBox);
 
-  m_bottomBox.addChild(&m_language);
   m_bottomBox.addChild(&m_label);
   m_bottomBox.addChild(m_entry);
-
-  auto& engines = script::Engine::getRegistry();
-  for (auto& entry : engines) {
-      std::string name = entry.first;
-      if (!name.empty())
-        m_language.addItem(name);
-  }
 
   m_view.setProperty(SkinStylePropertyPtr(
       new SkinStyleProperty(theme->styles.workspaceView())));
@@ -138,7 +129,6 @@ bool DevConsoleView::onProcessMessage(Message* msg)
 
 void DevConsoleView::onExecuteCommand(const std::string& cmd)
 {
-  script::Engine::setDefault(m_language.getValue());
   m_engine.printLastResult();
   m_engine.eval(cmd);
 }

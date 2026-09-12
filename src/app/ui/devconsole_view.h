@@ -53,7 +53,6 @@ namespace app {
     ui::View m_view;
     ui::TextBox m_textBox;
     ui::HBox m_bottomBox;
-    ui::ComboBox m_language;
     ui::Label m_label;
     CommmandEntry* m_entry;
     Provides m_dev{this};

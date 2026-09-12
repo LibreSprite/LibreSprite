@@ -1502,7 +1502,10 @@ ContextBar::ContextBar()
 
 ContextBar::~ContextBar()
 {
-  App::instance()->activeToolManager()->removeObserver(this);
+  // App::instance() may already be null if we're being destroyed during
+  // ~App (m_instance is cleared before the UI members are torn down).
+  if (App::instance())
+    App::instance()->activeToolManager()->removeObserver(this);
 }
 
 void ContextBar::onSizeHint(SizeHintEvent& ev)

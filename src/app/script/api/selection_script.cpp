@@ -1,126 +1,88 @@
-// Aseprite
-// Copyright (C) 2015-2016  David Capello
+// LibreSprite
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-/*
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "app/script/selection_class.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
 
 #include "app/cmd/deselect_mask.h"
 #include "app/cmd/set_mask.h"
 #include "app/document.h"
-#include "app/script/sprite_wrap.h"
 #include "app/transaction.h"
+#include "app/ui_context.h"
 #include "doc/mask.h"
+#include "doc/sprite.h"
+#include "gfx/rect.h"
 
-namespace app {
-
-using namespace doc;
+#include <memory>
+#include <stdexcept>
 
 namespace {
-
-script::result_t Selection_ctor(script::ContextHandle handle)
-{
-  return 0;
-}
-
-script::result_t Selection_select(script::ContextHandle handle)
-{
-  script::Context ctx(handle);
-  int x = ctx.requireInt(0);
-  int y = ctx.requireInt(1);
-  int w = ctx.requireInt(2);
-  int h = ctx.requireInt(3);
-
-  auto wrap = (SpriteWrap*)ctx.getThis();
-  if (wrap) {
-    Document* doc = wrap->document();
-
-    Mask newMask;
-    if (w > 0 && h > 0)
-      newMask.replace(gfx::Rect(x, y, w, h));
-
-    wrap->transaction().execute(new cmd::SetMask(doc, &newMask));
+  app::Document* activeDocument() {
+    auto* doc = app::UIContext::instance()->activeDocument();
+    if (!doc)
+      throw std::runtime_error{"No active document"};
+    return doc;
   }
+} // namespace
 
-  return 0;
-}
+class SelectionExtension : public Extension {
+public:
+  SelectionExtension() {
+    using namespace script_api;
+    auto& clazz = addClass<void, SelectionSite>("Selection");
+    clazz.setConstructor() = []() -> std::shared_ptr<SelectionSite> {
+      static std::shared_ptr<SelectionSite> site = std::make_shared<SelectionSite>();
+      return site;
+    };
 
-script::result_t Selection_selectAll(script::ContextHandle handle)
-{
-  script::Context ctx(handle);
+    clazz.addMethod("select") = [](SelectionSite&, double x, double y, double w, double h) -> JSON::Value {
+      auto* doc = activeDocument();
+      doc::Mask newMask;
+      if (w > 0 && h > 0)
+        newMask.replace(gfx::Rect((int)x, (int)y, (int)w, (int)h));
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::SetMask(doc, &newMask));
+      tx.commit();
+      return {};
+    };
 
-  auto wrap = (SpriteWrap*)ctx.getThis();
-  if (wrap) {
-    Document* doc = wrap->document();
+    clazz.addMethod("selectAll") = [](SelectionSite&) -> JSON::Value {
+      auto* doc = activeDocument();
+      doc::Mask newMask;
+      newMask.replace(doc->sprite()->bounds());
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::SetMask(doc, &newMask));
+      tx.commit();
+      return {};
+    };
 
-    Mask newMask;
-    newMask.replace(doc->sprite()->bounds());
+    clazz.addMethod("deselect") = [](SelectionSite&) -> JSON::Value {
+      auto* doc = activeDocument();
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::DeselectMask(doc));
+      tx.commit();
+      return {};
+    };
 
-    wrap->transaction().execute(new cmd::SetMask(doc, &newMask));
+    clazz.addGetter("bounds") = [](SelectionSite&) -> JSON::Value {
+      auto* doc = activeDocument();
+      if (!doc->isMaskVisible())
+        return JSON::Value{JSON::Special::Null};
+      gfx::Rect b = doc->mask()->bounds();
+      return JSON::makeObject({
+        {"x", (double)b.x},
+        {"y", (double)b.y},
+        {"width", (double)b.w},
+        {"height", (double)b.h},
+      });
+    };
   }
-
-  return 0;
-}
-
-script::result_t Selection_deselect(script::ContextHandle handle)
-{
-  script::Context ctx(handle);
-
-  auto wrap = (SpriteWrap*)ctx.getThis();
-  if (wrap) {
-    Document* doc = wrap->document();
-    wrap->transaction().execute(new cmd::DeselectMask(doc));
-  }
-
-  return 0;
-}
-
-script::result_t Selection_get_bounds(script::ContextHandle handle)
-{
-  script::Context ctx(handle);
-  auto wrap = (SpriteWrap*)ctx.getThis();
-  if (wrap) {
-    Document* doc = wrap->document();
-    if (doc->isMaskVisible()) {
-      gfx::Rect bounds = doc->mask()->bounds();
-      script::index_t obj = ctx.pushObject();
-      ctx.pushNumber(bounds.x); ctx.setProp(obj, "x");
-      ctx.pushNumber(bounds.y); ctx.setProp(obj, "y");
-      ctx.pushNumber(bounds.w); ctx.setProp(obj, "width");
-      ctx.pushNumber(bounds.h); ctx.setProp(obj, "height");
-      return 1;
-    }
-  }
-  return 0;
-}
-
-const script::FunctionEntry Selection_methods[] = {
-  { "select", Selection_select, 4 },
-  { "selectAll", Selection_selectAll, 0 },
-  { "deselect", Selection_deselect, 1 },
-  { nullptr, nullptr, 0 }
 };
 
-const script::PropertyEntry Selection_props[] = {
-  { "bounds", Selection_get_bounds, nullptr },
-  { nullptr, nullptr, 0 }
-};
-
-} // anonymous namespace
-
-void register_selection_class(script::index_t idx, script::Context& ctx)
-{
-  ctx.registerClass(idx, "Selection", Selection_ctor, 3, Selection_methods, Selection_props);
-}
-
-} // namespace app
-
-*/
+static di::provide<Extension, SelectionExtension> x{"selection"};
