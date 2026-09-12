@@ -20,7 +20,6 @@
 #include "base/path.h"
 #include "base/fs.h"
 #include "base/string.h"
-#include "script/script_object.h"
 #include "script/engine.h"
 
 namespace app {

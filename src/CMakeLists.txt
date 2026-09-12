@@ -36,7 +36,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:script-lib>")
+  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:delta")
   set(KEEP_INJECTIONS_END "")
 endif()
 
@@ -85,7 +85,6 @@ add_subdirectory(flic)
 add_subdirectory(gfx)
 add_subdirectory(net)
 add_subdirectory(render)
-add_subdirectory(script)
 add_subdirectory(she)
 add_subdirectory(ui)
 endif()
@@ -132,10 +131,10 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   gfx-lib
   net-lib
   render-lib
-  script-lib
   she
   ui-lib
   undo
+  delta
   ${KEEP_INJECTIONS_END}
   ${LibArchive_LIBRARY}
   ${TINYXML2_LIBRARY}

@@ -9,27 +9,28 @@
 #pragma once
 
 #include "base/injection.h"
+#include "script/value.h"
 
 namespace script {
-    class Engine;
-    class Value;
+  class Engine;
 };
+
+class Extension;
 
 namespace app {
 
   class AppScripting {
-    void initEngine();
-    static std::string m_fileName;
-
+    static void initEngine();
+    static void engineRaiseEvent(script::Value& event);
+    static void addExtension(Extension& ext);
   public:
-    static const std::string& getFileName() {return m_fileName;}
     static bool evalFile(const std::string& fileName);
-    static void raiseEvent(const std::string& fileName, const std::vector<script::Value>& event);
+    static void raiseEvent(const std::string& fileName, script::Value& event);
     static bool scanScript(const std::string& fullPath);
     static void clearEventHooks();
 
-    bool eval(const std::string& code);
-    void printLastResult();
+    static bool eval(const std::string& code, const std::string& path = "::");
+    static void printLastResult();
   };
 
 } // namespace app

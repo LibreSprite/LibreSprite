@@ -95,9 +95,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 set(EASYTAB_DIR         ${CMAKE_SOURCE_DIR}/third_party/EasyTab)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
-set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs)
+set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs-amalgam)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
+set(DELTA_DIR           ${CMAKE_SOURCE_DIR}/third_party/delta)
 
 # Search in the "cmake" directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -204,6 +205,9 @@ include_directories(${CURL_INCLUDE_DIRS})
 endif()
 # simpleini
 include_directories(${SIMPLEINI_DIR})
+
+# delta
+include_directories(${DELTA_DIR})
 
 ######################################################################
 # Platform specific stuff

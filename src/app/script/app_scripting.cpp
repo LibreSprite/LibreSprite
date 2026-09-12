@@ -10,23 +10,24 @@
 #include "config.h"
 #endif
 
+#include "delta/Extension.hpp"
+#include "delta/Interpreter.hpp"
 #include "app/app.h"
 #include "app/document.h"
 #include "app/script/app_scripting.h"
 #include "app/task_manager.h"
 #include "base/file_handle.h"
+#include "base/injection.h"
 #include "base/path.h"
 #include "base/range.h"
 #include "base/string.h"
 #include "base/trim_string.h"
-#include "script/engine.h"
-#include "script/engine_delegate.h"
-#include "script/value.h"
+#include "di.hpp"
 #include "ui/keys.h"
+#include "ui/manager.h"
 #include "ui/message.h"
 #include "ui/message_type.h"
 #include "ui/widget.h"
-#include "ui/manager.h"
 
 #include <map>
 #include <utility>
@@ -36,14 +37,14 @@
 
 namespace {
 
-inject<script::Engine> engine{nullptr};
-std::string previousFileName;
-bool wasInit{};
+std::unordered_set<std::string> loadedScripts;
+std::shared_ptr<Interpreter> engine;
+std::vector<std::shared_ptr<Extension>> extensions;
+JSON::Value LS;
 
 }
 
 namespace app {
-  std::string AppScripting::m_fileName;
   std::multimap<std::string, std::string> eventHooks;
 
   class EventListener : public ui::Widget {
@@ -54,16 +55,15 @@ namespace app {
       if (range.empty())
         return false;
 
-      std::vector<script::Value> args {
-        event,
-        static_cast<int>(msg->modifiers())
-      };
+      JSON::Value args;
+      args.push_back(event);
+      args.push_back(static_cast<double>(msg->modifiers()));
 
       switch (msg->type()) {
       case ui::kKeyDownMessage:
       case ui::kKeyUpMessage:
-        args.push_back(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->unicodeChar()));
-        args.push_back(static_cast<int>(static_cast<ui::KeyMessage*>(msg)->scancode()));
+        args.push_back(static_cast<double>(static_cast<ui::KeyMessage*>(msg)->unicodeChar()));
+        args.push_back(static_cast<double>(static_cast<ui::KeyMessage*>(msg)->scancode()));
         break;
 
       case ui::kMouseDownMessage:
@@ -74,11 +74,11 @@ namespace app {
       case ui::kMouseMoveMessage:
       case ui::kSetCursorMessage:
       case ui::kMouseWheelMessage:
-        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().x));
-        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->position().y));
-        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->buttons()));
-        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().x));
-        args.push_back(static_cast<int>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().y));
+        args.push_back(static_cast<double>(static_cast<ui::MouseMessage*>(msg)->position().x));
+        args.push_back(static_cast<double>(static_cast<ui::MouseMessage*>(msg)->position().y));
+        args.push_back(static_cast<double>(static_cast<ui::MouseMessage*>(msg)->buttons()));
+        args.push_back(static_cast<double>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().x));
+        args.push_back(static_cast<double>(static_cast<ui::MouseMessage*>(msg)->wheelDelta().y));
         break;
 
       default:
@@ -103,16 +103,8 @@ namespace app {
   }
 
   bool AppScripting::scanScript(const std::string& fullPath) {
-    bool supported = false;
     auto extension = base::string_to_lower(base::get_file_extension(fullPath));
-    for (auto& entry : script::Engine::getRegistry()) {
-      if (entry.second.hasFlag(extension)) {
-        supported = true;
-        break;
-      }
-    }
-
-    if (!supported)
+    if (extension != "js")
       return false;
 
     std::ifstream file{fullPath};
@@ -156,43 +148,70 @@ namespace app {
   }
 
   void AppScripting::initEngine() {
-    if (!wasInit) {
-      wasInit = true;
-      App::instance()->Exit.connect([]{
-        engine = nullptr;
-      });
-    }
+    if (engine)
+      return;
 
-    // if there is no engine OR
-    // the engine we have doesn't match the default in the registry,
-    // inject a new one
-    if (!engine || !script::Engine::getRegistry()[""].match(engine.get())) {
-        bool printLast = engine && engine->getPrintLastResult();
-        engine = inject<script::Engine>();
-        if (engine && printLast)
-            engine->getPrintLastResult();
+    App::instance()->Exit.connect([]{
+      extensions.clear();
+      engine.reset();
+    });
+
+    engine = di::inject<Interpreter>("js");
+
+    LS["version"] = VERSION;
+    LS["package"] = PACKAGE;
+    engine->addGlobalValue("LS", LS);
+
+    extensions = di::injectAll<Extension>();
+    for (auto& ext : extensions)
+      addExtension(*ext);
+  }
+
+  void AppScripting::addExtension(Extension& ext) {
+    for (auto& [name, func] : ext.getFunctions())
+      engine->addAPIFunction(name, func);
+    for (auto& [className, clazz] : ext.getClasses()) {
+      auto& cls = engine->addClass(className, clazz->getBaseType(), clazz->getDerivedType(), clazz->getConstructor());
+      for (auto& [name, method] : clazz->getMethods()) {
+        cls.addMethod(name, method);
+      }
+      for (auto& [name, getset] : clazz->getGetSet()) {
+        cls.addGetSet(name, getset.get, getset.set);
+      }
+    }
+    auto boot = ext.init("js", LS);
+    if (!boot.empty()) {
+      try {
+        engine->eval(boot, typeid(ext).name());
+      } catch (const std::exception& e) {
+        std::cerr << "Warning: Failed to run boot script for extension " << typeid(ext).name() << ": " << e.what() << std::endl;
+      }
     }
   }
 
-  void AppScripting::raiseEvent(const std::string& fileName, const std::vector<script::Value> &event) {
-    TaskManager::instance().delayed([=]{
-      if ((engine && fileName == previousFileName) || evalFile(fileName)) {
-        engine->raiseEvent(event);
+  void AppScripting::engineRaiseEvent(script::Value& event) {
+  }
+
+  void AppScripting::raiseEvent(const std::string& fileName, script::Value& event) {
+    TaskManager::instance().delayed([=]() mutable {
+      if (evalFile(fileName)) {
+          engineRaiseEvent(event);
       }
     });
   }
 
-  bool AppScripting::eval(const std::string& code) {
+  bool AppScripting::eval(const std::string& code, const std::string& path) {
     initEngine();
     if (engine) {
-      return engine->eval(code);
+        loadedScripts.insert(path);
+        return engine->eval(code, path).boolean();
     }
-    inject<script::EngineDelegate>{}->onConsolePrint("No compatible scripting engine.");
     return false;
   }
 
   bool AppScripting::evalFile(const std::string& fileName) {
-    m_fileName = fileName;
+    if (loadedScripts.find(fileName) != loadedScripts.end())
+        return true;
     std::cout << "Reading file " << fileName << std::endl;
     std::ifstream ifs(fileName);
     if (!ifs) {
@@ -200,24 +219,18 @@ namespace app {
       return false;
     }
 
-    auto extension = base::string_to_lower(base::get_file_extension(fileName));
-    script::Engine::setDefault(extension, {extension});
-
-    engine = nullptr;
-
-    AppScripting instance;
-    if (!instance.eval({std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()}))
+    if (!eval({std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()}, fileName))
       return false;
 
-    engine->raiseEvent({"init"});
-
-    previousFileName = fileName;
+    JSON::Value args;
+    args.push_back("init");
+    engineRaiseEvent(args);
     return true;
   }
 
   void AppScripting::printLastResult() {
-    if(engine)
-      engine->printLastResult();
+    // if(engine)
+    //   engine->printLastResult();
   }
 
 }
