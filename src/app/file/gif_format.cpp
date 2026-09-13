@@ -75,7 +75,8 @@ class GifFormat : public FileFormat {
       FILE_SUPPORT_INDEXED |
       FILE_SUPPORT_FRAMES |
       FILE_SUPPORT_PALETTES |
-      FILE_SUPPORT_GET_FORMAT_OPTIONS;
+      FILE_SUPPORT_GET_FORMAT_OPTIONS |
+      FILE_SUPPORT_PALETTE_WITH_ONEALPHA;
   }
 
   bool onLoad(FileOp* fop) override;
@@ -845,7 +846,7 @@ public:
       m_quantizeColormaps = true;
     }
 
-    m_transparentIndex = (m_hasBackground ? -1: m_bgIndex);
+    m_transparentIndex = m_bgIndex;
 
     if (m_hasBackground)
       m_clearColor = m_sprite->palette(0)->getEntry(m_bgIndex);
@@ -1085,7 +1086,7 @@ private:
           ASSERT(it != bits.end());
 
           color_t color = *it;
-          int i;
+          int i = m_transparentIndex;
 
           if (rgba_geta(color) >= 128) {
             i = framePalette->findExactMatch(
@@ -1099,13 +1100,6 @@ private:
                                    rgba_getg(color),
                                    rgba_getb(color),
                                    255);
-          }
-          else {
-            ASSERT(m_transparentIndex >= 0);
-            if (m_transparentIndex >= 0)
-              i = m_transparentIndex;
-            else
-              i = m_bgIndex;
           }
 
           ASSERT(i >= 0);

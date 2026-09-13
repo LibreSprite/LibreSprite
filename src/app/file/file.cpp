@@ -298,10 +298,16 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
   // Palette with alpha
   if (!fop->m_format->support(FILE_SUPPORT_PALETTE_WITH_ALPHA)) {
+    bool oneAlpha = fop->m_format->support(FILE_SUPPORT_PALETTE_WITH_ONEALPHA);
+    auto transparentColor = fop->m_document->sprite()->transparentColor();
     bool done = false;
     for (auto& pal : fop->m_document->sprite()->getPalettes()) {
       for (int c=0; c<pal->size(); ++c) {
-        if (rgba_geta(pal->getEntry(c)) < 255) {
+        int a = rgba_geta(pal->getEntry(c));
+        if (oneAlpha && c == transparentColor) {
+          continue;
+        }
+        if (a < 255) {
           warnings += "<<- Palette with alpha channel";
           done = true;
           break;
