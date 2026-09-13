@@ -3,8 +3,13 @@ name: MacOS
 on:
   push:
     branches: [ master ]
+    tags:
+      - '*'
   pull_request:
     branches: [ master ]
+
+permissions:
+  contents: write
 
 env:
   BUILD_TYPE: Release
@@ -12,10 +17,36 @@ env:
 jobs:
   build-arm64:
     runs-on: macos-latest
+    if: ${{ !contains(github.event.head_commit.message, 'NO_SW_CHANGE') && !contains(github.event.pull_request.body, 'NO_SW_CHANGE') }}
     steps:
     - uses: actions/checkout@v7
       with:
         submodules: 'true'
+    - name: Check for git tag
+      id: check_tag
+      run: |
+        TAG=$(git describe --exact-match --tags 2>/dev/null) || true
+        if [ -n "$TAG" ]; then
+          echo "has_tag=true" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        else
+          echo "has_tag=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Get short commit hash
+      id: commit
+      run: |
+        SHORT_HASH=$(git rev-parse --short HEAD)
+        echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+    - name: Prepare release version
+      run: |
+        sed -i '' "s/\"local build\"/\"${{ steps.commit.outputs.short_hash }}\"/g" src/config.h
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          VER="${{ steps.check_tag.outputs.version }}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VER" packaging/macos/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VER" packaging/macos/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleLongVersionString $VER" packaging/macos/Info.plist
+        fi
     - name: Prepare environment and install dependencies
       run: |
         # macos-latest runner images come with this tap pre-added; Homebrew's
@@ -42,10 +73,19 @@ jobs:
     - name: Generate Makefiles
       run: |
         mkdir build
-        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_OSX_ARCHITECTURES=arm64 \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
-          -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_TAG=ON \
+            -DRELEASE_VERSION="${{ steps.check_tag.outputs.version }}" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
+            -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        else
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
+            -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        fi
     - name: Build the binaries
       run: |
         # Build only the editor target so test/tool binaries (clip_*_tests,
@@ -136,21 +176,58 @@ jobs:
     - name: Create the DMG
       run: |
         dmgbuild --detach-retries 5 -Dapp=bundle/libresprite.app -s packaging/macos/dmg_settings.py "LibreSprite" libresprite.dmg
-        echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          mv libresprite.dmg "libresprite-${{ steps.check_tag.outputs.tag }}-macos-arm64.dmg"
+          echo "dmg=libresprite-${{ steps.check_tag.outputs.tag }}-macos-arm64.dmg" >> $GITHUB_OUTPUT
+        else
+          echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+        fi
       id: dmg
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: libresprite-macos-arm64
+        name: ${{ steps.check_tag.outputs.has_tag == 'true' && format('libresprite-{0}-macos-arm64', steps.check_tag.outputs.tag) || 'libresprite-macos-arm64' }}
         path: ${{ steps.dmg.outputs.dmg }}
         if-no-files-found: error
+    - name: Attach the DMG to the release
+      if: steps.check_tag.outputs.has_tag == 'true'
+      uses: softprops/action-gh-release@v3
+      with:
+        files: ${{ steps.dmg.outputs.dmg }}
+        fail_on_unmatched_files: true
 
   build-x86_64:
     runs-on: macos-15-intel
+    if: ${{ !contains(github.event.head_commit.message, 'NO_SW_CHANGE') && !contains(github.event.pull_request.body, 'NO_SW_CHANGE') }}
     steps:
     - uses: actions/checkout@v7
       with:
         submodules: 'true'
+    - name: Check for git tag
+      id: check_tag
+      run: |
+        TAG=$(git describe --exact-match --tags 2>/dev/null) || true
+        if [ -n "$TAG" ]; then
+          echo "has_tag=true" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        else
+          echo "has_tag=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Get short commit hash
+      id: commit
+      run: |
+        SHORT_HASH=$(git rev-parse --short HEAD)
+        echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+    - name: Prepare release version
+      run: |
+        sed -i '' "s/\"local build\"/\"${{ steps.commit.outputs.short_hash }}\"/g" src/config.h
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          VER="${{ steps.check_tag.outputs.version }}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VER" packaging/macos/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VER" packaging/macos/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleLongVersionString $VER" packaging/macos/Info.plist
+        fi
     - name: Prepare environment and install dependencies
       run: |
         # macos-latest runner images come with this tap pre-added; Homebrew's
@@ -177,10 +254,19 @@ jobs:
     - name: Generate Makefiles
       run: |
         mkdir build
-        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
-          -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_TAG=ON \
+            -DRELEASE_VERSION="${{ steps.check_tag.outputs.version }}" \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
+            -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        else
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
+            -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        fi
     - name: Build the binaries
       run: |
         # Build only the editor target so test/tool binaries (clip_*_tests,
@@ -271,11 +357,22 @@ jobs:
     - name: Create the DMG
       run: |
         dmgbuild --detach-retries 5 -Dapp=bundle/libresprite.app -s packaging/macos/dmg_settings.py "LibreSprite" libresprite.dmg
-        echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          mv libresprite.dmg "libresprite-${{ steps.check_tag.outputs.tag }}-macos-x86_64.dmg"
+          echo "dmg=libresprite-${{ steps.check_tag.outputs.tag }}-macos-x86_64.dmg" >> $GITHUB_OUTPUT
+        else
+          echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+        fi
       id: dmg
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: 'libresprite-macos-x86_64'
+        name: ${{ steps.check_tag.outputs.has_tag == 'true' && format('libresprite-{0}-macos-x86_64', steps.check_tag.outputs.tag) || 'libresprite-macos-x86_64' }}
         path: ${{ steps.dmg.outputs.dmg }}
         if-no-files-found: error
+    - name: Attach the DMG to the release
+      if: steps.check_tag.outputs.has_tag == 'true'
+      uses: softprops/action-gh-release@v3
+      with:
+        files: ${{ steps.dmg.outputs.dmg }}
+        fail_on_unmatched_files: true

@@ -3,8 +3,13 @@ name: Linux
 on:
   push:
     branches: [ master ]
+    tags:
+      - '*'
   pull_request:
     branches: [ master ]
+
+permissions:
+  contents: write
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -16,10 +21,30 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    if: ${{ !contains(github.event.head_commit.message, 'NO_SW_CHANGE') && !contains(github.event.pull_request.body, 'NO_SW_CHANGE') }}
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+    - name: Check for git tag
+      id: check_tag
+      run: |
+        TAG=$(git describe --exact-match --tags 2>/dev/null) || true
+        if [ -n "$TAG" ]; then
+          echo "has_tag=true" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        else
+          echo "has_tag=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Get short commit hash
+      id: commit
+      run: |
+        SHORT_HASH=$(git rev-parse --short HEAD)
+        echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+    - name: Prepare release version
+      run: |
+        sed -i "s/\"local build\"/\"${{ steps.commit.outputs.short_hash }}\"/g" src/config.h
     # install dependencies
     - name: update
       run: sudo apt-get update
@@ -33,17 +58,41 @@ jobs:
     - name: mkdir
       run: mkdir build
     - name: cmake
-      run: cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release .. && ninja libresprite
+      run: |
+        cd build
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_TAG=ON \
+            -DRELEASE_VERSION="${{ steps.check_tag.outputs.version }}" ..
+        else
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+        fi
+        ninja libresprite
     - name: appimage
+      id: appimage
       run: |
         cd build/bin
         export ARCH="$(uname -m)"
         sh ../../packaging/linux/package_linux.sh
         mv ./LibreSprite-anylinux-$ARCH.AppImage ../../
+        cd ../..
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          APPIMAGE="libresprite-${{ steps.check_tag.outputs.tag }}-linux-$ARCH.AppImage"
+          mv "LibreSprite-anylinux-$ARCH.AppImage" "$APPIMAGE"
+        else
+          APPIMAGE="LibreSprite-anylinux-$ARCH.AppImage"
+        fi
+        echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
     - name: Archive production artifacts
       if: runner.arch == 'X64'
       uses: actions/upload-artifact@v4
       with:
-        name: libresprite-development-linux-x86_64
-        path: LibreSprite-anylinux-x86_64.AppImage
+        name: ${{ steps.check_tag.outputs.has_tag == 'true' && format('libresprite-{0}-linux-x86_64', steps.check_tag.outputs.tag) || 'libresprite-linux-x86_64' }}
+        path: ${{ steps.appimage.outputs.appimage }}
         if-no-files-found: error
+    - name: Attach the AppImage to the release
+      if: ${{ steps.check_tag.outputs.has_tag == 'true' && runner.arch == 'X64' }}
+      uses: softprops/action-gh-release@v3
+      with:
+        files: ${{ steps.appimage.outputs.appimage }}
+        fail_on_unmatched_files: true

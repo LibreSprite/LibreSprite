@@ -106,6 +106,17 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Put libraries into "lib".
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
+# Release builds from a git tag: the version is supplied by the workflow
+# (the tag is the single source of truth).
+option(RELEASE_TAG "Building a release from a git tag" OFF)
+if(RELEASE_TAG)
+  if(NOT DEFINED RELEASE_VERSION)
+    message(FATAL_ERROR "RELEASE_VERSION must be set when RELEASE_TAG is enabled")
+  endif()
+  add_definitions(-DRELEASE_TAG)
+  add_definitions(-DRELEASE_VERSION="${RELEASE_VERSION}")
+endif()
+
 ######################################################################
 # Common definitions to compile all sources (app code and third party)
 

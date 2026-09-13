@@ -24,7 +24,12 @@
 
 // General information
 #define PACKAGE "LibreSprite"
-#define VERSION "1.2-dev"
+#define COMMIT  "local build"
+#ifndef RELEASE_TAG
+    #define VERSION "1.2-dev (" COMMIT ")"
+#else
+    #define VERSION RELEASE_VERSION
+#endif
 #define PACKAGE_AND_VERSION PACKAGE " " VERSION
 
 #define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
