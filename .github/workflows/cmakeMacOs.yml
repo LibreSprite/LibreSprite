@@ -7,58 +7,52 @@ on:
     branches: [ master ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
   build-arm64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
-
-    - name: install deps
+    - uses: actions/checkout@v7
+      with:
+        submodules: 'true'
+    - name: Prepare environment and install dependencies
       run: |
-        brew install gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
-
-    - name: git
-      run: |
-        git submodule update --init --recursive
-
-    - name: Build & Install GifLib 4.2.3
-      run: |
-        brew install autoconf automake libtool
+        # macos-latest runner images come with this tap pre-added; Homebrew's
+        # tap-trust check then warns on every brew invocation since it's untrusted.
+        brew untap aws/tap || true
+        brew install autoconf automake libtool gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
+        pip3 install --break-system-packages dmgbuild
+        echo "Building and Installing GifLib"
         export CFLAGS="-Wno-implicit-function-declaration"
         curl -L https://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.gz/download --output giflib.tar.gz
         tar -xvf giflib.tar.gz
         cd giflib-4.2.3/
         ./configure
         sudo make install -j4
-
-    - name: Build & Install libpng v1.6.50
-      run: |
+        cd ..
+        echo "Building and installing LibPNG"
         git clone https://github.com/glennrp/libpng -b v1.6.50 --recursive
         cd libpng/
         ./configure
         make all -j4
         sudo make install
-
-    - name: Download & Lint Info.plist
-      run: |
-        curl -L https://raw.githubusercontent.com/LibreSprite/LibreSprite/master/desktop/Info.plist --output desktop/Info.plist
+        cd ..
         plutil desktop/Info.plist
-
     - name: Generate Makefiles
       run: |
+        mkdir build
         cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_OSX_ARCHITECTURES=arm64 \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
           -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
-
-    - name: Build
+    - name: Build the binaries
       run: |
-        cmake --build build/ --parallel 3
-        rm -f build/bin/clip_image_tests build/bin/clip_text_tests build/bin/clip_user_format_tests build/bin/gen
-
-    - name: Generate .icns
+        # Build only the editor target so test/tool binaries (clip_*_tests,
+        # gen) are never produced and can't leak into the bundle.
+        cmake --build build -j 3 --target libresprite
+        rm -f build/bin/gen
+    - name: Generate .icns file
       run: |
         mkdir libresprite.iconset
         sips -z 16 16     data/icons/ase64.png --out libresprite.iconset/icon_16x16.png
@@ -73,8 +67,7 @@ jobs:
         sips -z 1024 1024 data/icons/ase64.png --out libresprite.iconset/icon_512x512@2x.png
         iconutil -c icns -o libresprite.icns libresprite.iconset
         rm -R libresprite.iconset
-
-    - name: Build Apple Bundle
+    - name: Create Apple Bundle
       run: |
         mkdir bundle/
         mkdir bundle/libresprite.app
@@ -82,40 +75,36 @@ jobs:
         mkdir bundle/libresprite.app/Contents/libs
         mkdir bundle/libresprite.app/Contents/MacOS
         mkdir bundle/libresprite.app/Contents/Resources
-        cp ./build/bin/libresprite ./bundle/libresprite.app/Contents/MacOS/
-        cp -r ./build/bin/data/ ./bundle/libresprite.app/Contents/Resources/data/
-        cp ./libresprite.icns ./bundle/libresprite.app/Contents/Resources/
-        cp ./desktop/Info.plist ./bundle/libresprite.app/Contents/
-        chmod +x ./bundle/libresprite.app/Contents/MacOS/libresprite
-
-    - name: Put Dylibs
+        cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
+        cp -r build/bin/data/ bundle/libresprite.app/Contents/Resources/data/
+        cp libresprite.icns bundle/libresprite.app/Contents/Resources/
+        cp desktop/Info.plist bundle/libresprite.app/Contents/
+        chmod +x bundle/libresprite.app/Contents/MacOS/libresprite
+    - name: Put in Dylibs
       run: |
-        dylibbundler -od -b -ns -x ./bundle/libresprite.app/Contents/MacOS/libresprite -d ./bundle/libresprite.app/Contents/libs/
-
-        # Check current RPATH entries after dylibbundler
+        dylibbundler -od -b -ns -x bundle/libresprite.app/Contents/MacOS/libresprite -d bundle/libresprite.app/Contents/libs/
+        echo "Manually bundling libSDL3.dylib..."
+        # Homebrew's sdl2 formula now installs sdl2-compat, whose libSDL2 dylib
+        # dlopen()s SDL3 at runtime instead of linking it (checks @loader_path,
+        # @executable_path, then plain name). dylibbundler only reads LC_LOAD_DYLIB
+        # entries via otool, so it never sees this dependency and skips it.
+        cp -L "$(brew --prefix sdl3)/lib/libSDL3.dylib" bundle/libresprite.app/Contents/libs/libSDL3.dylib
+        install_name_tool -id "@rpath/libSDL3.dylib" bundle/libresprite.app/Contents/libs/libSDL3.dylib
         echo "RPATH entries after dylibbundler:"
-        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
-        
-        # Clean up any duplicate RPATH entries from the main executable
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
         echo "Cleaning up RPATH entries from main executable..."
-        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
             if [ ! -z "$rpath" ]; then
                 echo "Removing RPATH: $rpath"
-                install_name_tool -delete_rpath "$rpath" ./bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "Could not remove $rpath (may not exist)"
+                install_name_tool -delete_rpath "$rpath" bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "Could not remove $rpath (may not exist)"
             fi
         done
-        
-        # Add our RPATH cleanly
         echo "Adding single RPATH: @executable_path/../libs/"
-        install_name_tool -add_rpath "@executable_path/../libs/" ./bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "RPATH may already exist"
-        
-        # Verify final RPATH
+        install_name_tool -add_rpath "@executable_path/../libs/" bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "RPATH may already exist"
         echo "Final RPATH entries:"
-        otool -l ./bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
-        
-        # Clean up RPATH entries in ALL bundled libraries to be thorough
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
         echo "Cleaning RPATH entries from all bundled libraries:"
-        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" -type f | while read -r dylib; do
+        find bundle/libresprite.app/Contents/libs -name "*.dylib" -type f | while read -r dylib; do
             echo "Processing: $(basename "$dylib")"
             otool -l "$dylib" | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
                 if [ ! -z "$rpath" ]; then
@@ -124,57 +113,169 @@ jobs:
                 fi
             done
         done
-
         echo "RPATH cleanup complete"
-
-    - name: Create DMG
+    - name: Sign the Binaries
       run: |
-        # Create an entitlements file to disable library validation for ad-hoc signed apps
-        cat > ./bundle_entitlements.plist << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>com.apple.security.cs.disable-library-validation</key>
-            <true/>
-        </dict>
-        </plist>
-        EOF
-        
-        # Remove all existing signatures completely
-        find ./bundle/libresprite.app -type f \( -name "*.dylib" -o -name "libresprite" \) -exec codesign --remove-signature {} \; 2>/dev/null || true
-        
-        # Create a temporary signing script to ensure identical codesign parameters
-        cat > ./sign_component.sh << 'EOF'
-        #!/bin/bash
-        COMPONENT="$1"
-        echo "Signing: $COMPONENT"
-        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - "$COMPONENT"
-        if [ $? -eq 0 ]; then
-            echo "Successfully signed: $COMPONENT"
-        else
-            echo "Failed to sign: $COMPONENT"
-        fi
-        EOF
-        chmod +x ./sign_component.sh
-        
-        # Sign all dylib files first using the same exact process
-        find ./bundle/libresprite.app/Contents/libs -name "*.dylib" -exec ./sign_component.sh {} \;
-        
-        # Sign the main executable
-        ./sign_component.sh "./bundle/libresprite.app/Contents/MacOS/libresprite"
-        
-        # Sign the app bundle itself (without --deep since components are already signed)
-        codesign --force --timestamp --options=runtime --entitlements ./bundle_entitlements.plist -s - ./bundle/libresprite.app
-        
-        # Clean up
-        rm ./bundle_entitlements.plist ./sign_component.sh
-        
-        hdiutil create -volname "LibreSprite" -srcfolder bundle -ov -format UDZO "libresprite.dmg"
+        # Remove all existing signatures before re-signing
+        find bundle/libresprite.app -type f \( -name "*.dylib" -o -name "libresprite" \) -exec codesign --remove-signature {} \; 2>/dev/null || true
 
+        # Ad-hoc sign without hardened runtime (--options=runtime triggers CS_RUNTIME which
+        # makes recent macOS releases enforce strict page-level validation on every loaded
+        # dylib — validation that ad-hoc signatures produced by older runners fail. Without
+        # CS_RUNTIME, library validation is not kernel-enforced and all dylibs load freely.)
+        find bundle/libresprite.app/Contents/libs -name "*.dylib" | while read -r dylib; do
+          echo "Signing: $dylib"
+          codesign --force -s - "$dylib" && echo "✓ $dylib" || echo "✗ $dylib"
+        done
+
+        codesign --force -s - bundle/libresprite.app/Contents/MacOS/libresprite && \
+          echo "LibreSprite contents signed successfully" || echo "Failed to sign LibreSprite contents"
+
+        codesign --force -s - bundle/libresprite.app && \
+          echo "LibreSprite app signed successfully" || echo "Failed to sign LibreSprite app"
+    - name: Create the DMG
+      run: |
+        dmgbuild --detach-retries 5 -Dapp=bundle/libresprite.app -s packaging/macos/dmg_settings.py "LibreSprite" libresprite.dmg
+        echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+      id: dmg
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: macos-arm64
-        path: libresprite.dmg
+        name: libresprite-macos-arm64
+        path: ${{ steps.dmg.outputs.dmg }}
+        if-no-files-found: error
+
+  build-x86_64:
+    runs-on: macos-15-intel
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: 'true'
+    - name: Prepare environment and install dependencies
+      run: |
+        # macos-latest runner images come with this tap pre-added; Homebrew's
+        # tap-trust check then warns on every brew invocation since it's untrusted.
+        brew untap aws/tap || true
+        brew install autoconf automake libtool gnutls freetype jpeg webp pixman sdl2 sdl2_image tinyxml2 libarchive ninja zlib xmlto dylibbundler
+        pip3 install --break-system-packages dmgbuild
+        echo "Building and Installing GifLib"
+        export CFLAGS="-Wno-implicit-function-declaration"
+        curl -L https://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.gz/download --output giflib.tar.gz
+        tar -xvf giflib.tar.gz
+        cd giflib-4.2.3/
+        ./configure
+        sudo make install -j4
+        cd ..
+        echo "Building and installing LibPNG"
+        git clone https://github.com/glennrp/libpng -b v1.6.50 --recursive
+        cd libpng/
+        ./configure
+        make all -j4
+        sudo make install
+        cd ..
+        plutil desktop/Info.plist
+    - name: Generate Makefiles
+      run: |
+        mkdir build
+        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 \
+          -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+    - name: Build the binaries
+      run: |
+        # Build only the editor target so test/tool binaries (clip_*_tests,
+        # gen) are never produced and can't leak into the bundle.
+        cmake --build build -j 3 --target libresprite
+        rm -f build/bin/gen
+    - name: Generate .icns file
+      run: |
+        mkdir libresprite.iconset
+        sips -z 16 16     data/icons/ase64.png --out libresprite.iconset/icon_16x16.png
+        sips -z 32 32     data/icons/ase64.png --out libresprite.iconset/icon_16x16@2x.png
+        sips -z 32 32     data/icons/ase64.png --out libresprite.iconset/icon_32x32.png
+        sips -z 64 64     data/icons/ase64.png --out libresprite.iconset/icon_32x32@2x.png
+        sips -z 128 128   data/icons/ase64.png --out libresprite.iconset/icon_128x128.png
+        sips -z 256 256   data/icons/ase64.png --out libresprite.iconset/icon_128x128@2x.png
+        sips -z 256 256   data/icons/ase64.png --out libresprite.iconset/icon_256x256.png
+        sips -z 512 512   data/icons/ase64.png --out libresprite.iconset/icon_256x256@2x.png
+        sips -z 512 512   data/icons/ase64.png --out libresprite.iconset/icon_512x512.png
+        sips -z 1024 1024 data/icons/ase64.png --out libresprite.iconset/icon_512x512@2x.png
+        iconutil -c icns -o libresprite.icns libresprite.iconset
+        rm -R libresprite.iconset
+    - name: Create Apple Bundle
+      run: |
+        mkdir bundle/
+        mkdir bundle/libresprite.app
+        mkdir bundle/libresprite.app/Contents
+        mkdir bundle/libresprite.app/Contents/libs
+        mkdir bundle/libresprite.app/Contents/MacOS
+        mkdir bundle/libresprite.app/Contents/Resources
+        cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
+        cp -r build/bin/data/ bundle/libresprite.app/Contents/Resources/data/
+        cp libresprite.icns bundle/libresprite.app/Contents/Resources/
+        cp desktop/Info.plist bundle/libresprite.app/Contents/
+        chmod +x bundle/libresprite.app/Contents/MacOS/libresprite
+    - name: Put in Dylibs
+      run: |
+        dylibbundler -od -b -ns -x bundle/libresprite.app/Contents/MacOS/libresprite -d bundle/libresprite.app/Contents/libs/
+        echo "Manually bundling libSDL3.dylib..."
+        # Homebrew's sdl2 formula now installs sdl2-compat, whose libSDL2 dylib
+        # dlopen()s SDL3 at runtime instead of linking it (checks @loader_path,
+        # @executable_path, then plain name). dylibbundler only reads LC_LOAD_DYLIB
+        # entries via otool, so it never sees this dependency and skips it.
+        cp -L "$(brew --prefix sdl3)/lib/libSDL3.dylib" bundle/libresprite.app/Contents/libs/libSDL3.dylib
+        install_name_tool -id "@rpath/libSDL3.dylib" bundle/libresprite.app/Contents/libs/libSDL3.dylib
+        echo "RPATH entries after dylibbundler:"
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
+        echo "Cleaning up RPATH entries from main executable..."
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
+            if [ ! -z "$rpath" ]; then
+                echo "Removing RPATH: $rpath"
+                install_name_tool -delete_rpath "$rpath" bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "Could not remove $rpath (may not exist)"
+            fi
+        done
+        echo "Adding single RPATH: @executable_path/../libs/"
+        install_name_tool -add_rpath "@executable_path/../libs/" bundle/libresprite.app/Contents/MacOS/libresprite 2>/dev/null || echo "RPATH may already exist"
+        echo "Final RPATH entries:"
+        otool -l bundle/libresprite.app/Contents/MacOS/libresprite | grep -A2 LC_RPATH || echo "No RPATH entries found"
+        echo "Cleaning RPATH entries from all bundled libraries:"
+        find bundle/libresprite.app/Contents/libs -name "*.dylib" -type f | while read -r dylib; do
+            echo "Processing: $(basename "$dylib")"
+            otool -l "$dylib" | grep -A2 LC_RPATH | grep path | awk '{print $2}' | sort | uniq | while read -r rpath; do
+                if [ ! -z "$rpath" ]; then
+                    echo "  Removing RPATH: $rpath"
+                    install_name_tool -delete_rpath "$rpath" "$dylib" 2>/dev/null || echo "  Could not remove $rpath from $(basename "$dylib")"
+                fi
+            done
+        done
+        echo "RPATH cleanup complete"
+    - name: Sign the Binaries
+      run: |
+        # Remove all existing signatures before re-signing
+        find bundle/libresprite.app -type f \( -name "*.dylib" -o -name "libresprite" \) -exec codesign --remove-signature {} \; 2>/dev/null || true
+
+        # Ad-hoc sign without hardened runtime (--options=runtime triggers CS_RUNTIME which
+        # makes recent macOS releases enforce strict page-level validation on every loaded
+        # dylib — validation that ad-hoc signatures produced by older runners fail. Without
+        # CS_RUNTIME, library validation is not kernel-enforced and all dylibs load freely.)
+        find bundle/libresprite.app/Contents/libs -name "*.dylib" | while read -r dylib; do
+          echo "Signing: $dylib"
+          codesign --force -s - "$dylib" && echo "✓ $dylib" || echo "✗ $dylib"
+        done
+
+        codesign --force -s - bundle/libresprite.app/Contents/MacOS/libresprite && \
+          echo "LibreSprite contents signed successfully" || echo "Failed to sign LibreSprite contents"
+
+        codesign --force -s - bundle/libresprite.app && \
+          echo "LibreSprite app signed successfully" || echo "Failed to sign LibreSprite app"
+    - name: Create the DMG
+      run: |
+        dmgbuild --detach-retries 5 -Dapp=bundle/libresprite.app -s packaging/macos/dmg_settings.py "LibreSprite" libresprite.dmg
+        echo "dmg=libresprite.dmg" >> $GITHUB_OUTPUT
+      id: dmg
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: 'libresprite-macos-x86_64'
+        path: ${{ steps.dmg.outputs.dmg }}
         if-no-files-found: error
