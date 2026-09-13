@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "LibreSprite"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.2"
 #define MyAppPublisher "LibreSprite Team"
 #define MyAppURL "https://libresprite.github.io/"
 #define MyAppExeName "libresprite.exe"
@@ -34,6 +34,8 @@ SetupIconFile=..\..\data\icons\ase.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -43,8 +45,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\..\build\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\build\bin\libresprite.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\build\bin\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\build\bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

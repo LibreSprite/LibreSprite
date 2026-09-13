@@ -55,3 +55,16 @@ jobs:
         name: libresprite-development-windows-x86_64
         path: |
           build/bin/*
+    - name: Install Inno Setup
+      if: startsWith(github.ref, 'refs/tags/')
+      run: choco install innosetup --version=6.7.1 -y
+    - name: Build installer
+      if: startsWith(github.ref, 'refs/tags/')
+      run: iscc packaging\windows\WindowsInstaller.iss
+    - name: Upload installer
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: libresprite-${{ github.ref_name }}-windows-x86_64-installer
+        path: packaging/windows/LibreSpriteInstaller.exe
+        if-no-files-found: error
