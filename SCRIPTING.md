@@ -53,26 +53,55 @@
 ## No Properties.
 
 ## Methods:
-   - `decodeBase64()`:
-      returns: Nothing
+   - `get(key, domain)`:
+     - key: String. The storage key name to retrieve.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
+      returns: The stored value, or undefined/null if missing.
+      Retrieves a value from key-value memory storage.
 
-   - `get()`:
+   - `set(value, key, domain)`:
+     - value: String or Object. The data to store.
+     - key: String. The storage key name.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
       returns: Nothing
+      Stores a value under the specified key and domain in memory.
 
-   - `save()`:
+   - `unload(key, domain)`:
+     - key: String. The storage key name to remove.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
       returns: Nothing
+      Removes a key-value pair from memory storage.
 
-   - `set()`:
-      returns: Nothing
+   - `load(key, domain)`:
+     - key: String. The storage key name.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
+      returns: Boolean (true on success, false on failure)
+      Loads file content from user resource file named `<domain>.<key>` into memory storage at key `<key>`.
 
-   - `fetch()`:
-      returns: Nothing
+   - `save(key, domain)`:
+     - key: String. The storage key name.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
+      returns: String (the saved file path on success, or empty string "" on failure)
+      Saves the in-memory value at `<key>` under `<domain>` to a local file named `<domain>.<key>` in the user resource directory.
 
-   - `load()`:
-      returns: Nothing
+   - `decodeBase64(key, domain)`:
+     - key: String. The storage key containing a Base64-encoded string.
+     - domain: String (optional). The storage namespace domain. Defaults to current script filename if omitted or empty.
+      returns: Boolean (true on success, false on failure or if key not found)
+      Decodes a Base64 string stored at `<key>` under `<domain>` in-place.
 
-   - `unload()`:
+   - `fetch(url, key, domain, ...headersOrPostBody)`:
+     - url: String. The HTTP/HTTPS URL to fetch.
+     - key: String. Storage key name where the response body will be saved.
+     - domain: String (optional). The storage domain. Defaults to current script filename if omitted or empty.
+     - Additional variadic arguments: Key-value pairs for request configuration. Passing `"POST", bodyString` sets the HTTP method to POST with body data. Any other key-value pairs are attached as HTTP headers (e.g., `"Content-Type", "application/json"`).
       returns: Nothing
+      Initiates an asynchronous HTTP request (GET by default, or POST if "POST" argument is provided).
+      Upon completion:
+        1. Stores response body string in `storage.get(key, domain)`.
+        2. Stores response HTTP status code integer in `storage.get(key + "_status", domain)`.
+        3. Raises the asynchronous script event `<key>_fetch` (handled via global `onEvent(eventName)`).
+
 
 
 
