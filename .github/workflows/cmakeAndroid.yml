@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: 'true'
     - name: Set up JDK 17
@@ -19,15 +19,25 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - name: Setup SDK
-      uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: 13114758
+      run: |
+        # android-actions/setup-android@v3 is archived and fails: it installs
+        # the legacy "tools" package, which no longer exists in the SDK repo.
+        SDK=/usr/local/lib/android/sdk
+        mkdir -p "$SDK/cmdline-tools"
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O /tmp/ct.zip
+        unzip -q /tmp/ct.zip -d "$SDK/cmdline-tools"
+        mv "$SDK/cmdline-tools/cmdline-tools" "$SDK/cmdline-tools/latest"
+        yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses
+        "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+        echo "ANDROID_HOME=$SDK" >> $GITHUB_ENV
     - name: Setup tools
       run: |
         # sudo apt-get install cmake g++ libtinyxml2-dev ninja-build
         sudo apt-get update
         sudo apt-get install g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libx11-dev libxcursor-dev ninja-build zlib1g-dev libarchive-dev
-        pip install cmake
+        # noble's apt cmake is 3.28 (the project needs >= 4.1) and system pip is PEP 668
+        curl -fsSL -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-linux-x86_64.tar.gz
+        sudo tar -xzf /tmp/cmake.tar.gz -C /usr/local --strip-components=1
         mkdir build
         cd build
         cmake -G Ninja -DGEN_ONLY=ON ..
@@ -41,11 +51,39 @@ jobs:
         CMAKEPATH=$(dirname $(dirname $(which cmake)))
         echo "cmake.dir=$CMAKEPATH" > local.properties
         sh ./gradlew --no-daemon --parallel build
-        cd ..
-#        ls -R android/app/build
+    - name: Sign release APK
+      env:
+        ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
+      run: |
+        # The gradle release build type is unsigned (ls-android-deps ships a
+        # placeholder signing config), so sign the release APK here with the
+        # shared release keystore (repo secrets) for a stable signature.
+        cd android
+        echo "$ANDROID_KEYSTORE_B64" | base64 -d > libresprite-release.keystore
+        BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+        APK=app/build/outputs/apk/all_in_one/release/app-all_in_one-release-unsigned.apk
+        if [ ! -f "$APK" ]; then
+          echo "::error::release APK not found at $APK - listing what was built:"
+          find app/build/outputs -type f 2>/dev/null | head -50
+          exit 1
+        fi
+        "$BUILD_TOOLS/zipalign" -f 4 "$APK" "$APK.aligned"
+        mv "$APK.aligned" "$APK"
+        "$BUILD_TOOLS/apksigner" sign \
+          --ks libresprite-release.keystore \
+          --ks-key-alias "$ANDROID_KEY_ALIAS" \
+          --ks-pass pass:"$ANDROID_KEYSTORE_PASS" \
+          --key-pass pass:"$ANDROID_KEY_PASS" \
+          "$APK"
+        "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
+        mv "$APK" app/build/outputs/apk/all_in_one/release/app-all_in_one-release.apk
+        rm libresprite-release.keystore
     - name: Archive production artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: libresprite-development-android
+        name: libresprite-android
         path: |
-          android/app/build/outputs/apk/all_in_one/debug/app-all_in_one-debug.apk
+          android/app/build/outputs/apk/all_in_one/release/app-all_in_one-release.apk

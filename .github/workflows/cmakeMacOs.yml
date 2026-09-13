@@ -11,9 +11,6 @@ on:
 permissions:
   contents: write
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build-arm64:
     runs-on: macos-latest

@@ -11,10 +11,6 @@ on:
 permissions:
   contents: write
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally
@@ -25,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Check for git tag
       id: check_tag
       run: |
@@ -51,7 +47,9 @@ jobs:
     - name: boost
       run: |
         sudo apt-get install g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libwebp-dev libx11-dev libxcursor-dev ninja-build libnode-dev zlib1g-dev libarchive-dev libfuse2
-        pip install cmake
+        # noble's apt cmake is 3.28 (the project needs >= 4.1) and system pip is PEP 668
+        curl -fsSL -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-linux-x86_64.tar.gz
+        sudo tar -xzf /tmp/cmake.tar.gz -C /usr/local --strip-components=1
     # build project
     - name: git
       run: git submodule update --init --recursive
@@ -85,7 +83,7 @@ jobs:
         echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
     - name: Archive production artifacts
       if: runner.arch == 'X64'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.check_tag.outputs.has_tag == 'true' && format('libresprite-{0}-linux-x86_64', steps.check_tag.outputs.tag) || 'libresprite-linux-x86_64' }}
         path: ${{ steps.appimage.outputs.appimage }}
