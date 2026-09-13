@@ -38,7 +38,7 @@ jobs:
       run: |
         cd build/bin
         export ARCH="$(uname -m)"
-        sh ../../package_linux.sh
+        sh ../../packaging/linux/package_linux.sh
         mv ./LibreSprite-anylinux-$ARCH.AppImage ../../
     - name: Archive production artifacts
       if: runner.arch == 'X64'

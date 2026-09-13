@@ -25,12 +25,12 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE.txt
+LicenseFile=..\..\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=.
 OutputBaseFilename=LibreSpriteInstaller
-SetupIconFile=..\data\icons\ase.ico
+SetupIconFile=..\..\data\icons\ase.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -42,10 +42,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\build\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\bin\libresprite.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\build\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\build\bin\gen.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\build\bin\libresprite.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\build\bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

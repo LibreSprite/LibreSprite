@@ -38,7 +38,7 @@ jobs:
         make all -j4
         sudo make install
         cd ..
-        plutil desktop/Info.plist
+        plutil packaging/macos/Info.plist
     - name: Generate Makefiles
       run: |
         mkdir build
@@ -78,7 +78,7 @@ jobs:
         cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
         cp -r build/bin/data/ bundle/libresprite.app/Contents/Resources/data/
         cp libresprite.icns bundle/libresprite.app/Contents/Resources/
-        cp desktop/Info.plist bundle/libresprite.app/Contents/
+        cp packaging/macos/Info.plist bundle/libresprite.app/Contents/
         chmod +x bundle/libresprite.app/Contents/MacOS/libresprite
     - name: Put in Dylibs
       run: |
@@ -173,7 +173,7 @@ jobs:
         make all -j4
         sudo make install
         cd ..
-        plutil desktop/Info.plist
+        plutil packaging/macos/Info.plist
     - name: Generate Makefiles
       run: |
         mkdir build
@@ -213,7 +213,7 @@ jobs:
         cp build/bin/libresprite bundle/libresprite.app/Contents/MacOS/
         cp -r build/bin/data/ bundle/libresprite.app/Contents/Resources/data/
         cp libresprite.icns bundle/libresprite.app/Contents/Resources/
-        cp desktop/Info.plist bundle/libresprite.app/Contents/
+        cp packaging/macos/Info.plist bundle/libresprite.app/Contents/
         chmod +x bundle/libresprite.app/Contents/MacOS/libresprite
     - name: Put in Dylibs
       run: |
