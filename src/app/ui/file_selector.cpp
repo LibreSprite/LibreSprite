@@ -273,6 +273,46 @@ private:
   FileSelector* m_filesel;
 };
 
+// We have this dummy/hidden widget only to catch the Enter key while
+// the user is typing/pasting a path into the location (address bar)
+// entry, so we can navigate to that path instead of letting Enter
+// trigger the dialog's default (OK) button. Follows the same pattern
+// as ArrowNavigator above.
+class LocationNavigator : public Widget {
+public:
+  LocationNavigator(FileSelector* filesel)
+    : Widget(kGenericWidget)
+    , m_filesel(filesel) {
+    setVisible(false);
+  }
+
+protected:
+  bool onProcessMessage(ui::Message* msg) override {
+    switch (msg->type()) {
+      case kOpenMessage:
+        manager()->addMessageFilter(kKeyDownMessage, this);
+        break;
+      case kCloseMessage:
+        manager()->removeMessageFilter(kKeyDownMessage, this);
+        break;
+      case kKeyDownMessage: {
+        KeyMessage* keyMsg = static_cast<KeyMessage*>(msg);
+        KeyScancode scancode = keyMsg->scancode();
+
+        if ((scancode == kKeyEnter || scancode == kKeyEnterPad) &&
+            m_filesel->location()->getEntryWidget()->hasFocus()) {
+          return m_filesel->onLocationEntryEnter();
+        }
+        return false;
+      }
+    }
+    return Widget::onProcessMessage(msg);
+  }
+
+private:
+  FileSelector* m_filesel;
+};
+
 FileSelector::FileSelector(FileSelectorType type, FileSelectorDelegate* delegate)
   : m_type(type)
   , m_delegate(delegate)
@@ -282,6 +322,7 @@ FileSelector::FileSelector(FileSelectorType type, FileSelectorDelegate* delegate
   bool withResizeOptions = (delegate && delegate->hasResizeCombobox());
 
   addChild(new ArrowNavigator(this));
+  addChild(new LocationNavigator(this));
 
   m_fileName = new CustomFileNameEntry;
   m_fileName->setFocusMagnet(true);
@@ -317,6 +358,10 @@ FileSelector::FileSelector(FileSelectorType type, FileSelectorDelegate* delegate
   setup_mini_look(goForwardButton());
   setup_mini_look(goUpButton());
   setup_mini_look(newFolderButton());
+
+  // Allow the user to type or paste a full path into the location
+  // (address bar) entry and press Enter to jump straight to it.
+  location()->setEditable(true);
 
   m_fileList = new FileList();
   m_fileList->setId("fileview");
@@ -911,6 +956,43 @@ void FileSelector::onLocationCloseListBox()
     // useful for the user)
     manager()->setFocus(m_fileList);
   }
+}
+
+// Called (via LocationNavigator) when the user presses Enter after
+// typing or pasting a path into the location entry. Returns true so
+// the key press is always consumed, i.e. it never falls through and
+// triggers the dialog's OK button with an unrelated file name.
+bool FileSelector::onLocationEntryEnter()
+{
+  IFileItem* currentFolder = m_fileList->getCurrentFolder();
+  if (!currentFolder)
+    return true;
+
+  std::string typedPath = location()->getEntryWidget()->text();
+  if (typedPath.empty() || typedPath == currentFolder->displayName())
+    return true;
+
+  bool isAbsolute = base::is_path_separator(*typedPath.begin());
+#ifdef _WIN32
+  isAbsolute = isAbsolute || typedPath.find(':') != std::string::npos;
+#endif
+
+  std::string buf = isAbsolute ? typedPath :
+    base::join_path(currentFolder->fileName(), typedPath);
+  buf = base::fix_path_separators(buf);
+
+  IFileItem* item = FileSystemModule::instance()->getFileItemFromPath(buf);
+  if (item && item->isFolder() && item->isBrowsable()) {
+    m_fileList->setCurrentFolder(item);
+    manager()->setFocus(m_fileList);
+  }
+  else {
+    Alert::show("Error<<Invalid or inaccessible path: \"%s\"||&OK", buf.c_str());
+    // Restore the entry text back to the current folder's name.
+    updateLocation();
+  }
+
+  return true;
 }
 
 // When the user selects a new file-type (extension), we have to
