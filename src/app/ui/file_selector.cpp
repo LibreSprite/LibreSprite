@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2026      LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -37,6 +37,7 @@
 #include <cctype>
 #include <cerrno>
 #include <iterator>
+#include <map>
 #include <set>
 #include <vector>
 
@@ -86,6 +87,45 @@ static NullableIterator<FileItemList> navigation_position; // Current position i
 // (second) is the selected extension by the user. It's used only in
 // FileSelector::Open type of dialogs.
 static std::map<std::string, std::string> preferred_open_extensions;
+
+namespace {
+
+// Extensions that represent the same underlying format and should be
+// coalesced into a single entry in the file-type dropdown (e.g. ".jpg" and
+// ".jpeg" are the same format under two extensions).
+struct FormatGroup {
+  const char* name;
+  std::vector<std::string> extensions; // display/priority order
+  bool pinned; // kept at the top of the dropdown
+};
+
+const std::vector<FormatGroup> kFormatGroups = {
+  { "Aseprite", { "ase", "aseprite" }, true },
+  { "JPEG",     { "jpeg", "jpg" },     false },
+  { "FLIC",     { "flc", "fli" },      false },
+};
+
+// Human-readable names for formats whose extension isn't simply its
+// upper-cased name (e.g. "webp" -> "WebP").
+const std::map<std::string, std::string> kFormatNames = {
+  { "webp", "WebP" },
+  { "anim", "Pixly Animation" },
+};
+
+std::string formatLabelFor(const std::string& ext)
+{
+  auto it = kFormatNames.find(ext);
+  return (it != kFormatNames.end()) ? it->second : base::string_to_upper(ext);
+}
+
+struct FileTypeEntry {
+  std::string label;
+  std::string value;      // extension(s) passed to FileList::setExtensions()
+  std::string defaultExt; // single extension used when appending to a filename
+  bool pinned;
+};
+
+} // anonymous namespace
 
 // Slot for App::Exit signal
 static void on_exit_delete_navigation_history()
@@ -413,16 +453,61 @@ std::string FileSelector::show(
     item->setValue(showExtensions);
     fileType()->addItem(item);
   }
-  // One file type for each supported image format
+  // One file type entry per supported image format. Extensions that are
+  // really the same format (e.g. .jpg/.jpeg) are coalesced into a single
+  // entry. The native Aseprite format is kept at the top; everything else
+  // is sorted alphabetically by format name for discoverability.
   std::vector<std::string> tokens;
   base::split_string(showExtensions, tokens, ",");
+
+  std::vector<FileTypeEntry> entries;
+  std::set<std::string> consumed;
+
+  for (const auto& group : kFormatGroups) {
+    std::vector<std::string> present;
+    for (const auto& ext : group.extensions) {
+      if (std::find(tokens.begin(), tokens.end(), ext) != tokens.end())
+        present.push_back(ext);
+    }
+    if (present.empty())
+      continue;
+
+    std::string label = std::string(group.name) + " files (";
+    std::string value;
+    for (size_t i=0; i<present.size(); ++i) {
+      if (i > 0) {
+        label += ", ";
+        value += ",";
+      }
+      label += "." + present[i];
+      value += present[i];
+    }
+    label += ")";
+
+    entries.push_back({ label, value, present.front(), group.pinned });
+    consumed.insert(present.begin(), present.end());
+  }
+
   for (const auto& tok : tokens) {
+    if (consumed.count(tok))
+      continue;
+    entries.push_back({ formatLabelFor(tok) + " files (." + tok + ")", tok, tok, false });
+  }
+
+  std::sort(entries.begin(), entries.end(),
+            [](const FileTypeEntry& a, const FileTypeEntry& b) {
+              if (a.pinned != b.pinned)
+                return a.pinned;
+              return base::string_to_lower(a.label) < base::string_to_lower(b.label);
+            });
+
+  for (const auto& entry : entries) {
     // If the default extension is empty, use the first filter
     if (m_defExtension.empty())
-      m_defExtension = tok;
+      m_defExtension = entry.defaultExt;
 
-    ListItem* item = new ListItem(tok + " files");
-    item->setValue(tok);
+    ListItem* item = new ListItem(entry.label.c_str());
+    item->setValue(entry.value);
     fileType()->addItem(item);
   }
   // All files
@@ -435,7 +520,24 @@ std::string FileSelector::show(
   // file name entry field
   m_fileName->setValue(base::get_file_name(initialPath).c_str());
   m_fileName->getEntryWidget()->selectText(0, -1);
-  fileType()->setValue(exts);
+
+  // Select the file-type entry matching "exts". A single extension may
+  // belong to a coalesced multi-extension entry (e.g. "jpg" is part of the
+  // "JPEG files (.jpeg, .jpg)" entry), so fall back to a membership search
+  // when no item's value is an exact match.
+  if (fileType()->findItemIndexByValue(exts) >= 0) {
+    fileType()->setValue(exts);
+  }
+  else {
+    for (int i=0; i<fileType()->getItemCount(); ++i) {
+      std::vector<std::string> members;
+      base::split_string(fileType()->getItem(i)->getValue(), members, ",");
+      if (std::find(members.begin(), members.end(), exts) != members.end()) {
+        fileType()->setSelectedItemIndex(i);
+        break;
+      }
+    }
+  }
 
   // setup the title of the window
   setText(title.c_str());
@@ -868,8 +970,23 @@ void FileSelector::onFileListCurrentFolderChanged()
 std::string FileSelector::getSelectedExtension() const
 {
   std::string ext = fileType()->getValue();
-  if (ext.empty() || ext.find(',') != std::string::npos)
+  if (ext.empty())
     ext = m_defExtension;
+  else if (ext.find(',') != std::string::npos) {
+    // The "All formats" entry's value is the full extension list, so
+    // there's no single format to prefer: fall back to the default
+    // extension. A coalesced multi-extension entry (e.g. "jpeg,jpg")
+    // does have a preferred extension: its first one.
+    ListItem* allFormats = fileType()->getItem(0);
+    if (allFormats && ext == allFormats->getValue())
+      ext = m_defExtension;
+    else {
+      std::vector<std::string> parts;
+      base::split_string(ext, parts, ",");
+      if (!parts.empty())
+        ext = parts.front();
+    }
+  }
   return ext;
 }
 
