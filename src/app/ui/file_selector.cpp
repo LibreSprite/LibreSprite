@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <filesystem>
 #include <iterator>
 #include <map>
 #include <set>
@@ -972,14 +973,12 @@ bool FileSelector::onLocationEntryEnter()
   if (typedPath.empty() || typedPath == currentFolder->displayName())
     return true;
 
-  bool isAbsolute = base::is_path_separator(*typedPath.begin());
-#ifdef _WIN32
-  isAbsolute = isAbsolute || typedPath.find(':') != std::string::npos;
-#endif
+  namespace fs = std::filesystem;
+  fs::path current(currentFolder->fileName());
+  fs::path input(typedPath);
+  fs::path resolved = (input.is_absolute() ? input : (current / input)).lexically_normal();
 
-  std::string buf = isAbsolute ? typedPath :
-    base::join_path(currentFolder->fileName(), typedPath);
-  buf = base::fix_path_separators(buf);
+  std::string buf = base::fix_path_separators(resolved.string());
 
   IFileItem* item = FileSystemModule::instance()->getFileItemFromPath(buf);
   if (item && item->isFolder() && item->isBrowsable()) {
