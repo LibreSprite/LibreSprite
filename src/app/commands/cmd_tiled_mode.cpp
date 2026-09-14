@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2015 David Capello
+// LibreSprite | Copyright (C) 2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -65,7 +65,8 @@ bool TiledModeCommand::onChecked(Context* ctx)
 void TiledModeCommand::onExecute(Context* ctx)
 {
   const Document* doc = ctx->activeDocument();
-  Preferences::instance().document(doc).tiled.mode(m_mode);
+  auto& tiled = Preferences::instance().document(doc).tiled;
+  tiled.mode(tiled.mode() == m_mode ? filters::TiledMode::NONE : m_mode);
 }
 
 Command* CommandFactory::createTiledModeCommand()
