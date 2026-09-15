@@ -17,6 +17,7 @@
 #include "base/path.h"
 #include "base/string.h"
 #include "doc/cel.h"
+#include "doc/file/ase_swatch_file.h"
 #include "doc/file/col_file.h"
 #include "doc/file/gpl_file.h"
 #include "doc/file/pal_file.h"
@@ -59,6 +60,12 @@ std::shared_ptr<Palette> load_palette(const char *filename)
   }
   else if (ext == "pal") {
     pal = doc::file::load_pal_file(filename);
+  }
+  else if ((pal = doc::file::load_ase_swatch_file(filename))) {
+    // Adobe Swatch Exchange (.ase) palette: handled above. The .ase extension
+    // is shared with Aseprite sprites, so load_ase_swatch_file() only succeeds
+    // when the file actually carries the "ASEF" signature; otherwise it returns
+    // null and we fall through to the document/sprite loader below.
   }
   else {
     FileFormat* ff = FileFormatsManager::instance()->getFileFormatByExtension(ext.c_str());

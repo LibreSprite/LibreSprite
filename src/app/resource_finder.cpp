@@ -163,7 +163,19 @@ void ResourceFinder::includeHomeDir(const char* filename)
 
 void ResourceFinder::includeUserDir(const char* filename)
 {
-#ifdef _WIN32
+#ifdef __ANDROID__
+
+  // On Android, store user files in a public, file-manager-accessible folder
+  // (the app has All-files access) so palettes/config persist across "clear
+  // cache" and can be managed by the user. EXTERNAL_STORAGE is set by Android
+  // to the primary shared storage (e.g. /sdcard or /storage/emulated/0).
+  {
+    const char* ext = std::getenv("EXTERNAL_STORAGE");
+    std::string sdcard = (ext && *ext) ? std::string(ext) : std::string("/storage/emulated/0");
+    addPath(base::join_path(base::join_path(sdcard, "LibreSprite"), filename).c_str());
+  }
+
+#elif defined(_WIN32)
 
   if (App::instance()->isPortable()) {
     // $BINDIR/filename

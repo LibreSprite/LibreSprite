@@ -65,6 +65,28 @@ static int win32_shell_execute(const wchar_t* verb, const wchar_t* file, const w
 }
 #endif  // _WIN32
 
+#ifdef __ANDROID__
+#include <jni.h>
+extern "C" JNIEnv* Android_JNI_GetEnv(void);
+extern "C" jclass Android_JNI_GetActivityClass(void);
+namespace {
+bool android_open_folder(const std::string& path)
+{
+  JNIEnv* env = Android_JNI_GetEnv();
+  jclass cls = Android_JNI_GetActivityClass();
+  if (!env || !cls)
+    return false;
+  jmethodID mid = env->GetStaticMethodID(cls, "openFolder", "(Ljava/lang/String;)Z");
+  if (!mid)
+    return false;
+  jstring jpath = env->NewStringUTF(path.c_str());
+  jboolean ok = env->CallStaticBooleanMethod(cls, mid, jpath);
+  env->DeleteLocalRef(jpath);
+  return ok == JNI_TRUE;
+}
+} // namespace
+#endif  // __ANDROID__
+
 namespace base {
 namespace launcher {
 
@@ -132,6 +154,12 @@ bool open_folder(const std::string& _file)
     ret = std::system(("open --reveal \"" + file + "\"").c_str());
   }
   return (ret == 0);
+
+#elif defined(__ANDROID__)
+
+  if (!base::is_directory(file))
+    file = base::get_file_path(file);
+  return android_open_folder(file);
 
 #else
 
