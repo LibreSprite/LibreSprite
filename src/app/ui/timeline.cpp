@@ -968,6 +968,13 @@ void Timeline::onPaint(ui::PaintEvent& ev)
       if (!clip)
         continue;
 
+      // Layer groups are not supported: the .ase loader flattens them
+      // on load, but guard here too in case a folder ever reaches the
+      // timeline (e.g. via undo/clipboard), since it has no cels.
+      ASSERT(m_layers[layer]->isImage());
+      if (!m_layers[layer]->isImage())
+        continue;
+
       // Get the first CelIterator to be drawn (it is the first cel with cel->frame >= first_frame)
       LayerImage* layerPtr = static_cast<LayerImage*>(m_layers[layer]);
       data.begin = layerPtr->getCelBegin();
@@ -1457,6 +1464,9 @@ void Timeline::drawLayer(ui::Graphics* g, LayerIndex layerIdx)
 void Timeline::drawCel(ui::Graphics* g, LayerIndex layerIndex, frame_t frame, Cel* cel, DrawCelData* data)
 {
   SkinTheme::Styles& styles = skinTheme()->styles;
+  ASSERT(m_layers[layerIndex]->isImage());
+  if (!m_layers[layerIndex]->isImage())
+    return;
   LayerImage* layer = static_cast<LayerImage*>(m_layers[layerIndex]);
   Image* image = (cel ? cel->image(): NULL);
   bool is_hover = (m_hot.part == PART_CEL &&

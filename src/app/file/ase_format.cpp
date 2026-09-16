@@ -1,5 +1,5 @@
-// Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -348,23 +348,18 @@ bool AseFormat::onPostLoad(FileOp* fop)
 {
   LayerFolder* folder = fop->document()->sprite()->folder();
 
-  // Forward Compatibility: In 1.1 we convert a file with layer groups
-  // (saved with 1.2) as top level layers
-  std::string ver = VERSION;
-  bool flat = (ver[0] == '1' &&
-               ver[1] == '.' &&
-               ver[2] == '1');
-  if (flat && ase_has_groups(folder)) {
+  // Flatten any group layers into top-level layers so the rest of the app
+  // (which assumes a flat layer list, e.g. the timeline) keeps working.
+  if (ase_has_groups(folder)) {
     if (fop->context() &&
         fop->context()->isUIAvailable() &&
         ui::Alert::show("Warning"
-                        "<<The selected file \"%s\" has layer groups."
-                        "<<Do you want to open it with \"%s %s\" anyway?"
-                        "<<"
-                        "<<Note: Layers inside groups will be converted to top level layers."
-                        "||&Yes||&No",
+                        "<<The file \"%s\" contains layer groups, which %s does not support."
+                        "<<Open it anyway? Layers inside groups will become top-level layers"
+                        "<<named \"Group-Layer\", and the groups will be lost if you save the file."
+                        "||&Open||&Cancel",
                         base::get_file_name(fop->filename()).c_str(),
-                        PACKAGE, ver.c_str()) != 1) {
+                        PACKAGE) != 1) {
       return false;
     }
     ase_ungroup_all(folder);
@@ -842,12 +837,26 @@ static Layer* ase_file_read_layer_chunk(FILE* f, ASE_Header* header, Sprite* spr
     layer->setName(name.c_str());
 
     // Child level
+    LayerFolder* parent = NULL;
     if (child_level == *current_level)
-      (*previous_layer)->parent()->addLayer(layer);
-    else if (child_level > *current_level)
-      static_cast<LayerFolder*>(*previous_layer)->addLayer(layer);
-    else if (child_level < *current_level)
-      (*previous_layer)->parent()->parent()->addLayer(layer);
+      parent = (*previous_layer)->parent();
+    else if (child_level > *current_level && (*previous_layer)->isFolder())
+      parent = static_cast<LayerFolder*>(*previous_layer);
+    else if (child_level < *current_level) {
+      // Ascend as many levels as the child_level dropped (a drop can
+      // skip several nested groups at once, not just one level).
+      parent = (*previous_layer)->parent();
+      for (int lvl = *current_level; lvl > child_level && parent; --lvl)
+        parent = parent->parent();
+    }
+
+    if (!parent) {
+      // Corrupt/unexpected child level sequence: fall back to the root
+      // folder instead of crashing on a NULL/invalid parent.
+      parent = sprite->folder();
+    }
+
+    parent->addLayer(layer);
 
     *previous_layer = layer;
     *current_level = child_level;
@@ -1542,19 +1551,21 @@ static bool ase_has_groups(LayerFolder* folder)
   return false;
 }
 
-static void ase_ungroup_all(LayerFolder* folder)
+// Recursively walks "folder" (in stack order) collecting every image
+// layer (renamed to reflect the group chain it was found in) and every
+// group folder found underneath it, both in depth-first order.
+static void ase_collect_flattened_layers(LayerFolder* folder, LayerFolder* root,
+                                          LayerList& outImageLayers, LayerList& outFolders)
 {
-  LayerFolder* root = folder->sprite()->folder();
-  LayerList list = folder->getLayersList();
-
-  for (Layer* child : list) {
+  for (Layer* child : folder->getLayersList()) {
     if (child->isFolder()) {
-      ase_ungroup_all(static_cast<LayerFolder*>(child));
-      folder->removeLayer(child);
+      ase_collect_flattened_layers(static_cast<LayerFolder*>(child), root,
+                                    outImageLayers, outFolders);
+      outFolders.push_back(child);
     }
-    else if (folder != root) {
-      // Create a new name adding all group layer names
-      {
+    else {
+      if (folder != root) {
+        // Create a new name adding all group layer names
         std::string name;
         for (Layer* layer=child; layer!=root; layer=layer->parent()) {
           if (!name.empty())
@@ -1563,16 +1574,40 @@ static void ase_ungroup_all(LayerFolder* folder)
         }
         child->setName(name);
       }
-
-      folder->removeLayer(child);
-      root->addLayer(child);
+      outImageLayers.push_back(child);
     }
   }
+}
 
-  if (folder != root) {
-    ASSERT(folder->getLayersCount() == 0);
+// Moves every image layer nested inside a group directly under "root",
+// preserving their original relative stacking order, and destroys the
+// (now-empty) groups. Unlike a naive "reparent as we go" approach, this
+// avoids moving layers to the top of the stack, which would silently
+// reorder the visible composition of files with more than one group.
+static void ase_ungroup_all(LayerFolder* root)
+{
+  LayerList imageLayers, folders;
+  ase_collect_flattened_layers(root, root, imageLayers, folders);
+
+  // Detach every collected layer/folder from its current parent first,
+  // so none of the folders we are about to delete still owns a layer
+  // (or nested folder) we need to keep.
+  for (Layer* layer : imageLayers)
+    layer->parent()->removeLayer(layer);
+  for (Layer* folder : folders)
+    folder->parent()->removeLayer(folder);
+
+  for (Layer* folder : folders) {
+    ASSERT(static_cast<LayerFolder*>(folder)->getLayersCount() == 0);
     delete folder;
   }
+
+  // Re-add the image layers to the root, in their original relative
+  // stacking order.
+  for (Layer* layer : imageLayers)
+    root->addLayer(layer);
+
+  ASSERT(!ase_has_groups(root));
 }
 
 } // namespace app
