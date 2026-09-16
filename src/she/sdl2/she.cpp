@@ -462,6 +462,30 @@ namespace she {
             m_events.push(ev);
           }
 
+          // Coalesce a contiguous run of pending motion events into the most
+          // recent sample. A high-rate pen/touch device (e.g. the Samsung S
+          // Pen, or a finger) otherwise floods the SDL queue faster than the
+          // tools can consume it, so the Line tool's preview lags further and
+          // further behind the real cursor.
+          //
+          // On Android every pen/finger sample arrives as BOTH an
+          // SDL_FINGERMOTION (pressure) and a synthesized SDL_MOUSEMOTION
+          // (position), interleaved in the queue, so we must collapse a run of
+          // *either* type -- keeping the latest mouse position and the latest
+          // pen pressure. We stop at the first non-motion event so ordering
+          // relative to button/key events is preserved.
+          {
+            SDL_Event peek;
+            while (SDL_PeepEvents(&peek, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 1 &&
+                   (peek.type == SDL_MOUSEMOTION || peek.type == SDL_FINGERMOTION)) {
+              SDL_PeepEvents(&peek, 1, SDL_GETEVENT, peek.type, peek.type);
+              if (peek.type == SDL_MOUSEMOTION)
+                sdlEvent.motion = peek.motion;
+              else
+                penPressure = std::max(peek.tfinger.pressure, 0.0001f);
+            }
+          }
+
           event.setType(Event::MouseMove);
           event.setModifiers(getSheModifiers());
           event.setPosition({

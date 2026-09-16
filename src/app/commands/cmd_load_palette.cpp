@@ -16,7 +16,9 @@
 #include "app/file/palette_file.h"
 #include "app/file_selector.h"
 #include "app/modules/palettes.h"
+#include "app/ui/color_bar.h"
 #include "base/fs.h"
+#include "base/path.h"
 #include "doc/palette.h"
 #include "ui/alert.h"
 
@@ -75,6 +77,21 @@ void LoadPaletteCommand::onExecute(Context* context)
       auto cmd = static_cast<SetPaletteCommand*>(CommandsModule::instance()->getCommandByName(CommandId::SetPalette));
       cmd->setPalette(palette.get());
       context->executeCommand(cmd);
+
+      // When the palette was loaded from a user-chosen file (not an existing
+      // preset), copy it into the user palettes directory so it is added
+      // permanently to the "Available palettes" list.
+      if (m_preset.empty()) {
+        std::string title = base::get_file_title(filename);
+        if (!title.empty()) {
+          std::string dest = get_preset_palette_filename(title, ".gpl");
+          if (save_palette(dest.c_str(), *palette, 0)) {
+            // Rebuild the palettes popup so the new entry appears immediately.
+            if (ColorBar* colorBar = ColorBar::instance())
+              colorBar->invalidatePalettePopup();
+          }
+        }
+      }
     }
   }
 }
