@@ -177,6 +177,7 @@ namespace app {
     tools::ToolLoopModifiers getToolLoopModifiers() const { return m_toolLoopModifiers; }
     bool isAutoSelectLayer() const { return m_autoSelectLayer; }
     bool isSecondaryButton() const { return m_secondaryButton; }
+    bool isSpacePressed() const { return m_spacePressed; }
 
     gfx::Point lastDrawingPosition() const { return m_lastDrawingPosition; }
     void setLastDrawingPosition(const gfx::Point& pos);
@@ -324,6 +325,7 @@ namespace app {
     EditorFlags m_flags;
 
     bool m_secondaryButton;
+    bool m_spacePressed;
 
     // Animation speed multiplier.
     double m_aniSpeed;

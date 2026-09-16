@@ -42,6 +42,7 @@ static KeyModifiers get_pressed_modifiers_from_she()
   if (she::is_key_pressed(kKeyRControl)) mods = KeyModifiers(int(mods) | int(kKeyCtrlModifier));
   if (she::is_key_pressed(kKeyAlt)     ) mods = KeyModifiers(int(mods) | int(kKeyAltModifier));
   if (she::is_key_pressed(kKeyCommand) ) mods = KeyModifiers(int(mods) | int(kKeyCmdModifier));
+  if (she::is_key_pressed(kKeySpace)   ) mods = KeyModifiers(int(mods) | int(kKeySpaceModifier));
   if (she::is_key_pressed(kKeyLWin)    ) mods = KeyModifiers(int(mods) | int(kKeyWinModifier));
   if (she::is_key_pressed(kKeyRWin)    ) mods = KeyModifiers(int(mods) | int(kKeyWinModifier));
   return mods;
@@ -213,6 +214,11 @@ Accelerator::Accelerator(const std::string& str)
         m_scancode = kKeyEnterPad;
     }
   }
+
+  if (m_scancode == kKeySpace) {
+    m_modifiers = KeyModifiers(int(m_modifiers) | int(kKeySpaceModifier));
+    m_scancode = kKeyNil;
+  }
 }
 
 bool Accelerator::operator==(const Accelerator& other) const
@@ -379,6 +385,16 @@ std::string Accelerator::toString() const
 
 bool Accelerator::isPressed(KeyModifiers modifiers, KeyScancode scancode, int unicodeChar) const
 {
+  if (scancode == kKeySpace &&
+      m_scancode == kKeyNil &&
+      m_unicodeChar == 0 &&
+      (m_modifiers & kKeySpaceModifier)) {
+    return (m_modifiers == modifiers);
+  }
+
+  if (scancode == kKeySpace)
+    modifiers = KeyModifiers(int(modifiers) & ~int(kKeySpaceModifier));
+
   // Preprocess the character to be compared with the accelerator
 #ifdef PREPROCESS_KEYS
   // Directly scancode
@@ -459,6 +475,9 @@ bool Accelerator::isPressed(KeyModifiers modifiers, KeyScancode scancode, int un
 bool Accelerator::isPressed() const
 {
   KeyModifiers modifiers = get_pressed_modifiers_from_she();
+
+  if (m_scancode == kKeySpace)
+    modifiers = KeyModifiers(int(modifiers) & ~int(kKeySpaceModifier));
 
   return ((m_scancode == 0 || she::is_key_pressed(m_scancode)) &&
           (m_modifiers == modifiers));

@@ -26,6 +26,8 @@ TEST(Accelerator, Parser)
   EXPECT_EQ(Accelerator(kKeyNoneModifier, kKeyPlusPad, 0), Accelerator("Plus Pad"));
   EXPECT_EQ(Accelerator(kKeyNoneModifier, kKeyPlusPad, 0), Accelerator("+ Pad"));
   EXPECT_EQ(Accelerator(kKeyCtrlModifier, kKeyPlusPad, 0), Accelerator("Ctrl++ Pad"));
+  EXPECT_EQ(Accelerator(kKeySpaceModifier, kKeyNil, 0), Accelerator("Space"));
+  EXPECT_EQ(Accelerator(kKeySpaceModifier, kKeyLeft, 0), Accelerator("Space+Left"));
 }
 
 TEST(Accelerator, ToString)
@@ -53,4 +55,17 @@ TEST(Accelerator, ToString)
   EXPECT_EQ("+ Pad", Accelerator(kKeyNoneModifier, kKeyPlusPad, 0).toString());
   EXPECT_EQ("+ Pad", Accelerator("Plus Pad").toString());
   EXPECT_EQ("+ Pad", Accelerator("+ Pad").toString());
+}
+
+TEST(Accelerator, IsPressedWithSpace)
+{
+  EXPECT_TRUE(Accelerator(kKeyNoneModifier, kKeySpace, 0).isPressed(
+    kKeySpaceModifier, kKeySpace, 0));
+  EXPECT_TRUE(Accelerator(kKeySpaceModifier, kKeyNil, 0).isPressed(
+    kKeySpaceModifier, kKeySpace, 0));
+  EXPECT_TRUE(Accelerator(kKeySpaceModifier, kKeyLeft, 0).isPressed(
+    kKeySpaceModifier, kKeyLeft, 0));
+
+  EXPECT_FALSE(Accelerator(kKeySpaceModifier, kKeyNil, 0).isPressed(
+    KeyModifiers(int(kKeyShiftModifier) | int(kKeySpaceModifier)), kKeySpace, 0));
 }
