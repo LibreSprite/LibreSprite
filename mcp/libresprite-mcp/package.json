@@ -1,0 +1,29 @@
+{
+  "name": "libresprite-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server exposing LibreSprite as a pixel-art source of truth",
+  "type": "module",
+  "bin": {
+    "libresprite-mcp": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc && npm run check:es5",
+    "watch": "tsc --watch",
+    "check:es5": "node scripts/check-es5.mjs",
+    "start": "node dist/server.js",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "acorn": "^8.14.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
