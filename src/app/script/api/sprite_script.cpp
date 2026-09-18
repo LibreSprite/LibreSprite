@@ -11,6 +11,8 @@
 #include "app/script/api/script_api_common.h"
 
 #include "app/cmd/set_sprite_size.h"
+#include "app/cmd/add_frame_tag.h"
+#include "app/cmd/remove_frame_tag.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
 #include "app/document.h"
@@ -19,6 +21,8 @@
 #include "app/transaction.h"
 #include "app/ui_context.h"
 #include "doc/document.h"
+#include "doc/frame_tag.h"
+#include "doc/frame_tags.h"
 #include "doc/layer.h"
 #include "doc/palette.h"
 #include "doc/sprite.h"
@@ -56,6 +60,45 @@ public:
 
     clazz.addGetter("layerCount") = [](SpriteSite&) -> JSON::Value {
       return (double)activeSprite()->countLayers();
+    };
+
+    clazz.addGetter("tags") = [](SpriteSite&) -> JSON::Value {
+      auto tags = std::make_shared<JSON::Array>();
+      for (auto* tag : activeSprite()->frameTags())
+        tags->push_back(JSON::makeNative(wrap(tag)));
+      return tags;
+    };
+
+    clazz.addMethod("addTag") = [](SpriteSite&, double from, double to) -> JSON::Value {
+      auto* spr = activeSprite();
+      if (from < 0 || to < from || to >= spr->totalFrames())
+        throw std::runtime_error{"Frame tag range is outside the sprite frames"};
+
+      auto* tag = new doc::FrameTag((doc::frame_t)from, (doc::frame_t)to);
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::AddFrameTag(spr, tag));
+      tx.commit();
+      return JSON::makeNative(wrap(tag));
+    };
+
+    clazz.addMethod("removeTag") = [](SpriteSite&, JSON::Value& value) -> JSON::Value {
+      if (!value.isNative())
+        throw std::runtime_error{"removeTag() requires a FrameTag"};
+      auto& native = value.native();
+      if (native.second != typeid(void) && native.second != typeid(doc::FrameTag))
+        throw std::runtime_error{"removeTag() requires a FrameTag"};
+      auto* rawTag = static_cast<doc::FrameTag*>(native.first.get());
+      if (!rawTag)
+        throw std::runtime_error{"removeTag() requires a FrameTag"};
+      std::shared_ptr<doc::FrameTag> tag(native.first, rawTag);
+      auto* spr = activeSprite();
+      if (tag->owner() != &spr->frameTags())
+        throw std::runtime_error{"FrameTag does not belong to the active sprite"};
+
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      tx.execute(new app::cmd::RemoveFrameTag(spr, tag.get()));
+      tx.commit();
+      return {};
     };
 
     clazz.addGetter("filename") = [](SpriteSite&) -> JSON::Value {
