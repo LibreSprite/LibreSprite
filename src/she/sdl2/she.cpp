@@ -462,6 +462,17 @@ namespace she {
             m_events.push(ev);
           }
 
+          // Drain excess SDL_MOUSEMOTION and SDL_FINGERMOTION events, keeping only the most recent
+          {
+            SDL_Event nextEvent;
+            while (SDL_PeepEvents(&nextEvent, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION) > 0) {
+              sdlEvent = nextEvent;
+            }
+            while (SDL_PeepEvents(&nextEvent, 1, SDL_GETEVENT, SDL_FINGERMOTION, SDL_FINGERMOTION) > 0) {
+              penPressure = std::max(nextEvent.tfinger.pressure, 0.0001f);
+            }
+          }
+
           event.setType(Event::MouseMove);
           event.setModifiers(getSheModifiers());
           event.setPosition({
