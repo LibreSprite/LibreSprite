@@ -226,7 +226,7 @@ private:
     m_sprite = spr.get();
     spr->setTransparentColor(transparentColor);
 
-    if (nframes >= 1) {
+    if (nframes >= 1 && nframes < 0xfffff) {
       spr->setTotalFrames(nframes);
       for (frame_t fr=0; fr<nframes; ++fr) {
         int msecs = read32(s);
@@ -290,6 +290,8 @@ private:
 
       // Cels
       int ncels = read32(s);
+      if (ncels < 0 || ncels >= 0xfffff)
+        ncels = 0;
       for (int i=0; i<ncels; ++i) {
         ObjectId celId = read32(s);
         std::shared_ptr<Cel> cel{loadObject<Cel*>("cel", celId, &Reader::readCel)};

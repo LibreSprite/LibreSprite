@@ -197,7 +197,7 @@ void ConvolutionMatrixFilter::applyToRgba(FilterManager* filterMgr)
       delegate.b = rgba_getb(color);
 
     if (target & TARGET_ALPHA_CHANNEL) {
-      delegate.a = delegate.a / m_matrix->getDiv() + m_matrix->getBias();
+      delegate.a = delegate.a / delegate.div + m_matrix->getBias();
       delegate.a = MID(0, delegate.a, 255);
     }
     else
@@ -250,7 +250,7 @@ void ConvolutionMatrixFilter::applyToGrayscale(FilterManager* filterMgr)
       delegate.v = graya_getv(color);
 
     if (target & TARGET_ALPHA_CHANNEL) {
-      delegate.a = delegate.a / m_matrix->getDiv() + m_matrix->getBias();
+      delegate.a = delegate.a / delegate.div + m_matrix->getBias();
       delegate.a = MID(0, delegate.a, 255);
     }
     else
@@ -298,7 +298,7 @@ void ConvolutionMatrixFilter::applyToIndexed(FilterManager* filterMgr)
     }
 
     if (target & TARGET_INDEX_CHANNEL) {
-      delegate.index = delegate.index / m_matrix->getDiv() + m_matrix->getBias();
+      delegate.index = delegate.index / delegate.div + m_matrix->getBias();
       delegate.index = MID(0, delegate.index, 255);
 
       *(dst_address++) = delegate.index;

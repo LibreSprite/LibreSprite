@@ -362,6 +362,8 @@ void Grid::expandStrip(std::vector<Strip>& colstrip,
             }
 
             // Divide the available size of the cell in the number of columns which are expandible
+            if (expand == 0)
+              continue;
             int size = cell_size / expand;
             for (i=col; i<col+cell_span; ++i) {
               if (colstrip[i].expand_count == max_expand_count) {

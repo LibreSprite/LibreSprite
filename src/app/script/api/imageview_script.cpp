@@ -50,9 +50,10 @@ public:
       }
       surface->lock();
       auto src = bytes.data();
+      const std::ptrdiff_t rowBytes = static_cast<std::ptrdiff_t>(w) * 4;
       for (int y = 0; y < h; ++y) {
-        std::copy(src, src + w * 4, surface->getData(0, y));
-        src += w * 4;
+        std::copy(src, src + rowBytes, surface->getData(0, y));
+        src += rowBytes;
       }
       surface->unlock();
       view->invalidate();

@@ -218,6 +218,11 @@ void App::initialize(const AppOptions& options)
   Params cropParams;
   SpriteSheetType sheetType = SpriteSheetType::None;
 
+  // Keeps alive any FrameTag created below from --frame-range: it's
+  // handed to m_exporter as a raw pointer and must outlive the
+  // "Export" block further down where exportSheet() consumes it.
+  std::vector<std::unique_ptr<FrameTag>> ownedFrameTags;
+
   // Open file specified in the command line
   if (!options.values().empty()) {
     Console console;
@@ -571,8 +576,10 @@ void App::initialize(const AppOptions& options)
                                            "Usage: --frame-range from,to\n"
                                            "E.g. --frame-range 0,99");
 
-                frameTag = new FrameTag(base::convert_to<frame_t>(splitRange[0]),
-                                        base::convert_to<frame_t>(splitRange[1]));
+                ownedFrameTags.push_back(std::make_unique<FrameTag>(
+                    base::convert_to<frame_t>(splitRange[0]),
+                    base::convert_to<frame_t>(splitRange[1])));
+                frameTag = ownedFrameTags.back().get();
             }
 
             if (!importLayer.empty()) {

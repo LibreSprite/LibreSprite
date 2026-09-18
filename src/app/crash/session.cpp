@@ -155,8 +155,9 @@ void Session::removeDocument(app::Document* doc)
     if (base::is_directory(dir))
       deleteDirectory(dir);
   }
-  catch (const std::exception&) {
-    // TODO Log this error
+  catch (const std::exception& ex) {
+    TRACE("Session document backup cannot be removed\nError: '%s'\n",
+      ex.what());
   }
 }
 
