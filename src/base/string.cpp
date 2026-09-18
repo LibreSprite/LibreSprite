@@ -8,6 +8,7 @@
 #include "config.h"
 #endif
 
+#include "base/debug.h"
 #include "base/string.h"
 #include <cassert>
 #include <cctype>
@@ -172,9 +173,7 @@ std::wstring from_utf8(const std::string& src)
   utf8_const_iterator end(src.end());
 
   while (it != end) {
-#ifdef _DEBUG
-    assert(buf_it != buf_end);
-#endif
+    ASSERT(buf_it != buf_end);
     *buf_it = *it;
     ++buf_it;
     ++it;

@@ -51,11 +51,15 @@ void MoveCel::onExecute()
 
   ASSERT(srcLayer);
   ASSERT(dstLayer);
+  if (!srcLayer || !dstLayer)
+    return;
 
   Sprite* srcSprite = srcLayer->sprite();
   Sprite* dstSprite = dstLayer->sprite();
   ASSERT(srcSprite);
   ASSERT(dstSprite);
+  if (!srcSprite || !dstSprite)
+    return;
   ASSERT(m_srcFrame >= 0 && m_srcFrame < srcSprite->totalFrames());
   ASSERT(m_dstFrame >= 0);
 

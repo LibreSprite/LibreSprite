@@ -229,6 +229,11 @@ bool TgaFormat::onLoad(FileOp* fop)
           if (palette_entry_size == 32)
             fgetc(f);
           break;
+
+        default:
+          // Unsupported palette entry size: reject rather than leave
+          // image_palette[i] uninitialized for the rest of the loader.
+          return false;
       }
     }
   }

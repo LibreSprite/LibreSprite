@@ -261,7 +261,7 @@ void TipWindow::onSizeHint(SizeHintEvent& ev)
 
 void TipWindow::onInitTheme(InitThemeEvent& ev)
 {
-  Window::onInitTheme(ev);
+  PopupWindow::onInitTheme(ev);
 
   setBorder(
     gfx::Border(6 * guiscale(),

@@ -59,7 +59,7 @@ public:
 
     clazz.addMethod("putImageData") = [](doc::Image& img, JSON::Value& data) -> JSON::Value {
       auto& bytes = data.byteArray();
-      if (bytes.size() != std::size_t(img.getRowStrideSize() * img.height())) {
+      if (bytes.size() != std::size_t(img.getRowStrideSize()) * img.height()) {
         std::cout << "Data size mismatch: " << bytes.size() << std::endl;
         return {};
       }
@@ -71,7 +71,7 @@ public:
 
     clazz.addMethod("getImageData") = [](doc::Image& img) -> JSON::Value {
       auto* addr = img.getPixelAddress(0, 0);
-      std::size_t size = std::size_t(img.getRowStrideSize() * img.height());
+      std::size_t size = std::size_t(img.getRowStrideSize()) * img.height();
       auto vec = std::make_shared<std::vector<uint8_t>>(addr, addr + size);
       return JSON::Value{vec};
     };
