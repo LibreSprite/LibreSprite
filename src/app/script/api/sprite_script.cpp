@@ -58,6 +58,44 @@ public:
       return (double)activeSprite()->countLayers();
     };
 
+    clazz.addGetter("frameCount") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->totalFrames();
+    };
+
+    clazz.addMethod("newLayer") = [](SpriteSite&, const std::string& requestedName) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto* spr = activeSprite();
+      const std::string name = requestedName.empty() ? "Layer" : requestedName;
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      auto* layer = doc->getApi(tx).newLayer(spr, name);
+      tx.commit();
+      return JSON::makeNative(wrap(static_cast<doc::Layer*>(layer)));
+    };
+
+    clazz.addMethod("addFrame") = [](SpriteSite&) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto* spr = activeSprite();
+      const auto newFrame = spr->totalFrames();
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      doc->getApi(tx).addFrame(spr, newFrame);
+      tx.commit();
+      return (double)newFrame;
+    };
+
+    clazz.addMethod("addEmptyFrame") = [](SpriteSite&, JSON::Value& value) -> JSON::Value {
+      auto* doc = activeDocument();
+      auto* spr = activeSprite();
+      const auto newFrame = value.isUndefined()
+        ? spr->totalFrames()
+        : static_cast<int>(value);
+      if (newFrame < 0 || newFrame > spr->totalFrames())
+        throw std::runtime_error{"Frame index is outside the sprite frame range"};
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      doc->getApi(tx).addEmptyFrame(spr, newFrame);
+      tx.commit();
+      return (double)newFrame;
+    };
+
     clazz.addGetter("filename") = [](SpriteSite&) -> JSON::Value {
       return std::string{activeSprite()->document()->filename()};
     };
