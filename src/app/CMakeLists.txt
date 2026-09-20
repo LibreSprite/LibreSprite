@@ -88,6 +88,8 @@ set(file_formats
   file/png_format.cpp
   file/qoi_format.cpp
   file/she_format.cpp
+  file/svg_dialect.cpp
+  file/svg_format.cpp
   file/tga_format.cpp
   file/webp_format.cpp
 )
@@ -472,4 +474,6 @@ add_library(app-lib
   xml_document.cpp
   ${data_recovery_files}
   ${generated_files})
+
+target_link_libraries(app-lib ${LIBRESPRITE_LIBS} ${LIBRESPRITE_EXTERNAL_LIBS})
 endif()
