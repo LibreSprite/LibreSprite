@@ -22,6 +22,9 @@
 #include "base/path.h"
 #include "ui/alert.h"
 
+#include <filesystem>
+#include <system_error>
+
 // Included last: on Windows, <archive_entry.h> drags in <windows.h>, whose
 // macros (TRANSPARENT, IMAGE_BITMAP, DIFFERENCE, ...) collide with
 // identically-named enum members in the headers above.
@@ -65,8 +68,21 @@ bool ExtensionFormat::onLoad(FileOp* fop)
 
   auto themePath = skins + base::path_separator + themeName;
   if (!base::is_directory(themePath)) {
-    base::make_all_directories(themePath);
-    archive.extractTo(themePath);
+    // Extract into a fresh staging directory and atomically move it into
+    // place instead of extracting straight into themePath: a concurrent
+    // local process could otherwise plant a symlink inside the
+    // just-mkdir'd, still-empty themePath before extraction writes into it.
+    base::make_all_directories(skins);
+    auto stagingPath = extension_format_detail::makeStagingDirectory(skins);
+    try {
+      archive.extractTo(stagingPath);
+      base::move_file(stagingPath, themePath);
+    }
+    catch (...) {
+      std::error_code ec;
+      std::filesystem::remove_all(stagingPath, ec);
+      throw;
+    }
   }
 
   if (themeName != Preferences::instance().theme.selected()) {

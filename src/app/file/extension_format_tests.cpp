@@ -148,3 +148,48 @@ TEST_F(ExtensionFormatTest, SkipsSymlinkEntriesInsteadOfExtractingThem)
   EXPECT_FALSE(
       std::filesystem::exists(destDir + base::path_separator + "link.txt"));
 }
+
+TEST_F(ExtensionFormatTest, RejectsArchiveWithTooManyEntries)
+{
+  std::vector<std::pair<std::string, std::string>> files;
+  files.reserve(100001);
+  for (int i = 0; i < 100001; ++i)
+    files.emplace_back("f" + std::to_string(i), "");
+  writeTestArchive(archivePath, files);
+
+  FILE* file = fopen(archivePath.c_str(), "rb");
+  ASSERT_NE(nullptr, file);
+  app::Archive archive{file};
+  EXPECT_THROW(archive.extractTo(destDir), std::runtime_error);
+  fclose(file);
+}
+
+TEST(ExtensionFormatPathSafetyTest, RejectsReservedNameWithTrailingSpaceOrDot)
+{
+  using app::extension_format_detail::isSafeArchiveEntryPath;
+  EXPECT_FALSE(isSafeArchiveEntryPath("con"));
+  EXPECT_FALSE(isSafeArchiveEntryPath("con "));
+  EXPECT_FALSE(isSafeArchiveEntryPath("con."));
+  EXPECT_FALSE(isSafeArchiveEntryPath("con.. "));
+  EXPECT_FALSE(isSafeArchiveEntryPath("nested/con./file.txt"));
+  EXPECT_TRUE(isSafeArchiveEntryPath("controller.txt"));
+}
+
+TEST(ExtensionFormatPathSafetyTest, RejectsReservedNameWithSuperscriptDigit)
+{
+  using app::extension_format_detail::isSafeArchiveEntryPath;
+  EXPECT_FALSE(isSafeArchiveEntryPath("com\xC2\xB9"));     // COM¹
+  EXPECT_FALSE(isSafeArchiveEntryPath("lpt\xE2\x81\xB4")); // LPT⁴
+  EXPECT_TRUE(isSafeArchiveEntryPath("com10"));
+}
+
+TEST_F(ExtensionFormatTest, MakeStagingDirectoryCreatesDistinctDirectories)
+{
+  auto first = app::extension_format_detail::makeStagingDirectory(destDir);
+  auto second = app::extension_format_detail::makeStagingDirectory(destDir);
+
+  EXPECT_NE(first, second);
+  EXPECT_TRUE(base::is_directory(first));
+  EXPECT_TRUE(base::is_directory(second));
+  EXPECT_EQ(destDir, base::get_file_path(first));
+}
