@@ -14,6 +14,7 @@
 #include "app/script/app_scripting.h"
 #include "app/script/api/storage_internal.h"
 #include "base/base64.h"
+#include "base/exception.h"
 #include "base/file_handle.h"
 #include "base/fs.h"
 
@@ -31,10 +32,43 @@ namespace {
     return domain.empty() ? app::AppScripting::getFileName() : domain;
   }
 
+  // key/domain reach the filesystem as "<domain>.<key>", joined onto the
+  // storage directory via plain string concatenation. A slash embedded in
+  // key/domain (e.g. the default domain, which is the active script's own -
+  // often absolute - path, see normalizeDomain) isn't itself dangerous: it
+  // just becomes a normal, contained subdirectory under the storage root
+  // either way. A ".." *component*, however, walks back out of it
+  // (make_all_directories has no traversal protection of its own) - reject
+  // only that.
+  bool hasPathTraversal(const std::string& s) {
+    // A JS string can carry an embedded NUL that std::string preserves but
+    // the eventual C-string handoff to ResourceFinder::includeUserDir()
+    // truncates at - the two would see different strings, so reject
+    // outright rather than trying to reason about what's checked vs. what's
+    // actually opened.
+    if (s.find('\0') != std::string::npos)
+      return true;
+
+    size_t start = 0;
+    while (start <= s.size()) {
+      size_t end = s.find_first_of("/\\", start);
+      if (end == std::string::npos)
+        end = s.size();
+      if (s.compare(start, end - start, "..") == 0)
+        return true;
+      start = end + 1;
+    }
+    return false;
+  }
+
   // The on-disk path for a key/domain (user dir, created if missing).
+  // Throws base::Exception if key/domain would let the file escape the
+  // storage directory.
   std::string storagePath(const std::string& key, const std::string& domain) {
+    if (hasPathTraversal(key) || hasPathTraversal(domain))
+      throw base::Exception("Invalid storage key/domain.");
     app::ResourceFinder rf;
-    rf.includeUserDir((normalizeDomain(domain) + "." + key).c_str());
+    rf.includeUserDir((domain + "." + key).c_str());
     return rf.getFirstOrCreateDefault();
   }
 

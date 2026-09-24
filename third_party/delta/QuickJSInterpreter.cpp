@@ -183,7 +183,14 @@ public:
     std::size_t classIdCount{0};
     std::vector<std::string> moduleSearchPaths;
 
-    static inline std::unordered_map<JSContext*, QuickJSInterpreter*> contextMap;
+    // Deliberately leaked (never destroyed): QuickJSInterpreter instances can
+    // outlive other static-duration objects depending on link-time static
+    // destruction order (observed as a heap-use-after-free when a JS engine
+    // shared_ptr was torn down after this map had already been destructed at
+    // exit). A heap-allocated, never-freed map sidesteps that ordering
+    // entirely since it's never destroyed.
+    static inline std::unordered_map<JSContext*, QuickJSInterpreter*>& contextMap =
+        *new std::unordered_map<JSContext*, QuickJSInterpreter*>();
 
     QuickJSInterpreter() {
         rt = std::shared_ptr<JSRuntime>{JS_NewRuntime(), [](auto* rt){
