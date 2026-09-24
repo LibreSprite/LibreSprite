@@ -1,4 +1,4 @@
-// LibreSprite | Copyright (C) 2024       LibreSprite contributors
+// LibreSprite | Copyright (C) 2024-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -56,8 +56,13 @@ bool QoiFormat::onLoad(FileOp* fop)
     return false;
   }
   fop->sequenceSetHasAlpha(true);
+  // qoi's own decoder allows dimensions well past sequenceImage()'s shared
+  // kMaxFileImageDimension cap, so this can legitimately return null here.
   auto image = fop->sequenceImage(IMAGE_RGB, desc.width, desc.height);
-  memcpy(image->getPixelAddress(0, 0), decoded.get(), desc.width * desc.height * 4);
+  if (!image)
+    return false;
+  const size_t size = static_cast<size_t>(desc.width) * static_cast<size_t>(desc.height) * 4;
+  memcpy(image->getPixelAddress(0, 0), decoded.get(), size);
   return true;
 }
 

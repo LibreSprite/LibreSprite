@@ -1,5 +1,6 @@
-// Aseprite Document Library
-// Copyright (c) 2001-2016 David Capello
+// Document Library
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2026      LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -100,12 +101,18 @@ Image* read_image(std::istream& is, bool setId)
   int height = read16(is);              // Height
   uint32_t maskColor = read32(is);      // Mask color
 
+  // width/height are read16() fields, already capped to [0,65535] by the
+  // field width alone - the 0xfffff (1,048,575) check that used to be here
+  // was therefore always true and never actually bounded anything. A
+  // 65535x65535 RGB image is still a ~17 GB single allocation attempt from
+  // a ~15-byte record; use a real ceiling instead.
+  constexpr int kMaxDimension = 16384;
   if ((pixelFormat != IMAGE_RGB &&
        pixelFormat != IMAGE_GRAYSCALE &&
        pixelFormat != IMAGE_INDEXED &&
        pixelFormat != IMAGE_BITMAP) ||
       (width < 1 || height < 1) ||
-      (width > 0xfffff || height > 0xfffff))
+      (width > kMaxDimension || height > kMaxDimension))
     return nullptr;
 
   std::unique_ptr<Image> image(Image::create(static_cast<PixelFormat>(pixelFormat), width, height));

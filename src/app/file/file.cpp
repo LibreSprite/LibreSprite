@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -575,17 +575,31 @@ void FileOp::operateLoad(IFileOpProgress* progress)
   printf("Loading file \"%s\" (%s)\n", m_filename.c_str(), extension.c_str());
 
   std::vector<std::pair<FileFormat*, int>> loaders;
+  std::vector<std::pair<FileFormat*, int>> matched;
 
   for (auto format : FileFormatsManager::instance()->support(FILE_SUPPORT_LOAD)) {
       int priority = format->loadPriority();
+      bool extensionMatches = false;
       for (auto& supported : base::split(format->extensions(), ',')) {
         if (supported == extension) {
           priority += 10;
+          extensionMatches = true;
           break;
         }
       }
+      if (extensionMatches)
+        matched.push_back(std::make_pair(format, priority));
       loaders.push_back(std::make_pair(format, priority));
   }
+
+  // Prefer formats whose declared extension matches the file being opened.
+  // Retrying every registered codec against bytes it was never meant to
+  // parse turns one malformed file into an attack surface spanning every
+  // codec in the program. Only fall back to the full, unfiltered list when
+  // nothing matches the extension at all (e.g. no/unknown extension), which
+  // is the one case this fallback search exists for.
+  if (!matched.empty())
+    loaders = std::move(matched);
 
   std::sort(loaders.begin(), loaders.end(), [](auto& a, auto& b){
     return a.second > b.second;
@@ -818,6 +832,17 @@ void FileOp::sequenceGetAlpha(int index, int* a) const
 Image* FileOp::sequenceImage(PixelFormat pixelFormat, int w, int h)
 {
   Sprite* sprite;
+
+  // Dimensions are ultimately read straight from the file being loaded
+  // (BMP/PCX/TGA headers, etc.) - reject invalid values here instead of
+  // relying on Sprite's ASSERT, which compiles out entirely in release
+  // builds and would otherwise let bogus dimensions reach buffer
+  // allocation.
+  if (w <= 0 || h <= 0 || w > kMaxFileImageDimension || h > kMaxFileImageDimension) {
+    setError("Error: invalid image dimensions in file \"%s\" (%dx%d).\n",
+             m_filename.c_str(), w, h);
+    return nullptr;
+  }
 
   // Create the image
   if (!m_document) {

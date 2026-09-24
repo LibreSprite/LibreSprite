@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2015  David Capello
+// LibreSprite | Copyright (C) 2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -42,6 +43,16 @@ namespace app {
   class FormatOptions;
 
   using namespace doc;
+
+  // Sanity ceiling for a single dimension of a file-format-derived image,
+  // applied wherever a codec constructs an Image/Sprite straight from a
+  // header field (width/height/count). Codec header fields are up to 16 or
+  // 32 bits, so a naive "greater than zero" check alone still allows a
+  // single tiny file to trigger a multi-gigabyte allocation attempt, or (for
+  // 32-bit fields) a signed-integer overflow in row-stride/size arithmetic.
+  // 16384 keeps the worst case (RGBA) allocation under ~1.1 GB while
+  // comfortably exceeding any realistic sprite/canvas size.
+  constexpr int kMaxFileImageDimension = 16384;
 
   // File operations.
   typedef enum {
