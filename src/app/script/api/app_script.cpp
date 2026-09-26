@@ -27,7 +27,6 @@
 #include "doc/site.h"
 #include "ui/manager.h"
 
-#include <cctype>
 #include <memory>
 #include <string>
 
@@ -115,19 +114,15 @@ public:
       return JSON::makeNative(script_api::wrap<doc::Document>(newDoc));
     };
 
+    // UNSAFE
     // App.launch() hands its argument to the OS's generic "open" handler
     // (ShellExecute/xdg-open/etc.), which - unlike a browser - will directly
     // execute local files/UNC paths and invoke arbitrary OS-registered
     // URI-scheme handlers with no download/confirmation step. Combined with
     // storage.save() writing script-controlled bytes to a script-controlled
-    // filename, an unrestricted target here is a script-only RCE primitive.
-    // Restrict scripts to opening actual web URLs.
+    // filename, an unrestricted target here allows for a Remote Code Execution
+    // ToDo: to be discussed how to address it in LibreSprite 1.4
     clazz.addMethod("launch") = [](AppObject&, const std::string& cmd) -> JSON::Value {
-      auto scheme = cmd.substr(0, cmd.find(':'));
-      for (auto& c : scheme)
-        c = std::tolower(static_cast<unsigned char>(c));
-      if (cmd.find(':') == std::string::npos || (scheme != "http" && scheme != "https"))
-        return JSON::Value{false};
       return base::launcher::open_file(cmd);
     };
 

@@ -68,10 +68,8 @@ class UI {
         const fileName = `voxel`;
         storage.set(STLBIN(), 'stl', fileName);
         let path = storage.save('stl', fileName);
-        // app.launch() only opens http(s) URLs - it can no longer be used
-        // to open a locally-saved file in an external viewer, so just show
-        // the path for the user to open manually.
         this.dlg.title = path ? path : "Could not save " + fileName;
+        if (path) app.launch(path);
 
         function STLBIN() {
             const Float = new Float32Array(1);

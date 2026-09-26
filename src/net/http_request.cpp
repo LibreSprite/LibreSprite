@@ -26,11 +26,17 @@ public:
     : m_curl(curl_easy_init())
     , m_headerlist(nullptr)
     , m_response(nullptr) {
-    // TLS verification must stay on unconditionally - it was previously
-    // disabled on Android, which let anyone on the network path intercept
-    // or tamper with every request (including script-initiated fetches).
+    // UNSAFE
+    // TLS verification must stay on unconditionally - being it disabled
+    // on Android lets anyone on the network path intercept or tamper
+    // with every request (including script-initiated fetches).
+    // This was supposedly disabled due to different/incompatible SSL library
+    // ToDo: confirm the problem with SSL library and provide safe solutions
     // If Android needs a CA bundle, supply one via CURLOPT_CAINFO rather
     // than skipping verification.
+#ifdef ANDROID
+    curl_easy_setopt(m_curl,  CURLOPT_SSL_VERIFYPEER, 0);
+#endif
     curl_easy_setopt(m_curl, CURLOPT_BUFFERSIZE, 102400L);
     curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &HttpRequestImpl::writeBodyCallback);

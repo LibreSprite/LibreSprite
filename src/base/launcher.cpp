@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2018-2026  LibreSprite contributors
+// LibreSprite | Copyright (C) 2018-2022  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -15,44 +15,9 @@
 #include "base/string.h"
 
 #include <cstdlib>
-#include <vector>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
-#endif
-
-#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
-#include <spawn.h>
-#include <sys/wait.h>
-
-extern char** environ;
-
-namespace
-{
-
-// Runs argv[0] with the given arguments directly (no shell), so a file/URL
-// containing shell metacharacters ($(...), backticks, quotes, backslashes)
-// cannot be interpreted as a command. Returns 0 on success, like
-// std::system did for the callers below.
-int spawn_and_wait(const std::vector<std::string>& args)
-{
-  std::vector<char*> argv;
-  argv.reserve(args.size() + 1);
-  for (auto& arg : args)
-    argv.push_back(const_cast<char*>(arg.c_str()));
-  argv.push_back(nullptr);
-
-  pid_t pid;
-  if (posix_spawnp(&pid, argv[0], nullptr, nullptr, argv.data(), environ) != 0)
-    return -1;
-
-  int status = 0;
-  if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status))
-    return -1;
-  return WEXITSTATUS(status);
-}
-
-} // namespace
 #endif
 
 #ifdef _WIN32
@@ -129,11 +94,11 @@ bool open_file(const std::string& file)
 
 #elif __APPLE__
 
-  ret = spawn_and_wait({"open", file});
+  ret = std::system(("open \"" + file + "\"").c_str());
 
 #else
 
-  ret = spawn_and_wait({"xdg-open", file});
+  ret = std::system(("xdg-open \"" + file + "\"").c_str());
 
 #endif
 
@@ -160,13 +125,11 @@ bool open_folder(const std::string& _file)
 #elif __APPLE__
 
   int ret;
-  if (base::is_directory(file))
-  {
-    ret = spawn_and_wait({"open", file});
+  if (base::is_directory(file)) {
+    ret = std::system(("open \"" + file + "\"").c_str());
   }
-  else
-  {
-    ret = spawn_and_wait({"open", "--reveal", file});
+  else {
+    ret = std::system(("open --reveal \"" + file + "\"").c_str());
   }
   return (ret == 0);
 
@@ -175,7 +138,7 @@ bool open_folder(const std::string& _file)
   if (!base::is_directory(file))
     file = base::get_file_path(file);
 
-  int ret = spawn_and_wait({"xdg-open", file});
+  int ret = std::system(("xdg-open \"" + file + "\"").c_str());
   return (ret == 0);
 
 #endif
