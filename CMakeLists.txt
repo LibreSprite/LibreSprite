@@ -42,7 +42,8 @@ option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" o
 option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
-option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+option(USE_SDL2_BACKEND "Use SDL2 backend" off)
+option(USE_SDL3_BACKEND "Use SDL3 backend" on)
 
 ######################################################################
 # Profile build type
@@ -233,6 +234,16 @@ if(USE_SDL2_BACKEND)
   include_directories(${SDL2_INCLUDE_DIRS})
   find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+endif()
+
+# SDL3 backend
+if(USE_SDL3_BACKEND)
+  add_definitions(-DUSE_SDL3_BACKEND)
+
+  find_package(SDL3 REQUIRED CONFIG REQUIRED)
+  include_directories(${SDL3_INCLUDE_DIRS})
+  find_package(SDL3_image REQUIRED)
+  include_directories(${SDL3_IMAGE_INCLUDE_DIRS})
 endif()
 
 # -- Unix --
