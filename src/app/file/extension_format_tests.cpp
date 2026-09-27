@@ -166,21 +166,21 @@ TEST_F(ExtensionFormatTest, RejectsArchiveWithTooManyEntries)
 
 TEST(ExtensionFormatPathSafetyTest, RejectsReservedNameWithTrailingSpaceOrDot)
 {
-  using app::extension_format_detail::isSafeArchiveEntryPath;
-  EXPECT_FALSE(isSafeArchiveEntryPath("con"));
-  EXPECT_FALSE(isSafeArchiveEntryPath("con "));
-  EXPECT_FALSE(isSafeArchiveEntryPath("con."));
-  EXPECT_FALSE(isSafeArchiveEntryPath("con.. "));
-  EXPECT_FALSE(isSafeArchiveEntryPath("nested/con./file.txt"));
-  EXPECT_TRUE(isSafeArchiveEntryPath("controller.txt"));
+  using base::is_safe_archive_entry_path;
+  EXPECT_FALSE(is_safe_archive_entry_path("con"));
+  EXPECT_FALSE(is_safe_archive_entry_path("con "));
+  EXPECT_FALSE(is_safe_archive_entry_path("con."));
+  EXPECT_FALSE(is_safe_archive_entry_path("con.. "));
+  EXPECT_FALSE(is_safe_archive_entry_path("nested/con./file.txt"));
+  EXPECT_TRUE(is_safe_archive_entry_path("controller.txt"));
 }
 
 TEST(ExtensionFormatPathSafetyTest, RejectsReservedNameWithSuperscriptDigit)
 {
-  using app::extension_format_detail::isSafeArchiveEntryPath;
-  EXPECT_FALSE(isSafeArchiveEntryPath("com\xC2\xB9"));     // COM¹
-  EXPECT_FALSE(isSafeArchiveEntryPath("lpt\xE2\x81\xB4")); // LPT⁴
-  EXPECT_TRUE(isSafeArchiveEntryPath("com10"));
+  using base::is_safe_archive_entry_path;
+  EXPECT_FALSE(is_safe_archive_entry_path("com\xC2\xB9"));     // COM¹
+  EXPECT_FALSE(is_safe_archive_entry_path("lpt\xE2\x81\xB4")); // LPT⁴
+  EXPECT_TRUE(is_safe_archive_entry_path("com10"));
 }
 
 TEST_F(ExtensionFormatTest, MakeStagingDirectoryCreatesDistinctDirectories)

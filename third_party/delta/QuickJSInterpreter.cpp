@@ -183,14 +183,21 @@ public:
     std::size_t classIdCount{0};
     std::vector<std::string> moduleSearchPaths;
 
-    // Deliberately leaked (never destroyed): QuickJSInterpreter instances can
-    // outlive other static-duration objects depending on link-time static
-    // destruction order (observed as a heap-use-after-free when a JS engine
-    // shared_ptr was torn down after this map had already been destructed at
-    // exit). A heap-allocated, never-freed map sidesteps that ordering
-    // entirely since it's never destroyed.
-    static inline std::unordered_map<JSContext*, QuickJSInterpreter*>& contextMap =
-        *new std::unordered_map<JSContext*, QuickJSInterpreter*>();
+    // A function-local static instead of a namespace/member-scope one:
+    // QuickJSInterpreter instances can outlive other static-duration
+    // objects depending on link-time static destruction order (observed
+    // as a heap-use-after-free when a JS engine shared_ptr was torn down
+    // after this map had already been destructed at exit). Since this
+    // map is only ever first touched from inside a QuickJSInterpreter
+    // constructor, its lazy construction is guaranteed to complete no
+    // earlier than that of any QuickJSInterpreter with static storage
+    // duration - and per the standard, static locals are destroyed in
+    // the reverse order of completion of their construction, so it's
+    // guaranteed to be destroyed no later than such an instance either.
+    static std::unordered_map<JSContext*, QuickJSInterpreter*>& contextMap() {
+        static std::unordered_map<JSContext*, QuickJSInterpreter*> instance;
+        return instance;
+    }
 
     QuickJSInterpreter() {
         rt = std::shared_ptr<JSRuntime>{JS_NewRuntime(), [](auto* rt){
@@ -211,7 +218,7 @@ public:
         if (!ctx)
             throw std::runtime_error{"Failed to create JSContext"};
 
-        contextMap[ctx.get()] = this;
+        contextMap()[ctx.get()] = this;
 
         JS_SetModuleLoaderFunc(rt.get(), NULL, module_loader, NULL);
     }
@@ -224,7 +231,7 @@ public:
         if (!fstr) {
             // Unresolved (bare) specifiers: search the configured module
             // paths in order.
-            if (auto it = contextMap.find(ctx); it != contextMap.end()) {
+            if (auto it = contextMap().find(ctx); it != contextMap().end()) {
                 for (auto& dir : it->second->moduleSearchPaths) {
                     std::string candidate = dir + "/" + module_name;
                     for (auto& tryPath : {candidate, candidate + ".js"}) {
@@ -278,7 +285,7 @@ public:
         }
         wrappers.clear();
         js_std_free_handlers(rt.get());
-        contextMap.erase(ctx.get());
+        contextMap().erase(ctx.get());
     }
 
     static JSValue valueToJSValue(JSContext* ctx, JSON::Value& value) {
@@ -327,7 +334,7 @@ public:
         }
         if (value.isNative()) {
             auto& [ptr, type] = value.native();
-            auto instance = contextMap[ctx];
+            auto instance = contextMap()[ctx];
             if (auto it = instance->wrappers.find(ptr.get()); it != instance->wrappers.end()) {
                 if (auto strong = lockWeakRef(ctx, it->second->weak.value); !JS_IsUndefined(strong)) {
                     return strong;
