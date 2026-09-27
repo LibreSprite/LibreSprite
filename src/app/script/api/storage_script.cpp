@@ -17,6 +17,7 @@
 #include "base/exception.h"
 #include "base/file_handle.h"
 #include "base/fs.h"
+#include "base/path.h"
 
 #include <cstdio>
 #include <iostream>
@@ -29,7 +30,8 @@ namespace {
   // Empty domain -> the current script file name (matches the old behavior +
   // the entry/intentry widgets, which persist under the file name).
   std::string normalizeDomain(const std::string& domain) {
-    return domain.empty() ? app::AppScripting::getFileName() : domain;
+    return domain.empty() ? base::get_file_name(app::AppScripting::getFileName())
+                          : domain;
   }
 
   // key/domain reach the filesystem as "<domain>.<key>", joined onto the
