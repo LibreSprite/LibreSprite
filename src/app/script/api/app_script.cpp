@@ -121,7 +121,7 @@ public:
     // URI-scheme handlers with no download/confirmation step. Combined with
     // storage.save() writing script-controlled bytes to a script-controlled
     // filename, an unrestricted target here allows for a Remote Code Execution
-    // ToDo: to be discussed how to address it in LibreSprite 1.4
+    // ToDo: discuss how to address it in LibreSprite 1.4
     clazz.addMethod("launch") = [](AppObject&, const std::string& cmd) -> JSON::Value {
       return base::launcher::open_file(cmd);
     };
