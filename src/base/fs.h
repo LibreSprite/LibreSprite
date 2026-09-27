@@ -46,14 +46,7 @@ namespace base {
 
   std::vector<std::string> list_files(const std::string& path);
 
-  // Rejects a relative path component that would walk back out of the
-  // directory it's meant to be joined onto (a ".." component that
-  // survives normalization), or that carries an embedded NUL a
-  // C-string handoff would silently truncate. A leading '/' is not by
-  // itself rejected: callers join this onto a base directory by plain
-  // string concatenation rather than std::filesystem::path::append(),
-  // so it can never be reinterpreted as an absolute path - it just
-  // becomes a contained subdirectory.
+  // Rejects a relative path component that would walk back out of the directory
   bool has_path_traversal(const std::string& relativePath);
 
   // Rejects absolute paths (Unix, Windows drive-letter, or UNC) and any
@@ -64,7 +57,7 @@ namespace base {
   // device basenames, since on Windows a colon anywhere in a filename
   // addresses an NTFS Alternate Data Stream of the base file rather than
   // a normal file, and CON/NUL/AUX/COM1-9/LPT1-9 are special device
-  // names regardless of extension (see issue #219). These checks are
+  // names regardless of extension. These checks are
   // applied on every platform, since a crafted archive is not
   // necessarily extracted on the platform it targets.
   bool is_safe_archive_entry_path(const std::string& fileName);

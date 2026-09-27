@@ -36,10 +36,7 @@ namespace {
 
   // The on-disk path for a key/domain (user dir, created if missing).
   // Throws base::Exception if key/domain would let the file escape the
-  // storage directory. key/domain reach the filesystem as "<domain>.<key>",
-  // joined onto the storage directory via plain string concatenation - see
-  // base::has_path_traversal for why a slash embedded in either one isn't
-  // itself dangerous, but a ".." component is.
+  // storage directory.
   std::string storagePath(const std::string& key, const std::string& domain) {
     if (base::has_path_traversal(key) || base::has_path_traversal(domain))
       throw base::Exception("Invalid storage key/domain.");

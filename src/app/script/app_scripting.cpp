@@ -411,9 +411,7 @@ namespace app {
     if (ok) {
       loadedScripts.insert(fileName);
       // Lexically normalized (".."/"." collapsed) rather than the raw
-      // argument: this becomes the default domain for storage.*() calls
-      // (see storage_script.cpp), whose path-traversal check rejects any
-      // ".." component - an unnormalized relative invocation like
+      // argument - an unnormalized relative invocation like
       // `--script ../foo.js` would otherwise make every default-domain
       // storage call fail for a script that did nothing wrong.
       activeScript = std::filesystem::path(absPath).lexically_normal().string();

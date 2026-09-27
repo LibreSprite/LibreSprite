@@ -183,17 +183,6 @@ public:
     std::size_t classIdCount{0};
     std::vector<std::string> moduleSearchPaths;
 
-    // A function-local static instead of a namespace/member-scope one:
-    // QuickJSInterpreter instances can outlive other static-duration
-    // objects depending on link-time static destruction order (observed
-    // as a heap-use-after-free when a JS engine shared_ptr was torn down
-    // after this map had already been destructed at exit). Since this
-    // map is only ever first touched from inside a QuickJSInterpreter
-    // constructor, its lazy construction is guaranteed to complete no
-    // earlier than that of any QuickJSInterpreter with static storage
-    // duration - and per the standard, static locals are destroyed in
-    // the reverse order of completion of their construction, so it's
-    // guaranteed to be destroyed no later than such an instance either.
     static std::unordered_map<JSContext*, QuickJSInterpreter*>& contextMap() {
         static std::unordered_map<JSContext*, QuickJSInterpreter*> instance;
         return instance;
@@ -812,7 +801,7 @@ public:
         }
         return *def;
     }
-    
+
     static std::string errorToString(JSContext* ctx, JSValueConst err) {
         std::string errmsg{"JavaScript exception"};
         JSString msg {ctx, JS_ToCString(ctx, err)};
