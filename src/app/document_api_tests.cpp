@@ -30,7 +30,7 @@ TEST(DocumentApi, MoveCel) {
   LayerImage* layer1 = dynamic_cast<LayerImage*>(sprite->folder()->getFirstLayer());
   LayerImage* layer2 = new LayerImage(sprite);
 
-  Cel* cel1 = layer1->cel(frame_t(0));
+  auto cel1 = layer1->cel(frame_t(0));
   cel1->setPosition(2, -2);
   cel1->setOpacity(128);
 
@@ -50,10 +50,10 @@ TEST(DocumentApi, MoveCel) {
     layer2, frame_t(1));
   transaction.commit();
 
-  EXPECT_EQ(NULL, layer1->cel(frame_t(0)));
+  EXPECT_EQ(NULL, layer1->cel(frame_t(0)).get());
 
-  Cel* cel2 = layer2->cel(frame_t(1));
-  ASSERT_TRUE(cel2 != NULL);
+  auto cel2 = layer2->cel(frame_t(1));
+  ASSERT_TRUE(cel2.get() != NULL);
 
   Image* image2 = cel2->image();
   EXPECT_EQ(32, image2->width());

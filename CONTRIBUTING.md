@@ -35,3 +35,12 @@ You are ready for your contribution to be reviewed and merged. There are a few t
 4. Rebuild your project to make sure everything still works. If things are now broken, resolve them, making commits along the way. Once resolved, return to step 1 as more changes could have been made in the meantime.
 5. Push your branch to your online fork with `git push origin name-of-your-feature`.
 6. On GitHub, create a pull request for your feature branch.
+
+## Run Automated Tests
+LibreSprite has a suit of automated tests, which can be enabled with the `ENABLE_TESTS=TRUE` cmake option. From the `./build` director
+
+```
+cmake -DENABLE_TESTS=TRUE ..
+cmake --build .
+ctest --output-on-failure
+```
