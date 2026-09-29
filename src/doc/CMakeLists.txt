@@ -30,6 +30,7 @@ add_library(doc-lib
   conversion_she.cpp
   document.cpp
   documents.cpp
+  file/ase_swatch_file.cpp
   file/col_file.cpp
   file/gpl_file.cpp
   file/pal_file.cpp

@@ -259,6 +259,13 @@ ColorBar::~ColorBar()
   UIContext::instance()->removeObserver(this);
 }
 
+void ColorBar::invalidatePalettePopup()
+{
+  // Drop the cached popup; it is recreated (and the palette list re-scanned)
+  // the next time the user opens "Available palettes".
+  m_palettePopup.reset();
+}
+
 void ColorBar::setPixelFormat(PixelFormat pixelFormat)
 {
   m_fgColor.setPixelFormat(pixelFormat);
@@ -493,26 +500,26 @@ void ColorBar::onPaletteButtonClick()
     }
 
     case PalButton::PRESETS: {
-      if (!m_palettePopup) {
-        try {
-          m_palettePopup.reset(new PalettePopup());
-        }
-        catch (const std::exception& ex) {
-          Console::showException(ex);
-          return;
-        }
-      }
-
-      if (!m_palettePopup->isVisible()) {
-        gfx::Rect bounds = m_buttons.getItem(item)->bounds();
-
-        m_palettePopup->showPopup(
-          gfx::Rect(bounds.x, bounds.y+bounds.h,
-                    ui::display_w()/2, ui::display_h()/2));
-      }
-      else {
+      if (m_palettePopup && m_palettePopup->isVisible()) {
         m_palettePopup->closeWindow(NULL);
+        break;
       }
+
+      // Recreate the popup each time it opens so the palette list re-scans the
+      // folder and reflects palettes added or removed on disk (including via a
+      // file manager).
+      try {
+        m_palettePopup.reset(new PalettePopup());
+      }
+      catch (const std::exception& ex) {
+        Console::showException(ex);
+        return;
+      }
+
+      gfx::Rect bounds = m_buttons.getItem(item)->bounds();
+      m_palettePopup->showPopup(
+        gfx::Rect(bounds.x, bounds.y+bounds.h,
+                  ui::display_w()/2, ui::display_h()/2));
       break;
     }
 

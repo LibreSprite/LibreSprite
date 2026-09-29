@@ -60,7 +60,10 @@ void SavePaletteCommand::onExecute(Context* context)
   }
   else {
     std::string exts = get_writable_palette_extensions();
-    filename = app::show_file_selector("Save Palette", "", exts,
+    // Default the dialog to the user palettes folder so a saved palette lands
+    // where "Available palettes" looks for it, instead of an app-private dir.
+    std::string initialPath = get_preset_palette_filename("Untitled", ".gpl");
+    filename = app::show_file_selector("Save Palette", initialPath, exts,
                                        FileSelectorType::Save);
     if (filename.empty())
       return;

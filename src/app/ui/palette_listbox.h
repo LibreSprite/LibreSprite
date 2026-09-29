@@ -17,6 +17,7 @@ in the Filesystem.
 
 #pragma once
 
+#include "app/file_system.h"
 #include "app/res/resources_loader.h"
 #include "base/injection.h"
 #include "doc/palette.h"
@@ -44,6 +45,9 @@ namespace app {
   class PaletteFileListBox : public PaletteListBox {
   public:
     PaletteFileListBox() {
+      // Drop cached directory listings so a freshly-built list reflects palettes
+      // added/removed on disk (including by a file manager) since last time.
+      FileSystemModule::instance()->refresh();
       setLoading(true);
       m_resourcesLoader->load([this](Resource palResource){
         if (palResource) {
