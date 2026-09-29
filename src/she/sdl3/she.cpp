@@ -361,10 +361,12 @@ namespace she {
     }
 #endif
 #if defined(_WIN32)
-    bool WindowsMessageHook(void *, MSG *win) {
-      if (EasyTab_HandleEvent(win->hwnd, win, win->lParam, win->wParam) == EASYTAB_OK) {
+    static bool WindowsMessageHook(void *, MSG *win) {
+      if (EasyTab_HandleEvent(win->hwnd, win->message, win->lParam, win->wParam) == EASYTAB_OK) {
         penPressure = std::max(EasyTab->Pressure, 0.0001f);
+        return false;
       }
+      return true;
     }
 #endif
 #endif
@@ -974,7 +976,6 @@ int main(const int argc, char* argv[]) {
     SDL_SetX11EventHook(she::SDL3EventQueue::X11EventHook, nullptr);
   }
 #elif defined(_WIN32)
-  // HWND hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
   SDL_SetWindowsMessageHook(she::SDL3EventQueue::WindowsMessageHook, nullptr);
 #endif
 
