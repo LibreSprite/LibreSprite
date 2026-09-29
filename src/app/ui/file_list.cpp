@@ -42,6 +42,7 @@ FileList::FileList()
 
   m_currentFolder = FileSystemModule::instance()->getRootFileItem();
   m_req_valid = false;
+  m_showHiddenFiles = false;
   m_selected = NULL;
   m_isearchClock = 0;
 
@@ -63,15 +64,20 @@ FileList::~FileList()
   // Stop workers creating thumbnails.
   ThumbnailGenerator::instance()->stopAllWorkers();
 }
+void FileList::refresh()
+{
+    setCurrentFolder(m_currentFolder);
+}
 
 void FileList::setExtensions(const char* extensions)
 {
   m_exts = extensions;
 
-  // Refresh
   if (isVisible())
-    setCurrentFolder(m_currentFolder);
+    refresh();
 }
+
+
 
 void FileList::setCurrentFolder(IFileItem* folder)
 {
@@ -522,7 +528,14 @@ void FileList::regenerateList()
          it!=m_list.end(); ) {
       IFileItem* fileitem = *it;
       if (fileitem->isHidden())
-        it = m_list.erase(it);
+      {
+        if(!m_showHiddenFiles){
+          it = m_list.erase(it);
+        }
+        else{
+          ++it;
+        }
+      }
       else if (!fileitem->isFolder() &&
           !fileitem->hasExtension(m_exts.c_str())) {
         it = m_list.erase(it);
