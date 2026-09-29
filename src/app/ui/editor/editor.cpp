@@ -168,6 +168,7 @@ Editor::Editor(Document* document, EditorFlags flags)
   , m_docView(NULL)
   , m_flags(flags)
   , m_secondaryButton(false)
+  , m_spacePressed(false)
   , m_aniSpeed(1.0)
 {
   // Add the first state into the history.
@@ -1222,6 +1223,7 @@ bool Editor::onProcessMessage(Message* msg)
 
         m_oldPos = mouseMsg->position();
         updateToolByTipProximity(mouseMsg->pointerType());
+        updateQuicktool();
 
         if (!m_secondaryButton && mouseMsg->right()) {
           m_secondaryButton = mouseMsg->right();
@@ -1294,6 +1296,9 @@ bool Editor::onProcessMessage(Message* msg)
 
     case kKeyDownMessage:
       if (m_sprite) {
+        if (static_cast<KeyMessage*>(msg)->scancode() == kKeySpace)
+          m_spacePressed = true;
+
         EditorStatePtr holdState(m_state);
         bool used = m_state->onKeyDown(this, static_cast<KeyMessage*>(msg));
 
@@ -1310,6 +1315,9 @@ bool Editor::onProcessMessage(Message* msg)
 
     case kKeyUpMessage:
       if (m_sprite) {
+        if (static_cast<KeyMessage*>(msg)->scancode() == kKeySpace)
+          m_spacePressed = false;
+
         EditorStatePtr holdState(m_state);
         bool used = m_state->onKeyUp(this, static_cast<KeyMessage*>(msg));
 
@@ -1327,6 +1335,7 @@ bool Editor::onProcessMessage(Message* msg)
     case kFocusLeaveMessage:
       // As we use keys like Space-bar as modifier, we can clear the
       // keyboard buffer when we lost the focus.
+      m_spacePressed = false;
       she::clear_keyboard_buffer();
       break;
 
