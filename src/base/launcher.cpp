@@ -21,7 +21,7 @@
 #include <emscripten/emscripten.h>
 #endif
 
-#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && !defined(ANDROID)
 #include <spawn.h>
 #include <sys/wait.h>
 
@@ -130,6 +130,10 @@ bool open_file(const std::string& file)
 #elif __APPLE__
 
   ret = spawn_and_wait({"open", file});
+
+#elif ANDROID
+
+  // No-op
 
 #else
 
