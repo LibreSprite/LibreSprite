@@ -172,6 +172,10 @@ bool open_folder(const std::string& _file)
   }
   return (ret == 0);
 
+#elif ANDROID
+
+  // No-op
+
 #else
 
   if (!base::is_directory(file))
