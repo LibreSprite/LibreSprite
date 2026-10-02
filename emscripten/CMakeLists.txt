@@ -4,6 +4,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# CMake 3.28+ scans C++20 sources for modules, and its scanner fails on Emscripten's -s flags
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 add_definitions(-DEMSCRIPTEN -DHAVE_CONFIG_H)
 set(EMSCRIPTEN on)
@@ -26,6 +28,8 @@ include_directories(
 )
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/third_party/)
+# QuickJS's libc only defines _GNU_SOURCE (for environ and sighandler_t) on __linux__
+target_compile_definitions(quickjs PRIVATE _GNU_SOURCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2 ${CMAKE_CURRENT_SOURCE_DIR}/../build/tinyxml2/)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/pixman/)
 
@@ -34,8 +38,10 @@ set(GENSRC ${CMAKE_CURRENT_SOURCE_DIR}/../build/src)
 
 include_directories(
   ${SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../third_party
   ${GENSRC}/base
-  ${SRC}/observable
+  ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/observable
   ${GENSRC}/app
 )
 
@@ -43,7 +49,7 @@ set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -flto -fwasm-exceptions -s SUPPORT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
 include_directories(${SDL2_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s EXPORTED_FUNCTIONS=_main,_onPointerEvent -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
 set(CMAKE_EXECUTABLE_SUFFIX .html)
 
 set_source_files_properties(${SRC}/app/file/ase_format.cpp PROPERTIES COMPILE_FLAGS "-s USE_ZLIB=1")
@@ -65,6 +71,7 @@ set(SRC_FILES
   # ${SRC}/app/errno_tests.cpp
   # ${SRC}/app/file/file_tests.cpp
   # ${SRC}/app/file/split_filename_tests.cpp
+  ${SRC}/app/file/qoi_format.cpp
   ${SRC}/app/file/webp_format.cpp
   # ${SRC}/app/filename_formatter_tests.cpp
   # ${SRC}/app/ini_file_tests.cpp
@@ -292,6 +299,7 @@ set(SRC_FILES
   ${SRC}/app/commands/cmd_repeat_last_export.cpp
   ${SRC}/app/commands/cmd_rescan_scripts.cpp
   ${SRC}/app/commands/cmd_reselect_mask.cpp
+  ${SRC}/app/commands/cmd_reset_symmetry.cpp
   ${SRC}/app/commands/cmd_reverse_frames.cpp
   ${SRC}/app/commands/cmd_rotate.cpp
   ${SRC}/app/commands/cmd_run_script.cpp
@@ -638,7 +646,6 @@ set(SRC_FILES
   ${SRC}/net/http_request.cpp
   ${SRC}/net/http_request_wasm.cpp
   ${SRC}/net/http_response.cpp
-  ${SRC}/observable/obs/connection.cpp
   ${SRC}/render/get_sprite_pixel.cpp
   ${SRC}/render/quantization.cpp
   ${SRC}/render/render.cpp
@@ -697,13 +704,12 @@ set(SRC_FILES
 
 add_executable(libresprite ${SRC_FILES})
 
+# SDL2, SDL2_image and SDL2_ttf come from Emscripten's ports (-s USE_SDL...)
 target_link_libraries( libresprite
-                        SDL2
-                        SDL2_image
-                        SDL2_ttf
                         tinyxml2
                         pixman
                         modp_b64
                         simpleini
                         delta
+                        obs
                       )

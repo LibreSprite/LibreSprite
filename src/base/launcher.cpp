@@ -172,9 +172,10 @@ bool open_folder(const std::string& _file)
   }
   return (ret == 0);
 
-#elif ANDROID
+#elif defined(ANDROID) || defined(__EMSCRIPTEN__)
 
   // No-op
+  return false;
 
 #else
 

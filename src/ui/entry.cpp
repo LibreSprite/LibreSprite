@@ -13,6 +13,7 @@
 #include "base/bind.h"
 #include "base/string.h"
 #include "clip/clip.h"
+#include "she/display.h"
 #include "she/font.h"
 #include "she/keys.h"
 #include "ui/manager.h"
@@ -206,7 +207,13 @@ bool Entry::onProcessMessage(Message* msg)
       m_got_focus_message = true;
       View* view = View::getView(this);
       gfx::Rect rect = view ? view->viewportBounds() : bounds();
+#ifdef __EMSCRIPTEN__
+      // On the web this places the text box an on-screen keyboard types into, so it has to be
+      // in canvas pixels.
+      int scale = Manager::getDefault()->getDisplay()->scale();
+#else
       int scale = 2*guiscale();
+#endif
       rect.x *= scale;
       rect.y *= scale;
       rect.h *= scale;
