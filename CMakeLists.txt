@@ -42,8 +42,8 @@ option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" o
 option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
-option(USE_SDL2_BACKEND "Use SDL2 backend" off)
-option(USE_SDL3_BACKEND "Use SDL3 backend" on)
+option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+option(USE_SDL3_BACKEND "Use SDL3 backend" off)
 
 ######################################################################
 # Profile build type
