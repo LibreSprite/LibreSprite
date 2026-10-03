@@ -15,10 +15,14 @@
 #include "doc/doc.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
+#include "tinyxml2.h"
 
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <locale>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -47,11 +51,8 @@ struct PathGroup {
 
 static void skipSeparators(std::string_view& s)
 {
-  size_t i = 0;
-  while (i < s.size() &&
-         (s[i] == ' ' || s[i] == '\t' || s[i] == '\n' || s[i] == '\r' || s[i] == ','))
-    ++i;
-  s.remove_prefix(i);
+  const size_t first = s.find_first_not_of(" \t\n\r,");
+  s.remove_prefix(first == std::string_view::npos ? s.size() : first);
 }
 
 // from_chars rejects garbage and out-of-range values.
@@ -68,72 +69,44 @@ static bool parseInt(std::string_view& s, int& out)
 }
 
 // Our writer always emits viewBox="0 0 W H".
-static bool parseViewBox(std::string_view svg, int& width, int& height)
+static bool parseViewBox(std::string_view v, int& width, int& height)
 {
-  size_t vb = svg.find("viewBox=\"");
-  if (vb == std::string_view::npos)
-    return false;
-  vb += 9;
-  size_t endQ = svg.find('"', vb);
-  if (endQ == std::string_view::npos)
-    return false;
-  std::string_view v = svg.substr(vb, endQ - vb);
   int x0 = 0, y0 = 0;
   if (!parseInt(v, x0) || !parseInt(v, y0) ||
       !parseInt(v, width) || !parseInt(v, height))
     return false;
-  return x0 == 0 && y0 == 0 && width > 0 && height > 0;
+  skipSeparators(v);
+  return v.empty() && x0 == 0 && y0 == 0 && width > 0 && height > 0;
 }
 
 // "#rgb" (each digit doubled) or "#rrggbb".
 static bool parseHexColor(std::string_view s, doc::color_t& out)
 {
-  auto nibble = [](char ch) -> int {
-    if (ch >= '0' && ch <= '9') return ch - '0';
-    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
-    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
-    return -1;
-  };
-  if (s.size() != 4 && s.size() != 7)
+  if ((s.size() != 4 && s.size() != 7) || s.front() != '#')
     return false;
-  if (s[0] != '#')
+
+  unsigned rgb = 0;
+  const auto result = std::from_chars(s.data() + 1, s.data() + s.size(), rgb, 16);
+  if (result.ec != std::errc() || result.ptr != s.data() + s.size())
     return false;
-  int v[6];
-  for (int i = 0; i < 6; ++i) {
-    // The short form indexes each nibble twice ("#abc" -> "aabbcc").
-    int n = nibble(s[1 + (s.size() == 4 ? i / 2 : i)]);
-    if (n < 0)
-      return false;
-    v[i] = n;
-  }
-  out = rgba(v[0] * 16 + v[1], v[2] * 16 + v[3], v[4] * 16 + v[5], 255);
+
+  if (s.size() == 4)
+    out = rgba((rgb >> 8) * 17, ((rgb >> 4) & 15) * 17, (rgb & 15) * 17, 255);
+  else
+    out = rgba(rgb >> 16, (rgb >> 8) & 255, rgb & 255, 255);
   return true;
 }
 
-// Parses plain-decimal fill-opacity in fixed point for exact alpha.
 static bool parseFillOpacity(std::string_view s, uint8_t& alpha)
 {
-  if (!s.empty() && s.front() == '-')
-    return false;
-  int whole = 0;
-  if (!parseInt(s, whole))
-    return false;
-
-  int64_t num = whole;    // value * scale
-  int64_t scale = 1;
-  if (!s.empty() && s.front() == '.') {
-    s.remove_prefix(1);
-    while (!s.empty() && s.front() >= '0' && s.front() <= '9' &&
-           scale <= 100000000) {
-      num = num * 10 + (s.front() - '0');
-      scale *= 10;
-      s.remove_prefix(1);
-    }
-  }
-  if (!s.empty() || whole < 0 || num > scale) // reject garbage and opacity > 1
+  std::istringstream input{std::string(s)};
+  input.imbue(std::locale::classic());
+  double opacity = 0;
+  input >> std::noskipws >> opacity;
+  if (!input || !input.eof() || !(opacity >= 0 && opacity <= 1))
     return false;
 
-  alpha = uint8_t((255 * num + scale / 2) / scale); // round to nearest
+  alpha = uint8_t(std::lround(255 * opacity));
   return true;
 }
 
@@ -193,21 +166,7 @@ static bool parseSvgPathData(std::string_view d,
   return !polys.empty();
 }
 
-static std::string_view svgXmlAttr(std::string_view tag, const char* name)
-{
-  std::string key = std::string(name) + "=\"";
-  size_t p = tag.find(key);
-  if (p == std::string_view::npos)
-    return std::string_view();
-  p += key.size();
-  size_t q = tag.find('"', p);
-  if (q == std::string_view::npos)
-    return std::string_view();
-  return tag.substr(p, q - p);
-}
-
-// Nonzero winding in exact integer math. Holes and islands use
-// opposite orientations, so even-odd would cancel them.
+// Evaluate SVG's nonzero fill rule with exact integer arithmetic.
 static bool windingNonzero(int px, int py,
                            const std::vector<std::vector<gfx::Point>>& polys)
 {
@@ -238,13 +197,22 @@ bool SvgDialect::parse(std::string_view svg,
                        std::string& error,
                        const ProgressFn& progress)
 {
-  if (svg.find("<svg") == std::string_view::npos) {
-    error = "SVG: no <svg> element found\n";
+  tinyxml2::XMLDocument xml;
+  if (xml.Parse(svg.data(), svg.size()) != tinyxml2::XML_SUCCESS) {
+    error = std::string("SVG: invalid XML: ") + xml.ErrorStr() + "\n";
+    return false;
+  }
+
+  const auto* root = xml.RootElement();
+  if (!root || std::string_view(root->Name()) != "svg" ||
+      root->NextSiblingElement()) {
+    error = "SVG: expected a single <svg> root element\n";
     return false;
   }
 
   int width = 0, height = 0;
-  if (!parseViewBox(svg, width, height)) {
+  const char* viewBox = root->Attribute("viewBox");
+  if (!viewBox || !parseViewBox(viewBox, width, height)) {
     error = "SVG: missing or invalid viewBox\n";
     return false;
   }
@@ -257,22 +225,15 @@ bool SvgDialect::parse(std::string_view svg,
   }
 
   std::vector<PathGroup> groups;
-  size_t pos = 0;
-  while ((pos = svg.find("<path", pos)) != std::string_view::npos) {
-    size_t end = svg.find('>', pos);
-    if (end == std::string_view::npos) {
-      error = "SVG: truncated <path> element\n";
-      return false;
-    }
-    std::string_view tag = svg.substr(pos, end - pos);
-    pos = end + 1;
-
+  for (const auto* path = root->FirstChildElement("path");
+       path; path = path->NextSiblingElement("path")) {
     PathGroup group;
-    if (!parseHexColor(svgXmlAttr(tag, "fill"), group.color)) {
+    const char* fill = path->Attribute("fill");
+    if (!fill || !parseHexColor(fill, group.color)) {
       error = "SVG: invalid or missing fill color in <path>\n";
       return false;
     }
-    if (std::string_view opacity = svgXmlAttr(tag, "fill-opacity"); !opacity.empty()) {
+    if (const char* opacity = path->Attribute("fill-opacity")) {
       uint8_t alpha;
       if (!parseFillOpacity(opacity, alpha)) {
         error = "SVG: invalid fill-opacity in <path>\n";
@@ -281,8 +242,8 @@ bool SvgDialect::parse(std::string_view svg,
       group.color = rgba(rgba_getr(group.color), rgba_getg(group.color),
                          rgba_getb(group.color), alpha);
     }
-    std::string_view d = svgXmlAttr(tag, "d");
-    if (d.empty() || !parseSvgPathData(d, group.polys)) {
+    const char* d = path->Attribute("d");
+    if (!d || !parseSvgPathData(d, group.polys)) {
       error = "SVG: invalid path data\n";
       return false;
     }

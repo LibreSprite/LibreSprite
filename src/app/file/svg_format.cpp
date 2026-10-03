@@ -22,11 +22,11 @@
 #include "gfx/color.h"
 #include "she/surface.h"
 #include "she/system.h"
+#include "tinyxml2.h"
 
 #include "svg_options.xml.h"
 
 #include <algorithm>
-#include <charconv>
 #include <cstdio>
 #include <map>
 #include <memory>
@@ -37,13 +37,6 @@ namespace app {
 using namespace base;
 
 namespace {
-
-static void appendInt(std::string& out, int value)
-{
-  char buf[16];
-  auto res = std::to_chars(buf, buf + sizeof(buf), value);
-  out.append(buf, res.ptr);
-}
 
 // Converts any pixel to RGBA. Indexed transparency is the mask entry
 // (only without a visible background layer). Alpha 0 stays uncovered.
@@ -194,16 +187,9 @@ bool SvgFormat::onSave(FileOp* fop)
       while (end < width && pixelRgba(image, end, y, fop, maskEntry) == color)
         ++end;
 
-      std::string& d = pathData[color];
-      d += "M";
-      appendInt(d, x);
-      d += " ";
-      appendInt(d, y);
-      d += "h";
-      appendInt(d, end - x);
-      d += "v1h-";
-      appendInt(d, end - x);
-      d += "z ";
+      char run[64];
+      std::snprintf(run, sizeof(run), "M%d %dh%dv1h-%dz ", x, y, end - x, end - x);
+      pathData[color] += run;
       x = end;
     }
     fop->setProgress(0.9 * double(y + 1) / double(height));
@@ -214,15 +200,17 @@ bool SvgFormat::onSave(FileOp* fop)
   }
 
   // viewBox stays in sprite pixels; width/height carry the scale.
-  // Buffered and written with a single checked write.
-  char header[256];
-  std::snprintf(header, sizeof(header),
-    "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-    "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %d %d\" "
-    "width=\"%d\" height=\"%d\" shape-rendering=\"crispEdges\">\n",
-    width, height, width * scale, height * scale);
+  tinyxml2::XMLDocument xml;
+  xml.InsertEndChild(xml.NewDeclaration("xml version=\"1.0\" encoding=\"utf-8\""));
+  auto* root = xml.NewElement("svg");
+  xml.InsertEndChild(root);
+  root->SetAttribute("xmlns", "http://www.w3.org/2000/svg");
+  const std::string viewBox = "0 0 " + std::to_string(width) + " " + std::to_string(height);
+  root->SetAttribute("viewBox", viewBox.c_str());
+  root->SetAttribute("width", width * scale);
+  root->SetAttribute("height", height * scale);
+  root->SetAttribute("shape-rendering", "crispEdges");
 
-  std::string out(header);
   size_t emitted = 0;
   for (const auto& [color, d] : pathData) {
     if (fop->isStop()) {
@@ -231,27 +219,20 @@ bool SvgFormat::onSave(FileOp* fop)
     }
     ++emitted;
 
-    char fill[32];
+    char fill[8];
     std::snprintf(fill, sizeof(fill), "#%02x%02x%02x",
                   rgba_getr(color), rgba_getg(color), rgba_getb(color));
-    out += "  <path fill=\"";
-    out += fill;
-    if (rgba_geta(color) < 255) {
-      // Six digits keep the alpha byte exact on round trip.
-      char opacity[16];
-      std::snprintf(opacity, sizeof(opacity), "%.6g", rgba_geta(color) / 255.0);
-      out += "\" fill-opacity=\"";
-      out += opacity;
-    }
-    out += "\" fill-rule=\"nonzero\" d=\"";
-    out += d;
-    out += "\"/>\n";
+    auto* path = xml.NewElement("path");
+    root->InsertEndChild(path);
+    path->SetAttribute("fill", fill);
+    if (rgba_geta(color) < 255)
+      path->SetAttribute("fill-opacity", rgba_geta(color) / 255.0);
+    path->SetAttribute("fill-rule", "nonzero");
+    path->SetAttribute("d", d.c_str());
 
     fop->setProgress(0.9 + 0.1 * double(emitted) / double(pathData.size()));
   }
-  out += "</svg>\n";
-
-  if (out.size() != fwrite(out.data(), 1, out.size(), handle.get()) ||
+  if (xml.SaveFile(handle.get()) != tinyxml2::XML_SUCCESS ||
       fflush(handle.get()) != 0 ||
       ferror(handle.get())) {
     fop->setError("Error writing file \"%s\"\n", fop->filename().c_str());
