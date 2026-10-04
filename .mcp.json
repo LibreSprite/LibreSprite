@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "libresprite": {
+      "command": "node",
+      "args": ["mcp/libresprite-mcp/dist/server.js"],
+      "env": {
+        "LIBRESPRITE_ASSETS_ROOT": "workspace",
+        "LIBRESPRITE_IMAGE": "libresprite:mcp",
+        "LIBRESPRITE_LS_MODE": "batch",
+        "LIBRESPRITE_TIMEOUT_MS": "120000"
+      }
+    }
+  }
+}

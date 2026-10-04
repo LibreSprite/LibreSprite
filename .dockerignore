@@ -1,0 +1,18 @@
+.github
+build
+cmake-build-*
+*.AppImage
+Dockerfile
+docker-compose.yml
+docker/README.md
+*.md
+
+# Not part of the C++ build; keeping them out avoids busting the layer cache
+# (and shipping node_modules into the build context) on every MCP edit.
+.claude
+agents
+skills
+mcp
+godot-mcp
+workspace
+node_modules

@@ -1,0 +1,33 @@
+services:
+  # Interactive LibreSprite over noVNC: http://localhost:6080/vnc.html
+  #   docker compose --profile gui up
+  libresprite-gui:
+    profiles: ["gui"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: libresprite:local
+    container_name: libresprite-gui
+    ports:
+      - "6080:6080"
+      - "5900:5900"
+    environment:
+      - LS_MODE=gui
+      - RESOLUTION=1920x1080x24
+    volumes:
+      - ./workspace:/workspace
+    restart: unless-stopped
+
+  # Build-only target for the MCP server, which drives the image with
+  # ephemeral `docker run --rm` calls rather than a long-lived service.
+  #   docker compose build libresprite-batch
+  libresprite-batch:
+    profiles: ["build"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: libresprite:mcp
+    environment:
+      - LS_MODE=batch
+    volumes:
+      - ./workspace:/work
