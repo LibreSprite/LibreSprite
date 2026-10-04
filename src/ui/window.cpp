@@ -464,6 +464,12 @@ void Window::onPaint(PaintEvent& ev)
 void Window::onBroadcastMouseMessage(WidgetsList& targets)
 {
   targets.push_back(this);
+  // Verifying if the child is still in the main window, and if not closing it.
+  gfx::Rect pos = bounds();
+  gfx::Rect cpos = childrenBounds();
+  if (cpos.x + cpos.w < 0 || cpos.x > pos.w || cpos.y + cpos.h < 0 || cpos.y > pos.h){
+    closeWindow(NULL);
+  }
 
   // Continue sending the message to siblings windows until a desktop
   // or foreground window.
