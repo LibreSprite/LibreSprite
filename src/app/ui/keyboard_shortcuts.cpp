@@ -208,6 +208,9 @@ void Key::add(const ui::Accelerator& accel, KeySource source)
   Accelerators* accels = &m_accels;
 
   if (source == KeySource::UserDefined) {
+    if (!m_useUsers && m_accels.has(accel))
+      return;
+
     if (!m_useUsers) {
       m_useUsers = true;
       m_users = m_accels;
