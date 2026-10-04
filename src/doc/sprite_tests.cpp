@@ -4,6 +4,7 @@
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
+#include <memory>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,16 +32,16 @@ TEST(Sprite, CelsRange)
   spr->folder()->addLayer(lay2);
 
   ImageRef imgA(Image::create(IMAGE_RGB, 32, 32));
-  Cel* celA = new Cel(frame_t(0), imgA);
-  Cel* celB = Cel::createLink(celA);
+  std::shared_ptr<Cel> celA = std::make_shared<Cel>(frame_t(0), imgA);
+  std::shared_ptr<Cel> celB = Cel::createLink(celA);
   celB->setFrame(frame_t(2));
   lay1->addCel(celA);
   lay1->addCel(celB);
 
   ImageRef imgC(Image::create(IMAGE_RGB, 32, 32));
-  Cel* celC = new Cel(frame_t(0), imgC);
-  Cel* celD = Cel::createCopy(celC);
-  Cel* celE = Cel::createLink(celD);
+  auto celC = std::make_shared<Cel>(frame_t(0), imgC);
+  auto celD = Cel::createCopy(celC);
+  auto celE = Cel::createLink(celD);
   celD->setFrame(frame_t(1));
   celE->setFrame(frame_t(2));
   lay2->addCel(celC);
@@ -48,7 +49,7 @@ TEST(Sprite, CelsRange)
   lay2->addCel(celE);
 
   int i = 0;
-  for (Cel* cel : spr->cels()) {
+  for (auto cel : spr->cels()) {
     switch (i) {
       case 0: EXPECT_EQ(cel, celA); break;
       case 1: EXPECT_EQ(cel, celB); break;
@@ -61,7 +62,7 @@ TEST(Sprite, CelsRange)
   EXPECT_EQ(5, i);
 
   i = 0;
-  for (Cel* cel : spr->uniqueCels()) {
+  for (auto cel : spr->uniqueCels()) {
     switch (i) {
       case 0: EXPECT_EQ(cel, celA); break;
       case 1: EXPECT_EQ(cel, celC); break;
@@ -72,7 +73,7 @@ TEST(Sprite, CelsRange)
   EXPECT_EQ(3, i);
 
   i = 0;
-  for (Cel* cel : spr->cels(frame_t(0))) {
+  for (auto cel : spr->cels(frame_t(0))) {
     switch (i) {
       case 0: EXPECT_EQ(cel, celA); break;
       case 1: EXPECT_EQ(cel, celC); break;
@@ -82,7 +83,7 @@ TEST(Sprite, CelsRange)
   EXPECT_EQ(2, i);
 
   i = 0;
-  for (Cel* cel : spr->cels(frame_t(1))) {
+  for (auto cel : spr->cels(frame_t(1))) {
     switch (i) {
       case 0: EXPECT_EQ(cel, celD); break;
     }
@@ -91,7 +92,7 @@ TEST(Sprite, CelsRange)
   EXPECT_EQ(1, i);
 
   i = 0;
-  for (Cel* cel : spr->cels(frame_t(2))) {
+  for (auto cel : spr->cels(frame_t(2))) {
     switch (i) {
       case 0: EXPECT_EQ(cel, celB); break;
       case 1: EXPECT_EQ(cel, celE); break;
