@@ -103,7 +103,7 @@ namespace she {
 	      std::cout << "EasyTab error: " << error << std::endl;
 	  }
       }
-#elif defined(__linux__) && !defined(ANDROID)
+#elif defined(USE_X11)
       if (wmInfo.subsystem == SDL_SYSWM_X11) {
 	auto error = EasyTab_Load(wmInfo.info.x11.display, wmInfo.info.x11.window);
 	tabletSupport = error == EASYTAB_OK;
