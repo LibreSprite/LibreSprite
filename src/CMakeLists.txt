@@ -61,6 +61,37 @@ endif()
 # Disable clip examples
 set(CLIP_EXAMPLES OFF CACHE BOOL "Compile clip examples")
 set(CLIP_TESTS OFF CACHE BOOL "Compile clip tests")
+# Libraries every consumer of app-lib must link: the libresprite
+# executable and the unit-test binaries (find_tests links app-lib
+# directly). Keep both target_link_libraries calls in sync with these.
+set(LIBRESPRITE_LIBS
+  base-lib
+  cfg-lib
+  clip
+  css-lib
+  doc-lib
+  filters-lib
+  fixmath-lib
+  flic-lib
+  gfx-lib
+  net-lib
+  render-lib
+  she
+  ui-lib
+  undo
+  delta)
+
+set(LIBRESPRITE_EXTERNAL_LIBS
+  ${LibArchive_LIBRARY}
+  ${TINYXML2_LIBRARY}
+  ${JPEG_LIBRARIES}
+  ${GIF_LIBRARIES}
+  ${PNG_LIBRARIES}
+  ${WEBP_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${FREETYPE_LIBRARIES}
+  ${PLATFORM_LIBS})
+
 add_subdirectory(clip)
 
 # Disable undo tests
@@ -120,31 +151,9 @@ add_executable(libresprite WIN32
 
 target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   app-lib
-  base-lib
-  cfg-lib
-  clip
-  css-lib
-  doc-lib
-  filters-lib
-  fixmath-lib
-  flic-lib
-  gfx-lib
-  net-lib
-  render-lib
-  she
-  ui-lib
-  undo
-  delta
+  ${LIBRESPRITE_LIBS}
   ${KEEP_INJECTIONS_END}
-  ${LibArchive_LIBRARY}
-  ${TINYXML2_LIBRARY}
-  ${JPEG_LIBRARIES}
-  ${GIF_LIBRARIES}
-  ${PNG_LIBRARIES}
-  ${WEBP_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-  ${FREETYPE_LIBRARIES}
-  ${PLATFORM_LIBS})
+  ${LIBRESPRITE_EXTERNAL_LIBS})
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)
