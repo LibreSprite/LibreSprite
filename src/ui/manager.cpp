@@ -390,11 +390,17 @@ void Manager::generateMessagesFromSheEvents()
 
       case she::Event::MouseDoubleClick: {
         MouseButtons clickedButton = mouse_buttons_from_she_to_ui(sheEvent);
+        // The double click stands in for the second press (Widget converts it into a mouse down),
+        // so it must mark the button as pressed for the release that follows.
+        m_mouseButtons = (MouseButtons)((int)m_mouseButtons | (int)clickedButton);
+        _internal_set_mouse_buttons(m_mouseButtons);
+
         handleMouseDoubleClick(
           sheEvent.position(),
           clickedButton,
           sheEvent.modifiers(),
-          sheEvent.pointerType());
+          sheEvent.pointerType(),
+          sheEvent.pressure());
         break;
       }
 
@@ -510,7 +516,8 @@ void Manager::handleMouseUp(const gfx::Point& mousePos,
 void Manager::handleMouseDoubleClick(const gfx::Point& mousePos,
                                      MouseButtons mouseButtons,
                                      KeyModifiers modifiers,
-                                     PointerType pointerType)
+                                     PointerType pointerType,
+                                     float pressure)
 {
   Widget* dst = (capture_widget ? capture_widget: mouse_widget);
   if (dst) {
@@ -518,7 +525,8 @@ void Manager::handleMouseDoubleClick(const gfx::Point& mousePos,
       newMouseMessage(
         kDoubleClickMessage,
         dst, mousePos, pointerType,
-        mouseButtons, modifiers));
+        mouseButtons, modifiers,
+        {0,0}, false, pressure));
   }
 }
 

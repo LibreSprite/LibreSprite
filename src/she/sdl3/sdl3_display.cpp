@@ -8,8 +8,6 @@
 #include "config.h"
 #endif
 
-#define EASYTAB_IMPLEMENTATION
-
 #include "she/she.h"
 #include "she/system.h"
 
@@ -24,17 +22,12 @@
 
 #include <SDL3/SDL.h>
 
+#include <cstdint>
 #include <sstream>
 #include <iostream>
 #include <unordered_map>
 #include <memory>
 #include <vector>
-
-#if __APPLE__
-namespace osx_tablet {
-  int init();
-}
-#endif
 
 namespace she {
   SDL3Display* unique_display = nullptr;
@@ -78,40 +71,6 @@ namespace she {
       m_height = height;
 
       SDL_HideCursor();
-
-      bool tabletSupport = false;
-
-#ifdef EASYTAB_H
-#if defined(__WIN32__)
-HWND hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-if (hwnd) {
-  auto error = EasyTab_Load(hwnd);
-  tabletSupport = error == EASYTAB_OK;
-  if (!tabletSupport) {
-    std::cout << "EasyTab error: " << error << std::endl;
-  }
-}
-#elif defined(__linux__) && !defined(ANDROID)
-if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
-  ::Display *xdisplay = (::Display *)SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
-  ::Window xwindow = (::Window)SDL_GetNumberProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-
-  if (xwindow && xdisplay) {
-    auto error = EasyTab_Load(xdisplay, xwindow);
-    if (error != EASYTAB_OK) {
-      tabletSupport = error == EASYTAB_OK;
-      std::cout << "EasyTab error: " << error << std::endl;
-    }
-  }
-} else {
-	std::cout << "Unsupported wm subsystem for tablets" << std::endl;
-}
-#endif
-#endif
-#if __APPLE__
-      tabletSupport = osx_tablet::init();
-#endif
-      std::cout << "Tablet support: " << (tabletSupport ? "OK" : "FAILED") << std::endl;
     }, true);
 
     setScale(scale);
@@ -373,24 +332,23 @@ if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
 
   void* SDL3Display::nativeHandle()
   {
-  #if defined(SDL_PLATFORM_WIN32)
-    return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-  #elif defined(SDL_PLATFORM_MACOS)
-    return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
-  #elif defined(SDL_PLATFORM_LINUX)
-    if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
-      //we were returning info.info.x11.window before, this is just that ??
-      return reinterpret_cast<void*>(SDL_GetNumberProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
-    } else if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "wayland") == 0) {
-      return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL);
-    } else {
+    SDL_PropertiesID props = SDL_GetWindowProperties(m_window);
+    if (!props)
       return nullptr;
-    }
-  #elif defined(SDL_VIDEO_DRIVER_UIKIT)
-    return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, NULL);
-  #elif defined(SDL_VIDEO_DRIVER_ANDROID)
-    return SDL_GetPointerProperty(SDL_GetWindowProperties(m_window), SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, NULL);
-  #endif
+
+  #if defined(_WIN32)
+    return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+  #elif defined(__APPLE__)
+    return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
+  #elif defined(ANDROID)
+    return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, nullptr);
+  #elif defined(__linux__)
+    // Only meaningful under X11; a Wayland-native session has no numeric
+    // handle here, callers must tolerate nullptr.
+    Sint64 xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    return xid ? reinterpret_cast<void*>(static_cast<uintptr_t>(xid)) : nullptr;
+  #else
     return nullptr;
+  #endif
   }
 } // namespace she

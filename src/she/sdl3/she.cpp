@@ -24,6 +24,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <list>
 #include <memory>
@@ -350,26 +351,6 @@ namespace she {
 	getEventInternal(event, false);
     }
 
-#if defined(EASYTAB_H)
-#if defined(__linux__)
-    static bool X11EventHook(void *, XEvent *event) {
-      if (EasyTab_HandleEvent(event) == EASYTAB_OK) {
-        penPressure = std::max(EasyTab->Pressure, 0.0001f);
-        return false;
-      }
-      return true;
-    }
-#endif
-#if defined(_WIN32)
-    static bool WindowsMessageHook(void *, MSG *win) {
-      if (EasyTab_HandleEvent(win->hwnd, win->message, win->lParam, win->wParam) == EASYTAB_OK) {
-        penPressure = std::max(EasyTab->Pressure, 0.0001f);
-        return false;
-      }
-      return true;
-    }
-#endif
-#endif
     void getEventInternal(Event& event, bool) {
       SDL_Event sdlEvent;
       while (SDL_PollEvent(&sdlEvent)) {
@@ -457,12 +438,45 @@ namespace she {
 	        }
 
 
+	  if (sdlEvent.motion.which == SDL_PEN_MOUSEID) {
+	    pointerType = PointerType::Pen;
+	    if (penPressure == 0.0f)
+	      penPressure = 0.0001f;
+	  }
+
 	  event.setPressure(penPressure);
 	  event.setPointerType(pointerType);
           return;
 
         case SDL_EVENT_FINGER_MOTION:
           penPressure = std::max<>(sdlEvent.tfinger.pressure, 0.0001f);
+          continue;
+
+        case SDL_EVENT_PEN_AXIS:
+          if (sdlEvent.paxis.axis == SDL_PEN_AXIS_PRESSURE)
+            penPressure = std::max(sdlEvent.paxis.value, 0.0001f);
+          continue;
+
+        case SDL_EVENT_PEN_PROXIMITY_OUT:
+          // Stops a later plain mouse click from being misreported as pen input with stale pressure once a pen has touched the tablet.
+          penPressure = 0.0f;
+          pointerType = PointerType::Mouse;
+          continue;
+
+        // Position/clicks for these already arrive as ordinary SDL_EVENT_MOUSE_* events
+        // (SDL_HINT_PEN_MOUSE_EVENTS defaults to enabled), so only the pressure is tracked here.
+        case SDL_EVENT_PEN_PROXIMITY_IN:
+        case SDL_EVENT_PEN_MOTION:
+          // A hovering pen sends no pressure axis events, so mark it as present here;
+          // get_pen_pressure() != 0 is what hides the brush preview (and flags pen input) while hovering.
+          if (penPressure == 0.0f)
+            penPressure = 0.0001f;
+          continue;
+
+        case SDL_EVENT_PEN_DOWN:
+        case SDL_EVENT_PEN_UP:
+        case SDL_EVENT_PEN_BUTTON_DOWN:
+        case SDL_EVENT_PEN_BUTTON_UP:
           continue;
 
         case SDL_EVENT_MOUSE_WHEEL:
@@ -488,28 +502,30 @@ namespace she {
           event.setButton(mouseButtonMapping[sdlEvent.button.button]);
           event.setModifiers(getSheModifiers());
 
-	  if (penPressure > 0.0f) {
-	    pointerType = PointerType::Pen;
-	    event.setPressure(penPressure);
-	    event.setPointerType(pointerType);
-	  } else {
-	    event.setPressure(sdlEvent.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1.0f : 0.0f);
-	    event.setPointerType(pointerType);
-	    pointerType = PointerType::Mouse;
-	  }
-
-	  auto now = std::chrono::steady_clock::now();
-	  auto delta = now - lastUpTime;
-          if (sdlEvent.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-	    using namespace std::chrono_literals;
-	    if (delta < 200ms) {
-	      m_events.push(event);
-	      event.setType(Event::MouseDoubleClick);
-	      event.setPosition(event.position());
-	      event.setButton(event.button());
-	    }
-	    lastUpTime = now;
+          // The synthesized mouse event tells us it came from a pen even if no pressure axis event has arrived yet
+          // (e.g. first touch after the pen re-entered proximity, which reset penPressure to 0).
+          if (sdlEvent.button.which == SDL_PEN_MOUSEID || penPressure > 0.0f) {
+            pointerType = PointerType::Pen;
+            event.setPressure(std::max(penPressure, 0.0001f));
+          } else {
+            pointerType = PointerType::Mouse;
+            event.setPressure(sdlEvent.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1.0f : 0.0f);
           }
+          event.setPointerType(pointerType);
+
+          auto now = std::chrono::steady_clock::now();
+          auto delta = now - lastUpTime;
+
+          // A double click replaces the second press (the matching release still follows).
+          // ui::Widget turns it back into a mouse down, so emitting it after the release caused a press left with no release,
+          // which kept a freehand stroke running even with the pen lifted after a quick double tap.
+          if (sdlEvent.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            using namespace std::chrono_literals;
+            if (delta < 200ms) { event.setType(Event::MouseDoubleClick); }
+          else {
+            lastUpTime = now;
+          }
+
           return;
         }
 
@@ -964,20 +980,17 @@ int main(const int argc, char* argv[]) {
   // https://wiki.libsdl.org/SDL2/SDL_HINT_WINDOWS_DPI_AWARENESS
   SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
 
+  // Pen input arrives as SDL_EVENT_PEN_* events (pressure) plus synthesized mouse events (position/clicks).
+  // Also synthesizing touch events for the same pen would fight the finger-based pressure tracking with a second, less precise value.
+  SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "0");
+
+  //To do: consider hinting `wayland,x11` as default SDL Video Driver on Wayland once clippy is replaced with SDL3 clipboard
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == false) {
     std::cerr << "Critical: Could not initialize SDL3. Aborting." << std::endl;
     return -1;
   }
   SDL_SetEventEnabled(SDL_EVENT_FINGER_MOTION, true);
-
-#if defined(__linux__)
-  const char* driver = SDL_GetCurrentVideoDriver();
-  if (driver && SDL_strcmp(driver, "x11") == 0) {
-    SDL_SetX11EventHook(she::SDL3EventQueue::X11EventHook, nullptr);
-  }
-#elif defined(_WIN32)
-  SDL_SetWindowsMessageHook(she::SDL3EventQueue::WindowsMessageHook, nullptr);
-#endif
 
 
   return app_main(argc, argv);
