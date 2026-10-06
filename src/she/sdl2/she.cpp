@@ -508,27 +508,27 @@ namespace she {
           event.setButton(mouseButtonMapping[sdlEvent.button.button]);
           event.setModifiers(getSheModifiers());
 
-	  if (penPressure > 0.0f) {
-	    pointerType = PointerType::Pen;
-	    event.setPressure(penPressure);
-	    event.setPointerType(pointerType);
-	  } else {
-	    event.setPressure(sdlEvent.type == SDL_MOUSEBUTTONDOWN ? 1.0f : 0.0f);
-	    event.setPointerType(pointerType);
-	    pointerType = PointerType::Mouse;
-	  }
+          if (penPressure > 0.0f) {
+            pointerType = PointerType::Pen;
+            event.setPressure(penPressure);
+            event.setPointerType(pointerType);
+          } else {
+            event.setPressure(sdlEvent.type == SDL_MOUSEBUTTONDOWN ? 1.0f : 0.0f);
+            event.setPointerType(pointerType);
+            pointerType = PointerType::Mouse;
+          }
 
-	  auto now = std::chrono::steady_clock::now();
-	  auto delta = now - lastUpTime;
-          if (sdlEvent.type == SDL_MOUSEBUTTONUP) {
-	    using namespace std::chrono_literals;
-	    if (delta < 200ms) {
-	      m_events.push(event);
-	      event.setType(Event::MouseDoubleClick);
-	      event.setPosition(event.position());
-	      event.setButton(event.button());
-	    }
-	    lastUpTime = now;
+          auto now = std::chrono::steady_clock::now();
+          auto delta = now - lastUpTime;
+
+          // A double click replaces the second press (the matching release still follows).
+          // ui::Widget turns it back into a mouse down, so emitting it after the release caused a press left with no release,
+          // which kept a freehand stroke running even with the pen lifted after a quick double tap.
+          if (sdlEvent.type == SDL_MOUSEBUTTONDOWN) {
+            using namespace std::chrono_literals;
+            if (delta < 200ms) { event.setType(Event::MouseDoubleClick); }
+          } else {
+            lastUpTime = now;
           }
 
           return;
