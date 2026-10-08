@@ -313,6 +313,11 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
 
   Document* document = window.document();
   DocumentPreferences* docPref = window.docPref();
+
+  // Set symmetry preference values because they are initially loaded when the window is
+  docPref->symmetry.xAxis.setValueAndDefault(window.frameBounds().w/2);
+  docPref->symmetry.yAxis.setValueAndDefault(window.frameBounds().h/2);
+
   gfx::Rect frameBounds = window.frameBounds();
   bool partialTiles = window.partialTilesValue();
   auto sheetType = window.sheetTypeValue();
