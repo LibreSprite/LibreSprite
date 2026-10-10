@@ -9,8 +9,8 @@
 #include "delta/JSON.hpp"
 #include "di.hpp"
 
-#include "app/res/http.h"
 #include "app/resource_finder.h"
+#include "app/script/api/http_internal.h"
 #include "app/script/app_scripting.h"
 #include "app/script/api/storage_internal.h"
 #include "base/base64.h"
@@ -21,8 +21,8 @@
 
 #include <cstdio>
 #include <iostream>
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -119,9 +119,10 @@ public:
     };
 
     // storage.fetch(url, key, [domain, header, value, ...]) -> undefined.
-    // Async: seeds the key with "", performs app::HTTP::fetch, and on
-    // completion stores the body + `<key>_status` and raises `<key>_fetch`.
-    // A "POST" header key sets the request body instead of a header.
+    // Async: seeds the key with "", performs the request on a worker
+    // thread, and on completion stores the body + `<key>_status` and
+    // raises `<key>_fetch`. A "POST" header key sets the request body
+    // instead of a header.
     addVarArgFunction("__storageFetch") = [](JSON::Array& args) -> JSON::Value {
       if (args.size() < 2)
         return JSON::Value{JSON::Special::Undefined};
@@ -131,23 +132,24 @@ public:
       auto fileName = app::AppScripting::getFileName();
       script::setStorage(JSON::Value{std::string{}}, key, domain);
 
-      std::unordered_map<std::string, std::string> headers;
+      std::map<std::string, std::string> headers;
       std::string body;
-      std::string* post = nullptr;
+      bool isPost = false;
       for (std::size_t i = 3; i + 1 < args.size(); i += 2) {
         auto hkey = args[i].toString();
         auto hval = args[i + 1].toString();
         if (hkey == "POST") {
           body = hval;
-          post = &body;
+          isPost = true;
         } else {
           headers[hkey] = hval;
         }
       }
 
-      app::HTTP::fetch(url, post, headers, [key, domain, fileName](app::HTTP::Result&& result) {
-        script::setStorage(JSON::Value{std::move(result.body)}, key, domain);
-        script::setStorage(JSON::Value{(double)result.status}, key + "_status", domain);
+      script::httpFetch(url, isPost ? "POST" : "", body, false, headers, [key, domain, fileName](script::HttpResult&& res) {
+        auto status = res.error ? 0 : res.status;
+        script::setStorage(JSON::Value{res.error ? std::string{} : std::move(res.body)}, key, domain);
+        script::setStorage(JSON::Value{(double)status}, key + "_status", domain);
         JSON::Value event;
         event.push_back(key + "_fetch");
         app::AppScripting::raiseEvent(fileName, event);

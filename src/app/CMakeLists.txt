@@ -349,6 +349,8 @@ add_library(app-lib
   script/api/dialog_script.cpp
   script/api/document_script.cpp
   script/api/entry_script.cpp
+  script/api/http_internal.cpp
+  script/api/http_script.cpp
   script/api/image_script.cpp
   script/api/imageview_script.cpp
   script/api/intentry_script.cpp
@@ -473,3 +475,7 @@ add_library(app-lib
   ${data_recovery_files}
   ${generated_files})
 endif()
+
+# The script API includes httplib.h (http_internal.cpp): link the target so
+# its compile definitions (CPPHTTPLIB_OPENSSL_SUPPORT) match httplib.cpp.
+target_link_libraries(app-lib PRIVATE httplib)

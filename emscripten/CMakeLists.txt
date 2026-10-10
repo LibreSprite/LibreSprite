@@ -27,11 +27,21 @@ include_directories(
         ${QOI_DIR}
 )
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/third_party/)
+# The subdirectory targets below must be compiled with the same flags as the
+# final link: a pthreads (shared-memory) module needs atomics in every object
+# No -flto: with the current emscripten, LTO breaks wasm exception handling
+# (the first thrown C++ exception traps the worker thread at runtime)
+set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -fwasm-exceptions -s SUPPORT_LONGJMP=wasm")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
+
+# Keep the library outputs in this build's own tree: the native build owns
+# ../build/ and the two must not overwrite each other's objects and archives
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_BINARY_DIR}/third_party/)
 # QuickJS's libc only defines _GNU_SOURCE (for environ and sighandler_t) on __linux__
 target_compile_definitions(quickjs PRIVATE _GNU_SOURCE)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2 ${CMAKE_CURRENT_SOURCE_DIR}/../build/tinyxml2/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/pixman/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2 ${CMAKE_CURRENT_BINARY_DIR}/tinyxml2/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/ ${CMAKE_CURRENT_BINARY_DIR}/pixman/)
 
 set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 set(GENSRC ${CMAKE_CURRENT_SOURCE_DIR}/../build/src)
@@ -45,11 +55,9 @@ include_directories(
   ${GENSRC}/app
 )
 
-set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -flto -fwasm-exceptions -s SUPPORT_LONGJMP=wasm")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
 include_directories(${SDL2_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
+# The default pthread stack (64k) is too small for the app thread
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s DEFAULT_PTHREAD_STACK_SIZE=8MB -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
 set(CMAKE_EXECUTABLE_SUFFIX .html)
 
 set_source_files_properties(${SRC}/app/file/ase_format.cpp PROPERTIES COMPILE_FLAGS "-s USE_ZLIB=1")
@@ -408,6 +416,9 @@ set(SRC_FILES
   ${SRC}/app/script/api/dialog_script.cpp
   ${SRC}/app/script/api/document_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
+  ${SRC}/app/script/api/http_internal.cpp
+  ${SRC}/app/script/api/http_internal_wasm.cpp
+  ${SRC}/app/script/api/http_script.cpp
   ${SRC}/app/script/api/image_script.cpp
   ${SRC}/app/script/api/imageview_script.cpp
   ${SRC}/app/script/api/intentry_script.cpp
@@ -705,11 +716,15 @@ set(SRC_FILES
 add_executable(libresprite ${SRC_FILES})
 
 # SDL2, SDL2_image and SDL2_ttf come from Emscripten's ports (-s USE_SDL...)
+# No httplib: the web build performs script HTTP with the browser fetch()
+# (http_internal_wasm.cpp) and has no sockets.
 target_link_libraries( libresprite
                         tinyxml2
                         pixman
                         modp_b64
                         simpleini
+                        "LINKER:--whole-archive"
                         delta
+                        "LINKER:--no-whole-archive"
                         obs
                       )

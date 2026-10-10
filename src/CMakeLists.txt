@@ -136,6 +136,7 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   undo
   delta
   ${KEEP_INJECTIONS_END}
+  httplib
   ${LibArchive_LIBRARY}
   ${TINYXML2_LIBRARY}
   ${JPEG_LIBRARIES}

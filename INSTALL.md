@@ -119,6 +119,12 @@ https://github.com/LibreSprite/ls-android-deps as android/ in the LibreSprite
 directory. Now you can open the android subdirectory in Android Studio and build
 LibreSprite for Android.
 
+The build uses the CMake from the Android SDK by default, which may be too old.
+This project needs CMake 4.1 or newer. To use your own CMake instead, add this
+line to `android/local.properties`, replacing the path with the directory that
+contains `bin/cmake`:
+
+    cmake.dir=/usr
 
 ## Installing
 

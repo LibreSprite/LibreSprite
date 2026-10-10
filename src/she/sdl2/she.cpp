@@ -380,7 +380,7 @@ static void patchEventListeners() {
 	  let tmp = getWasmTableEntry(handle);
 	  function wrapper(...args) {
 	    let ret = tmp(...args);
-	    let keyCode = GROWABLE_HEAP_I32()[(args[1] >> 2) + 9];
+	    let keyCode = HEAP32[(args[1] >> 2) + 9];
 	    return ret && keyCode != 86;
 	  }
 	  if (tmp.name != wrapper.name)
