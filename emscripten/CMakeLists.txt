@@ -654,9 +654,6 @@ set(SRC_FILES
   ${SRC}/gfx/region.cpp
   ${SRC}/gfx/rgb.cpp
   ${SRC}/main/main.cpp
-  ${SRC}/net/http_request.cpp
-  ${SRC}/net/http_request_wasm.cpp
-  ${SRC}/net/http_response.cpp
   ${SRC}/render/get_sprite_pixel.cpp
   ${SRC}/render/quantization.cpp
   ${SRC}/render/render.cpp

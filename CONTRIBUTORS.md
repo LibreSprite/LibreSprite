@@ -12,8 +12,6 @@ It tries to replicate some pixel-art algorithms:
 
 And it uses the following third-party libraries:
 
-* [curl](http://curl.haxx.se/) (curl)
-
 * [freetype](https://www.freetype.org) (FTL)
 * [giflib](http://giflib.sourceforge.net) (MIT)
 * [gtest](https://github.com/google/googletest) (BSD-3-Clause)
