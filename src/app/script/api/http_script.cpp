@@ -93,6 +93,15 @@ public:
       });
       return JSON::Value{JSON::Special::Undefined};
     };
+
+    // __utf8decode(bytes) -> string. Decodes a byte array as UTF-8: the
+    // JSON layer converts the result through JS_NewStringLen, which maps
+    // invalid sequences to U+FFFD and astral characters to surrogate
+    // pairs (the runtime has no TextDecoder).
+    addFunction("__utf8decode") = [](JSON::Value& bytes) -> JSON::Value {
+      auto& buf = bytes.byteArray();
+      return JSON::Value{std::string(buf.begin(), buf.end())};
+    };
   }
 
   void shutdown() override {
@@ -117,13 +126,6 @@ return new Promise((resolve, reject) => {
             }
             const ok = rsp.status >= 200 && rsp.status < 300;
             let bodyUsed = false;
-            function text() {
-                const b = rsp.buffer;
-                const m = rsp.buffer.length;
-                let str = new Array(m);
-                for (let i = 0; i < m; ++i) str[i] = String.fromCharCode(b[i]);
-                return str.join('');
-            }
             const response = {
                 ok: ok,
                 status: rsp.status,
@@ -135,7 +137,7 @@ return new Promise((resolve, reject) => {
                         return Promise.reject(new TypeError("Body has already been consumed"));
                     }
                     bodyUsed = true;
-                    return Promise.resolve(text());
+                    return Promise.resolve(__utf8decode(rsp.buffer));
                 },
                 json: () => {
                     if (bodyUsed) {
@@ -143,7 +145,7 @@ return new Promise((resolve, reject) => {
                     }
                     bodyUsed = true;
                     try {
-                        return Promise.resolve(JSON.parse(text()));
+                        return Promise.resolve(JSON.parse(__utf8decode(rsp.buffer)));
                     } catch (e) {
                         return Promise.reject(new Error("Failed to parse JSON: " + e.message));
                     }
