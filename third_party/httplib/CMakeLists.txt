@@ -15,4 +15,7 @@ find_package(OpenSSL QUIET)
 if(OpenSSL_FOUND)
   target_compile_definitions(httplib PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
   target_link_libraries(httplib PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+elseif(NOT EMSCRIPTEN)
+  # the web build never links httplib, so only warn for native builds
+  message(WARNING "OpenSSL not found: script fetch() on https URLs will fail at runtime")
 endif()
