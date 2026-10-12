@@ -803,6 +803,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -831,6 +832,14 @@ void ExportSpriteSheetCommand::onLoadParams(const Params& params)
     m_askOverwrite = params.get_as<bool>("ask-overwrite");
   else
     m_askOverwrite = true;
+}
+
+std::vector<CommandParamInfo> ExportSpriteSheetCommand::onDescribeParams() const
+{
+  return {
+    {"ui", "Show the export dialog (1 or 0).", false, "1"},
+    {"ask-overwrite", "Ask before overwriting the output files (1 or 0).", false, "1"},
+  };
 }
 
 bool ExportSpriteSheetCommand::onEnabled(Context* context)

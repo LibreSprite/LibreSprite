@@ -30,6 +30,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -55,6 +56,14 @@ void RemoveFrameTagCommand::onLoadParams(const Params& params)
     m_tagId = ObjectId(base::convert_to<ObjectId>(id));
   else
     m_tagId = NullId;
+}
+
+std::vector<CommandParamInfo> RemoveFrameTagCommand::onDescribeParams() const
+{
+  return {
+    {"name", "Tag name to remove. Empty uses the tag id, or the inner tag of the current frame.", false, ""},
+    {"id", "Tag id to remove (when name is empty).", false, ""},
+  };
 }
 
 bool RemoveFrameTagCommand::onEnabled(Context* context)

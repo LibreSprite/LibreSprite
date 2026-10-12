@@ -376,7 +376,8 @@ function listCommandIds() {
   try {
     const proto = Object.getPrototypeOf(app.command);
     return Object.getOwnPropertyNames(proto)
-      .filter((k) => k !== "constructor" && k !== "setParameter" && k !== "clearParameters");
+      .filter((k) => k !== "constructor" && k !== "setParameter" &&
+                    k !== "clearParameters" && k !== "info");
   } catch (e) {
     return [];
   }

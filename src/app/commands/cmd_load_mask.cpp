@@ -34,6 +34,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 };
@@ -49,6 +50,13 @@ LoadMaskCommand::LoadMaskCommand()
 void LoadMaskCommand::onLoadParams(const Params& params)
 {
   m_filename = params.get("filename");
+}
+
+std::vector<CommandParamInfo> LoadMaskCommand::onDescribeParams() const
+{
+  return {
+    {"filename", ".msk mask file to load. Empty opens the file dialog.", false, ""},
+  };
 }
 
 bool LoadMaskCommand::onEnabled(Context* context)

@@ -42,6 +42,29 @@ public:
       return JSON::makeNative(script_api::wrap(&self));
     };
 
+    // info(name) -> {name, friendlyName, params: [{name, description,
+    // required, default?}]}, or null when no command has that id.
+    cls.addMethod("info") = [](CommandObject&, const std::string& name) -> JSON::Value {
+      app::Command* cmd = app::CommandsModule::instance()->getCommandByName(name.c_str());
+      if (!cmd)
+        return JSON::Value{JSON::Special::Null};
+      JSON::Value rsp;
+      auto& obj = rsp.object();
+      obj["name"] = cmd->id();
+      obj["friendlyName"] = cmd->friendlyName();
+      auto& arr = obj["params"].array();
+      for (const auto& p : cmd->describeParams()) {
+        arr.push_back({});
+        auto& entry = arr.back().object();
+        entry["name"] = p.name;
+        entry["description"] = p.description;
+        entry["required"] = p.required;
+        if (!p.defaultValue.empty())
+          entry["default"] = p.defaultValue;
+      }
+      return rsp;
+    };
+
     // One method per registered command, named by the command id - except
     // for commands that delete Document/Sprite/Layer/Image objects that a
     // script may still be holding a live (non-owning) wrapper for.

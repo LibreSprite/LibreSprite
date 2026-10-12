@@ -34,6 +34,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* ctx) override;
   void onExecute(Context* ctx) override;
   std::string onGetFriendlyName() const override;
@@ -64,6 +65,14 @@ void AddColorCommand::onLoadParams(const Params& params)
     m_color = app::Color::fromString(params.get("color"));
   else
     m_color = app::Color::fromMask();
+}
+
+std::vector<CommandParamInfo> AddColorCommand::onDescribeParams() const
+{
+  return {
+    {"source", "Where the color comes from: fg, bg or color.", false, "fg"},
+    {"color", "Color to add when source=color, for example rgb{255,0,0,255}.", false, ""},
+  };
 }
 
 bool AddColorCommand::onEnabled(Context* ctx)

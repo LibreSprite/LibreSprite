@@ -765,6 +765,11 @@ paths are used as-is.
       returns: Nothing
       Convolution Matrix
 
+   - `info(name)`:
+      - name: Command id, e.g. "OpenFile".
+      returns: {name, friendlyName, params: [{name, description, required, default}]} or null.
+      Describes the parameters a command reads.
+
    - `clearParameters()`:
       returns: Nothing
 
