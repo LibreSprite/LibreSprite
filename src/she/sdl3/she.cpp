@@ -969,6 +969,16 @@ namespace she {
 extern int app_main(int argc, char* argv[]);
 
 int main(const int argc, char* argv[]) {
+  // --batch and --shell never start the UI; use SDL's dummy video driver
+  // so no real display is needed. Keep a user-set SDL_VIDEODRIVER value.
+  for (int i = 1; i < argc; ++i) {
+    if (SDL_strcmp(argv[i], "--batch") == 0 ||
+        SDL_strcmp(argv[i], "--shell") == 0) {
+      SDL_setenv_unsafe("SDL_VIDEODRIVER", "dummy", 0);
+      break;
+    }
+  }
+
   #ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
   SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
   #endif
