@@ -10,7 +10,6 @@
 // endpoint URL. Point any MCP client at that URL.
 //
 // Limitations:
-//  - GUI mode only: the engine tick pump runs with the UI loop.
 //  - JSON responses only: no SSE streams, no sessions, no auth.
 //  - Binds to localhost.
 //  - run_command may open dialogs that need user interaction.

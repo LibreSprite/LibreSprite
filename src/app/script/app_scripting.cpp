@@ -18,6 +18,7 @@
 #include "app/script/app_scripting.h"
 #include "app/script/script_permission_dialog.h"
 #include "app/script/script_permissions.h"
+#include "app/task_manager.h"
 #include "base/injection.h"
 #include "base/path.h"
 #include "base/range.h"
@@ -31,6 +32,7 @@
 #include "ui/timer.h"
 #include "ui/widget.h"
 
+#include <chrono>
 #include <cmath>
 #include <deque>
 #include <filesystem>
@@ -39,6 +41,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_set>
 #include <utility>
 
@@ -509,6 +512,59 @@ namespace app {
       return;
     tickTimer.reset(new ScriptTimer());
     tickTimer->start();
+  }
+
+  void AppScripting::runHeadlessPump() {
+    if (!engine)
+      return;
+    using namespace std::chrono;
+    for (;;) {
+      // Deliver worker-thread results (fetch, fs, server handlers) queued
+      // by TaskManager; in GUI mode its 10ms ui::Timer does this.
+      if (app::TaskManager::exists())
+        app::TaskManager::instance().pump();
+
+      // Same sequence as tick() (which the GUI runs per frame): pump the
+      // engine (promises, microtasks), deliver queued events, then ask each
+      // extension for its next wake time (0 = idle) while firing due work.
+      engine->tick();
+      drainEventQueue();
+      milliseconds nextWake{0};
+      for (auto& ext : extensions) {
+        auto wake = ext->tick();
+        if (wake > milliseconds(0) && (nextWake == milliseconds(0) || wake < nextWake))
+          nextWake = wake;
+      }
+      // Settle the work queued by the above (e.g. a fired timer resolving a
+      // promise) before checking for idle.
+      engine->tick();
+
+      // The script is active while work is pending: events to deliver,
+      // due extension work, tasks in TaskManager (fs, fetch, server
+      // handlers), or a keepAlive() extension (e.g. a listening HTTP
+      // server).
+      bool active = nextWake > milliseconds(0);
+      pendingEvents >> [&](auto& q){ if (!q.empty()) active = true; };
+      if (app::TaskManager::exists() && app::TaskManager::instance().hasWork())
+        active = true;
+      if (!active) {
+        for (auto& ext : extensions) {
+          if (ext->keepAlive()) {
+            active = true;
+            break;
+          }
+        }
+      }
+      if (!active)
+        break;
+
+      // Sleep until the next wake, capped at the TaskManager poll period so
+      // worker results are delivered with the same latency as in GUI mode.
+      milliseconds sleepFor = nextWake > milliseconds(0) ? nextWake : milliseconds(10);
+      if (sleepFor > milliseconds(10))
+        sleepFor = milliseconds(10);
+      std::this_thread::sleep_for(sleepFor);
+    }
   }
 
   std::string AppScripting::getFileName() {

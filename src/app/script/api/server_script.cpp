@@ -261,6 +261,15 @@ async (port, userCB, req) => {
     wrapper.reset();
   }
 
+  // A listening server keeps the headless pump running.
+  bool keepAlive() override {
+    std::lock_guard lock(registry.mutex);
+    for (auto& [_, weak] : registry.servers)
+      if (weak.lock())
+        return true;
+    return false;
+  }
+
   ServerRegistry registry;
 
   // A weak reference to the boot-script wrapper (set once via
