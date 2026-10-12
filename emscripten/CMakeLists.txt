@@ -437,6 +437,8 @@ set(SRC_FILES
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp
   ${SRC}/app/script/script_menu.cpp
+  ${SRC}/app/script/script_permission_dialog.cpp
+  ${SRC}/app/script/script_permissions.cpp
   ${SRC}/app/send_crash.cpp
   ${SRC}/app/shade.cpp
   ${SRC}/app/shell.cpp

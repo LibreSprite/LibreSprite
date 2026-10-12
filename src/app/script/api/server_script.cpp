@@ -302,8 +302,8 @@ Server::Server(JSON::Value& opts, ServerRegistry* reg, ServerExtension* e) : reg
   // Set only SO_REUSEADDR: a busy port still fails to bind, but a port in
   // TIME_WAIT can be re-bound after stop() (stop-then-start).
   server.set_socket_options([](::socket_t sock) {
-    int one = 1;
-    ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+    // Reuse httplib's wrapper: on Windows setsockopt() takes a const char*.
+    httplib::detail::set_socket_opt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
   });
   if (opts.isObject()) {
     auto& o = opts.object();
