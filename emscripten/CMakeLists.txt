@@ -416,6 +416,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/dialog_script.cpp
   ${SRC}/app/script/api/document_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
+  ${SRC}/app/script/api/filesystem_script.cpp
   ${SRC}/app/script/api/http_internal.cpp
   ${SRC}/app/script/api/http_internal_wasm.cpp
   ${SRC}/app/script/api/http_script.cpp

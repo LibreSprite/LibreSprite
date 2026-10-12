@@ -349,6 +349,7 @@ add_library(app-lib
   script/api/dialog_script.cpp
   script/api/document_script.cpp
   script/api/entry_script.cpp
+  script/api/filesystem_script.cpp
   script/api/http_internal.cpp
   script/api/http_script.cpp
   script/api/server_script.cpp
