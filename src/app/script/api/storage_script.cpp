@@ -13,6 +13,7 @@
 #include "app/script/api/http_internal.h"
 #include "app/script/app_scripting.h"
 #include "app/script/api/storage_internal.h"
+#include "app/script/script_permissions.h"
 #include "base/base64.h"
 #include "base/exception.h"
 #include "base/file_handle.h"
@@ -126,6 +127,11 @@ public:
     addVarArgFunction("__storageFetch") = [](JSON::Array& args) -> JSON::Value {
       if (args.size() < 2)
         return JSON::Value{JSON::Special::Undefined};
+      // storage.fetch performs a network request: gate it like fetch.
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFetch)) {
+        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFetch));
+        return JSON::Value{JSON::Special::Undefined};
+      }
       auto url = args[0].toString();
       auto key = args[1].toString();
       auto domain = normalizeDomain(args.size() >= 3 ? args[2].toString() : "");

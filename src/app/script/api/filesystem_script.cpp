@@ -16,6 +16,7 @@
 #include "di.hpp"
 
 #include "app/script/app_scripting.h"
+#include "app/script/script_permissions.h"
 #include "app/task_manager.h"
 #include "base/fs.h"
 
@@ -56,6 +57,12 @@ namespace {
     rsp.object();
     rsp["error"] = message;
     return rsp;
+  }
+
+  // The active script lacks the required permission: the operation fails
+  // with the standard error object (the JS promise rejects).
+  JSON::Value deniedOp(const char* perm) {
+    return errorResult(app::ScriptPermissions::denyMessage(perm));
   }
 
   // The file_time_type clock is implementation-defined; rebase onto
@@ -245,6 +252,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsRead)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsRead); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string path = resolvePath(rawPath);
       bool binary = false, base64 = false;
       if (options.isObject()) {
@@ -270,6 +281,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsWrite)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsWrite); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string path = resolvePath(rawPath);
       std::string data;
       if (content.isString()) {
@@ -296,6 +311,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsRead)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsRead); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string path = resolvePath(rawPath);
       runAsync(cb, [path]() {
         return statOp(path);
@@ -309,6 +328,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsRead)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsRead); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string path = resolvePath(rawPath);
       runAsync(cb, [path]() {
         return listDirOp(path);
@@ -322,6 +345,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsWrite)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsWrite); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string src = resolvePath(rawSrc);
       std::string dst = resolvePath(rawDst);
       bool append = appendV.boolean();
@@ -337,6 +364,10 @@ public:
       if (!callback.isFunction())
         return JSON::Value{JSON::Special::Undefined};
       auto cb = std::get_if<JSON::FunctionRef>(&callback.value)->func;
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsWrite)) {
+        runAsync(cb, []() { return deniedOp(app::ScriptPermissions::kFsWrite); });
+        return JSON::Value{JSON::Special::Undefined};
+      }
       std::string path = resolvePath(rawPath);
       runAsync(cb, [path]() {
         return deleteFileOp(path);
@@ -347,6 +378,8 @@ public:
     // __fsShareFile(path) -> true. Synchronous: hands the file to the
     // system share sheet. Throws on platforms without one.
     addFunction("__fsShareFile") = [](const std::string& rawPath) -> JSON::Value {
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFsRead))
+        throw std::runtime_error(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFsRead));
 #if defined(ANDROID)
       std::string path = resolvePath(rawPath);
       std::error_code ec;

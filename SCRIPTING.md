@@ -988,3 +988,48 @@ paths are used as-is.
    - `documentation()`:
       returns: Nothing
       Prints this text.
+
+
+# Script Permissions
+
+Scripts that use privileged APIs must declare them in the script header,
+using `///permission` lines in the leading `///` comment block (the same
+block that carries `///listen` lines). These lines must come before any
+other line in the file.
+
+    ///permission fs.read
+    ///permission fetch
+    // The rest of the script...
+
+On the first run of a script, LibreSprite shows a dialog listing the
+permissions the script requests that are not granted yet. The user picks
+which to grant (all are checked by default). Cancelling the dialog stops
+the script from running; the next run asks again. The grants are saved
+per script path and can be changed or removed from
+Preferences > Script Permissions (removing a record makes the dialog
+appear again the next time the script runs).
+
+## Permissions
+   - `fs.read`:
+     `fs.readFile`, `fs.stat`, `fs.listDir`, `fs.shareFile`.
+
+   - `fs.write`:
+     `fs.writeFile`, `fs.copyFile`, `fs.deleteFile`.
+
+   - `fetch`:
+     `fetch` and `storage.fetch` (network requests).
+
+   - `app.launch`:
+     `app.launch` (opens a file/URL with the operating system).
+
+The `fs.getCurrentPath`, `fs.getExecutablePath` and `fs.getCachePath`
+functions are not gated.
+
+A gated call made by a script without the permission fails with an error
+like `Permission denied: 'fs.read' permission not granted to this
+script` (the promise rejects for `fs`/`fetch`, `app.launch` returns
+false, `storage.fetch` logs to the console).
+
+Headless runs (`--script` without a user interface) cannot show the
+dialog: the requested permissions are granted automatically with a
+warning printed to stdout.

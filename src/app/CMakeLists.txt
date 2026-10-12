@@ -339,6 +339,8 @@ add_library(app-lib
 
   script/app_scripting.cpp
   script/script_menu.cpp
+  script/script_permission_dialog.cpp
+  script/script_permissions.cpp
 
   script/api/app_script.cpp
   script/api/button_script.cpp

@@ -15,6 +15,7 @@
 #include "di.hpp"
 
 #include "app/script/api/http_internal.h"
+#include "app/script/script_permissions.h"
 
 #include <algorithm>
 #include <iostream>
@@ -41,6 +42,19 @@ public:
         std::lock_guard<std::mutex> guard(callbackMutex);
         pendingCallbacks.push_back(cb);
       }
+      // The JS callback is owned by pendingCallbacks and released on the
+      // main thread: the task object owning the success-path lambda is
+      // destroyed on a worker thread, and the QuickJS value must not be
+      // freed there.
+      std::weak_ptr<JSON::Function> cbWeak{cb};
+
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFetch)) {
+        script::HttpResult res;
+        res.error = true;
+        res.reason = app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFetch);
+        deliverFetchResult(cbWeak, std::move(res));
+        return JSON::Value{JSON::Special::Undefined};
+      }
 
       std::string method;
       std::string bodyStr;
@@ -64,32 +78,8 @@ public:
         }
       }
 
-      // The JS callback is owned by pendingCallbacks and released on the
-      // main thread: the task object owning this lambda is destroyed on a
-      // worker thread, and the QuickJS value must not be freed there.
-      std::weak_ptr<JSON::Function> cbWeak{cb};
       script::httpFetch(url, method, bodyStr, isBinaryBody, headers, [this, cbWeak](script::HttpResult&& res) {
-        JSON::Value rsp;
-        rsp.object();
-        if (res.error) {
-          rsp["error"] = true;
-          rsp["reason"] = res.reason;
-        } else {
-          rsp["status"].number() = res.status;
-          rsp["reason"] = res.reason;
-          rsp["buffer"].byteArray() = {res.body.begin(), res.body.end()};
-          rsp["headers"].object();
-          for (auto& [key, val] : res.headers)
-            rsp["headers"][key] = val;
-        }
-        if (auto cb = cbWeak.lock()) {
-          JSON::Array args{std::move(rsp)};
-          (*cb)(args);
-          std::lock_guard<std::mutex> guard(callbackMutex);
-          pendingCallbacks.erase(std::remove_if(pendingCallbacks.begin(), pendingCallbacks.end(),
-            [&cb](const auto& p) { return p == cb; }),
-            pendingCallbacks.end());
-        }
+        deliverFetchResult(cbWeak, std::move(res));
       });
       return JSON::Value{JSON::Special::Undefined};
     };
@@ -184,6 +174,32 @@ globalThis.Headers = class Headers {
   }
 
 private:
+  // Builds the JSON response of a fetch result and invokes the JS
+  // callback on the main thread (releasing the tracked callback).
+  void deliverFetchResult(const std::weak_ptr<JSON::Function>& cbWeak, script::HttpResult&& res) {
+    JSON::Value rsp;
+    rsp.object();
+    if (res.error) {
+      rsp["error"] = true;
+      rsp["reason"] = res.reason;
+    } else {
+      rsp["status"].number() = res.status;
+      rsp["reason"] = res.reason;
+      rsp["buffer"].byteArray() = {res.body.begin(), res.body.end()};
+      rsp["headers"].object();
+      for (auto& [key, val] : res.headers)
+        rsp["headers"][key] = val;
+    }
+    if (auto cb = cbWeak.lock()) {
+      JSON::Array args{std::move(rsp)};
+      (*cb)(args);
+      std::lock_guard<std::mutex> guard(callbackMutex);
+      pendingCallbacks.erase(std::remove_if(pendingCallbacks.begin(), pendingCallbacks.end(),
+        [&cb](const auto& p) { return p == cb; }),
+        pendingCallbacks.end());
+    }
+  }
+
   // JS callbacks of in-flight fetches, released on the main thread (see
   // shutdown() and the __fetchCB consumer).
   std::mutex callbackMutex;

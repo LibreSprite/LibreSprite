@@ -1,4 +1,5 @@
 
+///permission fetch
 // Legacy storage.fetch
 
 const methods = {
