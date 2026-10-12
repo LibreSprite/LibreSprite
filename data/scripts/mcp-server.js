@@ -339,8 +339,28 @@ const TOOLS = [
     },
   },
   {
+    name: "command_info",
+    description: "Describes a LibreSprite UI command's parameters by id (for example OpenFile, SpriteSize). Returns the command name, friendly name and its parameter contract (name, description, required, default). Ids are case-insensitive. Call this before run_command to see what parameters a command accepts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "command id" },
+      },
+      required: ["name"],
+    },
+    run: (args) => {
+      const name = args.name;
+      if (typeof name !== "string" || !name)
+        throw new Error("name must be a non-empty string");
+      const info = app.command.info(name);
+      if (!info)
+        throw new Error("unknown command " + name + ". Available: " + listCommandIds().join(", "));
+      return textResult(JSON.stringify(info, null, 2));
+    },
+  },
+  {
     name: "run_command",
-    description: "Runs a LibreSprite UI command by id (for example NewLayer, Undo, GotoNextFrame). Some commands open dialogs that wait for the user; prefer the dedicated tools. CloseFile, CloseAllFiles and Exit are not exposed.",
+    description: "Runs a LibreSprite UI command by id (for example NewLayer, Undo, GotoNextFrame). Some commands open dialogs that wait for the user; prefer the dedicated tools. Use command_info to look up a command's parameters. CloseFile, CloseAllFiles and Exit are not exposed.",
     inputSchema: {
       type: "object",
       properties: {
@@ -360,8 +380,11 @@ const TOOLS = [
       const params = args.params;
       // Command methods are class methods: keep the command object as this.
       const ok = (params && typeof params === "object") ? fn.call(app.command, params) : fn.call(app.command);
-      if (!ok)
-        throw new Error("command " + name + " is not available in the current state");
+      if (!ok) {
+        const contract = describeParams(app.command.info(name));
+        throw new Error("command " + name + " is not available in the current state" +
+          (contract ? ". Parameters: " + contract : ""));
+      }
       return textResult("ran " + name);
     },
   },
@@ -383,6 +406,22 @@ function listCommandIds() {
   }
 }
 
+// One-line parameter contract for error messages, e.g.
+// 'width: New width in pixels. Empty keeps the current width; ...'.
+// Empty string when the command documents no parameters.
+function describeParams(info) {
+  if (!info || !Array.isArray(info.params) || info.params.length === 0)
+    return "";
+  return info.params.map((p) => {
+    let s = p.name;
+    if (p.required)
+      s += " (required)";
+    if (p.default !== undefined)
+      s += ' (default "' + p.default + '")';
+    return s + ": " + p.description;
+  }).join("; ");
+}
+
 // HTTP header names are case-insensitive and the server keeps the sent case.
 function getHeader(req, name) {
   const lower = name.toLowerCase();
@@ -400,7 +439,7 @@ function handleInitialize(params) {
     protocolVersion: (requested && PROTOCOL_VERSIONS.indexOf(requested) >= 0) ? requested : LATEST_VERSION,
     capabilities: { tools: { listChanged: false } },
     serverInfo: { name: SERVER_NAME, version: LS.version },
-    instructions: "Tools act on the document active in LibreSprite. Open a sprite first, then use sprite_info to inspect it. Use sprite_image to see frames as PNG. Edits are not undoable, so back up with sprite_save_as before large edits. run_command may open dialogs that need the user.",
+    instructions: "Tools act on the document active in LibreSprite. Open a sprite first, then use sprite_info to inspect it. Use sprite_image to see frames as PNG. Edits are not undoable, so back up with sprite_save_as before large edits. run_command may open dialogs that need the user; use command_info to look up a command's parameters before calling it.",
   };
 }
 
