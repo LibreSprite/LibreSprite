@@ -5,10 +5,10 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 //
-// HTTP extension: ports the fetch API from DeltaAI's HTTP_JS/HTTPBase
-// (cpp-httplib based) onto LibreSprite's TaskManager. The blocking
-// request runs on a worker thread; the callback is delivered on the
-// main thread, where the JS Promise is resolved.
+// HTTP extension: the fetch API (cpp-httplib based) on top of
+// LibreSprite's TaskManager. The blocking request runs on a worker
+// thread; the callback is delivered on the main thread, where the
+// JS Promise is resolved.
 
 #include "delta/Extension.hpp"
 #include "delta/JSON.hpp"

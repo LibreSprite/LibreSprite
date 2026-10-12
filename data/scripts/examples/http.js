@@ -32,3 +32,16 @@ async function main() {
 main().catch(ex => {
     console.log('EX:', ex.message, ex.stack);
 });
+
+const server = new HTTPServer({
+    port: 9999,
+    onGet({path, method, body, headers, query}) {
+        console.log(JSON.stringify({path, method, body, headers, query}, null, 2));
+        return "GetBacon";
+    },
+    onPost({path, method, body, headers, query}) {
+        console.log(JSON.stringify({path, method, body, headers, query}, null, 2));
+        return "PostBacon";
+    }
+});
+server.start();

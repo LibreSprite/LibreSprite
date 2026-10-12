@@ -419,6 +419,8 @@ set(SRC_FILES
   ${SRC}/app/script/api/http_internal.cpp
   ${SRC}/app/script/api/http_internal_wasm.cpp
   ${SRC}/app/script/api/http_script.cpp
+  ${SRC}/app/script/api/server_script.cpp
+  ${SRC}/app/script/api/server_script_wasm.cpp
   ${SRC}/app/script/api/image_script.cpp
   ${SRC}/app/script/api/imageview_script.cpp
   ${SRC}/app/script/api/intentry_script.cpp
