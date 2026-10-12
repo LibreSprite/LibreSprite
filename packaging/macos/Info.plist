@@ -6,13 +6,13 @@
 	<string>LibreSprite</string>
 
 	<key>CFBundleVersion</key>
-	<string>1.2-dev</string>
+	<string>1.3-dev</string>
 
 	<key>CFBundleLongVersionString</key>
-	<string>1.2-dev</string>
+	<string>1.3-dev</string>
 
 	<key>CFBundleShortVersionString</key>
-	<string>1.2-dev</string>
+	<string>1.3-dev</string>
 
 	<key>CFBundleIdentifier</key>
 	<string>libresprite.libresprite.github</string>

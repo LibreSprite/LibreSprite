@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "LibreSprite"
-#define MyAppVersion "1.2"
+#define MyAppVersion "1.3"
 #define MyAppPublisher "LibreSprite Team"
 #define MyAppURL "https://libresprite.github.io/"
 #define MyAppExeName "libresprite.exe"
