@@ -884,8 +884,13 @@ namespace she {
         SDL_IOFromMem(data.data(), data.size()),
         [](auto *rops){ SDL_CloseIO(rops); }
       };
-      if (IMG_SavePNG_IO(static_cast<SDL_Surface*>(surface->nativeHandle()), rops.get(), false) != 0)
+      // SDL_image 3.x returns true on success (unlike SDL2's 0-on-success)
+      if (!IMG_SavePNG_IO(static_cast<SDL_Surface*>(surface->nativeHandle()), rops.get(), false)) {
+        std::string msg = std::string{"Failed to encode PNG: "} + SDL_GetError();
+        if (g_instance && g_instance->logger())
+          g_instance->logger()->logError(msg.c_str());
         return {};
+      }
       data.resize(SDL_TellIO(rops.get()));
       return data;
     }
