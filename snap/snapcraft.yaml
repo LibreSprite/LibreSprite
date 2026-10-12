@@ -1,0 +1,46 @@
+name: libresprite
+base: core22
+adopt-info: libresprite
+grade: stable
+confinement: strict
+
+parts:
+  libresprite:
+    plugin: cmake
+    source: https://github.com/LibreSprite/LibreSprite.git
+    source-tag: 'v1.1-dev'
+    source-depth: 1
+    build-environment:
+      - CMAKE_PREFIX_PATH: /snap/gnome-42-2204-sdk/current/usr:$CMAKE_PREFIX_PATH
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DWITH_WEBP_SUPPORT=ON
+      - -DWITH_GTK_FILE_DIALOG_SUPPORT=ON
+      - -DENABLE_UPDATER=OFF
+      - -DWITH_DESKTOP_INTEGRATION=ON
+    build-packages:
+      - libarchive-dev
+      - libtinyxml2-dev
+      - libgif-dev
+      - libsdl2-dev
+      - libsdl2-image-dev
+      - liblua5.4-dev 
+    stage-packages:
+      - libgif7
+      - libsdl2-2.0-0
+      - libxss1
+      - libsdl2-image-2.0-0
+      - libdecor-0-0
+      - liblua5.4-0
+      - libtinyxml2-9
+    parse-info: [usr/share/metainfo/io.github.libresprite.libresprite.metainfo.xml]
+
+apps:
+  libresprite:
+    command: usr/bin/libresprite
+    common-id: io.github.libresprite.libresprite
+    extensions: [gnome]
+    plugs:
+      - home
+      - removable-media
