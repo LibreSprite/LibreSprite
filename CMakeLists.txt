@@ -41,6 +41,7 @@ option(WITH_QT_THUMBNAILER          "Enable kde5/qt5 thumnailer" off)
 option(ENABLE_MEMLEAK     "Enable memory-leaks detector (only for developers)" off)
 option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
+option(ENABLE_MCP         "Enable native localhost MCP server" on)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
 option(USE_SDL3_BACKEND "Use SDL3 backend" off)
@@ -100,6 +101,7 @@ set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs-amalgam)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
 set(DELTA_DIR           ${CMAKE_SOURCE_DIR}/third_party/delta)
+set(NLOHMANN_JSON_DIR   ${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
 # Search in the "cmake" directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -220,6 +222,9 @@ include_directories(${SIMPLEINI_DIR})
 
 # delta
 include_directories(${DELTA_DIR})
+
+# nlohmann/json (native MCP)
+include_directories(${NLOHMANN_JSON_DIR})
 
 ######################################################################
 # Platform specific stuff

@@ -144,7 +144,8 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${FREETYPE_LIBRARIES}
-  ${PLATFORM_LIBS})
+  ${PLATFORM_LIBS}
+  ${CMAKE_DL_LIBS})
 
 install(TARGETS libresprite
   RUNTIME DESTINATION bin)

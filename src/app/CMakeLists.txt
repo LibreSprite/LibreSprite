@@ -222,6 +222,7 @@ add_library(app-lib
   commands/cmd_mask_all.cpp
   commands/cmd_mask_by_color.cpp
   commands/cmd_mask_content.cpp
+  commands/cmd_mcp_server.cpp
   commands/cmd_merge_down_layer.cpp
   commands/cmd_modify_selection.cpp
   commands/cmd_move_cel.cpp
@@ -470,6 +471,10 @@ add_library(app-lib
   util/range_utils.cpp
   widget_loader.cpp
   xml_document.cpp
+  mcp/mcp_server.cpp
+  mcp/mcp_protocol.cpp
+  mcp/mcp_tools.cpp
+  mcp/mcp_ui_bridge.cpp
   ${data_recovery_files}
   ${generated_files})
 endif()

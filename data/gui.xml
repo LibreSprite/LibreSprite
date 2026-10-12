@@ -521,6 +521,7 @@
         <item command="SaveFileAs" text="Save &amp;As..." />
         <item command="SaveFileCopyAs" text="E&amp;xport..." />
         <item command="Share" text="Share..." />
+        <item command="McpServer" text="MCP Server..." />
         <item command="CloseFile" text="&amp;Close" />
         <item command="CloseAllFiles" text="Close All" />
         <separator />

@@ -23,6 +23,10 @@ This fork was made on the [last commit](https://github.com/aseprite/aseprite/com
 ## Contributing
 As LibreSprite has a newly budding community, we need help building the infrastructure of our development, support, and news networks. If you would like to help, please make yourself known at our [Discord](https://discord.gg/95gbyU5) or [Matrix](https://matrix.to/#/%23libresprite:matrix.org), and checkout our guide on [contributing](CONTRIBUTING.md).
 
+## Native MCP
+This fork embeds a localhost MCP server so Cursor (and other MCP clients) can
+drive pixel editing. See [docs/MCP.md](docs/MCP.md).
+
 ## Compiling
 Don't worry, it isn't as hard as you might think! Just follow the instructions [here](INSTALL.md).
 

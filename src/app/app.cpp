@@ -28,6 +28,7 @@
 #include "app/gui_xml.h"
 #include "app/ini_file.h"
 #include "app/log.h"
+#include "app/mcp/mcp_server.h"
 #include "app/modules.h"
 #include "app/modules/gfx.h"
 #include "app/modules/gui.h"
@@ -73,6 +74,7 @@
 #include "ui/intern.h"
 #include "ui/ui.h"
 
+#include <cstdlib>
 #include <iostream>
 
 namespace app {
@@ -659,6 +661,14 @@ void App::run()
     // Pump the scripting engine (timers, promises, queued events) once
     // per UI message-loop iteration.
     app::AppScripting::startTickPump();
+
+    // Optional: auto-start native MCP server (File → MCP Server… also works).
+    if (std::getenv("LIBRESPRITE_START_MCP")) {
+      if (mcp::McpServer::instance().start(64823))
+        LOG("MCP server listening on 127.0.0.1:64823\n");
+      else
+        LOG("MCP server failed to start on 127.0.0.1:64823\n");
+    }
 
     // Run the GUI main message loop
     ui::Manager::getDefault()->run();
