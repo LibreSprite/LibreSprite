@@ -19,9 +19,9 @@ set(QOI_DIR             ${CMAKE_SOURCE_DIR}/../third_party/qoi)
 
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/pixman
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/tinyxml2
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman/pixman
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman
         ${SIMPLEINI_DIR}
         ${MODP_B64_DIR}
         ${QOI_DIR}
@@ -40,8 +40,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_BINARY_DIR}/third_party/)
 # QuickJS's libc only defines _GNU_SOURCE (for environ and sighandler_t) on __linux__
 target_compile_definitions(quickjs PRIVATE _GNU_SOURCE)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2 ${CMAKE_CURRENT_BINARY_DIR}/tinyxml2/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/ ${CMAKE_CURRENT_BINARY_DIR}/pixman/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/tinyxml2 ${CMAKE_CURRENT_BINARY_DIR}/tinyxml2/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman/ ${CMAKE_CURRENT_BINARY_DIR}/pixman/)
 
 set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 set(GENSRC ${CMAKE_CURRENT_SOURCE_DIR}/../build/src)
