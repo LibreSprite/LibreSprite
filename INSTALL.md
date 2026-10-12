@@ -157,9 +157,11 @@ Known gotchas:
   Work around it by building the freetype port once before the first link:
 
       echo 'int main(){}' > /tmp/dummy.c
-      emcc -O2 -pthread -flto -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
+      emcc -O2 -pthread -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
 
-  and rerun the build.
+  The flags must stay plain (no -flto, no -fwasm-exceptions): the port
+  sub-build requests the default libfreetype.a variant. Then rerun the
+  build.
 
 ## Installing
 

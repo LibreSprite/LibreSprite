@@ -74,15 +74,19 @@ jobs:
     - name: Cache emscripten ports
       uses: actions/cache@v6
       with:
-        path: ~/.cache/emscripten
+        # emcc caches in the emsdk install dir here (EM_CACHE is not set)
+        path: emsdk/upstream/emscripten/cache
         key: emscripten-${{ env.EMSDK_VERSION }}
     - name: Pre-build the freetype port
       run: |
         # A fresh emsdk cache hits a port-cache assert on the first link
         # (emscripten-core/emscripten#20204); a no-op when the port is cached.
+        # No -flto: LTO ports cache under lto/, but the sdl2_ttf port
+        # sub-build (nested in the final link) requests the non-LTO
+        # libfreetype.a.
         source emsdk/emsdk_env.sh
         echo 'int main(){}' > /tmp/dummy.c
-        emcc -O2 -pthread -flto -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
+        emcc -O2 -pthread -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
     - name: cmake (web)
       run: |
         source emsdk/emsdk_env.sh
