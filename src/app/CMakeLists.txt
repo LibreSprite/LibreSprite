@@ -344,6 +344,8 @@ add_library(app-lib
 
   script/api/app_script.cpp
   script/api/button_script.cpp
+  script/api/child_process_script.cpp
+  script/api/child_process_script_wasm.cpp
   script/api/cel_script.cpp
   script/api/colormode_script.cpp
   script/api/command_script.cpp

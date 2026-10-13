@@ -968,6 +968,41 @@ paths are used as-is.
 
 
 
+# global child_process [module]
+## No Properties.
+
+## Methods:
+   - `spawn(path, args)`:
+      path: Path of the executable to run (searched in PATH if relative).
+      args: Array of string arguments (no shell).
+      returns: A Process object.
+      Starts a detached process that runs independently of the script and
+      outlives the script run. The process inherits the environment and runs
+      with the script's directory as its working directory. Throws if the
+      process cannot be started.
+
+   - `exec(path, args)`:
+      path/args: as in spawn().
+      returns: A Promise that resolves to {exitCode, output}.
+      Runs the process, captures its merged stdout and stderr, and resolves
+      when the process exits (without blocking the app). Rejects if the
+      process cannot be started or its output exceeds 1 MiB.
+
+   Not available in the web build (the functions throw).
+
+
+# [class Process]
+## Properties:
+   - `pid`: read-only. The process id.
+   - `exitCode`: read-only, can be null. null until the process exits,
+      then its exit code.
+
+## Methods:
+   - `kill()`:
+      returns: A bool.
+      Terminates the process. False if it does not exist.
+
+
 # global app [class App]
 ## Properties:
    - `platform`: read-only. Returns one of: emscripten, windows, macos, android, linux.
@@ -1032,15 +1067,17 @@ appear again the next time the script runs).
      `fetch` and `storage.fetch` (network requests).
 
    - `app.launch`:
-     `app.launch` (opens a file/URL with the operating system).
+     `app.launch` (opens a file/URL with the operating system),
+     `child_process.spawn` and `child_process.exec` (launch processes).
 
 The `fs.getCurrentPath`, `fs.getExecutablePath` and `fs.getCachePath`
 functions are not gated.
 
 A gated call made by a script without the permission fails with an error
 like `Permission denied: 'fs.read' permission not granted to this
-script` (the promise rejects for `fs`/`fetch`, `app.launch` returns
-false, `storage.fetch` logs to the console).
+script` (the promise rejects for `fs`/`fetch`/`child_process.exec`,
+`child_process.spawn` throws, `app.launch` returns false, `storage.fetch`
+logs to the console).
 
 Headless runs (`--script` without a user interface) cannot show the
 dialog: the requested permissions are granted automatically with a
