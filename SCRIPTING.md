@@ -221,6 +221,13 @@ paths are used as-is.
       returns: A Cel object or null if an invalid index is passed
       retrieves a Cel
 
+   - `createCel(frame)`:
+     - frame: The number of the frame to create the cel in
+      returns: The new Cel object
+      Creates an empty (transparent) cel at the given frame.
+      Throws if the layer is a folder, the frame is out of range,
+      or a cel already exists at that frame.
+
 
 
 # [class IntentryWidget]

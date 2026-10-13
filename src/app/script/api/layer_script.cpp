@@ -10,10 +10,17 @@
 #include "di.hpp"
 #include "app/script/api/script_api_common.h"
 
+#include "app/document.h"
+#include "app/document_api.h"
+#include "app/transaction.h"
+#include "app/ui_context.h"
 #include "doc/cel.h"
+#include "doc/image.h"
 #include "doc/layer.h"
+#include "doc/sprite.h"
 
 #include <memory>
+#include <stdexcept>
 
 // `Layer` wraps a `doc::Layer` (a snapshot of a specific layer, obtained via
 // `sprite.layer(i)`).
@@ -74,6 +81,27 @@ public:
 
     clazz.addMethod("cel") = [](doc::Layer& layer, double i) -> JSON::Value {
       return JSON::makeNative(layer.cel((doc::frame_t)i));
+    };
+
+    // The ASSERT in DocumentApi::addCel is debug-only, so the wrapper checks
+    // the preconditions itself and throws (surfaces as a JS exception).
+    clazz.addMethod("createCel") = [](doc::Layer& layer, double i) -> JSON::Value {
+      if (!layer.isImage())
+        throw std::runtime_error{"createCel: not an image layer"};
+      auto frame = static_cast<doc::frame_t>(i);
+      auto* li = static_cast<doc::LayerImage*>(&layer);
+      auto* sprite = li->sprite();
+      if (frame < 0 || frame >= sprite->totalFrames())
+        throw std::runtime_error{"createCel: frame out of range"};
+      if (li->cel(frame) != nullptr)
+        throw std::runtime_error{"createCel: a cel already exists at this frame"};
+
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      auto* doc = static_cast<app::Document*>(sprite->document());
+      doc::ImageRef image(doc::Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
+      auto cel = doc->getApi(tx).addCel(li, frame, image);
+      tx.commit();
+      return JSON::makeNative(script_api::wrap(cel.get()));
     };
   }
 };
