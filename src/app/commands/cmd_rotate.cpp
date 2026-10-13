@@ -177,6 +177,14 @@ void RotateCommand::onLoadParams(const Params& params)
   }
 }
 
+std::vector<CommandParamInfo> RotateCommand::onDescribeParams() const
+{
+  return {
+    {"target", "mask rotates the selection; default rotates the sprite.", false, ""},
+    {"angle", "Rotation angle in degrees (90, 180 or -90).", false, ""},
+  };
+}
+
 bool RotateCommand::onEnabled(Context* context)
 {
   return context->checkFlags(ContextFlags::ActiveDocumentIsWritable |

@@ -150,6 +150,14 @@ void SaveFileBaseCommand::onLoadParams(const Params& params)
   m_filenameFormat = params.get("filename-format");
 }
 
+std::vector<CommandParamInfo> SaveFileBaseCommand::onDescribeParams() const
+{
+  return {
+    {"filename", "File to save to. Empty saves in place or opens the save dialog.", false, ""},
+    {"filename-format", "Output filename format with {title}, {frame}, {path}, {extension} or {fullname} tokens.", false, ""},
+  };
+}
+
 // Returns true if there is a current sprite to save.
 // [main thread]
 bool SaveFileBaseCommand::onEnabled(Context* context)

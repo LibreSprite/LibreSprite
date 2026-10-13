@@ -43,6 +43,7 @@ option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
+option(USE_SDL3_BACKEND "Use SDL3 backend" off)
 
 ######################################################################
 # Profile build type
@@ -210,9 +211,6 @@ include_directories(${GIF_INCLUDE_DIRS})
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
-
-find_package(CURL REQUIRED)
-include_directories(${CURL_INCLUDE_DIRS})
 endif()
 # simpleini
 include_directories(${SIMPLEINI_DIR})
@@ -233,6 +231,16 @@ if(USE_SDL2_BACKEND)
   include_directories(${SDL2_INCLUDE_DIRS})
   find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+endif()
+
+# SDL3 backend
+if(USE_SDL3_BACKEND)
+  add_definitions(-DUSE_SDL3_BACKEND)
+
+  find_package(SDL3 REQUIRED CONFIG REQUIRED)
+  include_directories(${SDL3_INCLUDE_DIRS})
+  find_package(SDL3_image REQUIRED)
+  include_directories(${SDL3_IMAGE_INCLUDE_DIRS})
 endif()
 
 # -- Unix --
@@ -292,10 +300,9 @@ if(WIN32)
     kernel32 user32 gdi32 comdlg32 ole32 winmm
     shlwapi psapi wininet comctl32 dbghelp)
 
-  # Windows Vista is the minimum supported platform. The QuickJS
-  # scripting engine requires Vista+ Win32 threading APIs
-  # (InitOnceExecuteOnce, condition variables).
-  add_definitions(-D_WIN32_WINNT=0x0600 -DWINVER=0x0600)
+  # Windows 10 is the minimum supported platform. cpp-httplib (the
+  # script fetch API) hard-errors below _WIN32_WINNT 0x0A00.
+  add_definitions(-D_WIN32_WINNT=0x0A00 -DWINVER=0x0A00)
 
   # We need Unicode support
   add_definitions(-DUNICODE -D_UNICODE)

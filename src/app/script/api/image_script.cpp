@@ -90,8 +90,11 @@ public:
         for (auto x = 0; x < w; ++x)
           surface->putPixel(img.getPixel(x, y), x, y);
 
+      auto png = she::instance()->encodeSurfaceAsPNG(surface.get());
+      if (png.empty())
+        throw std::runtime_error{"Failed to encode PNG data"};
       std::string encoded;
-      base::encode_base64(she::instance()->encodeSurfaceAsPNG(surface.get()), encoded);
+      base::encode_base64(png, encoded);
       return std::string{"data:image/png;base64,"} + encoded;
     };
   }

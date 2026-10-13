@@ -135,7 +135,8 @@ namespace ui {
     void handleMouseDoubleClick(const gfx::Point& mousePos,
                                 MouseButtons mouseButtons,
                                 KeyModifiers modifiers,
-                                PointerType pointerType);
+                                PointerType pointerType,
+                                float pressure);
     void handleMouseWheel(const gfx::Point& mousePos,
                           MouseButtons mouseButtons,
                           KeyModifiers modifiers,

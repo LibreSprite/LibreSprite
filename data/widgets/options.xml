@@ -14,6 +14,7 @@
           <listitem text="Undo" value="section_undo" />
           <listitem text="Theme" value="section_theme" />
           <listitem text="Experimental" value="section_experimental" />
+          <listitem text="Script Permissions" value="section_script_permissions" />
         </listbox>
       </view>
 
@@ -195,6 +196,22 @@
           
           <check id="native_file_dialog" text="Use native file dialog" />
           <check id="flash_layer" text="Flash layer when it is selected" />
+        </vbox>
+
+        <!-- Script Permissions -->
+        <vbox id="section_script_permissions">
+          <separator text="Script Permissions" horizontal="true" />
+          <label text="Permissions granted to scripts.&#10;Remove a script to ask again the next time it runs." />
+          <view expansive="true" maxsize="true">
+            <listbox id="script_permissions_list" />
+          </view>
+          <check id="perm_fs_read" text="Read files (fs.read)" tooltip="fs.readFile, fs.stat, fs.listDir, fs.shareFile" />
+          <check id="perm_fs_write" text="Write and delete files (fs.write)" tooltip="fs.writeFile, fs.copyFile, fs.deleteFile" />
+          <check id="perm_fetch" text="Make network requests (fetch)" tooltip="fetch and storage.fetch" />
+          <check id="perm_app_launch" text="Open files/URLs with the OS (app.launch)" tooltip="app.launch" />
+          <hbox>
+            <button id="remove_script_permission" text="Remove" width="60" />
+          </hbox>
         </vbox>
 
       </panel>

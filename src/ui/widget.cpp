@@ -1378,7 +1378,9 @@ bool Widget::onProcessMessage(Message* msg)
                              mouseMsg->buttons(),
                              mouseMsg->modifiers(),
                              mouseMsg->position(),
-                             mouseMsg->wheelDelta());
+                             mouseMsg->wheelDelta(),
+                             false,
+                             mouseMsg->pressure());
 
       sendMessage(&mouseMsg2);
       break;

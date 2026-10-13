@@ -295,6 +295,16 @@ void SpriteSizeCommand::onLoadParams(const Params& params)
     m_resizeMethod = doc::algorithm::RESIZE_METHOD_NEAREST_NEIGHBOR;
 }
 
+std::vector<CommandParamInfo> SpriteSizeCommand::onDescribeParams() const
+{
+  return {
+    {"use-ui", "Show the sprite size dialog (true or false).", false, "true"},
+    {"width", "New width in pixels. Empty keeps the current width.", false, ""},
+    {"height", "New height in pixels. Empty keeps the current height.", false, ""},
+    {"resize-method", "Resize algorithm: nearest-neighbor, bilinear or rotsprite.", false, "nearest-neighbor"},
+  };
+}
+
 bool SpriteSizeCommand::onEnabled(Context* context)
 {
   return context->checkFlags(ContextFlags::ActiveDocumentIsWritable |

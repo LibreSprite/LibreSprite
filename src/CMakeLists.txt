@@ -114,7 +114,6 @@ add_subdirectory(filters)
 add_subdirectory(fixmath)
 add_subdirectory(flic)
 add_subdirectory(gfx)
-add_subdirectory(net)
 add_subdirectory(render)
 add_subdirectory(she)
 add_subdirectory(ui)
@@ -152,6 +151,7 @@ add_executable(libresprite WIN32
 target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   app-lib
   ${LIBRESPRITE_LIBS}
+  httplib
   ${KEEP_INJECTIONS_END}
   ${LIBRESPRITE_EXTERNAL_LIBS})
 

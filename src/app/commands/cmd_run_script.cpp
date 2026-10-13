@@ -29,6 +29,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -45,6 +46,13 @@ RunScriptCommand::RunScriptCommand()
 void RunScriptCommand::onLoadParams(const Params& params)
 {
   m_filename = params.get("filename");
+}
+
+std::vector<CommandParamInfo> RunScriptCommand::onDescribeParams() const
+{
+  return {
+    {"filename", "Script file to run.", true, ""},
+  };
 }
 
 void RunScriptCommand::onExecute(Context* context)

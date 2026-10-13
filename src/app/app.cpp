@@ -673,6 +673,13 @@ void App::run()
     shell.run(engine);
   }
 
+  // Headless script pump: without a UI message loop nothing drives
+  // AppScripting::tick(), so async script work (timers, promises, fetch,
+  // HTTPServer) would never run. Pump until the script is idle so the
+  // process can exit.
+  if (!isGui() && !m_isShell && !AppScripting::getFileName().empty())
+    AppScripting::runHeadlessPump();
+
   // Destroy all documents in the UIContext.
   const doc::Documents& docs = m_modules->m_ui_context.documents();
   while (!docs.empty()) {

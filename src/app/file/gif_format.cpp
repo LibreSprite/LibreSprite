@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2015  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -201,6 +201,17 @@ public:
   }
 
   bool decode() {
+    // The Logical Screen Descriptor's Width/Height are raw 16-bit fields
+    // with no validation upstream - reject before any Image::create/Sprite
+    // allocation (createSprite() below) rather than after a multi-gigabyte
+    // allocation attempt from just the header.
+    if (m_spriteBounds.w <= 0 || m_spriteBounds.h <= 0 ||
+        m_spriteBounds.w > kMaxFileImageDimension ||
+        m_spriteBounds.h > kMaxFileImageDimension) {
+      m_fop->setError("Invalid GIF file: bad screen width/height\n");
+      return false;
+    }
+
     GifRecordType recType;
 
     // Read record by record
@@ -599,6 +610,14 @@ private:
         if (i == static_cast<color_t>(m_localTransparentIndex))
           continue;
 
+        // The raw pixel-index byte comes straight from the LZW-decoded
+        // frame data and isn't bound to this colormap's actual
+        // ColorCount - unlike the sibling compositeIndexedImageToIndexed(),
+        // which safely goes through m_remap[]. Skip out-of-range indices
+        // instead of reading past colormap->Colors.
+        if (!colormap || static_cast<int>(i) >= colormap->ColorCount)
+          continue;
+
         i = rgba(
           colormap->Colors[i].Red,
           colormap->Colors[i].Green,
@@ -748,7 +767,7 @@ private:
   int m_filesize;
   std::unique_ptr<Sprite> m_sprite;
   gfx::Rect m_spriteBounds;
-  LayerImage* m_layer;
+  LayerImage* m_layer = nullptr;
   int m_frameNum;
   bool m_opaque;
   DisposalMethod m_disposalMethod;
@@ -1251,9 +1270,9 @@ private:
   int m_loop;
   ImageBufferPtr m_frameImageBuf;
   ImageRef m_images[3];
-  Image* m_previousImage;
-  Image* m_currentImage;
-  Image* m_nextImage;
+  Image* m_previousImage = nullptr;
+  Image* m_currentImage = nullptr;
+  Image* m_nextImage = nullptr;
 };
 
 bool GifFormat::onSave(FileOp* fop)

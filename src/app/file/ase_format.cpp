@@ -191,6 +191,12 @@ bool AseFormat::onLoad(FileOp* fop)
     return false;
   }
 
+  if (header.width == 0 || header.height == 0 ||
+      header.width > kMaxFileImageDimension || header.height > kMaxFileImageDimension) {
+    fop->setError("Invalid ASE file: bad width/height\n");
+    return false;
+  }
+
   // Create the new sprite
   std::unique_ptr<Sprite> sprite(new Sprite(header.depth == 32 ? IMAGE_RGB:
       header.depth == 16 ? IMAGE_GRAYSCALE: IMAGE_INDEXED,
@@ -333,6 +339,8 @@ bool AseFormat::onLoad(FileOp* fop)
   }
 
   fop->createDocument(sprite.get());
+  // cppcheck-suppress ignoredReturnValue ; releasing ownership is the
+  // point, sprite is now owned by the Document created above.
   sprite.release();
 
   if (ferror(f)) {
@@ -735,8 +743,22 @@ static std::shared_ptr<Palette> ase_file_read_palette_chunk(FILE* f, const Palet
   int to = fgetl(f);
   ase_file_read_padding(f, 8);
 
+  // newSize/from/to are raw 32-bit fields with no format-level upper bound.
+  // Palette::setEntry() below is bounds-checked so this loop can't corrupt
+  // memory either way, but an oversized newSize is still a multi-GB
+  // resize() attempt, and an oversized `to` is a CPU-exhaustion DoS
+  // (reading past real EOF for up to ~2 billion iterations). Cap both to a
+  // sane ceiling.
+  constexpr int kMaxPaletteSize = 65536;
+  if (newSize < 0 || newSize > kMaxPaletteSize)
+    newSize = 0;
   if (newSize > 0)
     pal->resize(newSize);
+
+  if (from < 0)
+    from = 0;
+  if (to > kMaxPaletteSize - 1)
+    to = kMaxPaletteSize - 1;
 
   for (int c=from; c<=to; ++c) {
     int flags = fgetw(f);
@@ -1057,6 +1079,15 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
   while (true) {
     size_t input_bytes;
 
+    // chunk_size (hence chunk_end) is attacker-controlled and can
+    // understate the bytes the cel header itself already consumed - if
+    // ftell() has already passed chunk_end, `chunk_end - ftell(f)` below
+    // would wrap around (unsigned - larger value) into a huge input_bytes,
+    // reading the rest of the file into a fixed 4096-byte buffer. Bail out
+    // first instead.
+    if (static_cast<long>(chunk_end) <= ftell(f))
+      break;
+
     if (ftell(f)+compressed.size() > chunk_end) {
       input_bytes = chunk_end - ftell(f); // Remaining bytes
       ASSERT(input_bytes < compressed.size());
@@ -1068,11 +1099,17 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
       input_bytes = compressed.size();
 
     size_t bytes_read = fread(&compressed[0], 1, input_bytes, f);
-    zstream.next_in = (Bytef*)&compressed[0];
+    // A chunk_size that overstates the bytes actually left in the file
+    // (attacker-controlled) would otherwise spin forever here: once ftell()
+    // stops advancing at real EOF, input_bytes never reaches 0 even though
+    // fread() keeps returning 0 bytes every iteration. Bail out instead.
+    if (bytes_read == 0)
+      break;
+    zstream.next_in = reinterpret_cast<Bytef*>(&compressed[0]);
     zstream.avail_in = bytes_read;
 
     do {
-      zstream.next_out = (Bytef*)&scanline[0];
+      zstream.next_out = reinterpret_cast<Bytef*>(&scanline[0]);
       zstream.avail_out = scanline.size();
 
       err = inflate(&zstream, Z_NO_FLUSH);
@@ -1132,12 +1169,12 @@ static void write_compressed_image(FILE* f, const Image* image)
 
     pixel_io.write_scanline(address, image->width(), &scanline[0]);
 
-    zstream.next_in = (Bytef*)&scanline[0];
+    zstream.next_in = reinterpret_cast<Bytef*>(&scanline[0]);
     zstream.avail_in = scanline.size();
     int flush = (y == image->height()-1 ? Z_FINISH: Z_NO_FLUSH);
 
     do {
-      zstream.next_out = (Bytef*)&compressed[0];
+      zstream.next_out = reinterpret_cast<Bytef*>(&compressed[0]);
       zstream.avail_out = compressed.size();
 
       // Compress
@@ -1199,7 +1236,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int w = fgetw(f);
       int h = fgetw(f);
 
-      if (w > 0 && h > 0) {
+      if (w > 0 && h > 0 && w <= kMaxFileImageDimension && h <= kMaxFileImageDimension) {
         ImageRef image(Image::create(pixelFormat, w, h));
 
         // Read pixel data
@@ -1254,7 +1291,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int w = fgetw(f);
       int h = fgetw(f);
 
-      if (w > 0 && h > 0) {
+      if (w > 0 && h > 0 && w <= kMaxFileImageDimension && h <= kMaxFileImageDimension) {
         ImageRef image(Image::create(pixelFormat, w, h));
 
         // Try to read pixel data
@@ -1396,6 +1433,9 @@ static Mask* ase_file_read_mask_chunk(FILE* f)
 
   ase_file_read_padding(f, 8);
   std::string name = ase_file_read_string(f);
+
+  if (w > kMaxFileImageDimension || h > kMaxFileImageDimension)
+    return nullptr;
 
   mask = new Mask();
   mask->setName(name.c_str());

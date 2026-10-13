@@ -13,6 +13,7 @@
   * [Windows details](#windows-details)
   * [MacOS details](#macos-details)
   * [Android details](#android-details)
+  * [Web (emscripten) details](#web-emscripten-details)
 * [Installing](#installing)
 
 ## Platforms
@@ -55,17 +56,17 @@ You'll need the following dependencies to compile LibreSprite:
 
 Debian/Ubuntu:
 
-    sudo apt-get install cmake g++ libcurl4-gnutls-dev libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libnode-dev ninja-build zlib1g-dev libarchive-dev
+    sudo apt-get install cmake g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libnode-dev ninja-build zlib1g-dev libarchive-dev
 
 Fedora:
 
-    sudo dnf install g++ cmake libcurl-devel freetype-devel giflib-devel gtest-devel libjpeg-devel pixman-devel libpng-devel SDL2-devel SDL2_image-devel tinyxml2-devel zlib-devel ninja-build nodejs-devel libarchive-devel
+    sudo dnf install g++ cmake freetype-devel giflib-devel gtest-devel libjpeg-devel pixman-devel libpng-devel SDL2-devel SDL2_image-devel tinyxml2-devel zlib-devel ninja-build nodejs-devel libarchive-devel
 
 ### Windows dependencies
 
 To install the required dependencies with msys2, run the following in mingw32:
 
-    pacman -S base-devel mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-make mingw-w64-i686-curl mingw-w64-i686-freetype mingw-w64-i686-giflib mingw-w64-i686-libjpeg-turbo mingw-w64-i686-libpng mingw-w64-i686-libwebp mingw-w64-i686-pixman mingw-w64-i686-SDL2 mingw-w64-i686-SDL2_image mingw-w64-i686-tinyxml2 mingw-w64-i686-zlib mingw-w64-i686-libarchive
+    pacman -S base-devel mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-make mingw-w64-i686-openssl mingw-w64-i686-freetype mingw-w64-i686-giflib mingw-w64-i686-libjpeg-turbo mingw-w64-i686-libpng mingw-w64-i686-libwebp mingw-w64-i686-pixman mingw-w64-i686-SDL2 mingw-w64-i686-SDL2_image mingw-w64-i686-tinyxml2 mingw-w64-i686-zlib mingw-w64-i686-libarchive
 
 ### MacOS dependencies
 
@@ -119,6 +120,48 @@ https://github.com/LibreSprite/ls-android-deps as android/ in the LibreSprite
 directory. Now you can open the android subdirectory in Android Studio and build
 LibreSprite for Android.
 
+The build uses the CMake from the Android SDK by default, which may be too old.
+This project needs CMake 4.1 or newer. To use your own CMake instead, add this
+line to `android/local.properties`, replacing the path with the directory that
+contains `bin/cmake`:
+
+    cmake.dir=/usr
+
+### Web (emscripten) details
+
+Before you can make a web build, you must make a native build for your OS,
+so follow the appropriate instructions above. The web build reuses the
+sources generated in `build/src/` and preloads the data from
+`build/bin/data`, so the native build's `gen` step and the data copy must
+have run first. You'll also need [emsdk](https://emsdk.org/), Ninja and
+CMake 4.1 or newer.
+
+    emcmake cmake -S emscripten -B emscripten/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+    ninja -C emscripten/build
+
+This produces `emscripten/build/libresprite.html`, `libresprite.js`,
+`libresprite.wasm` and `libresprite.data`. `emscripten/index.html` loads
+`libresprite.js` from the same directory, so serve the build artifacts
+next to it.
+
+The build uses pthreads, which need SharedArrayBuffer. Browsers only
+allow that on a cross-origin isolated page, so serve the page over http(s)
+with the `Cross-Origin-Opener-Policy: same-origin` and
+`Cross-Origin-Embedder-Policy: require-corp` headers.
+
+Known gotchas:
+
+- On a fresh emsdk cache, the first link can fail with a cache assertion
+  from the `sdl2_ttf` port sub-build
+  ([emscripten-core/emscripten#20204](https://github.com/emscripten-core/emscripten/issues/20204)).
+  Work around it by building the freetype port once before the first link:
+
+      echo 'int main(){}' > /tmp/dummy.c
+      emcc -O2 -pthread -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
+
+  The flags must stay plain (no -flto, no -fwasm-exceptions): the port
+  sub-build requests the default libfreetype.a variant. Then rerun the
+  build.
 
 ## Installing
 

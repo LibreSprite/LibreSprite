@@ -20,6 +20,8 @@
 #include "app/commands/params.h"
 #include "app/document.h"
 #include "app/modules/editors.h"
+#include "app/script/app_scripting.h"
+#include "app/script/script_permissions.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui_context.h"
 #include "base/launcher.h"
@@ -114,7 +116,19 @@ public:
       return JSON::makeNative(script_api::wrap<doc::Document>(newDoc));
     };
 
+    // UNSAFE
+    // App.launch() hands its argument to the OS's generic "open" handler
+    // (ShellExecute/xdg-open/etc.), which - unlike a browser - will directly
+    // execute local files/UNC paths and invoke arbitrary OS-registered
+    // URI-scheme handlers with no download/confirmation step. Combined with
+    // storage.save() writing script-controlled bytes to a script-controlled
+    // filename, an unrestricted target here allows for a Remote Code Execution
+    // ToDo: discuss how to address it in LibreSprite 1.4
     clazz.addMethod("launch") = [](AppObject&, const std::string& cmd) -> JSON::Value {
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kAppLaunch)) {
+        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kAppLaunch));
+        return JSON::Value{false};
+      }
       return base::launcher::open_file(cmd);
     };
 

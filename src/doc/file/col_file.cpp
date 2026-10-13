@@ -1,5 +1,6 @@
-// Aseprite Document Library
-// Copyright (c) 2001-2016 David Capello
+// Document Library
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2026      LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -36,10 +37,18 @@ std::shared_ptr<Palette> load_col_file(const char* filename)
   if (!f)
     return NULL;
 
-  // Get file size.
+  // Get file size. A non-seekable stream (e.g. a FIFO) makes ftell() fail
+  // (-1); treating that as a huge unsigned size would wrap `size - 8` and
+  // ultimately feed a bogus color count into Palette::create() below, so
+  // reject outright instead.
   std::fseek(f, 0, SEEK_END);
-  std::size_t size = std::ftell(f);
-  std::div_t d = std::div(size-8, 3);
+  const long rawSize = std::ftell(f);
+  if (rawSize < 8) {
+    fclose(f);
+    return NULL;
+  }
+  const std::size_t size = static_cast<std::size_t>(rawSize);
+  std::div_t d = std::div(static_cast<int>(size-8), 3);
   std::fseek(f, 0, SEEK_SET);
 
   bool pro = (size == 768)? false: true; // is Animator Pro format?

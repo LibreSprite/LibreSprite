@@ -9,18 +9,21 @@
 #include "delta/JSON.hpp"
 #include "di.hpp"
 
-#include "app/res/http.h"
 #include "app/resource_finder.h"
+#include "app/script/api/http_internal.h"
 #include "app/script/app_scripting.h"
 #include "app/script/api/storage_internal.h"
+#include "app/script/script_permissions.h"
 #include "base/base64.h"
+#include "base/exception.h"
 #include "base/file_handle.h"
 #include "base/fs.h"
+#include "base/path.h"
 
 #include <cstdio>
 #include <iostream>
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -28,13 +31,18 @@ namespace {
   // Empty domain -> the current script file name (matches the old behavior +
   // the entry/intentry widgets, which persist under the file name).
   std::string normalizeDomain(const std::string& domain) {
-    return domain.empty() ? app::AppScripting::getFileName() : domain;
+    return domain.empty() ? base::get_file_name(app::AppScripting::getFileName())
+                          : domain;
   }
 
   // The on-disk path for a key/domain (user dir, created if missing).
+  // Throws base::Exception if key/domain would let the file escape the
+  // storage directory.
   std::string storagePath(const std::string& key, const std::string& domain) {
+    if (base::has_path_traversal(key) || base::has_path_traversal(domain))
+      throw base::Exception("Invalid storage key/domain.");
     app::ResourceFinder rf;
-    rf.includeUserDir((normalizeDomain(domain) + "." + key).c_str());
+    rf.includeUserDir((domain + "." + key).c_str());
     return rf.getFirstOrCreateDefault();
   }
 
@@ -112,35 +120,42 @@ public:
     };
 
     // storage.fetch(url, key, [domain, header, value, ...]) -> undefined.
-    // Async: seeds the key with "", performs app::HTTP::fetch, and on
-    // completion stores the body + `<key>_status` and raises `<key>_fetch`.
-    // A "POST" header key sets the request body instead of a header.
+    // Async: seeds the key with "", performs the request on a worker
+    // thread, and on completion stores the body + `<key>_status` and
+    // raises `<key>_fetch`. A "POST" header key sets the request body
+    // instead of a header.
     addVarArgFunction("__storageFetch") = [](JSON::Array& args) -> JSON::Value {
       if (args.size() < 2)
         return JSON::Value{JSON::Special::Undefined};
+      // storage.fetch performs a network request: gate it like fetch.
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFetch)) {
+        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFetch));
+        return JSON::Value{JSON::Special::Undefined};
+      }
       auto url = args[0].toString();
       auto key = args[1].toString();
       auto domain = normalizeDomain(args.size() >= 3 ? args[2].toString() : "");
       auto fileName = app::AppScripting::getFileName();
       script::setStorage(JSON::Value{std::string{}}, key, domain);
 
-      std::unordered_map<std::string, std::string> headers;
+      std::map<std::string, std::string> headers;
       std::string body;
-      std::string* post = nullptr;
+      bool isPost = false;
       for (std::size_t i = 3; i + 1 < args.size(); i += 2) {
         auto hkey = args[i].toString();
         auto hval = args[i + 1].toString();
         if (hkey == "POST") {
           body = hval;
-          post = &body;
+          isPost = true;
         } else {
           headers[hkey] = hval;
         }
       }
 
-      app::HTTP::fetch(url, post, headers, [key, domain, fileName](app::HTTP::Result&& result) {
-        script::setStorage(JSON::Value{std::move(result.body)}, key, domain);
-        script::setStorage(JSON::Value{(double)result.status}, key + "_status", domain);
+      script::httpFetch(url, isPost ? "POST" : "", body, false, headers, [key, domain, fileName](script::HttpResult&& res) {
+        auto status = res.error ? 0 : res.status;
+        script::setStorage(JSON::Value{res.error ? std::string{} : std::move(res.body)}, key, domain);
+        script::setStorage(JSON::Value{(double)status}, key + "_status", domain);
         JSON::Value event;
         event.push_back(key + "_fetch");
         app::AppScripting::raiseEvent(fileName, event);

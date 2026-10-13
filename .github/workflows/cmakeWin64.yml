@@ -27,10 +27,10 @@ jobs:
           base-devel
           git
           mingw-w64-x86_64-nodejs
+          mingw-w64-x86_64-openssl
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-make
-          mingw-w64-x86_64-curl
           mingw-w64-x86_64-freetype
           mingw-w64-x86_64-giflib
           mingw-w64-x86_64-libjpeg-turbo

@@ -16,6 +16,9 @@
 #include "app/app.h"
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
+#include "app/script/script_permission_dialog.h"
+#include "app/script/script_permissions.h"
+#include "app/task_manager.h"
 #include "base/injection.h"
 #include "base/path.h"
 #include "base/range.h"
@@ -29,6 +32,7 @@
 #include "ui/timer.h"
 #include "ui/widget.h"
 
+#include <chrono>
 #include <cmath>
 #include <deque>
 #include <filesystem>
@@ -37,6 +41,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_set>
 #include <utility>
 
@@ -74,6 +79,16 @@ public:
   }
 };
 std::unique_ptr<ScriptTimer> tickTimer;
+
+// Canonical form of a script path (absolute + lexically normalized, the
+// same form as AppScripting::activeScript). Used to match event file
+// names against loadedScripts no matter how the path was passed in.
+std::string canonicalScriptPath(const std::string& path) {
+  std::filesystem::path p{path};
+  if (!p.is_absolute())
+    p = std::filesystem::current_path() / p;
+  return p.lexically_normal().string();
+}
 
 // Routes text to the console delegate (DevConsole panel, --shell stdout)
 // with a plain stdout fallback when no delegate is registered.
@@ -316,8 +331,11 @@ namespace app {
       // Lazily load the script that owns this event (first-event load for
       // ///listen scripts). Re-queue the event so the "init" event fired
       // by evalFile is delivered before it (legacy load-then-fire order).
-      if (!ev.fileName.empty() && loadedScripts.find(ev.fileName) == loadedScripts.end()) {
-        if (evalFile(ev.fileName)) {
+      // Normalize the path the same way evalFile stores it so a
+      // relative/absolute mismatch does not reload an already loaded script.
+      auto normPath = ev.fileName.empty() ? std::string{} : canonicalScriptPath(ev.fileName);
+      if (!normPath.empty() && loadedScripts.find(normPath) == loadedScripts.end()) {
+        if (evalFile(normPath)) {
           pendingEvents << [&](auto& q){ q.push_back(std::move(ev)); };
           continue;
         }
@@ -350,6 +368,8 @@ namespace app {
   }
 
   bool AppScripting::eval(const std::string& code, const std::string& path) {
+    // REPL lines are user-typed code: not gated by script permissions.
+    ScriptPermissions::setUnrestricted();
     initEngine();
     if (!engine)
       return false;
@@ -393,12 +413,29 @@ namespace app {
     if (!std::filesystem::path(fileName).is_absolute())
       absPath = (std::filesystem::current_path() / fileName).string();
 
+    // Lexically normalized (".."/"." collapsed) rather than the raw
+    // argument - an unnormalized relative invocation like
+    // `--script ../foo.js` would otherwise make every default-domain
+    // storage call fail for a script that did nothing wrong.
+    auto canonicalPath = std::filesystem::path(absPath).lexically_normal().string();
+
+    // Permission gate: the script requests API access via "///permission"
+    // header lines; the first run prompts for the missing grants (or
+    // auto-grants them when there is no UI to prompt in). A cancelled
+    // prompt aborts the run.
+    auto requested = ScriptPermissions::parseRequested(canonicalPath);
+    if (!ensurePermissions(canonicalPath, requested))
+      return false;
+    ScriptPermissions::setActiveContext(ScriptPermissions::granted(canonicalPath));
+
     // Re-run semantics: the most recently run script owns the event
     // handler, so drop the previous one and let the epilogue / an
     // explicit setEventHandler in the script re-register it. (The
     // event-driven lazy load in drainEventQueue only calls evalFile for
     // files not in loadedScripts, so this never re-evaluates on events.)
     eventHandler = JSON::Value{JSON::Special::Undefined};
+
+    activeScript = canonicalPath;
 
     bool ok = false;
     try {
@@ -409,8 +446,9 @@ namespace app {
     }
 
     if (ok) {
-      loadedScripts.insert(fileName);
-      activeScript = fileName;
+      // Store the canonical path (the same form events carry via
+      // getFileName), so event-driven lookups do not re-load the script.
+      loadedScripts.insert(activeScript);
       JSON::Value initEvent;
       initEvent.push_back("init");
       pendingEvents << [&](auto& q){ q.emplace_back(fileName, initEvent); };
@@ -420,6 +458,38 @@ namespace app {
       flushAfterEval();
     }
     return ok;
+  }
+
+  bool AppScripting::ensurePermissions(const std::string& path, const std::set<std::string>& requested) {
+    auto granted = ScriptPermissions::granted(path);
+    std::set<std::string> missing;
+    for (auto& perm : requested)
+      if (!granted.count(perm))
+        missing.insert(perm);
+    if (missing.empty())
+      return true;
+
+    if (!ui::Manager::getDefault()) {
+      // Headless (--script without a UI): auto-grant so batch runs keep
+      // working; the prompt is a GUI-only concern.
+      for (auto& perm : missing)
+        granted.insert(perm);
+      ScriptPermissions::setGranted(path, granted);
+      std::string list;
+      for (auto& perm : missing)
+        list += (list.empty() ? "" : " ") + perm;
+      std::cout << "Warning: no UI to prompt for permissions; auto-granted "
+                << list << " for " << path << std::endl;
+      return true;
+    }
+
+    std::set<std::string> chosen;
+    if (!ScriptPermissionDialog::show(path, missing, chosen))
+      return false;
+    for (auto& perm : chosen)
+      granted.insert(perm);
+    ScriptPermissions::setGranted(path, granted);
+    return true;
   }
 
   void AppScripting::printLastResult() {
@@ -442,6 +512,59 @@ namespace app {
       return;
     tickTimer.reset(new ScriptTimer());
     tickTimer->start();
+  }
+
+  void AppScripting::runHeadlessPump() {
+    if (!engine)
+      return;
+    using namespace std::chrono;
+    for (;;) {
+      // Deliver worker-thread results (fetch, fs, server handlers) queued
+      // by TaskManager; in GUI mode its 10ms ui::Timer does this.
+      if (app::TaskManager::exists())
+        app::TaskManager::instance().pump();
+
+      // Same sequence as tick() (which the GUI runs per frame): pump the
+      // engine (promises, microtasks), deliver queued events, then ask each
+      // extension for its next wake time (0 = idle) while firing due work.
+      engine->tick();
+      drainEventQueue();
+      milliseconds nextWake{0};
+      for (auto& ext : extensions) {
+        auto wake = ext->tick();
+        if (wake > milliseconds(0) && (nextWake == milliseconds(0) || wake < nextWake))
+          nextWake = wake;
+      }
+      // Settle the work queued by the above (e.g. a fired timer resolving a
+      // promise) before checking for idle.
+      engine->tick();
+
+      // The script is active while work is pending: events to deliver,
+      // due extension work, tasks in TaskManager (fs, fetch, server
+      // handlers), or a keepAlive() extension (e.g. a listening HTTP
+      // server).
+      bool active = nextWake > milliseconds(0);
+      pendingEvents >> [&](auto& q){ if (!q.empty()) active = true; };
+      if (app::TaskManager::exists() && app::TaskManager::instance().hasWork())
+        active = true;
+      if (!active) {
+        for (auto& ext : extensions) {
+          if (ext->keepAlive()) {
+            active = true;
+            break;
+          }
+        }
+      }
+      if (!active)
+        break;
+
+      // Sleep until the next wake, capped at the TaskManager poll period so
+      // worker results are delivered with the same latency as in GUI mode.
+      milliseconds sleepFor = nextWake > milliseconds(0) ? nextWake : milliseconds(10);
+      if (sleepFor > milliseconds(10))
+        sleepFor = milliseconds(10);
+      std::this_thread::sleep_for(sleepFor);
+    }
   }
 
   std::string AppScripting::getFileName() {

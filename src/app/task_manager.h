@@ -45,6 +45,7 @@ TaskManager::instance().addTask<Data>(
 
 #pragma once
 
+#include "ui/manager.h"
 #include "ui/timer.h"
 
 #include <array>
@@ -105,7 +106,9 @@ namespace app {
   };
 
   class TaskManager {
-    ui::Timer m_timer{10};
+    // Drives onTick() on the UI message loop in GUI mode. Not created when
+    // there is no ui::Manager (headless); the headless pump calls pump().
+    std::unique_ptr<ui::Timer> m_timer;
     std::atomic_bool isAlive{true};
     std::array<std::thread, 8> threads;
 
@@ -118,8 +121,18 @@ namespace app {
     std::array<std::shared_ptr<detail::Task>, std::tuple_size<decltype(threads)>::value> processing;
     std::mutex processingMutex;
 
+    // Tasks popped from pending (bumped under pendingMutex) until their
+    // processing slot is cleared: covers the window where a task is in
+    // neither queue.
+    std::atomic_int inFlight{0};
+
     TaskManager() {
-      m_timer.Tick.connect(&TaskManager::onTick, this);
+      // The UI timer only exists in GUI mode; headless mode has no
+      // ui::Manager, so the headless pump drives onTick() via pump().
+      if (ui::Manager::getDefault()) {
+        m_timer.reset(new ui::Timer(10));
+        m_timer->Tick.connect(&TaskManager::onTick, this);
+      }
       for (std::size_t i = 0; i < threads.size(); ++i) {
         threads[i] = std::thread([this, i]{this->thread(i);});
       }
@@ -127,7 +140,8 @@ namespace app {
 
     ~TaskManager() {
       isAlive = false;
-      m_timer.stop();
+      if (m_timer)
+        m_timer->stop();
 
       {
         std::lock_guard<std::mutex> guard(processingMutex);
@@ -154,6 +168,7 @@ namespace app {
           }
           task = pending.front();
           pending.pop_front();
+          ++inFlight;
         }
 
         if (task->isAlive) {
@@ -183,6 +198,7 @@ namespace app {
             std::lock_guard<std::mutex> guard(processingMutex);
             processing[id].reset();
           }
+          --inFlight;
 
         }
 
@@ -225,8 +241,8 @@ namespace app {
 
   public:
     void delayed(std::function<void()>&& func) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (m_timer && !m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::recursive_mutex> guard(readyMutex);
       ready.emplace_back(new detail::Task{
           nullptr,
@@ -238,8 +254,8 @@ namespace app {
 
     template<typename Data>
     TaskHandle addTask(std::function<Data(std::atomic_bool& isAlive)>&& worker, std::function<void(Data&&)>&& consumer) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (m_timer && !m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
       pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
@@ -255,8 +271,8 @@ namespace app {
 
     template<typename Data>
     TaskHandle addTask(std::function<Data()>&& worker, std::function<void(Data&&)>&& consumer, std::function<void()>&& aborter) {
-      if (!m_timer.isRunning())
-        m_timer.start();
+      if (m_timer && !m_timer->isRunning())
+        m_timer->start();
       std::lock_guard<std::mutex> guard(pendingMutex);
       pending.emplace_back(new detail::Task{
           [worker=std::move(worker)](std::atomic_bool& isAlive){
@@ -279,6 +295,33 @@ namespace app {
       if (!manager)
         manager = new TaskManager();
       return *manager;
+    }
+
+    // True when the manager has been created.
+    static bool exists() {
+      return manager != nullptr;
+    }
+
+    // True while a task waits for a worker, runs on one, or waits to be
+    // delivered: the headless pump keeps running while work is pending.
+    bool hasWork() {
+      {
+        std::lock_guard<std::mutex> guard(pendingMutex);
+        if (!pending.empty())
+          return true;
+      }
+      {
+        std::lock_guard<std::recursive_mutex> guard(readyMutex);
+        if (!ready.empty())
+          return true;
+      }
+      return inFlight > 0;
+    }
+
+    // Runs ready callbacks on the calling thread. In GUI mode the 10ms
+    // timer does this; the headless pump calls it directly.
+    void pump() {
+      onTick();
     }
 
     static void cleanup() {

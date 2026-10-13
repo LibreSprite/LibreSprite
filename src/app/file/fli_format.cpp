@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2015  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -60,6 +60,22 @@ bool FliFormat::onLoad(FileOp* fop)
   // Size by frame
   int w = header.width;
   int h = header.height;
+
+  // header.width/height/frames are raw 16-bit fields with no validation
+  // upstream (this codec doesn't go through FileOp::sequenceImage) - a
+  // tiny crafted file can otherwise claim a multi-gigabyte canvas or a
+  // huge frame count with no real frame data behind it.
+  if (w <= 0 || h <= 0 || w > kMaxFileImageDimension ||
+      h > kMaxFileImageDimension)
+  {
+    fop->setError("Invalid FLI/FLC file: bad width/height\n");
+    return false;
+  }
+  if (header.frames > 10000)
+  {
+    fop->setError("Invalid FLI/FLC file: too many frames\n");
+    return false;
+  }
 
   // Create a temporal bitmap
   ImageRef bmp(Image::create(IMAGE_INDEXED, w, h));

@@ -1,5 +1,6 @@
 // Clip Library
 // Copyright (C) 2015-2020  David Capello
+// Copyright (C) 2026  LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -319,9 +320,21 @@ bool lock::impl::get_data(format f, char* buf, size_t len) const {
       if (hglobal) {
         LPSTR lpstr = static_cast<LPSTR>(GlobalLock(hglobal));
         if (lpstr) {
-          // TODO check length
-          memcpy(buf, lpstr, len);
-          result = true;
+          // `len` is the caller's buffer size, not the clipboard data's
+          // actual size (get_data_length() above computes that
+          // separately) - a length mismatch previously made this an
+          // unbounded read from the clipboard global (data supplied by
+          // another, possibly untrusted, process on the desktop). Match
+          // the pattern the other two branches already use.
+          // strnlen (not strlen): another process controls this global's
+          // contents and isn't obligated to NUL-terminate it within its
+          // allocated size.
+          size_t maxlen = GlobalSize(hglobal);
+          size_t reqsize = strnlen(lpstr, maxlen) + 1;
+          if (reqsize <= len) {
+            memcpy(buf, lpstr, reqsize);
+            result = true;
+          }
           GlobalUnlock(hglobal);
         }
       }
@@ -378,7 +391,7 @@ size_t lock::impl::get_data_length(format f) const {
       if (hglobal) {
         LPSTR lpstr = (LPSTR)GlobalLock(hglobal);
         if (lpstr) {
-          len = strlen(lpstr) + 1;
+          len = strnlen(lpstr, GlobalSize(hglobal)) + 1;
           GlobalUnlock(hglobal);
         }
       }

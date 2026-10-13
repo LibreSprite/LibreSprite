@@ -9,6 +9,7 @@
 #pragma once
 
 #include <functional>
+#include <set>
 #include <string>
 
 #include "base/injection.h"
@@ -23,6 +24,9 @@ namespace app {
     static void addExtension(Extension& ext);
     static void drainEventQueue();
     static void flushAfterEval();
+    // Prompts for the missing permissions of a script (or auto-grants
+    // them when there is no UI); returns false to abort the run.
+    static bool ensurePermissions(const std::string& path, const std::set<std::string>& requested);
   public:
     static bool evalFile(const std::string& fileName);
     static void raiseEvent(const std::string& fileName, script::Value& event);
@@ -42,6 +46,11 @@ namespace app {
     // Starts the per-frame tick pump. Must be called once the UI message
     // loop is up (from App::run() in GUI mode).
     static void startTickPump();
+    // Headless counterpart of startTickPump(): pumps tick() until the
+    // script is idle (no pending events, no due extension work, no
+    // keepAlive() extension), then returns so the process can exit.
+    // Called from App::run() when no UI message loop runs.
+    static void runHeadlessPump();
 
     // The file of the most recently loaded script ("" if none).
     static std::string getFileName();
