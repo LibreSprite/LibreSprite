@@ -878,12 +878,19 @@ namespace she {
 
     std::vector<uint8_t> encodeSurfaceAsPNG(Surface* s) override {
       auto surface = static_cast<SDL3Surface*>(s);
-      std::vector<uint8_t> data;
-      data.resize(surface->width() * surface->height() * 4 + 1024);
+      // The stream grows as needed, so the output size is uncapped. A chunk
+      // near the raw image size keeps reallocs to a few even for big images
+      Sint64 chunk = surface->width() * (Sint64)surface->height() * 2;
+      if (chunk < 1024)
+        chunk = 1024;
       std::shared_ptr<SDL_IOStream> rops{
-        SDL_IOFromMem(data.data(), data.size()),
+        SDL_IOFromDynamicMem(),
         [](auto *rops){ SDL_CloseIO(rops); }
       };
+      if (!rops)
+        return {};
+      auto props = SDL_GetIOProperties(rops.get());
+      SDL_SetNumberProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_CHUNKSIZE_NUMBER, chunk);
       // SDL_image 3.x returns true on success (unlike SDL2's 0-on-success)
       if (!IMG_SavePNG_IO(static_cast<SDL_Surface*>(surface->nativeHandle()), rops.get(), false)) {
         std::string msg = std::string{"Failed to encode PNG: "} + SDL_GetError();
@@ -891,8 +898,11 @@ namespace she {
           g_instance->logger()->logError(msg.c_str());
         return {};
       }
-      data.resize(SDL_TellIO(rops.get()));
-      return data;
+      auto *mem = SDL_GetPointerProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, nullptr);
+      Sint64 size = SDL_TellIO(rops.get());
+      if (!mem || size <= 0)
+        return {};
+      return std::vector<uint8_t>(static_cast<uint8_t*>(mem), static_cast<uint8_t*>(mem) + (size_t)size);
     }
 
     Surface* loadSurface(const char* filename) override {
