@@ -24,9 +24,9 @@
 #include "delta/JSON.hpp"
 #include "delta/StringUtils.hpp"
 #include "di.hpp"
-#include "httplib/httplib.h"
 #include "app/task_manager.h"
 #include "base/fs.h"
+#include "httplib/httplib.h"
 
 #include <any>
 #include <atomic>
