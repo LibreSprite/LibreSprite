@@ -137,10 +137,15 @@ public:
     // Requires the GUI (ui::Manager); in a headless --shell there is no UI
     // system, so creating the ui::Dialog would crash (null widget list) —
     // return null instead.
-    clazz.addMethod("createDialog") = [](AppObject&) -> JSON::Value {
+    clazz.addMethod("createDialog") = [](AppObject&, const std::string& id) -> JSON::Value {
       if (!ui::Manager::getDefault())
         return JSON::Value{JSON::Special::Null};
-      return JSON::makeNative(std::make_shared<DialogObject>());
+
+      auto dobj = std::make_shared<DialogObject>();
+      if (!id.empty())
+          dobj->dialog()->setId(id.c_str());
+
+      return JSON::makeNative(dobj);
     };
   }
 
