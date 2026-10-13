@@ -973,7 +973,9 @@ paths are used as-is.
 
 ## Methods:
    - `spawn(path, args)`:
-      path: Path of the executable to run (searched in PATH if relative).
+      path: Path of the executable to run. A relative path with a slash
+       resolves against the script's directory; a bare name is searched
+       in PATH.
       args: Array of string arguments (no shell).
       returns: A Process object.
       Starts a detached process that runs independently of the script and

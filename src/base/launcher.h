@@ -29,7 +29,9 @@ struct ProcessInfo {
 // Spawns a detached child process: no wait, no shell (argv is passed as-is,
 // same rationale as spawn_and_wait). The child inherits the environment and,
 // unless captureOutput, the app's stdio. cwd is the child's working
-// directory ("") means inherit. On failure, pid is -1 and error is set.
+// directory ("") means inherit; a relative path with a slash is resolved
+// against cwd, a bare name is searched in PATH. On failure, pid is -1 and
+// error is set.
 ProcessInfo spawn_process(const std::string& path,
                           const std::vector<std::string>& args,
                           const std::string& cwd,

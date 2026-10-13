@@ -473,12 +473,21 @@ bool open_folder(const std::string& _file)
 ProcessInfo spawn_process(const std::string& path, const std::vector<std::string>& args,
                           const std::string& cwd, bool captureOutput)
 {
+  // A relative path with a slash resolves against the child's cwd;
+  // absolutize it up front so the POSIX pre-check (which runs in the parent)
+  // agrees with the child's exec. Bare names (PATH search) are left as-is.
+  std::string exe = path;
+  if (!cwd.empty() && exe.find('/') != std::string::npos) {
+    std::filesystem::path p{exe};
+    if (!p.is_absolute())
+      exe = (std::filesystem::path(cwd) / p).lexically_normal().string();
+  }
 #if defined(_WIN32)
-  return spawnWin(path, args, cwd, captureOutput);
+  return spawnWin(exe, args, cwd, captureOutput);
 #elif defined(ANDROID) || defined(__EMSCRIPTEN__)
-  return spawnStub(path, args, cwd, captureOutput);
+  return spawnStub(exe, args, cwd, captureOutput);
 #else
-  return spawnPosix(path, args, cwd, captureOutput);
+  return spawnPosix(exe, args, cwd, captureOutput);
 #endif
 }
 
