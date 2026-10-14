@@ -23,10 +23,10 @@ namespace app {
     permFsWrite()->setVisible(missing.count(app::ScriptPermissions::kFsWrite));
     permFetch()->setVisible(missing.count(app::ScriptPermissions::kFetch));
     permAppLaunch()->setVisible(missing.count(app::ScriptPermissions::kAppLaunch));
-    permFsRead()->setSelected(true);
-    permFsWrite()->setSelected(true);
-    permFetch()->setSelected(true);
-    permAppLaunch()->setSelected(true);
+    permFsRead()->setSelected(missing.count(app::ScriptPermissions::kFsRead));
+    permFsWrite()->setSelected(missing.count(app::ScriptPermissions::kFsWrite));
+    permFetch()->setSelected(missing.count(app::ScriptPermissions::kFetch));
+    permAppLaunch()->setSelected(missing.count(app::ScriptPermissions::kAppLaunch));
   }
 
   bool ScriptPermissionDialog::show(const std::string& scriptPath,

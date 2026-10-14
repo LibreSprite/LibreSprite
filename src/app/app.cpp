@@ -182,7 +182,6 @@ void App::initialize(const AppOptions& options)
   UIContext* ctx = UIContext::instance();
   if (isGui()) {
     LOG("GUI mode\n");
-    script::EngineDelegate::setDefault("gui");
 
     // Setup the GUI cursor and redraw screen
 
@@ -507,7 +506,6 @@ void App::initialize(const AppOptions& options)
         }
         // --script <filename>
         else if (opt == &options.script()) {
-          script::EngineDelegate::setDefault("stdout");
           AppScripting engine;
           engine.evalFile(value.value());
         }
@@ -666,7 +664,6 @@ void App::run()
 
   // Start shell to execute scripts.
   if (m_isShell) {
-    script::EngineDelegate::setDefault("stdout");
     AppScripting engine;
     engine.printLastResult();
     Shell shell;

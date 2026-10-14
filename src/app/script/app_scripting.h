@@ -9,24 +9,13 @@
 #pragma once
 
 #include <functional>
-#include <set>
 #include <string>
 
-#include "base/injection.h"
 #include "script/value.h"
-
-class Extension;
 
 namespace app {
 
   class AppScripting {
-    static void initEngine();
-    static void addExtension(Extension& ext);
-    static void drainEventQueue();
-    static void flushAfterEval();
-    // Prompts for the missing permissions of a script (or auto-grants
-    // them when there is no UI); returns false to abort the run.
-    static bool ensurePermissions(const std::string& path, const std::set<std::string>& requested);
   public:
     static bool evalFile(const std::string& fileName);
     static void raiseEvent(const std::string& fileName, script::Value& event);
@@ -52,7 +41,9 @@ namespace app {
     // Called from App::run() when no UI message loop runs.
     static void runHeadlessPump();
 
-    // The file of the most recently loaded script ("" if none).
+    // The file of the executing script (the script token on top of the
+    // interpreter token stack), or the most recently loaded script when
+    // no script token is active ("" if none).
     static std::string getFileName();
     // Queues a callback to run right after the next eval() returns.
     static void afterEval(std::function<void()> fn);

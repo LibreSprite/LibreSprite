@@ -10,7 +10,10 @@
 // block scanScript() reads for "///listen"). The first run of a script
 // asks the user which of the requested permissions to grant; the grants
 // are persisted in a JSON file in the user dir. The API extensions call
-// check() at call time for the active script.
+// check() at call time; check() resolves the token on top of the
+// interpreter token stack (Interpreter::currentToken()), which AppScripting
+// pushes around every JS entry point (script evals, stamped callbacks,
+// tagged jobs) so the executing script's own grants apply.
 
 #pragma once
 
@@ -41,11 +44,12 @@ namespace app {
     static void removeRecord(const std::string& path);
     static std::map<std::string, std::set<std::string>> allRecords();
 
-    // Active script context: set by AppScripting before each eval; the
-    // API extensions call check() at call time. Unrestricted by default
-    // (REPL lines and headless evals of non-file code).
-    static void setActiveContext(const std::set<std::string>& perms);
-    static void setUnrestricted();
+    // Script context tokens: an opaque identity for the permission
+    // context of the running JS code, valid for the process lifetime.
+    // AppScripting pushes a token around every JS entry point (see
+    // Interpreter::pushToken); check() resolves the top of the stack.
+    static const void* kUnrestrictedToken; // REPL lines, non-file evals
+    static const void* tokenFor(const std::string& path); // canonical script path
     static bool check(const std::string& perm);
 
     // Human-readable denial message for error results and the console.

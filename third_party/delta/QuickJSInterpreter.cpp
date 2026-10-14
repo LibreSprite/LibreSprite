@@ -27,49 +27,6 @@ static void clearQueue() {
     };
 }
 
-// Unhandled promise rejections, buffered instead of handled by
-// js_std_promise_rejection_tracker: the std tracker feeds
-// js_std_promise_rejection_check, which prints and calls exit(1) inside
-// js_std_loop() — fatal for an embedded app. Entries are drained (and
-// reported to stderr) by eval()/tick() and cleared at teardown.
-static std::vector<std::tuple<JSContext*, JSValue, JSValue>> unhandledRejections;
-
-static void rejectionTracker(JSContext* ctx, JSValueConst promise, JSValueConst reason, bool is_handled, void* opaque) {
-    if (is_handled) {
-        for (auto it = unhandledRejections.begin(); it != unhandledRejections.end(); ++it) {
-            auto& [c, p, r] = *it;
-            if (JS_IsSameValue(ctx, p, promise)) {
-                JS_FreeValue(c, p);
-                JS_FreeValue(c, r);
-                unhandledRejections.erase(it);
-                break;
-            }
-        }
-        return;
-    }
-    for (auto& [c, p, r] : unhandledRejections) {
-        if (JS_IsSameValue(ctx, p, promise))
-            return;
-    }
-    unhandledRejections.emplace_back(ctx, JS_DupValue(ctx, promise), JS_DupValue(ctx, reason));
-}
-
-// Reports and frees the buffered unhandled rejections.
-static void drainUnhandledRejections() {
-    for (auto& [ctx, promise, reason] : unhandledRejections) {
-        fprintf(stderr, "Possibly unhandled promise rejection: ");
-        const char* msg = JS_ToCString(ctx, reason);
-        if (msg) {
-            fputs(msg, stderr);
-            JS_FreeCString(ctx, msg);
-        }
-        fputs("\n", stderr);
-        JS_FreeValue(ctx, promise);
-        JS_FreeValue(ctx, reason);
-    }
-    unhandledRejections.clear();
-}
-
 struct JSHandle {
     JSContext* ctx;
     JSValue value;
@@ -183,6 +140,22 @@ public:
     std::size_t classIdCount{0};
     std::vector<std::string> moduleSearchPaths;
 
+    // The script context token this runtime's JS runs under (set at
+    // bootstrap): eval() and tick() push it around their JS entry points,
+    // so the jobs and microtasks they drain run under the owning script's
+    // token (a runtime's job queue only holds that runtime's jobs).
+    const void* token{nullptr};
+    void setToken(const void* tok) override { token = tok; }
+
+    // Unhandled promise rejections, buffered per interpreter instead of
+    // handled by js_std_promise_rejection_tracker: the std tracker feeds
+    // js_std_promise_rejection_check, which prints and calls exit(1) inside
+    // js_std_loop() — fatal for an embedded app. The host callback receives
+    // this instance as opaque, so each runtime only sees its own entries;
+    // they are drained (and reported to stderr) by eval()/tick() and at
+    // teardown.
+    std::vector<std::tuple<JSContext*, JSValue, JSValue>> unhandledRejections;
+
     static std::unordered_map<JSContext*, QuickJSInterpreter*>& contextMap() {
         static std::unordered_map<JSContext*, QuickJSInterpreter*> instance;
         return instance;
@@ -197,7 +170,7 @@ public:
             throw std::runtime_error{"Failed to create JSRuntime"};
 
         js_std_init_handlers(rt.get());
-        JS_SetHostPromiseRejectionTracker(rt.get(), rejectionTracker, NULL);
+        JS_SetHostPromiseRejectionTracker(rt.get(), rejectionTracker, this);
 
         ctx = std::shared_ptr<JSContext>{JS_NewContext(rt.get()), [](auto* ctx){
             if (ctx)
@@ -262,6 +235,43 @@ public:
         JS_FreeValue(ctx, func_val);
 
         return m;
+    }
+
+    static void rejectionTracker(JSContext* ctx, JSValueConst promise, JSValueConst reason, bool is_handled, void* opaque) {
+        auto& rejections = static_cast<QuickJSInterpreter*>(opaque)->unhandledRejections;
+        if (is_handled) {
+            for (auto it = rejections.begin(); it != rejections.end(); ++it) {
+                auto& [c, p, r] = *it;
+                if (JS_IsSameValue(ctx, p, promise)) {
+                    JS_FreeValue(c, p);
+                    JS_FreeValue(c, r);
+                    rejections.erase(it);
+                    break;
+                }
+            }
+            return;
+        }
+        for (auto& [c, p, r] : rejections) {
+            if (JS_IsSameValue(ctx, p, promise))
+                return;
+        }
+        rejections.emplace_back(ctx, JS_DupValue(ctx, promise), JS_DupValue(ctx, reason));
+    }
+
+    // Reports and frees the buffered unhandled rejections.
+    void drainUnhandledRejections() {
+        for (auto& [c, p, r] : unhandledRejections) {
+            fprintf(stderr, "Possibly unhandled promise rejection: ");
+            const char* msg = JS_ToCString(c, r);
+            if (msg) {
+                fputs(msg, stderr);
+                JS_FreeCString(c, msg);
+            }
+            fputs("\n", stderr);
+            JS_FreeValue(c, p);
+            JS_FreeValue(c, r);
+        }
+        unhandledRejections.clear();
     }
 
     ~QuickJSInterpreter() {
@@ -408,8 +418,13 @@ public:
         }
 
         if (JS_IsFunction(ctx, jsValue)) {
-            auto wrapper = [this, func = JSHandle{ctx, JS_DupValue(ctx, jsValue)}](const JSON::Array& args) -> JSON::Value {
+            // Stamp the token active at marshal time: when the function is
+            // invoked later (timer fire, worker-result delivery, ...), its
+            // JS body runs under the token of the script that created it.
+            auto wrapper = [this, func = JSHandle{ctx, JS_DupValue(ctx, jsValue)},
+                            tok = Interpreter::currentToken()](const JSON::Array& args) -> JSON::Value {
                 auto ctx = this->ctx.get();
+                Interpreter::TokenGuard tokenGuard{tok};
                 std::vector<JSValue> argv;
                 std::vector<JSHandle> argh;
                 argv.reserve(args.size());
@@ -817,6 +832,9 @@ public:
     }
 
     JSON::Value eval(const std::string& script, const std::string& path, EvalType type) override {
+        // The eval and the jobs it drains (js_std_loop) run under this
+        // interpreter's token.
+        Interpreter::TokenGuard tokenGuard{token};
         int evalType = (type == EvalType::Module) ? JS_EVAL_TYPE_MODULE : JS_EVAL_TYPE_GLOBAL;
         JSHandle result {
             ctx.get(),
@@ -877,6 +895,9 @@ public:
     }
 
     void tick() override {
+        // The jobs drained by js_std_loop run under this interpreter's
+        // token.
+        Interpreter::TokenGuard tokenGuard{token};
         if (js_std_loop(ctx.get()) < 0) {
             js_std_dump_error(ctx.get());
         }

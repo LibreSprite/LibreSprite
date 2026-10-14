@@ -14,6 +14,7 @@
 #include "app/resource_finder.h"
 #include "base/string.h"
 #include "base/trim_string.h"
+#include "delta/Interpreter.hpp"
 #include "delta/JSON.hpp"
 
 #include <filesystem>
@@ -98,12 +99,23 @@ namespace app {
       file << root.toJSON(1);
     }
 
-    // The permissions of the currently running script (set by
-    // AppScripting before each eval); unrestricted by default.
-    bool unrestricted = true;
-    std::set<std::string> activePerms;
+    // The token string for kUnrestrictedToken.
+    const char kUnrestrictedTokenName[] = "<unrestricted>";
+
+    // Interned token strings: std::map keys are stable for the process
+    // lifetime, so the c_str() pointer can serve as the token.
+    std::map<std::string, std::string>& tokenInterns() {
+      static std::map<std::string, std::string> interns;
+      return interns;
+    }
 
   } // anonymous namespace
+
+  const void* ScriptPermissions::kUnrestrictedToken = kUnrestrictedTokenName;
+
+  const void* ScriptPermissions::tokenFor(const std::string& path) {
+    return tokenInterns().try_emplace(path, path).first->second.c_str();
+  }
 
   bool ScriptPermissions::isKnownPermission(const std::string& name) {
     return isKnown(name);
@@ -159,17 +171,13 @@ namespace app {
     return records();
   }
 
-  void ScriptPermissions::setActiveContext(const std::set<std::string>& perms) {
-    activePerms = perms;
-    unrestricted = false;
-  }
-
-  void ScriptPermissions::setUnrestricted() {
-    unrestricted = true;
-  }
-
   bool ScriptPermissions::check(const std::string& perm) {
-    return unrestricted || activePerms.count(perm) > 0;
+    auto* token = Interpreter::currentToken();
+    if (!token)
+      return false; // No active context: deny
+    if (token == kUnrestrictedToken)
+      return true;
+    return granted(std::string{static_cast<const char*>(token)}).count(perm) > 0;
   }
 
   std::string ScriptPermissions::denyMessage(const std::string& perm) {
