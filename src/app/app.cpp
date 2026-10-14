@@ -131,6 +131,7 @@ App::App()
   , m_legacy(nullptr)
   , m_isGui(false)
   , m_isShell(false)
+  , m_isHeadless(false)
   , m_exporter(nullptr)
 {
   ASSERT(m_instance == NULL);
@@ -141,6 +142,7 @@ void App::initialize(const AppOptions& options)
 {
   m_isGui = options.startUI();
   m_isShell = options.startShell();
+  m_isHeadless = options.startBatch() || options.startShell();
   // The ui system (widget registry) is also needed headless: the gui
   // module creates a ui::Manager, which registers its widgets.
   if (m_isGui || options.startBatch() || options.startShell())
@@ -184,10 +186,10 @@ void App::initialize(const AppOptions& options)
   // palette from an old format palette to the new one, etc.
   load_default_palette(options.paletteFileName());
 
-  // Initialize GUI interface
+  // Initialize GUI interface (headless runs build it invisibly)
   UIContext* ctx = UIContext::instance();
-  if (isGui()) {
-    LOG("GUI mode\n");
+  if (isGui() || isHeadless()) {
+    LOG(isGui() ? "GUI mode\n" : "Headless mode (UI runs invisibly)\n");
 
     // Setup the GUI cursor and redraw screen
 
@@ -205,8 +207,8 @@ void App::initialize(const AppOptions& options)
     app_rebuild_documents_tabs();
     app_default_statusbar_message();
 
-    // Recover data
-    if (m_modules->hasRecoverySessions())
+    // Recover data (GUI only)
+    if (isGui() && m_modules->hasRecoverySessions())
       m_mainWindow->showDataRecovery(m_modules->recovery());
 
     m_mainWindow->openWindow();
@@ -703,7 +705,7 @@ void App::run()
     delete doc;
   }
 
-  if (isGui()) {
+  if (isGui() || isHeadless()) {
     // Destroy the window.
     m_mainWindow.reset(nullptr);
   }
@@ -742,6 +744,19 @@ App::~App()
     // Destroy the loaded gui.xml data.
     delete KeyboardShortcuts::instance();
     delete GuiXml::instance();
+
+    // Safety net if run() was interrupted by an exception: mirror its
+    // teardown (documents, then main window) while App::instance() is valid.
+    {
+      const doc::Documents& docs = m_modules->m_ui_context.documents();
+      while (!docs.empty()) {
+        doc::Document* doc = docs.back();
+        doc->close();
+        delete doc;
+      }
+      if (isGui() || isHeadless())
+        m_mainWindow.reset(nullptr);
+    }
 
     m_instance = nullptr;
   }
@@ -868,7 +883,7 @@ void app_refresh_screen()
 // document is modified).
 void app_rebuild_documents_tabs()
 {
-  if (App::instance()->isGui()) {
+  if (App::instance()->isGui() || App::instance()->isHeadless()) {
     App::instance()->workspace()->updateTabs();
     App::instance()->updateDisplayTitleBar();
   }

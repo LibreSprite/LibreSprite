@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/console.h"
 #include "app/context.h"
 #include "app/document.h"
@@ -1302,9 +1303,9 @@ base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
   if (!gif_options)
     gif_options.reset(new GifOptions);
 
-  // Non-interactive mode
+  // Non-interactive mode (headless runs have a UI but no human)
   if (!fop->context() ||
-      !fop->context()->isUIAvailable())
+      !App::instance()->isGui())
     return gif_options;
 
   try {

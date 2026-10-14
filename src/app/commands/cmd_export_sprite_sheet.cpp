@@ -854,7 +854,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   DocumentPreferences& docPref(Preferences::instance().document(document));
   bool askOverwrite = m_askOverwrite;
 
-  if (m_useUI && context->isUIAvailable()) {
+  if (m_useUI && App::instance()->isGui()) {
     ExportSpriteSheetWindow window(document, sprite, docPref);
     window.openWindowInForeground();
     if (!window.ok())
@@ -912,7 +912,7 @@ void ExportSpriteSheetCommand::onExecute(Context* context)
   bool listLayers = docPref.spriteSheet.listLayers();
   bool listFrameTags = docPref.spriteSheet.listFrameTags();
 
-  if (context->isUIAvailable() && askOverwrite) {
+  if (App::instance()->isGui() && askOverwrite) {
     if (!ask_overwrite(true, filename,
                        true, dataFilename))
       return;                   // Do not overwrite

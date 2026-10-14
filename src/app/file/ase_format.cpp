@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/context.h"
 #include "app/document.h"
 #include "app/file/file.h"
@@ -360,7 +361,7 @@ bool AseFormat::onPostLoad(FileOp* fop)
   // (which assumes a flat layer list, e.g. the timeline) keeps working.
   if (ase_has_groups(folder)) {
     if (fop->context() &&
-        fop->context()->isUIAvailable() &&
+        App::instance()->isGui() &&
         ui::Alert::show("Warning"
                         "<<The file \"%s\" contains layer groups, which %s does not support."
                         "<<Open it anyway? Layers inside groups will become top-level layers"

@@ -319,9 +319,9 @@ base::SharedPtr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
   if (!webp_options)
     webp_options.reset(new WebPOptions);
 
-  // Non-interactive mode
+  // Non-interactive mode (headless runs have a UI but no human)
   if (!fop->context() ||
-      !fop->context()->isUIAvailable())
+      !App::instance()->isGui())
     return webp_options;
 
   try {

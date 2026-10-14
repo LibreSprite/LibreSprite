@@ -57,7 +57,8 @@ UIContext::~UIContext()
 
 bool UIContext::isUIAvailable() const
 {
-  return App::instance()->isGui();
+  // Headless runs build the UI invisibly, so views and editors exist.
+  return App::instance()->isGui() || App::instance()->isHeadless();
 }
 
 DocumentView* UIContext::activeView() const
@@ -187,8 +188,8 @@ void UIContext::onAddDocument(doc::Document* doc)
 {
   m_lastSelectedDoc = static_cast<app::Document*>(doc);
 
-  // We don't create views in batch mode.
-  if (!App::instance()->isGui())
+  // We don't create views without a UI.
+  if (!isUIAvailable())
     return;
 
   // Add a new view for this document

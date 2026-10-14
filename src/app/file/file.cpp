@@ -11,6 +11,7 @@
 
 #include "app/file/file.h"
 
+#include "app/app.h"
 #include "app/console.h"
 #include "app/context.h"
 #include "app/document.h"
@@ -165,7 +166,7 @@ FileOp* FileOp::createLoadDocumentOperation(Context* context, const char* filena
       }
 
       /* TODO add a better dialog to edit file-names */
-      if ((fop->m_loadFlags & FILE_LOAD_SEQUENCE_ASK) && fop->m_context && fop->m_context->isUIAvailable() && fop->m_seq.filename_list.size() > 1) {
+      if ((fop->m_loadFlags & FILE_LOAD_SEQUENCE_ASK) && fop->m_context && App::instance()->isGui() && fop->m_seq.filename_list.size() > 1) {
         /* really want load all files? */
         bool skip = ui::Alert::show("Notice"
                                     "<<Possible animation with:"
@@ -320,8 +321,8 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
 
   // Show the confirmation alert
   if (!warnings.empty()) {
-    // Interative
-    if (context && context->isUIAvailable()) {
+    // Interactive
+    if (context && App::instance()->isGui()) {
       warnings += "<<You can use \".ase\" format to keep all this information.";
 
       if (fatal) {
@@ -417,7 +418,7 @@ FileOp* FileOp::createSaveDocumentOperation(const Context* context,
         fop->m_seq.filename_list.push_back(frame_fn);
       }
 
-      if (context && context->isUIAvailable() &&
+      if (context && App::instance()->isGui() &&
           fop->m_seq.filename_list.size() > 1 &&
           ui::Alert::show("Notice"
                           "<<Do you want to export the animation in %d files?"

@@ -562,6 +562,12 @@ void CustomizedGuiManager::saveLayout(Widget* widget, const std::string& str)
   if (widget->window() == NULL)
     return;
 
+  // Headless runs must not persist window layouts to the config file.
+  // (gui_mode, not App::instance()->isGui(): App is already gone when
+  // a kCloseMessage is dispatched during the module exit.)
+  if (!gui_mode)
+    return;
+
   std::string windowId = widget->window()->id();
   std::string widgetId = widget->id();
 

@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/commands/command.h"
 #include "app/context_access.h"
 #include "app/document_api.h"
@@ -301,7 +302,8 @@ void CanvasSizeCommand::onExecute(Context* context)
   const ContextReader reader(context);
   const Sprite* sprite(reader.sprite());
 
-  if (context->isUIAvailable()) {
+  // Interactive only: the dialog would block headless.
+  if (App::instance()->isGui()) {
     // load the window widget
     std::unique_ptr<CanvasSizeWindow> window(new CanvasSizeWindow());
 

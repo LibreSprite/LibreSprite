@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/cmd/set_mask.h"
 #include "app/commands/command.h"
 #include "app/commands/params.h"
@@ -70,7 +71,8 @@ void LoadMaskCommand::onExecute(Context* context)
 
   std::string filename = m_filename;
 
-  if (context->isUIAvailable()) {
+  // Interactive only: the file selector would block headless.
+  if (App::instance()->isGui()) {
     filename = app::show_file_selector(
       "Load .msk File", filename, "msk",
       FileSelectorType::Open);

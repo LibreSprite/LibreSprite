@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/commands/cmd_sprite_size.h"
 #include "app/commands/command.h"
 #include "app/commands/params.h"
@@ -319,7 +320,7 @@ void SpriteSizeCommand::onExecute(Context* context)
   int new_height = (m_height ? m_height: int(sprite->height()*m_scaleY));
   ResizeMethod resize_method = m_resizeMethod;
 
-  if (m_useUI && context->isUIAvailable()) {
+  if (m_useUI && App::instance()->isGui()) {
     SpriteSizeWindow window(context, new_width, new_height);
     window.remapWindow();
     window.centerWindow();
