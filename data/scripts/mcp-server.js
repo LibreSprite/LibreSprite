@@ -1,3 +1,4 @@
+///permission net.serve
 // LibreSprite
 // Copyright (C) 2026  LibreSprite contributors
 //

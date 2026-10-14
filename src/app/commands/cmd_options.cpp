@@ -240,7 +240,8 @@ public:
     scriptPermissionsList()->Change.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionsSelection, this));
     permFsRead()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
     permFsWrite()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
-    permFetch()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
+    permNetFetch()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
+    permNetServe()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
     permAppLaunch()->Click.connect(base::Bind<void>(&OptionsWindow::onScriptPermissionToggled, this));
     removeScriptPermission()->Click.connect(base::Bind<void>(&OptionsWindow::onRemoveScriptPermission, this));
     updateScriptPermissionChecks();
@@ -535,12 +536,14 @@ private:
 
     permFsRead()->setEnabled(hasSelection);
     permFsWrite()->setEnabled(hasSelection);
-    permFetch()->setEnabled(hasSelection);
+    permNetFetch()->setEnabled(hasSelection);
+    permNetServe()->setEnabled(hasSelection);
     permAppLaunch()->setEnabled(hasSelection);
     removeScriptPermission()->setEnabled(hasSelection);
     permFsRead()->setSelected(perms.count(ScriptPermissions::kFsRead));
     permFsWrite()->setSelected(perms.count(ScriptPermissions::kFsWrite));
-    permFetch()->setSelected(perms.count(ScriptPermissions::kFetch));
+    permNetFetch()->setSelected(perms.count(ScriptPermissions::kNetFetch));
+    permNetServe()->setSelected(perms.count(ScriptPermissions::kNetServe));
     permAppLaunch()->setSelected(perms.count(ScriptPermissions::kAppLaunch));
   }
 
@@ -553,8 +556,10 @@ private:
       perms.insert(ScriptPermissions::kFsRead);
     if (permFsWrite()->isSelected())
       perms.insert(ScriptPermissions::kFsWrite);
-    if (permFetch()->isSelected())
-      perms.insert(ScriptPermissions::kFetch);
+    if (permNetFetch()->isSelected())
+      perms.insert(ScriptPermissions::kNetFetch);
+    if (permNetServe()->isSelected())
+      perms.insert(ScriptPermissions::kNetServe);
     if (permAppLaunch()->isSelected())
       perms.insert(ScriptPermissions::kAppLaunch);
     ScriptPermissions::setGranted(item->getValue(), perms);

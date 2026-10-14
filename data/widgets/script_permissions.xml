@@ -7,7 +7,8 @@
       <label text="requests the following permissions:" />
       <check id="perm_fs_read" text="Read files (fs.read)" tooltip="fs.readFile, fs.stat, fs.listDir, fs.shareFile" />
       <check id="perm_fs_write" text="Write and delete files (fs.write)" tooltip="fs.writeFile, fs.copyFile, fs.deleteFile" />
-      <check id="perm_fetch" text="Make network requests (fetch)" tooltip="fetch and storage.fetch" />
+      <check id="perm_net_fetch" text="Make network requests (net.fetch)" tooltip="fetch and storage.fetch" />
+      <check id="perm_net_serve" text="Serve HTTP (net.serve)" tooltip="HTTPServer (listening on a port); static file serving also needs fs.read" />
       <check id="perm_app_launch" text="Open files/URLs or launch processes with the OS (app.launch)" tooltip="app.launch" />
       <hbox>
         <boxfiller />

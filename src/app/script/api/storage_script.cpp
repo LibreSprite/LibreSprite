@@ -128,8 +128,8 @@ public:
       if (args.size() < 2)
         return JSON::Value{JSON::Special::Undefined};
       // storage.fetch performs a network request: gate it like fetch.
-      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFetch)) {
-        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFetch));
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kNetFetch)) {
+        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kNetFetch));
         return JSON::Value{JSON::Special::Undefined};
       }
       auto url = args[0].toString();

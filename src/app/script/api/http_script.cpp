@@ -48,10 +48,10 @@ public:
       // freed there.
       std::weak_ptr<JSON::Function> cbWeak{cb};
 
-      if (!app::ScriptPermissions::check(app::ScriptPermissions::kFetch)) {
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kNetFetch)) {
         script::HttpResult res;
         res.error = true;
-        res.reason = app::ScriptPermissions::denyMessage(app::ScriptPermissions::kFetch);
+        res.reason = app::ScriptPermissions::denyMessage(app::ScriptPermissions::kNetFetch);
         deliverFetchResult(cbWeak, std::move(res));
         return JSON::Value{JSON::Special::Undefined};
       }

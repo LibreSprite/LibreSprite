@@ -27,7 +27,8 @@ namespace app {
   public:
     static const char* const kFsRead;    // "fs.read"
     static const char* const kFsWrite;   // "fs.write"
-    static const char* const kFetch;     // "fetch"
+    static const char* const kNetFetch;  // "net.fetch"
+    static const char* const kNetServe;  // "net.serve"
     static const char* const kAppLaunch; // "app.launch"
 
     // True if the name is one of the known permissions.

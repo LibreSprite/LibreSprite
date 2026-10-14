@@ -26,7 +26,8 @@ namespace app {
 
   const char* const ScriptPermissions::kFsRead = "fs.read";
   const char* const ScriptPermissions::kFsWrite = "fs.write";
-  const char* const ScriptPermissions::kFetch = "fetch";
+  const char* const ScriptPermissions::kNetFetch = "net.fetch";
+  const char* const ScriptPermissions::kNetServe = "net.serve";
   const char* const ScriptPermissions::kAppLaunch = "app.launch";
 
   namespace {
@@ -34,7 +35,8 @@ namespace app {
     bool isKnown(const std::string& name) {
       return name == ScriptPermissions::kFsRead ||
              name == ScriptPermissions::kFsWrite ||
-             name == ScriptPermissions::kFetch ||
+             name == ScriptPermissions::kNetFetch ||
+             name == ScriptPermissions::kNetServe ||
              name == ScriptPermissions::kAppLaunch;
     }
 

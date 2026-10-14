@@ -1,5 +1,5 @@
-
-///permission fetch
+///permission net.fetch
+///permission net.serve
 // Legacy storage.fetch
 
 const methods = {

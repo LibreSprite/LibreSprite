@@ -1047,7 +1047,7 @@ block that carries `///listen` lines). These lines must come before any
 other line in the file.
 
     ///permission fs.read
-    ///permission fetch
+    ///permission net.fetch
     // The rest of the script...
 
 On the first run of a script, LibreSprite shows a dialog listing the
@@ -1065,8 +1065,12 @@ appear again the next time the script runs).
    - `fs.write`:
      `fs.writeFile`, `fs.copyFile`, `fs.deleteFile`.
 
-   - `fetch`:
+   - `net.fetch`:
      `fetch` and `storage.fetch` (network requests).
+
+   - `net.serve`:
+     `HTTPServer` (listening on a port). Serving files from
+     `staticFilePath` additionally requires `fs.read`.
 
    - `app.launch`:
      `app.launch` (opens a file/URL with the operating system),
@@ -1079,7 +1083,8 @@ A gated call made by a script without the permission fails with an error
 like `Permission denied: 'fs.read' permission not granted to this
 script` (the promise rejects for `fs`/`fetch`/`child_process.exec`,
 `child_process.spawn` throws, `app.launch` returns false, `storage.fetch`
-logs to the console).
+logs to the console, and `HTTPServer.start()` returns `0` with `server.error`
+set for `net.serve`).
 
 Headless runs (`--script` without a user interface) cannot show the
 dialog: the requested permissions are granted automatically with a

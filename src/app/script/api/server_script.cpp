@@ -24,6 +24,7 @@
 #include "delta/JSON.hpp"
 #include "delta/StringUtils.hpp"
 #include "di.hpp"
+#include "app/script/script_permissions.h"
 #include "app/task_manager.h"
 #include "base/fs.h"
 #include "httplib/httplib.h"
@@ -162,6 +163,13 @@ private:
   bool started = false;
   std::atomic_bool running{false};
   std::thread serverThread;
+
+  // Permission results, resolved once in the constructor (main thread, under
+  // the creating script's token) and read later from worker threads: the
+  // serve thread starts after construction, so the writes happen-before the
+  // reads and no locking is needed.
+  bool canListen_ = false;    // net.serve granted
+  bool canServeDisk_ = false; // fs.read granted (disk static files only)
 
   // Virtual files (read on worker threads, written on the main thread).
   struct VirtualFile { std::string content; std::string contentType; };
@@ -339,6 +347,14 @@ Server::Server(JSON::Value& opts, ServerRegistry* reg, ServerExtension* e) : reg
     if (auto it = o.find("onOptions"); it != o.end() && it->second.isFunction())
       onOptions = it->second;
   }
+  // Permission gate (main thread, under the creating script's token): the
+  // results are cached because the static-file read runs on a worker thread,
+  // where ScriptPermissions::check() would resolve the wrong token.
+  canListen_ = app::ScriptPermissions::check(app::ScriptPermissions::kNetServe);
+  if (!canListen_)
+    error_ = app::ScriptPermissions::denyMessage(app::ScriptPermissions::kNetServe);
+  canServeDisk_ = !staticFilePath.empty() &&
+    app::ScriptPermissions::check(app::ScriptPermissions::kFsRead);
   registerRoutes();
 }
 
@@ -347,6 +363,8 @@ Server::~Server() {
 }
 
 int Server::start() {
+  if (!canListen_)
+    return 0;  // net.serve not granted; error_ was set in the constructor
   if (started)
     return boundPort;
 
@@ -578,7 +596,9 @@ bool Server::tryServeStatic(const httplib::Request& req, httplib::Response& res)
     }
   }
 
-  if (staticFilePath.empty())
+  // Disk serving needs fs.read (resolved and cached in the constructor; the
+  // read runs on a worker thread where check() would resolve the wrong token).
+  if (staticFilePath.empty() || !canServeDisk_)
     return false;
 
   // Reject paths that walk back out of staticFilePath.

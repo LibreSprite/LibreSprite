@@ -21,11 +21,13 @@ namespace app {
     // Show (and default-check) only the not-yet-granted permissions.
     permFsRead()->setVisible(missing.count(app::ScriptPermissions::kFsRead));
     permFsWrite()->setVisible(missing.count(app::ScriptPermissions::kFsWrite));
-    permFetch()->setVisible(missing.count(app::ScriptPermissions::kFetch));
+    permNetFetch()->setVisible(missing.count(app::ScriptPermissions::kNetFetch));
+    permNetServe()->setVisible(missing.count(app::ScriptPermissions::kNetServe));
     permAppLaunch()->setVisible(missing.count(app::ScriptPermissions::kAppLaunch));
     permFsRead()->setSelected(missing.count(app::ScriptPermissions::kFsRead));
     permFsWrite()->setSelected(missing.count(app::ScriptPermissions::kFsWrite));
-    permFetch()->setSelected(missing.count(app::ScriptPermissions::kFetch));
+    permNetFetch()->setSelected(missing.count(app::ScriptPermissions::kNetFetch));
+    permNetServe()->setSelected(missing.count(app::ScriptPermissions::kNetServe));
     permAppLaunch()->setSelected(missing.count(app::ScriptPermissions::kAppLaunch));
   }
 
@@ -42,8 +44,10 @@ namespace app {
       outGranted.insert(app::ScriptPermissions::kFsRead);
     if (dialog.permFsWrite()->isSelected())
       outGranted.insert(app::ScriptPermissions::kFsWrite);
-    if (dialog.permFetch()->isSelected())
-      outGranted.insert(app::ScriptPermissions::kFetch);
+    if (dialog.permNetFetch()->isSelected())
+      outGranted.insert(app::ScriptPermissions::kNetFetch);
+    if (dialog.permNetServe()->isSelected())
+      outGranted.insert(app::ScriptPermissions::kNetServe);
     if (dialog.permAppLaunch()->isSelected())
       outGranted.insert(app::ScriptPermissions::kAppLaunch);
     return true;
