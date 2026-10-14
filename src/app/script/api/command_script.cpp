@@ -84,6 +84,10 @@ public:
         app::UIContext* ctx = app::UIContext::instance();
         if (!ctx)
           return JSON::Value{0.0};
+        // Refresh the cached context flags before the pre-check: they are
+        // only updated by executeCommand() and the GUI menu paths, so in
+        // headless runs they may be stale and reject valid commands.
+        ctx->updateFlags();
         if (!cmd->isEnabled(ctx))
           return JSON::Value{0.0};
         if (mapArg.isObject()) {
