@@ -20,8 +20,11 @@
 
 // --- config ---
 
+const HOST = "127.0.0.1";
 const PORT = 0; // 0 = first free port in 9000-9099
 const READ_ONLY = false; // if true, the mutating tools are disabled
+const ALLOW_CORS = true;
+const ALLOWED_ORIGINS = { localhost: 1, "127.0.0.1": 1, "::1": 1 };
 
 // --- protocol constants ---
 
@@ -217,7 +220,7 @@ const TOOLS = [
   },
   {
     name: "pixel_set",
-    description: "Sets one pixel on the given frame. color is #RRGGBB, #RRGGBBAA or {r,g,b,a} with 0-255 values. On indexed-color sprites the color must exist in the palette. Edits are not undoable; use sprite_save_as to back up before large edits. Check the result with sprite_image.",
+    description: "Sets one pixel on the given frame. color is #RRGGBB, #RRGGBBAA or {r,g,b,a} with 0-255 values. On indexed-color sprites the color must exist in the palette. Edits are not undoable.",
     inputSchema: {
       type: "object",
       properties: {
@@ -504,9 +507,6 @@ const CORS_HEADERS = {
   "Access-Control-Max-Age": "86400",
 };
 
-// DNS rebinding guard: a browser Origin must point at localhost.
-const LOCAL_HOSTS = { localhost: 1, "127.0.0.1": 1, "::1": 1 };
-
 function originHost(origin) {
   let m = /^https?:\/\/\[(.+)\]/i.exec(origin);
   if (m)
@@ -520,7 +520,7 @@ function originBlock(req) {
   if (!origin || origin === "null")
     return null;
   const host = originHost(origin);
-  if (!host || !LOCAL_HOSTS[host])
+  if (!host || !ALLOWED_ORIGINS[host])
     return { status: 403, body: "Forbidden: non-local Origin" };
   return null;
 }
@@ -615,8 +615,9 @@ function statusPage() {
 // --- startup ---
 
 const server = new HTTPServer({
+  host: HOST,
   port: PORT,
-  defaultHeaders: CORS_HEADERS,
+  defaultHeaders: ALLOW_CORS ? CORS_HEADERS : {},
   onPost: handlePost,
   onGet: handleGet,
   onOptions: handleOptions,
