@@ -534,9 +534,10 @@ namespace app {
     if (missing.empty())
       return true;
 
-    if (!ui::Manager::getDefault()) {
-      // Headless (--script without a UI): auto-grant so batch runs keep
-      // working; the prompt is a GUI-only concern.
+    if (!App::instance()->isGui()) {
+      // Headless (--batch/--shell): auto-grant so batch runs keep
+      // working; the prompt is a GUI-only concern (it is a blocking
+      // modal loop and would hang the run).
       for (auto& perm : missing)
         granted.insert(perm);
       ScriptPermissions::setGranted(path, granted);
@@ -576,8 +577,6 @@ namespace app {
   void AppScripting::startTickPump() {
     if (tickTimer)
       return;
-    if (!ui::Manager::getDefault())
-      return;
     tickTimer.reset(new ScriptTimer());
     tickTimer->start();
   }
@@ -586,7 +585,20 @@ namespace app {
     if (envs.empty())
       return;
     using namespace std::chrono;
+    ui::Manager* mgr = ui::Manager::getDefault();
     for (;;) {
+      // Pump the ui::Manager loop (MessageLoop::pumpMessages() minus the
+      // display flip and the sleep): timers tick and listeners receive
+      // messages, but nothing is blitted. generateMessages() skips the
+      // timer poll when the manager has no child windows (headless), so
+      // poll the timers here too, and pump the queue either way.
+      if (mgr) {
+        ui::Timer::pollTimers();
+        mgr->generateMessages();
+        mgr->pumpQueue();
+        mgr->collectGarbage();
+      }
+
       // Deliver worker-thread results (fetch, fs, server handlers) queued
       // by TaskManager; in GUI mode its 10ms ui::Timer does this.
       if (app::TaskManager::exists())

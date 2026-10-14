@@ -31,6 +31,7 @@ public:
 
   bool startUI() const { return m_startUI; }
   bool startShell() const { return m_startShell; }
+  bool startBatch() const { return m_po.enabled(m_batch); }
   VerboseLevel verboseLevel() const { return m_verboseLevel; }
 
   const std::string& paletteFileName() const { return m_paletteFileName; }

@@ -134,9 +134,9 @@ public:
 
     // createDialog() -> a new Dialog object. The dialog is built (grid layout
     // + openWindow) after the current eval finishes (see DialogObject).
-    // Requires the GUI (ui::Manager); in a headless --shell there is no UI
-    // system, so creating the ui::Dialog would crash (null widget list) —
-    // return null instead.
+    // Requires a ui::Manager: headless --batch/--shell runs create one on
+    // the dummy video driver (the dialog is painted into the virtual
+    // surface), so it returns null only when no manager exists at all.
     clazz.addMethod("createDialog") = [](AppObject&, const std::string& id) -> JSON::Value {
       if (!ui::Manager::getDefault())
         return JSON::Value{JSON::Special::Null};

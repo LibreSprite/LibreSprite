@@ -106,8 +106,8 @@ namespace app {
   };
 
   class TaskManager {
-    // Drives onTick() on the UI message loop in GUI mode. Not created when
-    // there is no ui::Manager (headless); the headless pump calls pump().
+    // Drives onTick() on the UI message loop (the GUI run loop and the
+    // headless pump). Not created when there is no ui::Manager.
     std::unique_ptr<ui::Timer> m_timer;
     std::atomic_bool isAlive{true};
     std::array<std::thread, 8> threads;
@@ -127,8 +127,9 @@ namespace app {
     std::atomic_int inFlight{0};
 
     TaskManager() {
-      // The UI timer only exists in GUI mode; headless mode has no
-      // ui::Manager, so the headless pump drives onTick() via pump().
+      // The UI timer only exists when a ui::Manager exists (it cannot be
+      // constructed without one); the headless pump also drives onTick()
+      // directly via pump().
       if (ui::Manager::getDefault()) {
         m_timer.reset(new ui::Timer(10));
         m_timer->Tick.connect(&TaskManager::onTick, this);

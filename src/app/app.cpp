@@ -141,7 +141,9 @@ void App::initialize(const AppOptions& options)
 {
   m_isGui = options.startUI();
   m_isShell = options.startShell();
-  if (m_isGui)
+  // The ui system (widget registry) is also needed headless: the gui
+  // module creates a ui::Manager, which registers its widgets.
+  if (m_isGui || options.startBatch() || options.startShell())
     m_uiSystem.reset(new ui::UISystem);
 
   m_coreModules = std::make_unique<CoreModules>();
@@ -161,7 +163,11 @@ void App::initialize(const AppOptions& options)
   }
 
   m_modules = std::make_unique<Modules>(createLogInDesktop);
-  m_legacy = std::make_unique<LegacyModules>(isGui() ? REQUIRE_INTERFACE: 0);
+  // --batch/--shell also install the gui module (display + ui::Manager):
+  // the display runs on SDL's dummy video driver, so ui::Manager is
+  // non-null in every mode that executes code.
+  m_legacy = std::make_unique<LegacyModules>(
+    (options.startUI() || options.startBatch() || options.startShell()) ? REQUIRE_INTERFACE: 0);
   m_brushes.reset(new AppBrushes);
 
   if (options.hasExporterParams())

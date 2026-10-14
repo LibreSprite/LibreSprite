@@ -89,6 +89,10 @@ namespace she {
 
       SDL_ShowCursor(SDL_DISABLE);
 
+      // The dummy video driver has no window system: skip the tablet
+      // init (it would read uninitialized window manager info and
+      // print errors to the batch output).
+      if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0) {
       bool tabletSupport{};
 
 #ifdef EASYTAB_H
@@ -117,6 +121,7 @@ namespace she {
       tabletSupport = osx_tablet::init();
 #endif
       std::cout << "Tablet support: " << (tabletSupport ? "OK" : "FAILED") << std::endl;
+      }
     }, true);
 
     setScale(scale);
