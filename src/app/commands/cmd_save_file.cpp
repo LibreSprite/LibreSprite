@@ -18,6 +18,7 @@
 #include "app/console.h"
 #include "app/context_access.h"
 #include "app/file/file.h"
+#include "app/file/script_file_format.h"
 #include "app/file_selector.h"
 #include "app/job.h"
 #include "app/modules/gui.h"
@@ -106,8 +107,24 @@ static bool save_document_in_background(const Context* context,
   if (!fop)
     return false;
 
-  SaveFileJob job(fop.get());
-  job.showProgressWindow();
+  // A script codec must run on the main thread in headless: the reply
+  // is pumped by the headless pump, and a Job worker would leave the
+  // main thread blocked in waitJob() with nothing to pump the reply
+  // (deadlock). Built-in formats keep the Job path.
+  if (!App::instance()->isGui() &&
+      dynamic_cast<ScriptFileFormat*>(fop->format())) {
+    try {
+      fop->operate(nullptr);
+    }
+    catch (const std::exception& e) {
+      fop->setError("Error saving file:\n%s", e.what());
+    }
+    fop->done();
+  }
+  else {
+    SaveFileJob job(fop.get());
+    job.showProgressWindow();
+  }
 
   if (fop->hasError()) {
     Console console;

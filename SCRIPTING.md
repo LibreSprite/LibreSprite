@@ -1185,10 +1185,45 @@ The value is persisted to storage (keyed by the widget id) and raises the
       returns: Nothing
       Creates a dialog window
 
+   - `critical(fn)`:
+     - fn: A sync or async function.
+      returns: fn's return value (a Promise when fn is async), so callers
+      can `await app.critical(...)`.
+      Runs fn with the script's environment protected from teardown. While
+      fn runs - including any async work it awaits - re-running the script
+      is refused and the environment is not torn down, so an async
+      continuation cannot outlive its environment. Nested `app.critical`
+      calls are allowed (the protection ends when the outermost one
+      settles). App exit is not blocked by an active critical section.
+
    - `documentation()`:
       returns: Nothing
       Prints this text.
 
+
+# Script Events
+
+Scripts register for events in the leading `///` comment block at the top
+of the file: each `///listen` line adds one event name to the script.
+Events are delivered to the event handler, which is set with
+`setEventHandler(fn)` (the script's `onEvent` function is registered
+automatically for backward compatibility). The handler receives the event
+name as its first argument, followed by the event's payload.
+
+   - `init`:
+     Raised once, when the script is loaded. If a `///listen` script is
+     loaded by an incoming event (its first event arrives before the
+     script has run), `init` is raised before that event.
+
+   - `app_boot`:
+     Raised once per process, at startup. Scripts that declare
+     `///listen app_boot` are loaded at startup and receive the event
+     before the files from the command line are opened. The event
+     carries no payload (the script can read `app.isHeadless` and
+     `LS.version`).
+
+Other events carry their own payload (for example, dialog buttons raise
+`<id>_click` with a modifier-mask argument).
 
 # Script Permissions
 

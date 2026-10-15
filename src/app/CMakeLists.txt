@@ -311,6 +311,7 @@ add_library(app-lib
   file/file_format.cpp
   file/file_formats_manager.cpp
   file/palette_file.cpp
+  file/script_file_format.cpp
   file/split_filename.cpp
   ${file_formats}
   file_selector.cpp
@@ -356,6 +357,7 @@ add_library(app-lib
   script/api/document_script.cpp
   script/api/dropdown_script.cpp
   script/api/entry_script.cpp
+  script/api/file_script.cpp
   script/api/filesystem_script.cpp
   script/api/http_internal.cpp
   script/api/http_script.cpp

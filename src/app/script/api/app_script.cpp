@@ -152,6 +152,21 @@ public:
 
       return JSON::makeNative(dobj);
     };
+
+    // app.critical support (the JS glue is in the boot script below):
+    // __criticalEnter() increments the calling script's env critical
+    // counter and returns the env key to pass to __criticalLeave() (""
+    // when no script token is active: a no-op). While the counter is > 0
+    // a re-run of the script is refused (the env is not torn down), so an
+    // async continuation of the script cannot outlive its env.
+    addFunction("__criticalEnter") = []() -> JSON::Value {
+      return app::AppScripting::enterCritical();
+    };
+
+    addFunction("__criticalLeave") = [](const std::string& file) -> JSON::Value {
+      app::AppScripting::leaveCritical(file);
+      return JSON::Value{JSON::Special::Undefined};
+    };
   }
 
   std::string init(const std::string&, JSON::Value&) override {
@@ -170,6 +185,34 @@ public:
       // timer extension fires it). Scripts use `await app.yield()`.
       app.yield = function() {
         return new Promise(function(resolve) { setTimeout(resolve, 0); });
+      };
+      // Run fn (sync or async) with the env protected from teardown: while
+      // fn runs - including any async work it awaits - a re-run of the
+      // script is refused and the env is not torn down, so an async
+      // continuation cannot outlive its env. Returns fn's result (a
+      // Promise when fn is async), so callers can `await app.critical(...)`.
+      app.critical = function(fn) {
+        if (typeof fn !== "function")
+          throw new TypeError("app.critical: fn must be a function");
+        const key = __criticalEnter();
+        let result;
+        try {
+          result = fn();
+        } catch (err) {
+          __criticalLeave(key);
+          throw err;
+        }
+        // Async fn: hold the counter across the async window, release it on
+        // settle (resolve or reject - a rejecting fn must not leave the
+        // counter set). The value / rejection is passed through.
+        if (key && result && typeof result.then === "function")
+          return result.then(
+            v => { __criticalLeave(key); return v; },
+            e => { __criticalLeave(key); throw e; }
+          );
+        // Sync fn: the counter is only held during the call.
+        __criticalLeave(key);
+        return result;
       };
     )";
   }

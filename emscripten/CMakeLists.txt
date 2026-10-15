@@ -381,6 +381,7 @@ set(SRC_FILES
   ${SRC}/app/file/pcx_format.cpp
   ${SRC}/app/file/pixly_format.cpp
   ${SRC}/app/file/png_format.cpp
+  ${SRC}/app/file/script_file_format.cpp
   ${SRC}/app/file/she_format.cpp
   ${SRC}/app/file/split_filename.cpp
   ${SRC}/app/file/tga_format.cpp
@@ -419,6 +420,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/document_script.cpp
   ${SRC}/app/script/api/dropdown_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
+  ${SRC}/app/script/api/file_script.cpp
   ${SRC}/app/script/api/filesystem_script.cpp
   ${SRC}/app/script/api/http_internal.cpp
   ${SRC}/app/script/api/http_internal_wasm.cpp

@@ -22,6 +22,13 @@ namespace app {
     static bool scanScript(const std::string& fullPath);
     static void clearEventHooks();
 
+    // Loads every script that declares "///listen app_boot" and delivers
+    // it an "app_boot" event (each script's "init" event first),
+    // draining the event queue synchronously so the boot handlers run
+    // before App::initialize returns. Runs once per process, before CLI
+    // files are opened.
+    static void fireBootEvents();
+
     // Evaluates a REPL line (script-type eval, so top-level `var` persists
     // across lines). Prints the completion value when printLastResult()
     // has been called.
@@ -45,6 +52,13 @@ namespace app {
     // interpreter token stack), or the most recently loaded script when
     // no script token is active ("" if none).
     static std::string getFileName();
+
+    // Critical-section counter (app.critical): while it is > 0 the env is
+    // not torn down by a re-run. enterCritical() increments the running
+    // script's counter and returns the file to pass to leaveCritical()
+    // ("" when no script token is active: a no-op). Main thread only.
+    static std::string enterCritical();
+    static void leaveCritical(const std::string& file);
     // Queues a callback to run right after the next eval() returns.
     static void afterEval(std::function<void()> fn);
 

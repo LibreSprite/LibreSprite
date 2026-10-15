@@ -219,6 +219,12 @@ void App::initialize(const AppOptions& options)
     ui::Manager::getDefault()->invalidate();
   }
 
+  // Deliver the "app_boot" event to every "///listen app_boot" script.
+  // The menu scan (MainWindow constructor) has already populated the
+  // hooks, and the event is drained synchronously, so the handlers run
+  // before the options processing below opens the CLI files.
+  app::AppScripting::fireBootEvents();
+
   // Procress options
   LOG("Processing options...\n");
 
