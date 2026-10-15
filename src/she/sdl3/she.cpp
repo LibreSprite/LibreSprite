@@ -988,6 +988,7 @@ int main(const int argc, char* argv[]) {
   // so no real display is needed. Keep a user-set SDL_VIDEODRIVER value.
   for (int i = 1; i < argc; ++i) {
     if (SDL_strcmp(argv[i], "--batch") == 0 ||
+        SDL_strcmp(argv[i], "-b") == 0 ||
         SDL_strcmp(argv[i], "--shell") == 0) {
       SDL_setenv_unsafe("SDL_VIDEODRIVER", "dummy", 0);
       break;
