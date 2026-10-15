@@ -1159,6 +1159,7 @@ The value is persisted to storage (keyed by the widget id) and raises the
 ## Properties:
    - `platform`: read-only. Returns one of: emscripten, windows, macos, android, linux.
    - `version`: read-only. Returns LibreSprite's current version as a string.
+   - `isHeadless`: read-only. True when running without a visible UI (--batch/--shell).
    - `activeDocument`: read-only. Returns the currently active Document.
    - `command`: read-only. Returns an object with functions for running commands.
    - `activeSprite`: read-only. Returns the currently active Sprite.

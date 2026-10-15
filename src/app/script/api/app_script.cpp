@@ -16,6 +16,7 @@
 #include "app/script/api/script_api_common.h"
 #include "app/script/api/widget_script.h"
 
+#include "app/app.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
 #include "app/document.h"
@@ -99,6 +100,10 @@ public:
       #else
       return std::string{"linux"};
       #endif
+    };
+
+    clazz.addGetter("isHeadless") = [](AppObject&) -> JSON::Value {
+      return JSON::Value{app::App::instance()->isHeadless()};
     };
 
     clazz.addMethod("open") = [](AppObject&, const std::string& fn) -> JSON::Value {
