@@ -409,12 +409,15 @@ set(SRC_FILES
   ${SRC}/app/resource_finder.cpp
   ${SRC}/app/script/api/app_script.cpp
   ${SRC}/app/script/api/button_script.cpp
+  ${SRC}/app/script/api/checkbox_script.cpp
+  ${SRC}/app/script/api/colorbutton_script.cpp
   ${SRC}/app/script/api/cel_script.cpp
   ${SRC}/app/script/api/colormode_script.cpp
   ${SRC}/app/script/api/console_script.cpp
   ${SRC}/app/script/api/command_script.cpp
   ${SRC}/app/script/api/dialog_script.cpp
   ${SRC}/app/script/api/document_script.cpp
+  ${SRC}/app/script/api/dropdown_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
   ${SRC}/app/script/api/filesystem_script.cpp
   ${SRC}/app/script/api/http_internal.cpp
@@ -427,12 +430,16 @@ set(SRC_FILES
   ${SRC}/app/script/api/intentry_script.cpp
   ${SRC}/app/script/api/label_script.cpp
   ${SRC}/app/script/api/layer_script.cpp
+  ${SRC}/app/script/api/linklabel_script.cpp
+  ${SRC}/app/script/api/listbox_script.cpp
   ${SRC}/app/script/api/palette_script.cpp
   ${SRC}/app/script/api/palettelistbox_script.cpp
   ${SRC}/app/script/api/pixelcolor_script.cpp
   ${SRC}/app/script/api/selection_script.cpp
+  ${SRC}/app/script/api/slider_script.cpp
   ${SRC}/app/script/api/sprite_script.cpp
   ${SRC}/app/script/api/storage_internal.cpp
+  ${SRC}/app/script/api/textbox_script.cpp
   ${SRC}/app/script/api/timer_script.cpp
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp

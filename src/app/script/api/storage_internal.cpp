@@ -7,6 +7,9 @@
 
 #include "app/script/api/storage_internal.h"
 
+#include "app/script/app_scripting.h"
+#include "base/path.h"
+
 #include <unordered_map>
 
 namespace {
@@ -35,5 +38,9 @@ namespace script {
     domainIt->second.erase(key);
     if (domainIt->second.empty())
       g_storage.erase(domainIt);
+  }
+
+  std::string defaultStorageDomain() {
+    return base::get_file_name(app::AppScripting::getFileName());
   }
 }

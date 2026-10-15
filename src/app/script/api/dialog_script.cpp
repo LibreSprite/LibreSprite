@@ -50,9 +50,21 @@ public:
     cls.addMethod("addLabel") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
       return widgetToNative(self.addLabel(text, id));
     };
+    // addTextBox(text, id) -> the TextBox object.
+    cls.addMethod("addTextBox") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addTextBox(text, id));
+    };
     // addButton(text, id) -> the Button object.
     cls.addMethod("addButton") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
       return widgetToNative(self.addButton(text, id));
+    };
+    // addLinkLabel(text, url, id) -> the LinkLabel object.
+    cls.addMethod("addLinkLabel") = [](DialogObject& self, const std::string& text, const std::string& url, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addLinkLabel(text, url, id));
+    };
+    // addCheckBox(text, id) -> the CheckBox object.
+    cls.addMethod("addCheckBox") = [](DialogObject& self, const std::string& text, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addCheckBox(text, id));
     };
     // addEntry(text, id) -> the Entry object (also adds a label with text if
     // non-empty). Matches the old Aseprite API.
@@ -64,6 +76,19 @@ public:
     cls.addMethod("addIntEntry") = [](DialogObject& self, const std::string& text, const std::string& id, int min, int max) -> JSON::Value {
       return widgetToNative(self.addIntEntry(text, id, min, max));
     };
+    // addDropDown(id) -> the Dropdown object (options are added via
+    // Dropdown::addOption).
+    cls.addMethod("addDropDown") = [](DialogObject& self, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addDropDown(id));
+    };
+    // addListBox(id) -> the ListBox object (items are added via ListBox::add()).
+    cls.addMethod("addListBox") = [](DialogObject& self, const std::string& id) -> JSON::Value {
+      return widgetToNative(self.addListBox(id));
+    };
+    // addSlider(id, min, max) -> the Slider object (initial value is min).
+    cls.addMethod("addSlider") = [](DialogObject& self, const std::string& id, int min, int max) -> JSON::Value {
+      return widgetToNative(self.addSlider(id, min, max));
+    };
     // addImageView(id) -> the ImageView object.
     cls.addMethod("addImageView") = [](DialogObject& self, const std::string& id) -> JSON::Value {
       return widgetToNative(self.addImageView(id));
@@ -71,6 +96,11 @@ public:
     // addPaletteListBox(id) -> the PaletteListBox object.
     cls.addMethod("addPaletteListBox") = [](DialogObject& self, const std::string& id) -> JSON::Value {
       return widgetToNative(self.addPaletteListBox(id));
+    };
+    // addColor(id, color) -> the Color object (color is a 32-bit RGBA int,
+    // the pixelColor.rgba() format).
+    cls.addMethod("addColor") = [](DialogObject& self, const std::string& id, double color) -> JSON::Value {
+      return widgetToNative(self.addColor(id, (uint32_t)color));
     };
     // addBreak() -> end the current row so the next add*() starts a new one.
     cls.addMethod("addBreak") = [](DialogObject& self) -> JSON::Value {

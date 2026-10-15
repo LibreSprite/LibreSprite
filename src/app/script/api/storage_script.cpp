@@ -18,7 +18,6 @@
 #include "base/exception.h"
 #include "base/file_handle.h"
 #include "base/fs.h"
-#include "base/path.h"
 
 #include <cstdio>
 #include <iostream>
@@ -28,11 +27,10 @@
 
 namespace {
 
-  // Empty domain -> the current script file name (matches the old behavior +
-  // the entry/intentry widgets, which persist under the file name).
+  // Empty domain -> the default storage domain (the current script BASENAME,
+  // script::defaultStorageDomain, shared with the entry/intentry widgets).
   std::string normalizeDomain(const std::string& domain) {
-    return domain.empty() ? base::get_file_name(app::AppScripting::getFileName())
-                          : domain;
+    return domain.empty() ? script::defaultStorageDomain() : domain;
   }
 
   // The on-disk path for a key/domain (user dir, created if missing).

@@ -344,6 +344,8 @@ add_library(app-lib
 
   script/api/app_script.cpp
   script/api/button_script.cpp
+  script/api/checkbox_script.cpp
+  script/api/colorbutton_script.cpp
   script/api/child_process_script.cpp
   script/api/child_process_script_wasm.cpp
   script/api/cel_script.cpp
@@ -352,6 +354,7 @@ add_library(app-lib
   script/api/console_script.cpp
   script/api/dialog_script.cpp
   script/api/document_script.cpp
+  script/api/dropdown_script.cpp
   script/api/entry_script.cpp
   script/api/filesystem_script.cpp
   script/api/http_internal.cpp
@@ -363,13 +366,17 @@ add_library(app-lib
   script/api/intentry_script.cpp
   script/api/layer_script.cpp
   script/api/label_script.cpp
+  script/api/linklabel_script.cpp
+  script/api/listbox_script.cpp
   script/api/pixelcolor_script.cpp
   script/api/palette_script.cpp
   script/api/palettelistbox_script.cpp
   script/api/storage_script.cpp
   script/api/sprite_script.cpp
   script/api/selection_script.cpp
+  script/api/slider_script.cpp
   script/api/storage_internal.cpp
+  script/api/textbox_script.cpp
   script/api/timer_script.cpp
 
   send_crash.cpp

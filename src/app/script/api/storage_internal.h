@@ -21,4 +21,9 @@ namespace script {
   JSON::Value getStorage(const std::string& key, const std::string& domain);
   // Remove a key from the domain's map (no-op if absent). Used by storage.unload.
   void removeStorage(const std::string& key, const std::string& domain);
+  // Shared domain normalization: an empty domain resolves to the BASENAME of
+  // the running script (e.g. "foo.js"), matching the on-disk format
+  // (domain + "." + key in the user dir). Used by the `storage` global and
+  // the entry/intentry/palettelistbox widgets so both see the same keys.
+  std::string defaultStorageDomain();
 }

@@ -202,6 +202,33 @@ paths are used as-is.
 ## No Methods.
 
 
+
+# [class TextBoxWidget]
+## Properties:
+   - `text`: read+write. The text to display (multiline supported).
+   - `align`: read+write. The alignment flags as an int (e.g.
+      LEFT = 0x00040000, TOP = 0x00200000). OR the WORDWRAP flag
+      (0x02000000) to enable text wrapping.
+   - `id`:
+
+## No Methods.
+
+A read-only multiline text display (like a multiline Label, not an
+editable text box).
+
+
+# [class LinkLabel]
+## Properties:
+   - `text`: read+write. The link text to display.
+   - `url`: read+write. The URL to open in the OS handler when clicked.
+   - `id`:
+
+## No Methods.
+
+A clickable text label. Clicking opens its URL in the OS handler (the
+built-in behavior of the widget) and raises the `<id>_click` event.
+
+
 # [class Layer]
 ## Properties: 
    - `flags`: read-only. Returns all flags OR'd together as an int
@@ -294,10 +321,35 @@ paths are used as-is.
    - `addPaletteListBox()`:
       returns: Nothing
 
+   - `addColor(id, color)`:
+     - id: The widget id (use it to retrieve the widget with get()).
+     - color: The initial color, a 32-bit color in 8888 RGBA format.
+      returns: The new Color object (the same instance as get(id)).
+      Adds a color picker (a swatch that opens the color selection popup
+      on click).
+
    - `addEntry()`:
       returns: Nothing
 
    - `addButton()`:
+      returns: Nothing
+
+   - `addTextBox(text, id)`:
+     - text: The text to display (multiline supported).
+     - id: The widget id (use it to retrieve the widget with get()).
+      returns: The new TextBox object (the same instance as get(id)).
+      Adds a read-only multiline text display (not editable; use Entry for
+      editable text).
+
+   - `addLinkLabel(text, url, id)`:
+     - text: The link text to display.
+     - url: The URL to open in the OS handler when clicked.
+     - id: The widget id (use it to retrieve the widget with get()).
+      returns: The new LinkLabel object (the same instance as get(id)).
+      Adds a clickable text label that opens its URL in the OS handler
+      when clicked (also raises the `<id>_click` event).
+
+   - `addCheckBox()`:
       returns: Nothing
 
    - `add()`:
@@ -309,8 +361,24 @@ paths are used as-is.
    - `addLabel()`:
       returns: Nothing
 
-   - `addDropDown()`:
-      returns: Nothing
+   - `addDropDown(id)`:
+     - id: The widget id (use it to retrieve the widget with get()).
+      returns: The new Dropdown object (the same instance as get(id)).
+      Adds an empty dropdown (options are added via Dropdown.addOption()).
+
+   - `addListBox(id)`:
+     - id: The widget id (use it to retrieve the widget with get()).
+      returns: The new ListBox object (the same instance as get(id)).
+      Adds an empty list box (items are added via ListBox.add()).
+
+   - `addSlider(id, min, max)`:
+     - id: The widget id (use it to retrieve the widget with get()).
+     - min: The minimum value (also the initial value).
+     - max: The maximum value.
+      returns: The new Slider object (the same instance as get(id)).
+      Adds a slider with the given range; the value is persisted to storage
+      (keyed by the widget id) and raises the `<id>_change` event when the
+      user moves it.
 
    - `addIntEntry()`:
       returns: Nothing
@@ -338,6 +406,88 @@ paths are used as-is.
    - `id`:
 
 ## No Methods.
+
+
+# [class Color]
+## Properties:
+   - `color`: read+write. A 32-bit color in 8888 RGBA format
+      (the pixelColor.rgba() format). Setting it does not raise the change
+      event; user edits do.
+   - `id`:
+
+## No Methods.
+
+A color picker: a swatch showing the current color that opens the color
+selection popup on click. The selected color is persisted to storage (keyed
+by the widget id) and raises the `<id>_change` event when the user picks a
+color.
+
+
+# [class CheckBoxWidget]
+## Properties:
+   - `text`:
+   - `id`:
+   - `checked`:
+
+## No Methods.
+
+
+# [class Dropdown]
+## Properties:
+   - `id`:
+   - `selected`: read+write. The selected option's index (-1 if none).
+      Setting it persists to storage but does not raise the change event;
+      user selection does.
+   - `value`: read+write. The selected option's text ("" if none).
+      Setting it selects the matching option without raising the change event.
+   - `count`: read-only. The number of options.
+
+## Methods:
+   - `addOption(text)`:
+     - text: The option text.
+      returns: Nothing
+      Appends a dropdown option.
+
+The selected option's text is persisted to storage (keyed by the widget id)
+and raises the `<id>_change` event when the selection changes.
+
+
+# [class ListBox]
+## Properties:
+   - `id`:
+   - `selectedIndex`: read+write. The selected item's index (-1 if none).
+      Setting it persists to storage but does not raise the change event;
+      user selection does.
+   - `selected`: read only. The selected item's text ("" if none).
+   - `count`: read-only. The number of items.
+
+## Methods:
+   - `add(text)`:
+     - text: The item text.
+      returns: The index of the new item.
+      Appends a list item.
+
+   - `remove(index)`:
+     - index: The index of the item to remove.
+      returns: Nothing
+
+The selected item's text is persisted to storage (keyed by the widget id)
+and raises the `<id>_change` event when the selection changes ("" if no item
+is selected).
+
+
+# [class Slider]
+## Properties:
+   - `id`:
+   - `min`: read+write. The minimum value.
+   - `max`: read+write. The maximum value.
+   - `value`: read+write. The integer value. Setting it persists to storage
+      but does not raise the change event; user edits do.
+
+## No Methods.
+
+The value is persisted to storage (keyed by the widget id) and raises the
+`<id>_change` event when the user moves the slider.
 
 
 # [class command]
