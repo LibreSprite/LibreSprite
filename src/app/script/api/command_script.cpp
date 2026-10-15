@@ -84,18 +84,20 @@ public:
         app::UIContext* ctx = app::UIContext::instance();
         if (!ctx)
           return JSON::Value{0.0};
-        if (!cmd->isEnabled(ctx))
-          return JSON::Value{0.0};
-        if (mapArg.isObject()) {
+        bool transient = mapArg.isObject();
+        if (transient) {
           // Transient params: set, execute, then clear so they don't leak.
           for (auto& [k, v] : mapArg.object())
             self.params.set(k.c_str(), v.toString().c_str());
-          ctx->executeCommand(cmd, self.params);
-          self.params.clear();
-        } else {
-          ctx->executeCommand(cmd, self.params);
         }
-        return JSON::Value{1.0};
+        ctx->updateFlags();
+        cmd->loadParams(self.params);
+        bool enabled = cmd->isEnabled(ctx);
+        if (enabled)
+          ctx->executeCommand(cmd, self.params);
+        if (transient)
+          self.params.clear();
+        return JSON::Value{enabled ? 1.0 : 0.0};
       };
     }
   }
