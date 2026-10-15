@@ -1,4 +1,5 @@
 ///permission net.serve
+
 // LibreSprite
 // Copyright (C) 2026  LibreSprite contributors
 //
@@ -6,21 +7,15 @@
 // 2025-03-26 and 2025-06-18 revisions. Runs inside LibreSprite on the
 // built-in HTTPServer script API.
 //
-// Run it from the Scripts menu or with `libresprite --script`. A
-// configuration dialog (host, port, read-only, CORS, allowed origins)
-// opens and the server auto-starts with the current settings; Start
-// re-applies them, Stop stops it, and closing the dialog shuts it down.
-// In headless (--batch/--script) mode there is no dialog: the server
-// auto-starts with the stored settings (or defaults) and the console
-// prints the endpoint URL. Point any MCP client at that URL.
+// In headless mode the server auto-starts with the stored settings (or defaults)
+// and the console prints the endpoint URL. Point any MCP client at that URL.
+// Override settings in the CLI with --set key=value:
+// libresprite --batch --script --set host=0.0.0.0 --script data/scripts/mcp-server.js
 //
 // Limitations:
 //  - JSON responses only: no SSE streams, no sessions, no auth.
 //  - Binds to the configured host (default: loopback).
 //  - run_command may open dialogs that need user interaction.
-//  - Script edits (pixel_set, palette_set) write pixels directly: they
-//    create no undo history and the canvas may not repaint immediately.
-//    Back up with sprite_save_as before large edits.
 
 // --- config (mutable state, applied on each start) ---
 

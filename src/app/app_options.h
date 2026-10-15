@@ -64,6 +64,7 @@ public:
   const Option& crop() const { return m_crop; }
   const Option& filenameFormat() const { return m_filenameFormat; }
   const Option& script() const { return m_script; }
+  const Option& set() const { return m_set; }
   const Option& listLayers() const { return m_listLayers; }
   const Option& listTags() const { return m_listTags; }
 
@@ -106,6 +107,7 @@ private:
   Option& m_crop;
   Option& m_filenameFormat;
   Option& m_script;
+  Option& m_set;
   Option& m_listLayers;
   Option& m_listTags;
 

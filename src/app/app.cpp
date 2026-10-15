@@ -35,6 +35,7 @@
 #include "app/pref/preferences.h"
 #include "app/recent_files.h"
 #include "app/resource_finder.h"
+#include "app/script/api/storage_internal.h"
 #include "app/script/app_scripting.h"
 #include "app/send_crash.h"
 #include "app/shell.h"
@@ -65,6 +66,7 @@
 #include "doc/palette.h"
 #include "doc/site.h"
 #include "doc/sprite.h"
+#include "delta/JSON.hpp"
 #include "render/render.h"
 #include "script/engine_delegate.h"
 #include "she/display.h"
@@ -243,6 +245,10 @@ void App::initialize(const AppOptions& options)
     std::string filenameFormat;
     std::string frameTagName;
     std::string frameRange;
+
+    // --set key=value pairs seen so far: applied to each --script's
+    // storage domain when it runs.
+    std::vector<std::pair<std::string, std::string>> setValues;
 
     for (const auto& value : options.values()) {
       const AppOptions::Option* opt = value.option();
@@ -514,8 +520,25 @@ void App::initialize(const AppOptions& options)
         }
         // --script <filename>
         else if (opt == &options.script()) {
+          // Seed the script's storage domain (its BASENAME) with the
+          // --set values before the script runs.
+          auto domain = base::get_file_name(value.value());
+          for (const auto& sv : setValues)
+            script::setCliStorage(JSON::Value{sv.second}, sv.first, domain);
+
           AppScripting engine;
           engine.evalFile(value.value());
+        }
+        // --set key=value
+        else if (opt == &options.set()) {
+          // Storage value for the --script runs that follow (repeatable;
+          // the last value for a key wins).
+          auto pos = value.value().find('=');
+          if (pos == std::string::npos || pos == 0)
+            throw std::runtime_error("--set needs a key and a value separated by =\n"
+                                     "Usage: --set key=value\n"
+                                     "E.g. --set host=127.0.0.1");
+          setValues.emplace_back(value.value().substr(0, pos), value.value().substr(pos + 1));
         }
         // --list-layers
         else if (opt == &options.listLayers()) {

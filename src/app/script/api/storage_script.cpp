@@ -86,6 +86,9 @@ public:
     // storage.load(key, domain) -> true if the file was read + stored.
     addFunction("__storageLoad") = [](const std::string& key, const std::string& domainV) -> JSON::Value {
       auto domain = normalizeDomain(domainV);
+      // A --set value wins over the saved value: keep the in-memory one.
+      if (script::isCliStorage(key, domain))
+        return JSON::Value{true};
       try {
         auto path = storagePath(key, domain);
         base::FileHandle handle(base::open_file_with_exception(path, "rb"));

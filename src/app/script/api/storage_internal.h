@@ -19,6 +19,12 @@ namespace script {
   // to use this same map.
   void setStorage(const JSON::Value& value, const std::string& key, const std::string& domain);
   JSON::Value getStorage(const std::string& key, const std::string& domain);
+  // Value seeded from the command line (--set key=value): stored like
+  // setStorage, but protected from storage.load() overwriting it with
+  // the saved on-disk value. The protection drops when the key is
+  // assigned or removed (setStorage/removeStorage).
+  void setCliStorage(const JSON::Value& value, const std::string& key, const std::string& domain);
+  bool isCliStorage(const std::string& key, const std::string& domain);
   // Remove a key from the domain's map (no-op if absent). Used by storage.unload.
   void removeStorage(const std::string& key, const std::string& domain);
   // Shared domain normalization: an empty domain resolves to the BASENAME of
