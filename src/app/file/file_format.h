@@ -9,6 +9,7 @@
 
 #include "base/injection.h"
 #include "base/shared_ptr.h"
+#include "format_options.h"
 
 #include <vector>
 
@@ -31,7 +32,6 @@
 
 namespace app {
 
-  class FormatOptions;
   class FileFormat;
   class FileOp;
 
