@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2026       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -97,7 +98,7 @@ void NewLayerCommand::onExecute(Context* context)
     name = get_unique_layer_name(sprite);
 
   // If params specify to ask the user about the name...
-  if (m_ask) {
+  if (m_ask && context->isUIAvailable()) {
     // We open the window to ask the name
     std::unique_ptr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer"));
     Widget* name_widget = app::find_widget<Widget>(window.get(), "name");
@@ -127,6 +128,9 @@ void NewLayerCommand::onExecute(Context* context)
     transaction.commit();
   }
   update_screen_for_document(document);
+
+  if (!context->isUIAvailable())
+    return;
 
   StatusBar::instance()->invalidate();
   StatusBar::instance()->showTip(1000, "Layer `%s' created", name.c_str());

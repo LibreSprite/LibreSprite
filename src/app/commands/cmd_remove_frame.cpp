@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2026       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -57,8 +58,9 @@ void RemoveFrameCommand::onExecute(Context* context)
     DocumentApi api = document->getApi(transaction);
 
     // TODO the range of selected frames should be in doc::Site.
-    auto range = App::instance()->timeline()->range();
-    if (range.enabled()) {
+    Timeline* timeline = (context->isUIAvailable() ? App::instance()->timeline() : nullptr);
+    if (timeline && timeline->range().enabled()) {
+      auto range = timeline->range();
       for (frame_t frame = range.frameEnd(),
              begin = range.frameBegin()-1;
            frame != begin;

@@ -857,7 +857,8 @@ void app_refresh_screen()
     set_current_palette(NULL, false);
 
   // Invalidate the whole screen.
-  ui::Manager::getDefault()->invalidate();
+  if (ui::Manager* manager = ui::Manager::getDefault())
+    manager->invalidate();
 }
 
 // TODO remove app_rebuild_documents_tabs() and replace it by

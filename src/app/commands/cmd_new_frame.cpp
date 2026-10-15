@@ -1,5 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
+// Copyright (C) 2026       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -115,9 +116,9 @@ void NewFrameCommand::onExecute(Context* context)
       case Content::DUPLICATE_CELS:
       case Content::DUPLICATE_CELS_BLOCK: {
         // TODO the range of selected frames should be in doc::Site.
-        Timeline* timeline = App::instance()->timeline();
-        Timeline::Range range = timeline->range();
-        if (range.enabled()) {
+        Timeline* timeline = (context->isUIAvailable() ? App::instance()->timeline() : nullptr);
+        if (timeline && timeline->range().enabled()) {
+          Timeline::Range range = timeline->range();
           std::map<CelData*, Cel*> relatedCels;
           timeline->prepareToMoveRange();
 
@@ -186,6 +187,9 @@ void NewFrameCommand::onExecute(Context* context)
     transaction.commit();
   }
   update_screen_for_document(document);
+
+  if (!context->isUIAvailable())
+    return;
 
   StatusBar::instance()
     ->showTip(1000, "New frame %d/%d",
