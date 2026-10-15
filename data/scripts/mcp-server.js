@@ -6,25 +6,34 @@
 // 2025-03-26 and 2025-06-18 revisions. Runs inside LibreSprite on the
 // built-in HTTPServer script API.
 //
-// Run it from the Scripts menu or with `libresprite --script`. The
-// server lives while the app window is open; the console prints the
-// endpoint URL. Point any MCP client at that URL.
+// Run it from the Scripts menu or with `libresprite --script`. A
+// configuration dialog (host, port, read-only, CORS, allowed origins)
+// opens and the server auto-starts with the current settings; Start
+// re-applies them, Stop stops it, and closing the dialog shuts it down.
+// In headless (--batch/--script) mode there is no dialog: the server
+// auto-starts with the stored settings (or defaults) and the console
+// prints the endpoint URL. Point any MCP client at that URL.
 //
 // Limitations:
 //  - JSON responses only: no SSE streams, no sessions, no auth.
-//  - Binds to localhost.
+//  - Binds to the configured host (default: loopback).
 //  - run_command may open dialogs that need user interaction.
 //  - Script edits (pixel_set, palette_set) write pixels directly: they
 //    create no undo history and the canvas may not repaint immediately.
 //    Back up with sprite_save_as before large edits.
 
-// --- config ---
+// --- config (mutable state, applied on each start) ---
 
-const HOST = "127.0.0.1";
-const PORT = 0; // 0 = first free port in 9000-9099
-const READ_ONLY = false; // if true, the mutating tools are disabled
-const ALLOW_CORS = true;
-const ALLOWED_ORIGINS = { localhost: 1, "127.0.0.1": 1, "::1": 1 };
+let HOST = "127.0.0.1";
+let PORT = 0; // 0 = first free port in 9000-9099
+let READ_ONLY = false; // if true, the mutating tools are disabled
+let ALLOW_CORS = true;
+// Browser origins allowed through the 403 gate (a host set). Rebuilt from
+// the "Allowed origins" list on each start; a "*" entry allows any origin.
+let ALLOWED_ORIGINS = { localhost: 1, "127.0.0.1": 1, "::1": 1 };
+
+let dialog = null; // the config dialog (null in headless mode)
+let server = null; // the running HTTPServer (null when stopped)
 
 // --- protocol constants ---
 
@@ -520,7 +529,7 @@ function originBlock(req) {
   if (!origin || origin === "null")
     return null;
   const host = originHost(origin);
-  if (!host || !ALLOWED_ORIGINS[host])
+  if (!host || (!ALLOWED_ORIGINS[host] && !ALLOWED_ORIGINS["*"]))
     return { status: 403, body: "Forbidden: non-local Origin" };
   return null;
 }
@@ -612,22 +621,174 @@ function statusPage() {
     "<p>Tools: " + TOOLS.map((t) => t.name).join(", ") + "</p></body></html>";
 }
 
-// --- startup ---
+// --- dialog + startup ---
 
-const server = new HTTPServer({
-  host: HOST,
-  port: PORT,
-  defaultHeaders: ALLOW_CORS ? CORS_HEADERS : {},
-  onPost: handlePost,
-  onGet: handleGet,
-  onOptions: handleOptions,
-  onDelete: handleDelete,
-});
-
-const boundPort = server.start();
-if (!boundPort) {
-  console.log("MCP server could not start: " + server.error);
-} else {
-  console.log("MCP server listening on http://localhost:" + boundPort +
-    "/mcp (read-only: " + READ_ONLY + ")");
+// storage.load() stores values as strings, so a saved checkbox comes back as
+// "true"/"false" - only accept booleans and those two strings.
+function loadBool(key, fallback) {
+  const v = storage.get(key);
+  if (typeof v === "boolean")
+    return v;
+  if (v === "true")
+    return true;
+  if (v === "false")
+    return false;
+  return fallback;
 }
+
+// Reads a config value: the widget's value in GUI mode, else the stored
+// value, else the fallback. storage.load() stores values as strings, so
+// everything is coerced to a string here.
+function entryValue(id, fallback) {
+  if (dialog) {
+    const w = dialog.get(id);
+    if (w)
+      return String(w.value);
+  }
+  const v = storage.get(id);
+  return (v === null || v === undefined) ? String(fallback) : String(v);
+}
+
+// Checkbox variant of entryValue: the widget's checked property in GUI mode,
+// else the stored value (a "true"/"false" string after storage.load), else
+// the fallback.
+function checkBoxValue(id, fallback) {
+  if (dialog) {
+    const w = dialog.get(id);
+    if (w)
+      return !!w.checked;
+  }
+  return loadBool(id, fallback);
+}
+
+// The "Allowed origins" entry text -> the ALLOWED_ORIGINS set. Tokens are
+// split on commas/whitespace, trimmed, lowercased; empty tokens are dropped.
+// An empty list allows no browser origins (fail-closed; it does NOT mean
+// "allow all" - use a literal "*" for that).
+function parseOrigins(text) {
+  const set = {};
+  for (const t of String(text).split(/[\s,]+/)) {
+    if (!t)
+      continue;
+    set[t.toLowerCase()] = 1;
+  }
+  return set;
+}
+
+function statusText() {
+  if (server)
+    return "Listening on http://" + HOST + ":" + server.port + "/mcp" +
+      (HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1" ? "" : " (reachable from the network)");
+  return "Stopped";
+}
+
+// User-facing feedback: the dialog's status label in GUI mode, console.log
+// in headless mode.
+function setStatus(text) {
+  if (dialog) {
+    const label = dialog.get("status");
+    if (label)
+      label.text = text;
+  } else {
+    console.log(text);
+  }
+}
+
+function buildServer() {
+  return new HTTPServer({
+    host: HOST,
+    port: PORT,
+    defaultHeaders: ALLOW_CORS ? CORS_HEADERS : {},
+    onPost: handlePost,
+    onGet: handleGet,
+    onOptions: handleOptions,
+    onDelete: handleDelete,
+  });
+}
+
+// Reads the config (widgets in GUI mode, storage in headless), applies it to
+// the mutable state above, stops the old server (if any), and starts a new
+// one. storage.save() persists the config for the next run.
+function start() {
+  HOST = entryValue("host", "127.0.0.1");
+  PORT = (parseInt(entryValue("port", "0"), 10) || 0) | 0;
+  READ_ONLY = checkBoxValue("readOnly", false);
+  ALLOW_CORS = checkBoxValue("cors", true);
+  ALLOWED_ORIGINS = parseOrigins(entryValue("origins", "localhost, 127.0.0.1, ::1"));
+
+  if (server)
+    server.stop();
+  server = buildServer();
+  const boundPort = server.start();
+  if (!boundPort) {
+    setStatus("Could not start: " + server.error);
+    server = null;
+  } else {
+    setStatus(statusText());
+  }
+  storage.save("host");
+  storage.save("port");
+  storage.save("readOnly");
+  storage.save("cors");
+  storage.save("origins");
+}
+
+const eventHandlers = {
+  init() {
+    storage.load("host");
+    storage.load("port");
+    storage.load("readOnly");
+    storage.load("cors");
+    storage.load("origins");
+    if (!app.isHeadless) {
+      dialog = app.createDialog("mcp");
+      dialog.title = "MCP Server";
+      dialog.addEntry("Host:", "host");
+      dialog.addBreak();
+      dialog.addIntEntry("Port:", "port", 0, 65535);
+      dialog.addBreak();
+      dialog.addEntry("Allowed origins:", "origins");
+      dialog.addBreak();
+      dialog.addCheckBox("Allow CORS", "cors");
+      dialog.addBreak();
+      dialog.addCheckBox("Read-only", "readOnly");
+      dialog.addBreak();
+      dialog.addLabel("Stopped", "status");
+      dialog.addBreak();
+      dialog.addButton("Stop", "stop");
+      dialog.addButton("Start", "start");
+      const host = dialog.get("host");
+      host.value = storage.get("host") || "127.0.0.1";
+      const port = dialog.get("port");
+      port.value = (parseInt(storage.get("port"), 10) || 0) | 0;
+      dialog.get("readOnly").checked = loadBool("readOnly", false);
+      dialog.get("cors").checked = loadBool("cors", true);
+      dialog.get("origins").value = storage.get("origins") || "localhost, 127.0.0.1, ::1";
+    }
+    // Auto-start: a headless --script run has no one to click Start.
+    start();
+  },
+
+  start_click() {
+    start();
+  },
+
+  stop_click() {
+    if (server)
+      server.stop();
+    server = null;
+    setStatus("Stopped");
+  },
+
+  mcp_close() {
+    if (server)
+      server.stop();
+    server = null;
+  },
+};
+
+setEventHandler((eventName, ...args) => {
+  const handler = eventHandlers[eventName];
+  if (typeof handler === "function")
+    handler();
+});
