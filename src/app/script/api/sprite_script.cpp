@@ -23,6 +23,7 @@
 #include "doc/palette.h"
 #include "doc/sprite.h"
 
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -33,6 +34,11 @@
 // snapshot. Sub-objects (`layer`, `palette`, `cel`, `image`) are wrapped
 // snapshots of the specific doc objects.
 namespace {
+  doc::frame_t toFrame(double value, doc::frame_t max) {
+    if (value != std::floor(value) || value < 0 || value > max)
+      throw std::runtime_error{"Frame out of range"};
+    return (doc::frame_t)value;
+  }
   app::Document* activeDocument() {
     return app::UIContext::instance()->activeDocument();
   }
@@ -56,6 +62,10 @@ public:
 
     clazz.addGetter("layerCount") = [](SpriteSite&) -> JSON::Value {
       return (double)activeSprite()->countLayers();
+    };
+
+    clazz.addGetter("frameCount") = [](SpriteSite&) -> JSON::Value {
+      return (double)activeSprite()->totalFrames();
     };
 
     clazz.addGetter("filename") = [](SpriteSite&) -> JSON::Value {
@@ -103,6 +113,39 @@ public:
     // is no persistent transaction to commit here. Kept as a no-op for
     // backward compatibility with the old API.
     clazz.addMethod("commit") = [](SpriteSite&) -> JSON::Value {
+      return {};
+    };
+
+    clazz.addMethod("addEmptyFrame") = [](SpriteSite&, double frame) -> JSON::Value {
+      auto* spr = activeSprite();
+      auto* doc = activeDocument();
+      auto at = toFrame(frame, spr->totalFrames());
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      doc->getApi(tx).addEmptyFrame(spr, at);
+      tx.commit();
+      return {};
+    };
+
+    clazz.addMethod("copyFrame") = [](SpriteSite&, double from, double to) -> JSON::Value {
+      auto* spr = activeSprite();
+      auto* doc = activeDocument();
+      auto src = toFrame(from, spr->totalFrames() - 1);
+      auto dst = toFrame(to, spr->totalFrames());
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      doc->getApi(tx).copyFrame(spr, src, dst);
+      tx.commit();
+      return {};
+    };
+
+    clazz.addMethod("removeFrame") = [](SpriteSite&, double frame) -> JSON::Value {
+      auto* spr = activeSprite();
+      auto* doc = activeDocument();
+      auto at = toFrame(frame, spr->totalFrames() - 1);
+      if (spr->totalFrames() < 2)
+        throw std::runtime_error{"Cannot remove the only frame"};
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      doc->getApi(tx).removeFrame(spr, at);
+      tx.commit();
       return {};
     };
 

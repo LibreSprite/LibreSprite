@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import time
+import zlib
+from dataclasses import dataclass
+from pathlib import Path
+
+USAGE = """lsprite - headless LibreSprite CLI
+
+  lsprite new FILE --w 32 --h 32 [--bg COLOR]
+  lsprite info FILE
+  lsprite render FILE [--out PNG] [--scale N|auto] [--frame N]
+  lsprite sheet FILE --out PNG [--data JSON]
+  lsprite pixels FILE [--layer N --frame N --x --y --w --h] [--ascii]
+  lsprite draw FILE --ops JSON|@file.json|- [--layer N --frame N]
+  lsprite palette FILE [--set '{"0":"#ff0000"}'] [--load PAL]
+  lsprite layer list|add|rename|show|hide|lock|unlock FILE [--index N --name S]
+  lsprite frame list|add|remove FILE [--at N] [--copy FROM] [--index N]
+  lsprite resize FILE --w N --h N
+  lsprite crop FILE --x --y --w --h
+  lsprite flip FILE [--vertical]
+  lsprite mode FILE rgb|grayscale|indexed [--dithering none|ordered]
+  lsprite commands
+  lsprite command-info ID
+  lsprite cmd FILE ID [name=value ...]
+  lsprite eval FILE --code JS [--no-save]
+  lsprite run FILE SCRIPT.js [--no-save]
+  lsprite gui [FILE]
+
+Mutating commands save in place unless --out PATH is given, and print a
+preview PNG path unless --no-preview is given.
+Colors: #RGB, #RRGGBB, #RRGGBBAA, [r,g,b,a] or transparent."""
+
+RESULT_MARK = "@@lsprite "
+PREVIEW_TARGET = 512
+MUTATING = {"draw", "palette", "layer", "frame", "resize", "crop", "flip", "mode", "cmd", "eval", "new"}
+PAYLOAD_FLAGS = ("--ops", "--set", "--code")
+NO_FILE_COMMANDS = {"commands", "command-info"}
+ACTION_COMMANDS = {"layer", "frame"}
+
+
+class LspriteError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class Paths:
+    binary: Path
+    script: Path
+    previews: Path
+
+    @classmethod
+    def from_env(cls):
+        repo = Path(os.environ.get("LSPRITE_REPO", Path(__file__).resolve().parents[1]))
+        binary = Path(os.environ.get("LSPRITE_BIN", repo / "build/bin/libresprite"))
+        if not binary.exists() and shutil.which("libresprite"):
+            binary = Path(shutil.which("libresprite"))
+        return cls(
+            binary=binary,
+            script=Path(os.environ.get("LSPRITE_SCRIPT", repo / "data/scripts/cli.js")),
+            previews=Path(os.environ.get("LSPRITE_PREVIEWS", Path.home() / ".cache/lsprite/previews")),
+        )
+
+
+class Args:
+    def __init__(self, items):
+        self.items = list(items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, index):
+        return self.items[index]
+
+    def first(self, usage):
+        if not self.items or self.items[0].startswith("--"):
+            raise LspriteError("usage: " + usage)
+        return self.items[0]
+
+    def has(self, name):
+        return "--" + name in self.items
+
+    def get(self, name, default=None):
+        key = "--" + name
+        for i, item in enumerate(self.items):
+            if item == key and i + 1 < len(self.items):
+                return self.items[i + 1]
+            if item.startswith(key + "="):
+                return item[len(key) + 1:]
+        return default
+
+    def with_payloads(self):
+        items = list(self.items)
+        for i in range(1, len(items)):
+            if items[i - 1] not in PAYLOAD_FLAGS:
+                continue
+            if items[i] == "-":
+                items[i] = sys.stdin.read()
+            elif items[i].startswith("@") and Path(items[i][1:]).is_file():
+                items[i] = Path(items[i][1:]).read_text()
+        return Args(items)
+
+    def with_absolute(self, index):
+        items = list(self.items)
+        if index < len(items) and not items[index].startswith("--"):
+            items[index] = absolute(items[index])
+        return Args(items)
+
+
+def absolute(path):
+    return str(Path(path).expanduser().resolve())
+
+
+def parse_color(value):
+    if value in (None, "transparent", "none"):
+        return (0, 0, 0, 0)
+    digits = value.lstrip("#")
+    if len(digits) == 3:
+        digits = "".join(ch * 2 for ch in digits)
+    if len(digits) not in (6, 8):
+        raise LspriteError(f"invalid color {value}")
+    rgba = [int(digits[i:i + 2], 16) for i in range(0, len(digits), 2)]
+    return tuple(rgba + [255] * (4 - len(rgba)))
+
+
+def write_png(path, width, height, rgba):
+    def chunk(tag, data):
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+    rows = b"".join(b"\x00" + bytes(rgba) * width for _ in range(height))
+    Path(path).write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(rows))
+        + chunk(b"IEND", b"")
+    )
+
+
+class LibreSprite:
+    def __init__(self, paths):
+        self.paths = paths
+
+    def _binary(self):
+        if not self.paths.binary.exists():
+            raise LspriteError(f"LibreSprite binary not found at {self.paths.binary} (set LSPRITE_BIN)")
+        return str(self.paths.binary)
+
+    def script(self, argv):
+        source = f"const LSPRITE_ARGV = {json.dumps(argv)};\n" + self.paths.script.read_text()
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "lsprite.js"
+            script.write_text(source)
+            proc = subprocess.run([self._binary(), "--batch", "--script", str(script)], capture_output=True, text=True)
+        output = proc.stdout + "\n" + proc.stderr
+        for line in output.splitlines():
+            if line.startswith(RESULT_MARK):
+                return json.loads(line[len(RESULT_MARK):])
+        tail = "\n".join(output.strip().splitlines()[-15:])
+        return {"ok": False, "error": f"no result from LibreSprite (exit {proc.returncode})", "log": tail}
+
+    def native(self, args):
+        proc = subprocess.run([self._binary(), "--batch", *args], capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise LspriteError(f"libresprite failed (exit {proc.returncode}): {proc.stdout[-800:]}{proc.stderr[-800:]}")
+
+    def gui(self, file=None):
+        args = [self._binary()] + ([absolute(file)] if file else [])
+        subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+    def size(self, path):
+        info = self.script(["info", path])
+        if not info.get("ok"):
+            raise LspriteError(info.get("error", "info failed"))
+        return info["width"], info["height"], info["frames"]
+
+
+class Cli:
+    def __init__(self, ls):
+        self.ls = ls
+        self.local = {
+            "new": self.new,
+            "render": self.render,
+            "sheet": self.sheet,
+            "gui": self.gui,
+            "run": self.run,
+        }
+
+    def new(self, args):
+        target = Path(absolute(args.first("lsprite new FILE --w N --h N [--bg COLOR]")))
+        width, height = int(args.get("w", 32)), int(args.get("h", 32))
+        rgba = parse_color(args.get("bg"))
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.suffix.lower() == ".png":
+            write_png(target, width, height, rgba)
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                blank = Path(tmp) / "blank.png"
+                write_png(blank, width, height, rgba)
+                self.ls.native([str(blank), "--save-as", str(target)])
+        return {"ok": True, "created": str(target), "width": width, "height": height}
+
+    def render(self, args, preview=False):
+        src = absolute(args.first("lsprite render FILE [--out PNG] [--scale N|auto] [--frame N]"))
+        out = absolute(self._preview_path(src) if preview or not args.get("out") else args.get("out"))
+        frame = args.get("frame")
+        width, height, frames = self.ls.size(src)
+        strip = frame is None and frames > 1
+        span = width * frames if strip else width
+        scale = args.get("scale", "auto")
+        scale = self._auto_scale(width, height, span) if scale == "auto" else int(scale)
+        scaling = ["--scale", str(scale)] if scale != 1 else []
+        if strip:
+            self.ls.native([src, *scaling, "--sheet", out])
+            shown = "all frames left to right"
+        else:
+            frame = int(frame or 0)
+            if not 0 <= frame < frames:
+                raise LspriteError(f"frame {frame} out of range (0..{frames - 1})")
+            self._render_frame(src, frame, frames, scaling, out)
+            shown = f"frame {frame}"
+        if not Path(out).exists():
+            raise LspriteError(f"render produced no file at {out}")
+        return {"ok": True, "preview": out, "frames": frames, "shown": shown, "scale": scale, "size": [span * scale, height * scale]}
+
+    def sheet(self, args):
+        out = args.get("out")
+        if not out:
+            raise LspriteError("usage: lsprite sheet FILE --out PNG [--data JSON]")
+        src = absolute(args.first("lsprite sheet FILE --out PNG [--data JSON]"))
+        data = args.get("data")
+        self.ls.native([src, "--sheet", out, *(["--data", data] if data else [])])
+        return {"ok": True, "sheet": out, "data": data}
+
+    def gui(self, args):
+        file = args[0] if len(args) else None
+        self.ls.gui(file)
+        return {"ok": True, "gui": True, "file": file}
+
+    def run(self, args):
+        if len(args) < 2:
+            raise LspriteError("usage: lsprite run FILE SCRIPT.js [--no-save]")
+        code = Path(args[1]).read_text()
+        return self.ls.script(["eval", absolute(args[0]), "--code", code, *args.items[2:]])
+
+    def remote(self, name, args):
+        args = args.with_payloads()
+        if name not in NO_FILE_COMMANDS:
+            args = args.with_absolute(1 if name in ACTION_COMMANDS else 0)
+        return self.ls.script([name, *args.items]), args
+
+    def dispatch(self, name, args):
+        if name in self.local:
+            result = self.local[name](args)
+        else:
+            result, args = self.remote(name, args)
+        if name == "run":
+            name = "eval"
+        return result, name, args
+
+    def with_preview(self, result, name, args):
+        if not result.get("ok") or not self._changes_file(name, args):
+            return result
+        target = result.get("saved") or result.get("created")
+        if not target:
+            return result
+        frame = args.get("frame")
+        rendered = self.render(Args([target, *([f"--frame={frame}"] if frame else [])]), preview=True)
+        return {**result, "preview": rendered["preview"]}
+
+    def _changes_file(self, name, args):
+        if name not in MUTATING:
+            return False
+        if name in ACTION_COMMANDS and len(args) and args[0] == "list":
+            return False
+        if name == "palette" and args.get("set") is None and args.get("load") is None:
+            return False
+        if name == "eval" and args.has("no-save"):
+            return False
+        return True
+
+    def _render_frame(self, src, frame, frames, scaling, out):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.ls.native([src, *scaling, "--save-as", str(Path(tmp) / "frame.png")])
+            rendered = Path(tmp) / ("frame.png" if frames == 1 else f"frame{frame + 1}.png")
+            if rendered.exists():
+                shutil.move(str(rendered), out)
+
+    def _preview_path(self, src):
+        self.ls.paths.previews.mkdir(parents=True, exist_ok=True)
+        return self.ls.paths.previews / f"{Path(src).stem}-{time.strftime('%H%M%S')}-{os.getpid()}.png"
+
+    @staticmethod
+    def _auto_scale(width, height, span):
+        return max(1, min(PREVIEW_TARGET // max(width, height), (PREVIEW_TARGET * 2) // max(span, height)))
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        print(USAGE)
+        return 0
+    name, preview = argv[0], "--no-preview" not in argv
+    args = Args(a for a in argv[1:] if a != "--no-preview")
+    cli = Cli(LibreSprite(Paths.from_env()))
+    try:
+        result, name, args = cli.dispatch(name, args)
+        if preview:
+            result = cli.with_preview(result, name, args)
+    except LspriteError as e:
+        result = {"ok": False, "error": str(e)}
+    print(json.dumps(result, ensure_ascii=False))
+    return 0 if result.get("ok") else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

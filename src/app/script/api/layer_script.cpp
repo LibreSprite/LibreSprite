@@ -10,8 +10,15 @@
 #include "di.hpp"
 #include "app/script/api/script_api_common.h"
 
+#include "app/document.h"
+#include "app/document_api.h"
+#include "app/transaction.h"
+#include "app/ui_context.h"
 #include "doc/cel.h"
+#include "doc/image.h"
 #include "doc/layer.h"
+#include "doc/primitives.h"
+#include "doc/sprite.h"
 
 #include <memory>
 
@@ -74,6 +81,22 @@ public:
 
     clazz.addMethod("cel") = [](doc::Layer& layer, double i) -> JSON::Value {
       return JSON::makeNative(layer.cel((doc::frame_t)i));
+    };
+
+    clazz.addMethod("createCel") = [](doc::Layer& layer, double i) -> JSON::Value {
+      auto frame = (doc::frame_t)i;
+      auto* sprite = layer.sprite();
+      if (!layer.isImage() || frame < 0 || frame >= sprite->totalFrames())
+        return JSON::Value{JSON::Special::Null};
+      if (!layer.cel(frame)) {
+        auto* doc = static_cast<app::Document*>(sprite->document());
+        doc::ImageRef image(doc::Image::create(sprite->pixelFormat(), sprite->width(), sprite->height()));
+        doc::clear_image(image.get(), sprite->transparentColor());
+        app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+        doc->getApi(tx).addCel(static_cast<doc::LayerImage*>(&layer), frame, image);
+        tx.commit();
+      }
+      return JSON::makeNative(layer.cel(frame));
     };
   }
 };

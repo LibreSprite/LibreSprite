@@ -7,6 +7,7 @@
    - `filename`: read-only. Returns the file name of the sprite.
    - `colorMode`: read-only. Returns the sprite's ColorMode.
    - `layerCount`: read-only. Returns the amount of layers in the sprite.
+   - `frameCount`: read-only. Returns the amount of frames in the sprite.
 
 ## Methods:
    - `loadPalette(fileName)`:
@@ -27,6 +28,22 @@
      - asCopy: If true, the file is saved as a copy. Requires fileName to be specified.
       returns: Nothing
       saves the sprite.
+
+   - `addEmptyFrame(frame)`:
+     - frame: The index of the new frame, from 0 to frameCount.
+      returns: Nothing
+      inserts an empty frame.
+
+   - `copyFrame(fromFrame, toFrame)`:
+     - fromFrame: The index of the frame to copy.
+     - toFrame: The index of the new frame, from 0 to frameCount.
+      returns: Nothing
+      inserts a copy of a frame.
+
+   - `removeFrame(frame)`:
+     - frame: The index of the frame to remove.
+      returns: Nothing
+      removes a frame. The last frame cannot be removed.
 
    - `resize(width, height)`:
      - width: The new width.
@@ -220,6 +237,11 @@ paths are used as-is.
      - index: The number of the Cel
       returns: A Cel object or null if an invalid index is passed
       retrieves a Cel
+
+   - `createCel(index)`:
+     - index: The number of the frame
+      returns: The Cel at the frame, or null for a folder layer or an invalid index
+      creates an empty sprite-sized Cel if the frame has none
 
 
 
