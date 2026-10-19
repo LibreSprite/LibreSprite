@@ -9,12 +9,15 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/cmd/set_palette.h"
 #include "app/commands/command.h"
 #include "app/commands/params.h"
+#include "app/console.h"
 #include "app/context_access.h"
 #include "app/modules/palettes.h"
 #include "app/transaction.h"
+#include "base/log.h"
 #include "doc/palette.h"
 #include "doc/sprite.h"
 
@@ -31,6 +34,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -50,8 +54,44 @@ void PaletteSizeCommand::onLoadParams(const Params& params)
   m_size = params.get_as<int>("size");
 }
 
+std::vector<CommandParamInfo> PaletteSizeCommand::onDescribeParams() const
+{
+  return {
+    {"size", "New palette size in colors. With this, resizes the palette without the dialog.", false, ""},
+  };
+}
+
 void PaletteSizeCommand::onExecute(Context* context)
 {
+  // With the size param, resize the palette without the dialog.
+  if (m_size > 0) {
+    ContextWriter writer(context);
+    Sprite* sprite = writer.sprite();
+    frame_t frame = writer.frame();
+    auto palette = sprite->palette(frame)->clone();
+
+    if (m_size == palette->size())
+      return;
+
+    palette->resize(MID(1, m_size, INT_MAX));
+
+    Transaction transaction(context, "Palette Size", ModifyDocument);
+    transaction.execute(new cmd::SetPalette(sprite, frame, *palette));
+    transaction.commit();
+
+    set_current_palette(palette.get(), false);
+    ui::Manager::getDefault()->invalidate();
+    return;
+  }
+
+  // The dialog would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("PaletteSize: not available in headless mode\n");
+    Console console(context);
+    console.printf("PaletteSize: not available in headless mode\n");
+    return;
+  }
+
   ContextWriter writer(context);
   Sprite* sprite = writer.sprite();
   frame_t frame = writer.frame();
