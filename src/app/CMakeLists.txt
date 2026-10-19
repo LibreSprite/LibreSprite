@@ -391,6 +391,7 @@ add_library(app-lib
   tools/intertwine.cpp
   tools/pick_ink.cpp
   tools/point_shape.cpp
+  tools/script_tool_loop.cpp
   tools/stroke.cpp
   tools/symmetry.cpp
   tools/tool_box.cpp
