@@ -8,7 +8,9 @@
 // The `tools` object: run a freehand tool gesture (pencil, eraser, spray,
 // contour, blur, jumble) with synthetic pointer events. One stroke() call
 // is one tool gesture, so it is one undo step (the driver owns the
-// Transaction). The target document becomes active after the call.
+// Transaction; inside an app.transaction() scope the strokes join the
+// scope's transaction instead). The target document becomes active after
+// the call.
 
 #include "delta/Extension.hpp"
 #include "delta/JSON.hpp"
@@ -301,8 +303,11 @@ public:
       // so long strokes are not batched. Revisit batching if scripts need
       // very long freehand paths.
       //
-      // Run the gesture. The driver makes the document active, validates the
-      // layer state, and owns the Transaction (one undo step).
+      // Run the gesture. The driver makes the document active and
+      // validates the layer state. It owns the Transaction (one undo
+      // step) unless an app.transaction() scope is open: then the loop
+      // joins the scope's transaction (the driver sets
+      // cfg.externalTransaction).
       app::ScriptToolLoopConfig cfg;
       cfg.context = ctx;
       cfg.document = document;
@@ -315,7 +320,6 @@ public:
       cfg.bg = bg;
       cfg.opacity = opacity;
       cfg.filled = filled;
-      // cfg.externalTransaction stays null: the loop owns its Transaction.
 
       app::run_tool_events(cfg, events);
       return {};
