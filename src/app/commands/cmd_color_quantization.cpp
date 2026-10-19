@@ -12,6 +12,7 @@
 #include "app/app.h"
 #include "app/cmd/set_palette.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/console.h"
 #include "app/context.h"
 #include "app/context_access.h"
@@ -21,6 +22,7 @@
 #include "app/transaction.h"
 #include "app/ui/color_bar.h"
 #include "app/ui_context.h"
+#include "base/log.h"
 #include "doc/palette.h"
 #include "doc/sprite.h"
 #include "render/quantization.h"
@@ -38,8 +40,15 @@ public:
   Command* clone() const override { return new ColorQuantizationCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  int m_colors;
+  bool m_alpha;
+  bool m_hasAlpha; // true when the alpha param is given
 };
 
 class ColorQuantizationJob : public Job,
@@ -78,6 +87,30 @@ ColorQuantizationCommand::ColorQuantizationCommand()
             "Create Palette from Current Sprite (Color Quantization)",
             CmdRecordableFlag)
 {
+  m_colors = 0;
+  m_alpha = false;
+  m_hasAlpha = false;
+}
+
+void ColorQuantizationCommand::onLoadParams(const Params& params)
+{
+  m_colors = 0;
+  m_alpha = false;
+  m_hasAlpha = false;
+  if (params.has_param("colors"))
+    m_colors = params.get_as<int>("colors");
+  if (params.has_param("alpha")) {
+    m_alpha = (params.get("alpha") == "true");
+    m_hasAlpha = true;
+  }
+}
+
+std::vector<CommandParamInfo> ColorQuantizationCommand::onDescribeParams() const
+{
+  return {
+    {"colors", "Size of the new quantized palette. With this, runs without the dialog.", false, ""},
+    {"alpha", "Keep the alpha channel in the palette (true or false).", false, ""},
+  };
 }
 
 bool ColorQuantizationCommand::onEnabled(Context* context)
@@ -88,6 +121,53 @@ bool ColorQuantizationCommand::onEnabled(Context* context)
 void ColorQuantizationCommand::onExecute(Context* context)
 {
   try {
+    // With the colors param, run the "new palette" path without the dialog.
+    if (m_colors > 0) {
+      Sprite* sprite;
+      frame_t frame;
+      Palette* curPalette;
+      {
+        ContextReader reader(context);
+        Site site = context->activeSite();
+        sprite = site.sprite();
+        frame = site.frame();
+        curPalette = sprite->palette(frame);
+      }
+
+      bool withAlpha = m_hasAlpha ? m_alpha :
+        App::instance()->preferences().quantization.withAlpha();
+
+      PalettePicks entries(m_colors);
+      entries.all();
+
+      auto tmpPalette = Palette::create(entries.picks());
+      tmpPalette->setFrame(frame);
+      ColorQuantizationJob job(sprite, withAlpha, *tmpPalette);
+      job.startJob();
+      job.waitJob();
+      if (job.isCanceled())
+        return;
+
+      if (*curPalette != *tmpPalette) {
+        ContextWriter writer(UIContext::instance(), 500);
+        Transaction transaction(writer.context(), "Color Quantization", ModifyDocument);
+        transaction.execute(new cmd::SetPalette(sprite, frame, *tmpPalette));
+        transaction.commit();
+
+        set_current_palette(tmpPalette.get(), false);
+        ui::Manager::getDefault()->invalidate();
+      }
+      return;
+    }
+
+    // The dialog would block headless.
+    if (!App::instance()->isGui()) {
+      LOG("ColorQuantization: not available in headless mode\n");
+      Console console(context);
+      console.printf("ColorQuantization: not available in headless mode\n");
+      return;
+    }
+
     app::gen::PaletteFromSprite window;
     PalettePicks entries;
 
