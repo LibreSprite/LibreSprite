@@ -69,6 +69,7 @@ ScriptToolLoop::ScriptToolLoop(const ScriptToolLoopConfig& config)
   , m_opacity(config.opacity)
   , m_tolerance(config.tolerance)
   , m_contiguous(config.contiguous)
+  , m_modifiers(config.modifiers)
   , m_zoom(1, 1)
   , m_button(config.button)
   , m_ink((config.inkOverride ? config.inkOverride: m_tool->getInk(m_button))->clone())
@@ -334,6 +335,8 @@ int ScriptToolLoop::getOpacity() { return m_opacity; }
 int ScriptToolLoop::getTolerance() { return m_tolerance; }
 bool ScriptToolLoop::getContiguous() { return m_contiguous; }
 tools::ToolLoopModifiers ScriptToolLoop::getModifiers() {
+  if (m_modifiers != tools::ToolLoopModifiers::kNone)
+    return m_modifiers;
   // The default selection mode replaces the selection (as the GUI),
   // so the selection ink adds to the mask in the final step.
   if (m_ink->isSelection())
