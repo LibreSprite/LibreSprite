@@ -11,6 +11,8 @@
 
 #include "app/app.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
+#include "app/console.h"
 #include "app/context.h"
 #include "app/context_access.h"
 #include "app/document.h"
@@ -20,6 +22,7 @@
 #include "app/pref/preferences.h"
 #include "app/ui/status_bar.h"
 #include "app/ui_context.h"
+#include "base/log.h"
 #include "doc/document.h"
 #include "doc/mask.h"
 #include "ui/window.h"
@@ -86,11 +89,17 @@ protected:
 };
 
 class GridSettingsCommand : public Command {
+  int m_x, m_y, m_w, m_h;
+  bool m_hasX, m_hasY; // optional: keep the current origin when absent
+  bool m_hasBounds; // true when width and height are given (skip the dialog)
+
 public:
   GridSettingsCommand();
   Command* clone() const override { return new GridSettingsCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 };
@@ -100,6 +109,29 @@ GridSettingsCommand::GridSettingsCommand()
             "Grid Settings",
             CmdUIOnlyFlag)
 {
+  m_x = m_y = m_w = m_h = 0;
+  m_hasX = m_hasY = m_hasBounds = false;
+}
+
+void GridSettingsCommand::onLoadParams(const Params& params)
+{
+  m_x = m_y = m_w = m_h = 0;
+  m_hasX = m_hasY = m_hasBounds = false;
+  if (params.has_param("x"))      { m_x = params.get_as<int>("x");      m_hasX = true; }
+  if (params.has_param("y"))      { m_y = params.get_as<int>("y");      m_hasY = true; }
+  if (params.has_param("width"))  m_w = params.get_as<int>("width");
+  if (params.has_param("height")) m_h = params.get_as<int>("height");
+  m_hasBounds = params.has_param("width") && params.has_param("height");
+}
+
+std::vector<CommandParamInfo> GridSettingsCommand::onDescribeParams() const
+{
+  return {
+    {"x", "Grid origin x in pixels (optional).", false, ""},
+    {"y", "Grid origin y in pixels (optional).", false, ""},
+    {"width", "Grid width in pixels. With height, sets the grid bounds without the dialog.", false, ""},
+    {"height", "Grid height in pixels.", false, ""},
+  };
 }
 
 bool GridSettingsCommand::onEnabled(Context* context)
@@ -109,6 +141,32 @@ bool GridSettingsCommand::onEnabled(Context* context)
 
 void GridSettingsCommand::onExecute(Context* context)
 {
+  DocumentPreferences& docPref = Preferences::instance().document(context->activeDocument());
+
+  // With width and height params, set the grid bounds without the dialog.
+  if (m_hasBounds) {
+    Rect bounds = docPref.grid.bounds();
+    if (m_hasX) bounds.x = m_x;
+    if (m_hasY) bounds.y = m_y;
+    bounds.w = MAX(m_w, 1);
+    bounds.h = MAX(m_h, 1);
+
+    docPref.grid.bounds(bounds);
+
+    // Make grid visible
+    if (!docPref.show.grid())
+      docPref.show.grid(true);
+    return;
+  }
+
+  // Interactive only: the dialog would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("GridSettings: not available in headless mode\n");
+    Console console(context);
+    console.printf("GridSettings: not available in headless mode\n");
+    return;
+  }
+
   std::unique_ptr<Window> window(app::load_widget<Window>("grid_settings.xml", "grid_settings"));
   Widget* button_ok = app::find_widget<Widget>(window.get(), "ok");
   Widget* grid_x = app::find_widget<Widget>(window.get(), "grid_x");
@@ -116,7 +174,6 @@ void GridSettingsCommand::onExecute(Context* context)
   Widget* grid_w = app::find_widget<Widget>(window.get(), "grid_w");
   Widget* grid_h = app::find_widget<Widget>(window.get(), "grid_h");
 
-  DocumentPreferences& docPref = Preferences::instance().document(context->activeDocument());
   Rect bounds = docPref.grid.bounds();
 
   grid_x->setTextf("%d", bounds.x);
