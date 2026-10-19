@@ -1329,6 +1329,36 @@ Every method also accepts these common options:
       returns: Nothing
       Runs the paint bucket tool.
 
+    - `text(options)`:
+      - options: an object; `x`, `y`, `string`, `font` and `size` are
+        required, plus `color`, `antialias`, `layer` and `frame` (the
+        `tool`, `ink`, `brush` and `opacity` options do not apply).
+      - x, y: Required. Where the text's top-left lands, in sprite
+        coordinates. Negative values are allowed; the text is clipped to
+        the sprite bounds.
+      - string: Required. The text to render (a single line: a newline
+        does not start a new line).
+      - font: Required. A TTF/OTF font file path. An absolute path is used
+        as is; a relative path resolves against the script's directory
+        (as in `fs.*`). There is no system-font lookup - the font must be
+        a file.
+      - size: Required. The font size in pixels, 1-999.
+      - color: Optional. A 32-bit color in 8888 RGBA format (the
+        `pixelColor.rgba` convention). Defaults to the GUI foreground
+        color.
+      - antialias: Optional. A boolean. Defaults to the text tool
+        preference.
+      - layer, frame: As in the common options.
+       returns: Nothing
+       Rasterizes the text (the same rendering as the GUI's Insert Text
+       command) and composites it into the target layer's cel. One undo
+       step (`command.Undo` reverts it); inside `app.transaction(fn)` the
+       call joins the scope's transaction. The write is clipped to the
+       sprite bounds, and with a visible selection only the selected
+       pixels receive the text. Text fully outside the sprite draws
+       nothing. For an indexed sprite the text is converted to the
+       sprite's palette (best fit, no dithering).
+
 The `brush` field is an object:
    - `type`: "circle", "square", "line", or "image".
    - `size`: 1-256, the brush diameter (ignored for `image`).
