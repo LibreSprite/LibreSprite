@@ -11,9 +11,11 @@
 
 #include "app/app.h"
 #include "app/commands/command.h"
+#include "app/console.h"
 #include "app/ini_file.h"
 #include "app/ui/keyboard_shortcuts.h"
 #include "app/ui/main_window.h"
+#include "base/log.h"
 #include "ui/ui.h"
 
 #include "advanced_mode.xml.h"
@@ -42,6 +44,14 @@ AdvancedModeCommand::AdvancedModeCommand()
 
 void AdvancedModeCommand::onExecute(Context* context)
 {
+  // Interactive only: the warning dialog would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("AdvancedMode: not available in headless mode\n");
+    Console console(context);
+    console.printf("AdvancedMode: not available in headless mode\n");
+    return;
+  }
+
   // Switch advanced mode.
   MainWindow* mainWindow = App::instance()->mainWindow();
   MainWindow::Mode oldMode = mainWindow->getMode();
