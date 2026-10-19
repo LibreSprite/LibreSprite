@@ -7,10 +7,10 @@
 
 // The `tools` object: run a GUI drawing-tool gesture (freehand tools,
 // line, rectangle, ellipse, curve, paint bucket) with synthetic pointer
-// events. Each method is one tool gesture, so it is one undo step (the
-// driver owns the Transaction; inside an app.transaction() scope the
-// gestures join the scope's transaction instead). The target document
-// becomes active after the call.
+// events, or rasterize and paste text. Each method is one undo step
+// (the driver owns the Transaction for the gesture methods; inside an
+// app.transaction() scope the changes join the scope's transaction
+// instead). The target document becomes active after the call.
 
 #include "delta/Extension.hpp"
 #include "delta/JSON.hpp"
@@ -19,17 +19,24 @@
 
 #include "app/app.h"
 #include "app/color.h"
+#include "app/console.h"
+#include "app/context_access.h"
 #include "app/document.h"
+#include "app/document_access.h"
 #include "app/modules/editors.h"
 #include "app/pref/preferences.h"
+#include "app/script/app_scripting.h"
 #include "app/tools/ink.h"
 #include "app/tools/script_tool_driver.h"
 #include "app/tools/script_tool_loop.h"
 #include "app/tools/tool.h"
+#include "app/transaction.h"
 #include "app/ui/color_bar.h"
 #include "app/ui/context_bar.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui_context.h"
+#include "app/util/expand_cel_canvas.h"
+#include "app/util/freetype_utils.h"
 #include "doc/brush.h"
 #include "doc/brush_pattern.h"
 #include "doc/brush_type.h"
@@ -37,10 +44,18 @@
 #include "doc/image.h"
 #include "doc/layer.h"
 #include "doc/layer_index.h"
+#include "doc/mask.h"
+#include "doc/primitives.h"
 #include "doc/site.h"
 #include "doc/sprite.h"
+#include "filters/tiled_mode.h"
+#include "gfx/clip.h"
 #include "gfx/point.h"
+#include "gfx/rect.h"
+#include "gfx/region.h"
+#include "render/quantization.h"
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -53,6 +68,24 @@ namespace {
   {
     return id == "pencil" || id == "eraser" || id == "spray" ||
            id == "contour" || id == "blur" || id == "jumble";
+  }
+
+  // Absolute paths pass through; relative paths resolve against the
+  // running script's directory (CWD when no script is active) - the
+  // same resolution as fs.*.
+  std::string resolveFontPath(const std::string& path)
+  {
+    std::filesystem::path p{path};
+    if (p.is_absolute())
+      return path;
+    std::string base = std::filesystem::current_path().string();
+    const std::string script = app::AppScripting::getFileName();
+    if (!script.empty()) {
+      auto parent = std::filesystem::path(script).parent_path();
+      if (!parent.empty())
+        base = parent.string();
+    }
+    return (std::filesystem::path(base) / path).lexically_normal().string();
   }
 
   // Extract a doc::Image from a JSON::Value (a JS `Image` object). The
@@ -147,31 +180,27 @@ namespace {
     return brush;
   }
 
-  // Parse the options shared by all tools.* methods (tool, ink, brush,
-  // color, opacity, layer, frame) and fill the config that
-  // run_tool_events consumes. `defaultToolId` is the tool used when the
-  // `tool` option is absent; when it is null the GUI's active tool is
-  // used (stroke). Throws std::runtime_error on an invalid value.
-  app::ScriptToolLoopConfig parseToolOptions(JSON::Value& opts, const char* methodName, const char* defaultToolId)
+  // The drawing target shared by all tools.* methods: the active
+  // document, the target frame and layer (default: the active editor's
+  // site) and the colors (default: the GUI fg/bg, 'color' overrides
+  // the fg). Throws std::runtime_error on an invalid value.
+  struct DrawingTarget {
+    app::UIContext* context = nullptr;
+    app::Document* document = nullptr;
+    doc::Sprite* sprite = nullptr;
+    doc::frame_t frame = 0;
+    doc::Layer* layer = nullptr;
+    app::Color fg;
+    app::Color bg;
+  };
+
+  DrawingTarget parseDrawingTarget(JSON::Value& opts, const char* methodName)
   {
     auto& o = opts.object();
 
     app::UIContext* ctx = app::UIContext::instance();
     if (!ctx)
       throw std::runtime_error(std::string(methodName) + ": no UI context is available");
-
-    // Tool (default: `defaultToolId`, or the GUI's active tool when null)
-    app::tools::Tool* tool;
-    auto toolIt = o.find("tool");
-    if (toolIt != o.end() && toolIt->second.isString())
-      tool = app::resolve_tool(toolIt->second.string());
-    else if (defaultToolId)
-      tool = app::resolve_tool(defaultToolId);
-    else {
-      tool = app::App::instance()->activeTool();
-      if (!tool)
-        throw std::runtime_error(std::string(methodName) + ": no active tool is available");
-    }
 
     // Document
     app::Document* document = ctx->activeDocument();
@@ -181,10 +210,10 @@ namespace {
     if (!sprite)
       throw std::runtime_error(std::string(methodName) + ": the active document has no sprite");
 
-    app::ScriptToolLoopConfig cfg;
-    cfg.context = ctx;
-    cfg.document = document;
-    cfg.tool = tool;
+    DrawingTarget target;
+    target.context = ctx;
+    target.document = document;
+    target.sprite = sprite;
 
     // Frame (default: the active frame)
     int frame = 0;
@@ -195,7 +224,7 @@ namespace {
       frame = app::current_editor->getSite().frame();
     if (frame < 0 || frame >= sprite->totalFrames())
       throw std::runtime_error(std::string(methodName) + ": the frame is out of range");
-    cfg.frame = (doc::frame_t)frame;
+    target.frame = (doc::frame_t)frame;
 
     // Layer (default: the active layer)
     int layerIndex = 0;
@@ -207,15 +236,7 @@ namespace {
     doc::Layer* layer = sprite->indexToLayer(doc::LayerIndex(layerIndex));
     if (!layer)
       throw std::runtime_error(std::string(methodName) + ": the layer index is out of range");
-    cfg.layer = layer;
-
-    // Ink (default: the tool's ink)
-    auto inkIt = o.find("ink");
-    if (inkIt != o.end() && inkIt->second.isString())
-      cfg.inkOverride = app::resolve_ink(inkIt->second.string());
-
-    // Brush (default: the GUI's active brush for the tool)
-    cfg.brush = parseBrush(opts, tool, methodName);
+    target.layer = layer;
 
     // Colors (default: the GUI fg/bg; 'color' overrides the fg)
     app::ColorBar* colorBar = app::ColorBar::instance();
@@ -233,8 +254,53 @@ namespace {
       throw std::runtime_error(std::string(methodName) + ": the foreground color is invalid");
     if (!bg.isValid())
       throw std::runtime_error(std::string(methodName) + ": the background color is invalid");
-    cfg.fg = fg;
-    cfg.bg = bg;
+    target.fg = fg;
+    target.bg = bg;
+
+    return target;
+  }
+
+  // Parse the options shared by the gesture methods (tool, ink, brush,
+  // color, opacity, layer, frame) and fill the config that
+  // run_tool_events consumes. `defaultToolId` is the tool used when the
+  // `tool` option is absent; when it is null the GUI's active tool is
+  // used (stroke). Throws std::runtime_error on an invalid value.
+  app::ScriptToolLoopConfig parseToolOptions(JSON::Value& opts, const char* methodName, const char* defaultToolId)
+  {
+    auto& o = opts.object();
+
+    DrawingTarget target = parseDrawingTarget(opts, methodName);
+
+    // Tool (default: `defaultToolId`, or the GUI's active tool when null)
+    app::tools::Tool* tool;
+    auto toolIt = o.find("tool");
+    if (toolIt != o.end() && toolIt->second.isString())
+      tool = app::resolve_tool(toolIt->second.string());
+    else if (defaultToolId)
+      tool = app::resolve_tool(defaultToolId);
+    else {
+      tool = app::App::instance()->activeTool();
+      if (!tool)
+        throw std::runtime_error(std::string(methodName) + ": no active tool is available");
+    }
+
+    app::ScriptToolLoopConfig cfg;
+    cfg.context = target.context;
+    cfg.document = target.document;
+    cfg.tool = tool;
+    cfg.frame = target.frame;
+    cfg.layer = target.layer;
+
+    // Ink (default: the tool's ink)
+    auto inkIt = o.find("ink");
+    if (inkIt != o.end() && inkIt->second.isString())
+      cfg.inkOverride = app::resolve_ink(inkIt->second.string());
+
+    // Brush (default: the GUI's active brush for the tool)
+    cfg.brush = parseBrush(opts, tool, methodName);
+
+    cfg.fg = target.fg;
+    cfg.bg = target.bg;
 
     // Opacity (default: the tool preference)
     int opacity = app::Preferences::instance().tool(tool).opacity();
@@ -266,6 +332,177 @@ namespace {
     if (it == opts.object().end() || !it->second.isBoolean())
       return def;
     return it->second.boolean();
+  }
+
+  // Rasterize the text with render_text (the GUI's PasteText command
+  // path, minus the dialog) and composite it into the target cel with
+  // ExpandCelCanvas + a Transaction. Editor::pasteImage is not reused:
+  // it switches the active tool, centers the viewport and starts a
+  // PixelsMovement drag preview (UI behavior). The write is clipped to
+  // the sprite bounds and to the visible selection (the useMask
+  // semantics of the GUI tool loop). One undo step, or joins the
+  // active app.transaction() scope.
+  void pasteText(JSON::Value& opts, const char* methodName)
+  {
+    // x, y: where the text's top-left lands (sprite space; negative
+    // values are allowed - the write is clipped to the sprite)
+    const int x = parseCoord(opts, "x", methodName);
+    const int y = parseCoord(opts, "y", methodName);
+
+    // string (required, non-empty; a single line - render_text has no
+    // line-break handling, as in the GUI whose text field is single-line)
+    auto stringIt = opts.object().find("string");
+    if (stringIt == opts.object().end() || !stringIt->second.isString())
+      throw std::runtime_error(std::string(methodName) + ": 'string' is required");
+    const std::string text = stringIt->second.string();
+    if (text.empty())
+      throw std::runtime_error(std::string(methodName) + ": 'string' must not be empty");
+
+    // font: a TTF/OTF file path (no system-font lookup in v1)
+    auto fontIt = opts.object().find("font");
+    if (fontIt == opts.object().end() || !fontIt->second.isString())
+      throw std::runtime_error(std::string(methodName) + ": 'font' is required (a TTF/OTF file path)");
+    const std::string fontPath = resolveFontPath(fontIt->second.string());
+
+    // size (1-999, the GUI's clamped range)
+    auto sizeIt = opts.object().find("size");
+    if (sizeIt == opts.object().end() || !sizeIt->second.isNumber())
+      throw std::runtime_error(std::string(methodName) + ": 'size' is required (an integer between 1 and 999)");
+    const int size = (int)sizeIt->second.number();
+    if (size < 1 || size > 999)
+      throw std::runtime_error(std::string(methodName) + ": the font size must be between 1 and 999");
+
+    // antialias (default: the text tool preference)
+    bool antialias = app::Preferences::instance().textTool.antialias();
+    auto aaIt = opts.object().find("antialias");
+    if (aaIt != opts.object().end() && aaIt->second.isBoolean())
+      antialias = aaIt->second.boolean();
+
+    // Document / frame / layer / color (same defaults as the gesture methods)
+    DrawingTarget target = parseDrawingTarget(opts, methodName);
+    doc::Sprite* sprite = target.sprite;
+    doc::Layer* layer = target.layer;
+    const doc::frame_t frame = target.frame;
+
+    if (!layer->isVisible())
+      throw std::runtime_error(std::string(methodName) + ": the layer is hidden");
+    if (!layer->isEditable())
+      throw std::runtime_error(std::string(methodName) + ": the layer is locked");
+
+    // Rasterize (throws when the font file is unreadable or invalid)
+    const doc::color_t color = doc::rgba(target.fg.getRed(), target.fg.getGreen(),
+                                         target.fg.getBlue(), target.fg.getAlpha());
+    doc::ImageRef image(app::render_text(fontPath, size, text, color, antialias));
+    if (!image)
+      throw std::runtime_error(std::string(methodName) + ": the text could not be rendered");
+
+    // Convert to the sprite's pixel format when needed (the same
+    // conversion as the GUI's PasteText command)
+    if (image->pixelFormat() != sprite->pixelFormat()) {
+      doc::RgbMap* rgbmap = sprite->rgbMap(frame);
+      image.reset(render::convert_pixel_format(
+        image.get(), nullptr, sprite->pixelFormat(),
+        doc::DitheringMethod::NONE, rgbmap, sprite->palette(frame),
+        false, 0));
+    }
+
+    // The write region (sprite space), clipped to the sprite bounds
+    gfx::Rect writeRect(x, y, image->width(), image->height());
+    writeRect = writeRect.createIntersection(
+      gfx::Rect(0, 0, sprite->width(), sprite->height()));
+    if (writeRect.isEmpty())
+      return;  // the text is fully outside the sprite: nothing to draw
+
+    // A visible selection clips the write (the useMask semantics of the
+    // GUI tool loop)
+    const bool useMask = target.document->isMaskVisible();
+    const doc::Mask* mask = target.document->mask();
+    if (useMask && mask && !mask->isEmpty()) {
+      writeRect = writeRect.createIntersection(mask->bounds());
+      if (writeRect.isEmpty())
+        return;
+    }
+
+    // Join the script's active transaction scope (app.transaction), as
+    // the tool driver does; otherwise own the Transaction (one undo
+    // step). The scope is bound to the document active when it started.
+    app::Transaction* externalTx = app::AppScripting::activeTransaction();
+    if (externalTx && app::AppScripting::activeTransactionDocument() != target.document)
+      throw std::runtime_error(
+        std::string(methodName) + ": the document is not the document the script's "
+        "transaction scope is bound to (the scope is bound to the document active "
+        "when app.transaction started)");
+
+    std::unique_ptr<app::Transaction> ownTx(
+      externalTx ? nullptr:
+                   new app::Transaction(target.context, "Paste Text", app::ModifyDocument));
+    app::Transaction& tx = (externalTx ? *externalTx: *ownTx);
+    const bool ownsTx = (externalTx == nullptr);
+
+    // The write runs with the document locked, as the GUI's tool loop
+    bool committed = false;
+    {
+      app::ContextReader reader(target.context, 500);
+      app::ContextWriter writer(reader, 500);
+
+      doc::Site site;
+      site.document(target.document);
+      site.sprite(sprite);
+      site.layer(layer);
+      site.frame(frame);
+
+      app::ExpandCelCanvas ecs(site, layer, filters::TiledMode::NONE, tx,
+                               app::ExpandCelCanvas::NeedsSource);
+      try {
+        // Make the region valid (it copies the cel's content there)
+        ecs.validateDestCanvas(gfx::Region(writeRect));
+
+        doc::Image* dst = ecs.getDestCanvas();
+
+        // The dest canvas's origin is the (expanded) cel position
+        const gfx::Point origin(ecs.getCel()->x(), ecs.getCel()->y());
+
+        if (useMask && mask && !mask->isEmpty()) {
+          // Only the selected pixels receive the text (as the GUI's
+          // inks clip their writes to the mask)
+          const doc::Image* maskBitmap = mask->bitmap();
+          const gfx::Rect maskBounds = mask->bounds();
+          for (int v = writeRect.y; v < writeRect.y+writeRect.h; ++v) {
+            for (int u = writeRect.x; u < writeRect.x+writeRect.w; ++u) {
+              const int mu = u-maskBounds.x;
+              const int mv = v-maskBounds.y;
+              if (mu < 0 || mv < 0 || mu >= maskBitmap->width() || mv >= maskBitmap->height())
+                continue;
+              if (get_pixel(maskBitmap, mu, mv))
+                put_pixel(dst, u-origin.x, v-origin.y,
+                          get_pixel(image.get(), u-x, v-y));
+            }
+          }
+        }
+        else {
+          dst->copy(image.get(),
+                    gfx::Clip(writeRect.x-origin.x, writeRect.y-origin.y,
+                              writeRect.x-x, writeRect.y-y,
+                              writeRect.w, writeRect.h));
+        }
+
+        ecs.commit();
+
+        // Commit only our own transaction; when joining the script's
+        // app.transaction() scope the scope commits it (as the tool
+        // driver's loop does in dispose).
+        if (ownsTx)
+          tx.commit();
+
+        committed = true;
+      }
+      catch (const app::LockedDocumentException& ex) {
+        app::Console::showException(ex);
+      }
+    }
+
+    if (committed)
+      target.document->notifySpritePixelsModified(sprite, gfx::Region(writeRect), frame);
   }
 
 } // anonymous namespace
@@ -432,6 +669,18 @@ public:
       cfg.contiguous = contiguous;
 
       app::run_tool_events(cfg, app::one_point(p));
+      return {};
+    };
+
+    // text({x, y, string, font, size, color, antialias, layer, frame})
+    // rasterizes the text and composites it into the target cel; the
+    // driver's transaction handling is not used (there is no tool
+    // gesture), so pasteText manages the Transaction itself (one undo
+    // step, or joins the active app.transaction() scope).
+    cls.addMethod("text") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.text: the options must be an object");
+      pasteText(opts, "tools.text");
       return {};
     };
   }
