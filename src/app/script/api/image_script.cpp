@@ -19,45 +19,60 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <vector>
+
+namespace {
+  // The wrapper re-resolves the site's image on every call: a cel trim or a
+  // canvas resize may replace (or remove) the image object underneath.
+  doc::Image& resolveImage(script_api::ImageSite& site) {
+    auto* img = site.image();
+    if (!img)
+      throw std::runtime_error{"No image at this site"};
+    return *img;
+  }
+} // namespace
 
 class ImageExtension : public Extension {
 public:
   ImageExtension() {
-    auto& clazz = addClass<void, doc::Image>("Image");
+    using namespace script_api;
+    auto& clazz = addClass<void, ImageSite>("Image");
     clazz.setConstructor() = []() -> std::shared_ptr<void> {
       throw std::runtime_error{"Image cannot be constructed directly"};
     };
 
-    clazz.addGetter("width") = [](doc::Image& img) -> JSON::Value {
-      return (double)img.width();
+    clazz.addGetter("width") = [](ImageSite& site) -> JSON::Value {
+      return (double)resolveImage(site).width();
     };
-    clazz.addGetter("height") = [](doc::Image& img) -> JSON::Value {
-      return (double)img.height();
+    clazz.addGetter("height") = [](ImageSite& site) -> JSON::Value {
+      return (double)resolveImage(site).height();
     };
-    clazz.addGetter("stride") = [](doc::Image& img) -> JSON::Value {
-      return (double)img.getRowStrideSize();
+    clazz.addGetter("stride") = [](ImageSite& site) -> JSON::Value {
+      return (double)resolveImage(site).getRowStrideSize();
     };
-    clazz.addGetter("format") = [](doc::Image& img) -> JSON::Value {
-      return (double)img.pixelFormat();
-    };
-
-    clazz.addMethod("getPixel") = [](doc::Image& img, double x, double y) -> JSON::Value {
-      return (double)img.getPixel((int)x, (int)y);
+    clazz.addGetter("format") = [](ImageSite& site) -> JSON::Value {
+      return (double)resolveImage(site).pixelFormat();
     };
 
-    clazz.addMethod("putPixel") = [](doc::Image& img, double x, double y, double color) -> JSON::Value {
+    clazz.addMethod("getPixel") = [](ImageSite& site, double x, double y) -> JSON::Value {
+      return (double)resolveImage(site).getPixel((int)x, (int)y);
+    };
+
+    clazz.addMethod("putPixel") = [](ImageSite& site, double x, double y, double color) -> JSON::Value {
+      auto& img = resolveImage(site);
       if ((unsigned)x < (unsigned)img.width() && (unsigned)y < (unsigned)img.height())
         img.putPixel((int)x, (int)y, (doc::color_t)color);
       return {};
     };
 
-    clazz.addMethod("clear") = [](doc::Image& img, double color) -> JSON::Value {
-      img.clear((doc::color_t)color);
+    clazz.addMethod("clear") = [](ImageSite& site, double color) -> JSON::Value {
+      resolveImage(site).clear((doc::color_t)color);
       return {};
     };
 
-    clazz.addMethod("putImageData") = [](doc::Image& img, JSON::Value& data) -> JSON::Value {
+    clazz.addMethod("putImageData") = [](ImageSite& site, JSON::Value& data) -> JSON::Value {
+      auto& img = resolveImage(site);
       auto& bytes = data.byteArray();
       if (bytes.size() != std::size_t(img.getRowStrideSize()) * img.height()) {
         std::cout << "Data size mismatch: " << bytes.size() << std::endl;
@@ -69,14 +84,16 @@ public:
       return {};
     };
 
-    clazz.addMethod("getImageData") = [](doc::Image& img) -> JSON::Value {
+    clazz.addMethod("getImageData") = [](ImageSite& site) -> JSON::Value {
+      auto& img = resolveImage(site);
       auto* addr = img.getPixelAddress(0, 0);
       std::size_t size = std::size_t(img.getRowStrideSize()) * img.height();
       auto vec = std::make_shared<std::vector<uint8_t>>(addr, addr + size);
       return JSON::Value{vec};
     };
 
-    clazz.addMethod("getPNGData") = [](doc::Image& img) -> JSON::Value {
+    clazz.addMethod("getPNGData") = [](ImageSite& site) -> JSON::Value {
+      auto& img = resolveImage(site);
       auto w = img.width();
       auto h = img.height();
       std::shared_ptr<she::Surface> surface{
