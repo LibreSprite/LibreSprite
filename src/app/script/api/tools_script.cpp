@@ -5,12 +5,12 @@
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-// The `tools` object: run a freehand tool gesture (pencil, eraser, spray,
-// contour, blur, jumble) with synthetic pointer events. One stroke() call
-// is one tool gesture, so it is one undo step (the driver owns the
-// Transaction; inside an app.transaction() scope the strokes join the
-// scope's transaction instead). The target document becomes active after
-// the call.
+// The `tools` object: run a GUI drawing-tool gesture (freehand tools,
+// line, rectangle, ellipse, curve, paint bucket) with synthetic pointer
+// events. Each method is one tool gesture, so it is one undo step (the
+// driver owns the Transaction; inside an app.transaction() scope the
+// gestures join the scope's transaction instead). The target document
+// becomes active after the call.
 
 #include "delta/Extension.hpp"
 #include "delta/JSON.hpp"
@@ -58,27 +58,27 @@ namespace {
   // Extract a doc::Image from a JSON::Value (a JS `Image` object). The
   // native wrapper stores the base type, so the pointer is checked with a
   // dynamic_cast through the polymorphic doc::Object base.
-  doc::Image* imageFromValue(JSON::Value& v)
+  doc::Image* imageFromValue(JSON::Value& v, const char* methodName)
   {
     if (!v.isNative())
-      throw std::runtime_error("tools.stroke: the brush 'image' must be an Image object");
+      throw std::runtime_error(std::string(methodName) + ": the brush 'image' must be an Image object");
     auto& native = v.native();
     auto* image = dynamic_cast<doc::Image*>(static_cast<doc::Object*>(native.first.get()));
     if (!image)
-      throw std::runtime_error("tools.stroke: the brush 'image' must be an Image object");
+      throw std::runtime_error(std::string(methodName) + ": the brush 'image' must be an Image object");
     return image;
   }
 
   // Build the brush: a copy of the GUI's active brush for the tool, with the
   // given fields applied.
-  doc::BrushRef parseBrush(JSON::Value& opts, app::tools::Tool* tool)
+  doc::BrushRef parseBrush(JSON::Value& opts, app::tools::Tool* tool, const char* methodName)
   {
     app::ContextBar* contextBar = app::App::instance()->contextBar();
     if (!contextBar)
-      throw std::runtime_error("tools.stroke: the context bar is unavailable in this mode");
+      throw std::runtime_error(std::string(methodName) + ": the context bar is unavailable in this mode");
     doc::BrushRef active = contextBar->activeBrush(tool);
     if (!active)
-      throw std::runtime_error("tools.stroke: no active brush is available");
+      throw std::runtime_error(std::string(methodName) + ": no active brush is available");
 
     // Copy the active brush so the overrides don't mutate the GUI state.
     doc::BrushRef brush(new doc::Brush(*active));
@@ -99,7 +99,7 @@ namespace {
       else if (type == "line")   brush->setType(doc::kLineBrushType);
       else if (type == "image")  brush->setType(doc::kImageBrushType);
       else
-        throw std::runtime_error("tools.stroke: unknown brush type: " + type);
+        throw std::runtime_error(std::string(methodName) + ": unknown brush type: " + type);
     }
 
     // size / angle only apply to the shape brushes
@@ -108,7 +108,7 @@ namespace {
       if (sizeIt != obj.end() && sizeIt->second.isNumber()) {
         int size = (int)sizeIt->second.number();
         if (size < doc::Brush::kMinBrushSize || size > doc::Brush::kMaxBrushSize)
-          throw std::runtime_error("tools.stroke: the brush size must be between " +
+          throw std::runtime_error(std::string(methodName) + ": the brush size must be between " +
             std::to_string(doc::Brush::kMinBrushSize) + " and " +
             std::to_string(doc::Brush::kMaxBrushSize));
         brush->setSize(size);
@@ -118,7 +118,7 @@ namespace {
       if (angleIt != obj.end() && angleIt->second.isNumber()) {
         int angle = (int)angleIt->second.number();
         if (angle < 0 || angle > 359)
-          throw std::runtime_error("tools.stroke: the brush angle must be between 0 and 359");
+          throw std::runtime_error(std::string(methodName) + ": the brush angle must be between 0 and 359");
         brush->setAngle(angle);
       }
     }
@@ -133,18 +133,139 @@ namespace {
       else if (pattern == "paint_brush")
         brush->setPattern(doc::BrushPattern::PAINT_BRUSH);
       else
-        throw std::runtime_error("tools.stroke: unknown brush pattern: " + pattern);
+        throw std::runtime_error(std::string(methodName) + ": unknown brush pattern: " + pattern);
     }
 
     auto imageIt = obj.find("image");
     if (imageIt != obj.end() && imageIt->second.isNative())
-      brush->setImage(imageFromValue(imageIt->second));
+      brush->setImage(imageFromValue(imageIt->second, methodName));
 
     // An image brush must have an image to stamp.
     if (brush->type() == doc::kImageBrushType && !brush->image())
-      throw std::runtime_error("tools.stroke: an image brush needs the 'image' field");
+      throw std::runtime_error(std::string(methodName) + ": an image brush needs the 'image' field");
 
     return brush;
+  }
+
+  // Parse the options shared by all tools.* methods (tool, ink, brush,
+  // color, opacity, layer, frame) and fill the config that
+  // run_tool_events consumes. `defaultToolId` is the tool used when the
+  // `tool` option is absent; when it is null the GUI's active tool is
+  // used (stroke). Throws std::runtime_error on an invalid value.
+  app::ScriptToolLoopConfig parseToolOptions(JSON::Value& opts, const char* methodName, const char* defaultToolId)
+  {
+    auto& o = opts.object();
+
+    app::UIContext* ctx = app::UIContext::instance();
+    if (!ctx)
+      throw std::runtime_error(std::string(methodName) + ": no UI context is available");
+
+    // Tool (default: `defaultToolId`, or the GUI's active tool when null)
+    app::tools::Tool* tool;
+    auto toolIt = o.find("tool");
+    if (toolIt != o.end() && toolIt->second.isString())
+      tool = app::resolve_tool(toolIt->second.string());
+    else if (defaultToolId)
+      tool = app::resolve_tool(defaultToolId);
+    else {
+      tool = app::App::instance()->activeTool();
+      if (!tool)
+        throw std::runtime_error(std::string(methodName) + ": no active tool is available");
+    }
+
+    // Document
+    app::Document* document = ctx->activeDocument();
+    if (!document)
+      throw std::runtime_error(std::string(methodName) + ": no active document");
+    doc::Sprite* sprite = document->sprite();
+    if (!sprite)
+      throw std::runtime_error(std::string(methodName) + ": the active document has no sprite");
+
+    app::ScriptToolLoopConfig cfg;
+    cfg.context = ctx;
+    cfg.document = document;
+    cfg.tool = tool;
+
+    // Frame (default: the active frame)
+    int frame = 0;
+    auto frameIt = o.find("frame");
+    if (frameIt != o.end() && frameIt->second.isNumber())
+      frame = (int)frameIt->second.number();
+    else if (app::current_editor)
+      frame = app::current_editor->getSite().frame();
+    if (frame < 0 || frame >= sprite->totalFrames())
+      throw std::runtime_error(std::string(methodName) + ": the frame is out of range");
+    cfg.frame = (doc::frame_t)frame;
+
+    // Layer (default: the active layer)
+    int layerIndex = 0;
+    auto layerIt = o.find("layer");
+    if (layerIt != o.end() && layerIt->second.isNumber())
+      layerIndex = (int)layerIt->second.number();
+    else if (app::current_editor)
+      layerIndex = (int)app::current_editor->getSite().layerIndex();
+    doc::Layer* layer = sprite->indexToLayer(doc::LayerIndex(layerIndex));
+    if (!layer)
+      throw std::runtime_error(std::string(methodName) + ": the layer index is out of range");
+    cfg.layer = layer;
+
+    // Ink (default: the tool's ink)
+    auto inkIt = o.find("ink");
+    if (inkIt != o.end() && inkIt->second.isString())
+      cfg.inkOverride = app::resolve_ink(inkIt->second.string());
+
+    // Brush (default: the GUI's active brush for the tool)
+    cfg.brush = parseBrush(opts, tool, methodName);
+
+    // Colors (default: the GUI fg/bg; 'color' overrides the fg)
+    app::ColorBar* colorBar = app::ColorBar::instance();
+    if (!colorBar)
+      throw std::runtime_error(std::string(methodName) + ": the color bar is unavailable in this mode");
+    app::Color fg = colorBar->getFgColor();
+    app::Color bg = colorBar->getBgColor();
+    auto colorIt = o.find("color");
+    if (colorIt != o.end() && colorIt->second.isNumber()) {
+      uint32_t c = (uint32_t)colorIt->second.number();
+      fg = app::Color::fromRgb(doc::rgba_getr(c), doc::rgba_getg(c),
+                               doc::rgba_getb(c), doc::rgba_geta(c));
+    }
+    if (!fg.isValid())
+      throw std::runtime_error(std::string(methodName) + ": the foreground color is invalid");
+    if (!bg.isValid())
+      throw std::runtime_error(std::string(methodName) + ": the background color is invalid");
+    cfg.fg = fg;
+    cfg.bg = bg;
+
+    // Opacity (default: the tool preference)
+    int opacity = app::Preferences::instance().tool(tool).opacity();
+    auto opacityIt = o.find("opacity");
+    if (opacityIt != o.end() && opacityIt->second.isNumber()) {
+      opacity = (int)opacityIt->second.number();
+      if (opacity < 0 || opacity > 255)
+        throw std::runtime_error(std::string(methodName) + ": the opacity must be between 0 and 255");
+    }
+    cfg.opacity = opacity;
+
+    return cfg;
+  }
+
+  // Parse a required integer coordinate (sprite space; negative values are
+  // allowed - the pipeline clips like the GUI).
+  int parseCoord(JSON::Value& opts, const char* key, const char* methodName)
+  {
+    auto it = opts.object().find(key);
+    if (it == opts.object().end() || !it->second.isNumber())
+      throw std::runtime_error(std::string(methodName) + ": '" + key + "' is required (a sprite-space integer)");
+    return (int)it->second.number();
+  }
+
+  // Parse the optional `filled` boolean, or `def` when absent.
+  bool parseFilled(JSON::Value& opts, bool def)
+  {
+    auto it = opts.object().find("filled");
+    if (it == opts.object().end() || !it->second.isBoolean())
+      return def;
+    return it->second.boolean();
   }
 
 } // anonymous namespace
@@ -166,103 +287,20 @@ public:
     cls.addMethod("stroke") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
       if (!opts.isObject())
         throw std::runtime_error("tools.stroke: the options must be an object");
-      auto& o = opts.object();
 
-      app::UIContext* ctx = app::UIContext::instance();
-      if (!ctx)
-        throw std::runtime_error("tools.stroke: no UI context is available");
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.stroke", nullptr);
 
-      // Tool (default: the GUI's active tool)
-      std::string toolId;
-      app::tools::Tool* tool;
-      auto toolIt = o.find("tool");
-      if (toolIt != o.end() && toolIt->second.isString()) {
-        toolId = toolIt->second.string();
-        tool = app::resolve_tool(toolId); // throws when the id is unknown
-      }
-      else {
-        tool = app::App::instance()->activeTool();
-        if (!tool)
-          throw std::runtime_error("tools.stroke: no active tool is available");
-        toolId = tool->getId();
-      }
-      if (!is_supported_tool(toolId))
-        throw std::runtime_error("tools.stroke: '" + toolId +
+      if (!is_supported_tool(cfg.tool->getId()))
+        throw std::runtime_error("tools.stroke: '" + cfg.tool->getId() +
           "' is not a supported freehand tool (pencil, eraser, spray, "
           "contour, blur, jumble)");
 
-      // Document
-      app::Document* document = ctx->activeDocument();
-      if (!document)
-        throw std::runtime_error("tools.stroke: no active document");
-      doc::Sprite* sprite = document->sprite();
-      if (!sprite)
-        throw std::runtime_error("tools.stroke: the active document has no sprite");
-
-      // Frame (default: the active frame)
-      int frame = 0;
-      auto frameIt = o.find("frame");
-      if (frameIt != o.end() && frameIt->second.isNumber())
-        frame = (int)frameIt->second.number();
-      else if (app::current_editor)
-        frame = app::current_editor->getSite().frame();
-      if (frame < 0 || frame >= sprite->totalFrames())
-        throw std::runtime_error("tools.stroke: the frame is out of range");
-
-      // Layer (default: the active layer)
-      int layerIndex = 0;
-      auto layerIt = o.find("layer");
-      if (layerIt != o.end() && layerIt->second.isNumber())
-        layerIndex = (int)layerIt->second.number();
-      else if (app::current_editor)
-        layerIndex = (int)app::current_editor->getSite().layerIndex();
-      doc::Layer* layer = sprite->indexToLayer(doc::LayerIndex(layerIndex));
-      if (!layer)
-        throw std::runtime_error("tools.stroke: the layer index is out of range");
-
-      // Ink (default: the tool's ink)
-      std::shared_ptr<app::tools::Ink> inkOverride;
-      auto inkIt = o.find("ink");
-      if (inkIt != o.end() && inkIt->second.isString())
-        inkOverride = app::resolve_ink(inkIt->second.string()); // throws when unknown
-
-      // Brush (default: the GUI's active brush for the tool)
-      doc::BrushRef brush = parseBrush(opts, tool);
-
-      // Colors (default: the GUI fg/bg; 'color' overrides the fg)
-      app::ColorBar* colorBar = app::ColorBar::instance();
-      if (!colorBar)
-        throw std::runtime_error("tools.stroke: the color bar is unavailable in this mode");
-      app::Color fg = colorBar->getFgColor();
-      app::Color bg = colorBar->getBgColor();
-      auto colorIt = o.find("color");
-      if (colorIt != o.end() && colorIt->second.isNumber()) {
-        uint32_t c = (uint32_t)colorIt->second.number();
-        fg = app::Color::fromRgb(doc::rgba_getr(c), doc::rgba_getg(c),
-                                 doc::rgba_getb(c), doc::rgba_geta(c));
-      }
-      if (!fg.isValid())
-        throw std::runtime_error("tools.stroke: the foreground color is invalid");
-      if (!bg.isValid())
-        throw std::runtime_error("tools.stroke: the background color is invalid");
-
-      // Opacity / filled (default: the tool preferences)
-      app::ToolPreferences& toolPref = app::Preferences::instance().tool(tool);
-      int opacity = toolPref.opacity();
-      auto opacityIt = o.find("opacity");
-      if (opacityIt != o.end() && opacityIt->second.isNumber()) {
-        opacity = (int)opacityIt->second.number();
-        if (opacity < 0 || opacity > 255)
-          throw std::runtime_error("tools.stroke: the opacity must be between 0 and 255");
-      }
-      bool filled = toolPref.filled();
-      auto filledIt = o.find("filled");
-      if (filledIt != o.end() && filledIt->second.isBoolean())
-        filled = filledIt->second.boolean();
+      // Filled (default: the tool preference)
+      cfg.filled = parseFilled(opts, app::Preferences::instance().tool(cfg.tool).filled());
 
       // Points (required): an array of [x, y] or [x, y, pressure]
-      auto pointsIt = o.find("points");
-      if (pointsIt == o.end() || !pointsIt->second.isArray())
+      auto pointsIt = opts.object().find("points");
+      if (pointsIt == opts.object().end() || !pointsIt->second.isArray())
         throw std::runtime_error("tools.stroke: 'points' is required "
           "(an array of [x, y] or [x, y, pressure])");
       auto& pointsArr = pointsIt->second.array();
@@ -308,20 +346,92 @@ public:
       // step) unless an app.transaction() scope is open: then the loop
       // joins the scope's transaction (the driver sets
       // cfg.externalTransaction).
-      app::ScriptToolLoopConfig cfg;
-      cfg.context = ctx;
-      cfg.document = document;
-      cfg.layer = layer;
-      cfg.frame = (doc::frame_t)frame;
-      cfg.tool = tool;
-      cfg.inkOverride = inkOverride;
-      cfg.brush = brush;
-      cfg.fg = fg;
-      cfg.bg = bg;
-      cfg.opacity = opacity;
-      cfg.filled = filled;
-
       app::run_tool_events(cfg, events);
+      return {};
+    };
+
+    // line({x1, y1, x2, y2, ...}) runs the line tool (two_points gesture).
+    cls.addMethod("line") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.line: the options must be an object");
+
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.line", "line");
+      gfx::Point p1(parseCoord(opts, "x1", "tools.line"), parseCoord(opts, "y1", "tools.line"));
+      gfx::Point p2(parseCoord(opts, "x2", "tools.line"), parseCoord(opts, "y2", "tools.line"));
+      app::run_tool_events(cfg, app::two_points(p1, p2));
+      return {};
+    };
+
+    // rectangle({x1, y1, x2, y2, filled, ...}) runs the rectangle tool
+    // (two_points gesture); filled picks outline vs solid.
+    cls.addMethod("rectangle") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.rectangle: the options must be an object");
+
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.rectangle", "rectangle");
+      gfx::Point p1(parseCoord(opts, "x1", "tools.rectangle"), parseCoord(opts, "y1", "tools.rectangle"));
+      gfx::Point p2(parseCoord(opts, "x2", "tools.rectangle"), parseCoord(opts, "y2", "tools.rectangle"));
+      cfg.filled = parseFilled(opts, false);
+      app::run_tool_events(cfg, app::two_points(p1, p2));
+      return {};
+    };
+
+    // ellipse({x1, y1, x2, y2, filled, ...}) runs the ellipse tool
+    // (two_points gesture); filled picks outline vs solid.
+    cls.addMethod("ellipse") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.ellipse: the options must be an object");
+
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.ellipse", "ellipse");
+      gfx::Point p1(parseCoord(opts, "x1", "tools.ellipse"), parseCoord(opts, "y1", "tools.ellipse"));
+      gfx::Point p2(parseCoord(opts, "x2", "tools.ellipse"), parseCoord(opts, "y2", "tools.ellipse"));
+      cfg.filled = parseFilled(opts, false);
+      app::run_tool_events(cfg, app::two_points(p1, p2));
+      return {};
+    };
+
+    // curve({x1, y1, x2, y2, x3, y3, x4, y4, ...}) runs the curve tool
+    // (four_points gesture): a cubic bezier from (x1,y1) to (x4,y4) with
+    // control points (x2,y2) and (x3,y3).
+    cls.addMethod("curve") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.curve: the options must be an object");
+
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.curve", "curve");
+      gfx::Point p1(parseCoord(opts, "x1", "tools.curve"), parseCoord(opts, "y1", "tools.curve"));
+      gfx::Point p2(parseCoord(opts, "x2", "tools.curve"), parseCoord(opts, "y2", "tools.curve"));
+      gfx::Point p3(parseCoord(opts, "x3", "tools.curve"), parseCoord(opts, "y3", "tools.curve"));
+      gfx::Point p4(parseCoord(opts, "x4", "tools.curve"), parseCoord(opts, "y4", "tools.curve"));
+      app::run_tool_events(cfg, app::four_points(p1, p2, p3, p4));
+      return {};
+    };
+
+    // fill({x, y, tolerance, contiguous, ...}) runs the paint bucket tool
+    // (one_point gesture); tolerance/contiguous default to the tool prefs.
+    cls.addMethod("fill") = [](ToolsObject&, JSON::Value& opts) -> JSON::Value {
+      if (!opts.isObject())
+        throw std::runtime_error("tools.fill: the options must be an object");
+
+      app::ScriptToolLoopConfig cfg = parseToolOptions(opts, "tools.fill", "paint_bucket");
+      gfx::Point p(parseCoord(opts, "x", "tools.fill"), parseCoord(opts, "y", "tools.fill"));
+
+      // Tolerance / contiguous (default: the tool preferences)
+      app::ToolPreferences& toolPref = app::Preferences::instance().tool(cfg.tool);
+      int tolerance = toolPref.tolerance();
+      auto tolIt = opts.object().find("tolerance");
+      if (tolIt != opts.object().end() && tolIt->second.isNumber()) {
+        tolerance = (int)tolIt->second.number();
+        if (tolerance < 0 || tolerance > 255)
+          throw std::runtime_error("tools.fill: the tolerance must be between 0 and 255");
+      }
+      cfg.tolerance = tolerance;
+      bool contiguous = toolPref.contiguous();
+      auto contIt = opts.object().find("contiguous");
+      if (contIt != opts.object().end() && contIt->second.isBoolean())
+        contiguous = contIt->second.boolean();
+      cfg.contiguous = contiguous;
+
+      app::run_tool_events(cfg, app::one_point(p));
       return {};
     };
   }

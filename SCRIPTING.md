@@ -1238,38 +1238,96 @@ The value is persisted to storage (keyed by the widget id) and raises the
 # global tools [class Tools]
 ## No Properties.
 
-Runs a freehand tool gesture with synthetic pointer events, the same GUI
-drawing pipeline as the mouse. One `stroke()` call is one tool gesture and one
-undo step (`command.Undo` reverts it); the target document becomes active after
-the call.
+Runs a GUI drawing-tool gesture with synthetic pointer events, the same GUI
+drawing pipeline as the mouse. Each method is one tool gesture and one undo
+step (`command.Undo` reverts it); the target document becomes active after the
+call. Coordinates are sprite-space integers (like `image.putPixel`); negative
+values are allowed for shapes crossing the edge (the pipeline clips them like
+the GUI). The layer must be visible and editable and the frame must be in
+range. To group several calls into a single undo step, wrap them in
+`app.transaction(fn)`.
+
+Every method also accepts these common options:
+   - tool: Optional. A tool id. Defaults to the method's tool (`stroke`
+     defaults to the GUI's active tool).
+   - ink: Optional. An ink id override (e.g. "paint", "eraser",
+     "replace_fg_with_bg"). Defaults to the tool's ink.
+   - brush: Optional. A brush object with the fields below. Defaults to the
+     GUI's active brush for the tool.
+   - color: Optional. A 32-bit color in 8888 RGBA format (the
+     `pixelColor.rgba` convention). Sets the foreground color. Defaults to
+     the GUI foreground color.
+   - opacity: Optional. 0-255. Defaults to the tool preference.
+   - layer: Optional. The layer index (0 = bottom). Defaults to the active
+     layer.
+   - frame: Optional. The frame index. Defaults to the active frame.
 
 ## Methods:
    - `stroke(options)`:
-     - options: an object; only `points` is required.
+     - options: an object; only `points` is required, plus the common options.
      - tool: Optional. "pencil", "eraser", "spray", "contour", "blur", or
        "jumble". Defaults to the GUI's active tool (throws when the active
        tool is not a supported freehand tool).
-     - ink: Optional. An ink id override (e.g. "paint", "eraser",
-       "replace_fg_with_bg"). Defaults to the tool's ink.
-     - brush: Optional. A brush object with the fields below. Defaults to the
-       GUI's active brush for the tool.
-     - color: Optional. A 32-bit color in 8888 RGBA format (the
-       `pixelColor.rgba` convention). Sets the foreground color. Defaults to
-       the GUI foreground color.
-     - opacity: Optional. 0-255. Defaults to the tool preference.
-     - layer: Optional. The layer index (0 = bottom). Defaults to the active
-       layer.
-     - frame: Optional. The frame index. Defaults to the active frame.
      - filled: Optional. A boolean, for fill-optional tools (contour is
        always filled). Defaults to the tool preference.
      - points: Required. An array of `[x, y]` or `[x, y, pressure]` in sprite
-       coordinates (like `image.putPixel`). `pressure` is 0-1 (default 1.0).
-       At least one point.
+       coordinates. `pressure` is 0-1 (default 1.0). At least one point.
       returns: Nothing
-      Runs the tool gesture. The defaults (tool, brush, color, opacity,
-      filled) come from the current GUI state. The layer must be visible and
-      editable and the frame must be in range. To group several calls into a
-      single undo step, wrap them in `app.transaction(fn)`.
+      Runs the freehand tool gesture. The defaults (tool, brush, color,
+      opacity, filled) come from the current GUI state.
+
+   - `line(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. The line start, in sprite coordinates.
+     - x2, y2: Required. The line end, in sprite coordinates.
+      returns: Nothing
+      Runs the line tool.
+
+   - `rectangle(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. One corner of the rectangle, in sprite coordinates.
+     - x2, y2: Required. The opposite corner, in sprite coordinates.
+     - filled: Optional. A boolean (default false). false draws the outline,
+       true draws a solid rectangle.
+      returns: Nothing
+      Runs the rectangle tool.
+
+   - `ellipse(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. One end of the ellipse bounding box, in sprite
+       coordinates.
+     - x2, y2: Required. The opposite end of the bounding box, in sprite
+       coordinates.
+     - filled: Optional. A boolean (default false). false draws the outline,
+       true draws a solid ellipse.
+      returns: Nothing
+      Runs the ellipse tool.
+
+   - `curve(options)`:
+     - options: an object; `x1` through `y4` are required, plus the common
+       options.
+     - x1, y1: Required. The curve start, in sprite coordinates.
+     - x2, y2: Required. The first control point.
+     - x3, y3: Required. The second control point.
+     - x4, y4: Required. The curve end.
+      returns: Nothing
+      Runs the curve tool: a cubic bezier from (x1,y1) to (x4,y4) with
+      control points (x2,y2) and (x3,y3). The outline is drawn, not filled.
+
+   - `fill(options)`:
+     - options: an object; `x` and `y` are required, plus the common options.
+     - x, y: Required. The pixel to fill, in sprite coordinates.
+     - tolerance: Optional. 0-255. How far a pixel's color may differ from
+       the clicked color and still be filled. Defaults to the tool
+       preference.
+     - contiguous: Optional. A boolean (default the tool preference). true
+       fills only the region connected to (x, y); false fills every matching
+       pixel in the image.
+      returns: Nothing
+      Runs the paint bucket tool.
 
 The `brush` field is an object:
    - `type`: "circle", "square", "line", or "image".
