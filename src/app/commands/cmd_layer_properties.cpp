@@ -11,10 +11,12 @@
 
 #include "app/app.h"
 #include "app/cmd/set_layer_blend_mode.h"
+#include "app/cmd/set_layer_flags.h"
 #include "app/cmd/set_layer_name.h"
 #include "app/cmd/set_layer_opacity.h"
 #include "app/cmd/set_user_data.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/console.h"
 #include "app/context_access.h"
 #include "app/modules/gui.h"
@@ -23,6 +25,7 @@
 #include "app/ui/user_data_popup.h"
 #include "app/ui_context.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "base/scoped_value.h"
 #include "doc/document.h"
 #include "doc/document_event.h"
@@ -31,6 +34,8 @@
 #include "doc/sprite.h"
 #include "doc/user_data.h"
 #include "ui/ui.h"
+
+#include <stdexcept>
 
 #include "layer_properties.xml.h"
 
@@ -44,9 +49,53 @@ public:
   Command* clone() const override { return new LayerPropertiesCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  // Property params: with any of them the changes are applied in one
+  // transaction without the window.
+  bool m_hasParams;
+  bool m_hasName;
+  std::string m_name;
+  bool m_hasOpacity;
+  int m_opacity;
+  bool m_hasBlendMode;
+  doc::BlendMode m_blendMode;
+  bool m_hasVisible;
+  bool m_visible;
+  bool m_hasUserData;
+  std::string m_userData;
 };
+
+// Converts the blend-mode param to a BlendMode (the UI combo names).
+static doc::BlendMode blend_mode_from_string(const std::string& s)
+{
+  if (s == "normal") return doc::BlendMode::NORMAL;
+  if (s == "multiply") return doc::BlendMode::MULTIPLY;
+  if (s == "screen") return doc::BlendMode::SCREEN;
+  if (s == "overlay") return doc::BlendMode::OVERLAY;
+  if (s == "darken") return doc::BlendMode::DARKEN;
+  if (s == "lighten") return doc::BlendMode::LIGHTEN;
+  if (s == "color-dodge") return doc::BlendMode::COLOR_DODGE;
+  if (s == "color-burn") return doc::BlendMode::COLOR_BURN;
+  if (s == "hard-light") return doc::BlendMode::HARD_LIGHT;
+  if (s == "soft-light") return doc::BlendMode::SOFT_LIGHT;
+  if (s == "difference") return doc::BlendMode::DIFFERENCE;
+  if (s == "exclusion") return doc::BlendMode::EXCLUSION;
+  if (s == "hue") return doc::BlendMode::HSL_HUE;
+  if (s == "saturation") return doc::BlendMode::HSL_SATURATION;
+  if (s == "color") return doc::BlendMode::HSL_COLOR;
+  if (s == "luminosity") return doc::BlendMode::HSL_LUMINOSITY;
+
+  throw std::runtime_error(
+    "LayerProperties: invalid blend-mode '" + s + "' (expected one of: "
+    "normal, multiply, screen, overlay, darken, lighten, color-dodge, "
+    "color-burn, hard-light, soft-light, difference, exclusion, hue, "
+    "saturation, color, luminosity)");
+}
 
 class LayerPropertiesWindow;
 static LayerPropertiesWindow* g_window = nullptr;
@@ -283,6 +332,70 @@ LayerPropertiesCommand::LayerPropertiesCommand()
             "Layer Properties",
             CmdRecordableFlag)
 {
+  m_hasParams = false;
+  m_hasName = false;
+  m_hasOpacity = false;
+  m_opacity = 255;
+  m_hasBlendMode = false;
+  m_blendMode = doc::BlendMode::NORMAL;
+  m_hasVisible = false;
+  m_visible = true;
+  m_hasUserData = false;
+}
+
+void LayerPropertiesCommand::onLoadParams(const Params& params)
+{
+  m_hasParams = false;
+  m_hasName = false;
+  m_hasOpacity = false;
+  m_hasBlendMode = false;
+  m_hasVisible = false;
+  m_hasUserData = false;
+
+  if (params.has_param("name")) {
+    m_hasName = true;
+    m_name = params.get("name");
+  }
+
+  if (params.has_param("opacity")) {
+    m_hasOpacity = true;
+    m_opacity = MID(0, params.get_as<int>("opacity"), 255);
+  }
+
+  if (params.has_param("blend-mode")) {
+    m_hasBlendMode = true;
+    m_blendMode = blend_mode_from_string(params.get("blend-mode"));
+  }
+
+  if (params.has_param("visible")) {
+    std::string visible = params.get("visible");
+    if (visible == "true")
+      m_visible = true;
+    else if (visible == "false")
+      m_visible = false;
+    else
+      throw std::runtime_error("LayerProperties: visible must be 'true' or 'false'");
+    m_hasVisible = true;
+  }
+
+  if (params.has_param("user-data")) {
+    m_hasUserData = true;
+    m_userData = params.get("user-data");
+  }
+
+  m_hasParams = m_hasName || m_hasOpacity || m_hasBlendMode ||
+                m_hasVisible || m_hasUserData;
+}
+
+std::vector<CommandParamInfo> LayerPropertiesCommand::onDescribeParams() const
+{
+  return {
+    {"name", "Layer name. With any property, applies without the window.", false, ""},
+    {"opacity", "Layer opacity, 0 to 255.", false, ""},
+    {"blend-mode", "Layer blend mode: normal, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color or luminosity.", false, ""},
+    {"visible", "Layer visibility: true or false.", false, ""},
+    {"user-data", "Layer user data text (keeps the current color).", false, ""},
+  };
 }
 
 bool LayerPropertiesCommand::onEnabled(Context* context)
@@ -294,12 +407,81 @@ bool LayerPropertiesCommand::onEnabled(Context* context)
 void LayerPropertiesCommand::onExecute(Context* context)
 {
   ContextReader reader(context);
-  LayerImage* layer = static_cast<LayerImage*>(reader.layer());
+  Layer* layer = reader.layer();
+
+  // With the property params, apply them without the window.
+  if (m_hasParams) {
+    LayerImage* image = dynamic_cast<LayerImage*>(layer);
+
+    if ((m_hasOpacity || m_hasBlendMode) && !image)
+      throw std::runtime_error(
+        "LayerProperties: opacity and blend-mode need an image layer");
+
+    doc::UserData newUserData = layer->userData();
+    if (m_hasUserData)
+      newUserData.setText(m_userData);
+
+    bool changeName = m_hasName && (layer->name() != m_name);
+    bool changeOpacity = m_hasOpacity && image &&
+                         (image->opacity() != m_opacity);
+    bool changeBlendMode = m_hasBlendMode && image &&
+                           (image->blendMode() != m_blendMode);
+    bool changeVisible = m_hasVisible && (layer->isVisible() != m_visible);
+    bool changeUserData = m_hasUserData &&
+                          (layer->userData() != newUserData);
+
+    if (changeName || changeOpacity || changeBlendMode ||
+        changeVisible || changeUserData) {
+      ContextWriter writer(reader);
+      Transaction transaction(writer.context(), "Set Layer Properties");
+
+      if (changeName)
+        transaction.execute(new cmd::SetLayerName(layer, m_name));
+
+      if (changeOpacity)
+        transaction.execute(new cmd::SetLayerOpacity(image, m_opacity));
+
+      if (changeBlendMode)
+        transaction.execute(new cmd::SetLayerBlendMode(image, m_blendMode));
+
+      if (changeVisible) {
+        LayerFlags newFlags = layer->flags();
+        if (m_visible)
+          newFlags = LayerFlags(int(newFlags) | int(LayerFlags::Visible));
+        else
+          newFlags = LayerFlags(int(newFlags) & ~int(LayerFlags::Visible));
+        transaction.execute(new cmd::SetLayerFlags(layer, newFlags));
+      }
+
+      if (changeUserData) {
+        transaction.execute(new cmd::SetUserData(layer, newUserData));
+
+        // Redraw timeline because the layer's user data/color
+        // might have changed.
+        if (App::instance()->timeline())
+          App::instance()->timeline()->invalidate();
+      }
+
+      transaction.commit();
+      update_screen_for_document(writer.document());
+    }
+    return;
+  }
+
+  // The window would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("LayerProperties: not available in headless mode\n");
+    Console console(context);
+    console.printf("LayerProperties: not available in headless mode\n");
+    return;
+  }
+
+  LayerImage* imageLayer = static_cast<LayerImage*>(layer);
 
   if (!g_window)
     g_window = new LayerPropertiesWindow;
 
-  g_window->setLayer(layer);
+  g_window->setLayer(imageLayer);
   g_window->openWindow();
 
   // Focus layer name
