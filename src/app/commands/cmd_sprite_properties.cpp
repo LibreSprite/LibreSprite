@@ -9,14 +9,18 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/color.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
+#include "app/console.h"
 #include "app/context_access.h"
 #include "app/document_api.h"
 #include "app/modules/gui.h"
 #include "app/ui/color_button.h"
 #include "app/transaction.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "base/mem_utils.h"
 #include "doc/image.h"
 #include "doc/palette.h"
@@ -32,11 +36,16 @@ namespace app {
 using namespace ui;
 
 class SpritePropertiesCommand : public Command {
+  int m_transparentColor;
+  bool m_hasParams; // true when the transparent-color param is given
+
 public:
   SpritePropertiesCommand();
   Command* clone() const override { return new SpritePropertiesCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 };
@@ -46,6 +55,25 @@ SpritePropertiesCommand::SpritePropertiesCommand()
             "Sprite Properties",
             CmdUIOnlyFlag)
 {
+  m_transparentColor = -1;
+  m_hasParams = false;
+}
+
+void SpritePropertiesCommand::onLoadParams(const Params& params)
+{
+  m_transparentColor = -1;
+  m_hasParams = false;
+  if (params.has_param("transparent-color")) {
+    m_transparentColor = params.get_as<int>("transparent-color");
+    m_hasParams = true;
+  }
+}
+
+std::vector<CommandParamInfo> SpritePropertiesCommand::onDescribeParams() const
+{
+  return {
+    {"transparent-color", "Index of the new transparent color (indexed sprites). Sets it without the dialog.", false, ""},
+  };
 }
 
 bool SpritePropertiesCommand::onEnabled(Context* context)
@@ -56,6 +84,33 @@ bool SpritePropertiesCommand::onEnabled(Context* context)
 
 void SpritePropertiesCommand::onExecute(Context* context)
 {
+  // With the param, run the OK path without the dialog.
+  if (m_hasParams) {
+    ContextWriter writer(context);
+    Sprite* sprite(writer.sprite());
+
+    // Only indexed sprites have a transparent color; update it if the
+    // index changed (same as the OK path below).
+    if (sprite->pixelFormat() == IMAGE_INDEXED &&
+        color_t(m_transparentColor) != sprite->transparentColor()) {
+      Transaction transaction(writer.context(), "Set Transparent Color");
+      DocumentApi api = writer.document()->getApi(transaction);
+      api.setSpriteTransparentColor(sprite, m_transparentColor);
+      transaction.commit();
+
+      update_screen_for_document(writer.document());
+    }
+    return;
+  }
+
+  // The dialog is read-only info; it would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("SpriteProperties: not available in headless mode\n");
+    Console console(context);
+    console.printf("SpriteProperties: not available in headless mode\n");
+    return;
+  }
+
   std::string imgtype_text;
   char buf[256];
   ColorButton* color_button = NULL;
