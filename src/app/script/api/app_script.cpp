@@ -60,13 +60,15 @@ public:
       return (double)static_cast<int>(app::current_editor->getSite().layerIndex());
     };
 
+    // The wrapper re-resolves its site's image on every call (see ImageSite):
+    // a stroke's cel trim or a canvas resize may replace the image object.
     clazz.addGetter("activeImage") = [](AppObject&) -> JSON::Value {
       if (!app::current_editor)
         return JSON::Value{JSON::Special::Null};
-      auto* img = app::current_editor->getSite().image();
-      if (!img)
+      auto site = app::current_editor->getSite();
+      if (!site.image())
         return JSON::Value{JSON::Special::Null};
-      return JSON::makeNative(script_api::wrap<doc::Image>(img));
+      return JSON::makeNative(std::make_shared<script_api::ImageSite>(site));
     };
 
     // The `Sprite` proxy re-resolves the active document, so a fresh

@@ -12,6 +12,8 @@
 
 #include "doc/cel.h"
 #include "doc/image.h"
+#include "doc/layer.h"
+#include "doc/site.h"
 
 #include <memory>
 
@@ -37,8 +39,17 @@ public:
       cel.setPosition(cel.x(), static_cast<int>(v));
     };
 
+    // The wrapper re-resolves its site's image on every call (see ImageSite);
+    // the site is this cel's (document, layer, frame) slot.
     clazz.addGetter("image") = [](doc::Cel& cel) -> JSON::Value {
-      return JSON::makeNative(script_api::wrap(cel.image()));
+      if (!cel.image())
+        return JSON::Value{JSON::Special::Null};
+      doc::Site site;
+      site.document(cel.document());
+      site.sprite(cel.sprite());
+      site.layer(cel.layer());
+      site.frame(cel.frame());
+      return JSON::makeNative(std::make_shared<script_api::ImageSite>(site));
     };
 
     clazz.addGetter("frame") = [](doc::Cel& cel) -> JSON::Value {

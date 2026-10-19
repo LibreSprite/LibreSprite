@@ -268,6 +268,11 @@ built-in behavior of the widget) and raises the `<id>_click` event.
 
 
 # [class Image]
+The wrapper re-resolves its site's image on every call (the site is the
+document, layer and frame the image was taken from): a stroke's cel trim or a
+canvas resize may replace (or remove) the image object underneath. When the
+site no longer has an image, every method throws.
+
 ## Properties:
    - `format`: read-only. The PixelFormat of the image.
    - `stride`: read-only. The number of bytes per image row.
@@ -1108,7 +1113,7 @@ The value is persisted to storage (keyed by the widget id) and raises the
 # [class Cel]
 ## Properties:
    - `frame`:
-   - `image`:
+   - `image`: the cel's image (see class Image for its re-resolving behavior).
    - `y`:
    - `x`:
 
@@ -1165,7 +1170,7 @@ The value is persisted to storage (keyed by the widget id) and raises the
    - `tools`: read-only. Returns the tools object (freehand drawing tools).
    - `activeSprite`: read-only. Returns the currently active Sprite.
    - `activeLayerNumber`: read-only. Returns the number of the current layer.
-   - `activeImage`: read-only, can be null. Returns the current layer/frame's image.
+   - `activeImage`: read-only, can be null. Returns the current layer/frame's image (see class Image for its re-resolving behavior).
    - `pixelColor`: read-only. Returns an object with functions for color conversion.
    - `activeFrameNumber`: read-only. Returns the number of the currently active animation frame.
 
@@ -1245,7 +1250,9 @@ call. Coordinates are sprite-space integers (like `image.putPixel`); negative
 values are allowed for shapes crossing the edge (the pipeline clips them like
 the GUI). The layer must be visible and editable and the frame must be in
 range. To group several calls into a single undo step, wrap them in
-`app.transaction(fn)`.
+`app.transaction(fn)`. A stroke's commit trims the cel, which replaces (or
+removes) the cel's image object; an `Image` wrapper re-resolves on every call
+(see class Image).
 
 Every method also accepts these common options:
    - tool: Optional. A tool id. Defaults to the method's tool (`stroke`
