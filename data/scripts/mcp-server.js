@@ -224,7 +224,7 @@ const TOOLS = [
   },
   {
     name: "pixel_set",
-    description: "Sets one pixel on the given frame. color is #RRGGBB, #RRGGBBAA or {r,g,b,a} with 0-255 values. On indexed-color sprites the color must exist in the palette. Edits are not undoable.",
+    description: "Sets one pixel on the given frame. color is #RRGGBB, #RRGGBBAA or {r,g,b,a} with 0-255 values. On indexed-color sprites the color must exist in the palette. Edits are undoable (one undo step per call; group a loop with app.transaction).",
     inputSchema: {
       type: "object",
       properties: {
