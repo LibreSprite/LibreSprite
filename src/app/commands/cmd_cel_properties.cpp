@@ -13,6 +13,7 @@
 #include "app/cmd/set_cel_opacity.h"
 #include "app/cmd/set_user_data.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/console.h"
 #include "app/context_access.h"
 #include "app/document_api.h"
@@ -23,6 +24,7 @@
 #include "app/ui/user_data_popup.h"
 #include "app/ui_context.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "base/mem_utils.h"
 #include "base/scoped_value.h"
 #include "doc/cel.h"
@@ -32,6 +34,9 @@
 #include "doc/layer.h"
 #include "doc/sprite.h"
 #include "ui/ui.h"
+
+#include <cstdlib>
+#include <stdexcept>
 
 #include "cel_properties.xml.h"
 
@@ -286,15 +291,87 @@ public:
   Command* clone() const override { return new CelPropertiesCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  // Property params: with opacity or user-data the changes are applied to
+  // the target cel in one transaction without the window.
+  bool m_hasParams;
+  bool m_hasOpacity;
+  int m_opacity;
+  bool m_hasUserData;
+  std::string m_userData;
+  std::string m_layer; // Target layer: name, then index
+  int m_frame;         // 1-based target frame, 0 = the active site's frame
 };
+
+// Finds a layer by name (searching the nested folders too); nullptr when
+// no layer has that name.
+static Layer* find_layer_by_name(Layer* folder, const std::string& name)
+{
+  LayerFolder* f = static_cast<LayerFolder*>(folder);
+  for (auto it = f->getLayerBegin(); it != f->getLayerEnd(); ++it) {
+    if ((*it)->name() == name)
+      return *it;
+    if ((*it)->isFolder()) {
+      Layer* found = find_layer_by_name(*it, name);
+      if (found)
+        return found;
+    }
+  }
+  return nullptr;
+}
 
 CelPropertiesCommand::CelPropertiesCommand()
   : Command("CelProperties",
             "Cel Properties",
             CmdUIOnlyFlag)
 {
+  m_hasParams = false;
+  m_hasOpacity = false;
+  m_opacity = 255;
+  m_hasUserData = false;
+  m_frame = 0;
+}
+
+void CelPropertiesCommand::onLoadParams(const Params& params)
+{
+  m_hasParams = false;
+  m_hasOpacity = false;
+  m_hasUserData = false;
+  m_layer = "";
+  m_frame = 0;
+
+  if (params.has_param("opacity")) {
+    m_hasOpacity = true;
+    m_opacity = MID(0, params.get_as<int>("opacity"), 255);
+  }
+
+  if (params.has_param("user-data")) {
+    m_hasUserData = true;
+    m_userData = params.get("user-data");
+  }
+
+  m_layer = params.get("layer");
+
+  std::string frame = params.get("frame");
+  if (!frame.empty())
+    m_frame = strtol(frame.c_str(), NULL, 10);
+
+  m_hasParams = m_hasOpacity || m_hasUserData;
+}
+
+std::vector<CommandParamInfo> CelPropertiesCommand::onDescribeParams() const
+{
+  return {
+    {"opacity", "Cel opacity, 0 to 255. With opacity or user-data, applies without the window.", false, ""},
+    {"user-data", "Cel user data text (keeps the current color).", false, ""},
+    {"layer", "Target layer: the layer name, then the layer index. Empty: the active layer.", false, ""},
+    {"frame", "1-based target frame. Empty: the active frame.", false, ""},
+  };
 }
 
 bool CelPropertiesCommand::onEnabled(Context* context)
@@ -306,6 +383,82 @@ bool CelPropertiesCommand::onEnabled(Context* context)
 void CelPropertiesCommand::onExecute(Context* context)
 {
   ContextReader reader(context);
+
+  // With the property params, apply them to the target cel without the
+  // window.
+  if (m_hasParams) {
+    Sprite* sprite = reader.sprite();
+
+    // Target layer: by name, then by index; fallback the active layer.
+    Layer* layer = reader.layer();
+    if (!m_layer.empty()) {
+      layer = find_layer_by_name(sprite->folder(), m_layer);
+      if (!layer) {
+        char* end = NULL;
+        long index = strtol(m_layer.c_str(), &end, 10);
+        if (end && *end == '\0' && index >= 0)
+          layer = sprite->layer((int)index);
+      }
+      if (!layer)
+        throw std::runtime_error(
+          "CelProperties: layer not found: '" + m_layer + "'");
+    }
+
+    LayerImage* image = dynamic_cast<LayerImage*>(layer);
+    if (!image)
+      throw std::runtime_error(
+        "CelProperties: the target layer is not an image layer");
+
+    // Target frame (1-based, like GotoFrame); fallback the active frame.
+    frame_t frame = reader.frame();
+    if (m_frame != 0)
+      frame = MID(0, m_frame-1, sprite->lastFrame());
+
+    std::shared_ptr<Cel> cel = image->cel(frame);
+    if (!cel)
+      throw std::runtime_error(
+        "CelProperties: no cel in layer '" + image->name() +
+        "' at frame " + std::to_string(frame+1));
+
+    doc::UserData newUserData = cel->data()->userData();
+    if (m_hasUserData)
+      newUserData.setText(m_userData);
+
+    // The background layer is always opaque, like the window.
+    bool changeOpacity = m_hasOpacity && !image->isBackground() &&
+                         (cel->opacity() != m_opacity);
+    bool changeUserData = m_hasUserData &&
+                          (cel->data()->userData() != newUserData);
+
+    if (changeOpacity || changeUserData) {
+      ContextWriter writer(reader);
+      Transaction transaction(writer.context(), "Set Cel Properties");
+
+      if (changeOpacity)
+        transaction.execute(new cmd::SetCelOpacity(cel, m_opacity));
+
+      if (changeUserData) {
+        transaction.execute(new cmd::SetUserData(cel->data(), newUserData));
+
+        // Redraw timeline because the cel's user data/color
+        // might have changed.
+        if (App::instance()->timeline())
+          App::instance()->timeline()->invalidate();
+      }
+
+      transaction.commit();
+      update_screen_for_document(writer.document());
+    }
+    return;
+  }
+
+  // The window would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("CelProperties: not available in headless mode\n");
+    Console console(context);
+    console.printf("CelProperties: not available in headless mode\n");
+    return;
+  }
 
   if (!g_window)
     g_window = new CelPropertiesWindow;
