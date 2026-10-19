@@ -181,6 +181,9 @@ public:
       Object.defineProperty(app, "command", {
         configurable: true, get: function() { return globalThis.command; }
       });
+      Object.defineProperty(app, "tools", {
+        configurable: true, get: function() { return globalThis.tools; }
+      });
       // Yield to the event loop: a Promise resolved on the next tick (the
       // timer extension fires it). Scripts use `await app.yield()`.
       app.yield = function() {
