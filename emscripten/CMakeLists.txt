@@ -443,6 +443,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/storage_internal.cpp
   ${SRC}/app/script/api/textbox_script.cpp
   ${SRC}/app/script/api/timer_script.cpp
+  ${SRC}/app/script/api/tools_script.cpp
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp
   ${SRC}/app/script/script_menu.cpp
@@ -458,6 +459,8 @@ set(SRC_FILES
   ${SRC}/app/tools/intertwine.cpp
   ${SRC}/app/tools/pick_ink.cpp
   ${SRC}/app/tools/point_shape.cpp
+  ${SRC}/app/tools/script_tool_driver.cpp
+  ${SRC}/app/tools/script_tool_loop.cpp
   ${SRC}/app/tools/stroke.cpp
   ${SRC}/app/tools/symmetry.cpp
   ${SRC}/app/tools/tool_box.cpp

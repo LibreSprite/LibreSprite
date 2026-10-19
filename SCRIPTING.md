@@ -1162,6 +1162,7 @@ The value is persisted to storage (keyed by the widget id) and raises the
    - `isHeadless`: read-only. True when running without a visible UI (--batch/--shell).
    - `activeDocument`: read-only. Returns the currently active Document.
    - `command`: read-only. Returns an object with functions for running commands.
+   - `tools`: read-only. Returns the tools object (freehand drawing tools).
    - `activeSprite`: read-only. Returns the currently active Sprite.
    - `activeLayerNumber`: read-only. Returns the number of the current layer.
    - `activeImage`: read-only, can be null. Returns the current layer/frame's image.
@@ -1199,6 +1200,51 @@ The value is persisted to storage (keyed by the widget id) and raises the
    - `documentation()`:
       returns: Nothing
       Prints this text.
+
+
+# global tools [class Tools]
+## No Properties.
+
+Runs a freehand tool gesture with synthetic pointer events, the same GUI
+drawing pipeline as the mouse. One `stroke()` call is one tool gesture and one
+undo step (`command.Undo` reverts it); the target document becomes active after
+the call.
+
+## Methods:
+   - `stroke(options)`:
+     - options: an object; only `points` is required.
+     - tool: Optional. "pencil", "eraser", "spray", "contour", "blur", or
+       "jumble". Defaults to the GUI's active tool (throws when the active
+       tool is not a supported freehand tool).
+     - ink: Optional. An ink id override (e.g. "paint", "eraser",
+       "replace_fg_with_bg"). Defaults to the tool's ink.
+     - brush: Optional. A brush object with the fields below. Defaults to the
+       GUI's active brush for the tool.
+     - color: Optional. A 32-bit color in 8888 RGBA format (the
+       `pixelColor.rgba` convention). Sets the foreground color. Defaults to
+       the GUI foreground color.
+     - opacity: Optional. 0-255. Defaults to the tool preference.
+     - layer: Optional. The layer index (0 = bottom). Defaults to the active
+       layer.
+     - frame: Optional. The frame index. Defaults to the active frame.
+     - filled: Optional. A boolean, for fill-optional tools (contour is
+       always filled). Defaults to the tool preference.
+     - points: Required. An array of `[x, y]` or `[x, y, pressure]` in sprite
+       coordinates (like `image.putPixel`). `pressure` is 0-1 (default 1.0).
+       At least one point.
+      returns: Nothing
+      Runs the tool gesture. The defaults (tool, brush, color, opacity,
+      filled) come from the current GUI state. The layer must be visible and
+      editable and the frame must be in range. Grouping several calls into a
+      single undo step (a transaction) is a planned follow-up.
+
+The `brush` field is an object:
+   - `type`: "circle", "square", "line", or "image".
+   - `size`: 1-256, the brush diameter (ignored for `image`).
+   - `angle`: 0-359, in degrees (for square/line brushes).
+   - `pattern`: "aligned_to_source", "aligned_to_destination", or "paint_brush".
+   - `image`: An `Image` object (a cel image or a loaded file); required when
+     `type` is "image". The image is stamped along the stroke.
 
 
 # Script Events

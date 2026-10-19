@@ -380,6 +380,7 @@ add_library(app-lib
   script/api/storage_internal.cpp
   script/api/textbox_script.cpp
   script/api/timer_script.cpp
+  script/api/tools_script.cpp
 
   send_crash.cpp
   shade.cpp
