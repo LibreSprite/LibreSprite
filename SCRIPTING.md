@@ -273,6 +273,14 @@ document, layer and frame the image was taken from): a stroke's cel trim or a
 canvas resize may replace (or remove) the image object underneath. When the
 site no longer has an image, every method throws.
 
+`putPixel`, `putImageData` and `clear` are raw, format-dependent writes and
+are undoable: each call is one undo step (`command.Undo` reverts it), and a
+loop wrapped in `app.transaction(fn)` commits as one undo step. For drawing
+(blending, brushes, shapes) use `app.tools`. The bulk idiom is
+`getImageData()` -> mutate the array in JS -> `putImageData(data)` (one undo
+step). A write into a non-active document's image makes that document active
+(the same side effect as `sprite.save`); the undo lands in its history.
+
 ## Properties:
    - `format`: read-only. The PixelFormat of the image.
    - `stride`: read-only. The number of bytes per image row.
@@ -283,9 +291,12 @@ site no longer has an image, every method throws.
    - `putPixel(x, y, color)`:
      - x: integer
      - y: integer
-     - color: a 32-bit color in 8888 RGBA format.
+     - color: a 32-bit color in 8888 RGBA format. On indexed images it is a
+       palette index (raw write, no palette conversion).
       returns: Nothing
-      writes the color onto the image at the the given coordinate.
+      writes the color onto the image at the given coordinate. Out of bounds
+      is a no-op. One undo step; inside `app.transaction(fn)` the calls join
+      the scope's transaction.
 
    - `getImageData()`:
       returns: All pixels in a Uint8Array
@@ -294,7 +305,9 @@ site no longer has an image, every method throws.
    - `putImageData(data)`:
      - data: All of the pixels in the image.
       returns: Nothing
-      writes the given pixels onto the image. Must be the same size as the image.
+      writes the given pixels onto the image. Must be the same size as the
+      image. One undo step; inside `app.transaction(fn)` the calls join the
+      scope's transaction.
 
    - `getPNGData()`:
       returns: The image as a Base64-encoded PNG string.
@@ -303,7 +316,8 @@ site no longer has an image, every method throws.
    - `clear(color)`:
      - color: a 32-bit color in 8888 RGBA format.
       returns: Nothing
-      clears the image with the specified color.
+      clears the image with the specified color. One undo step; inside
+      `app.transaction(fn)` the calls join the scope's transaction.
 
    - `getPixel(x, y)`:
      - x: integer
@@ -1206,14 +1220,16 @@ The value is persisted to storage (keyed by the widget id) and raises the
       - fn: A sync or async function.
        returns: fn's return value (a Promise when fn is async), so callers
        can `await app.transaction(...)`.
-       Runs fn with a shared transaction: all `tools.*` calls inside fn
-       join the transaction, so the whole group commits as one undo step
-       when fn completes (`command.Undo` reverts every call at once). A
-       throwing fn rolls back every grouped change (the document is exactly
-       as before the call) and the error propagates.
-       Only the drawing tools are grouped: the other mutating APIs
-       (`sprite.width =`, `selection.select`, `command.*`, ...) keep their
-       own transactions and are not affected by the scope.
+       Runs fn with a shared transaction: all `tools.*` calls and the raw
+       image writes (`image.putPixel`, `image.putImageData`, `image.clear`)
+       inside fn join the transaction, so the whole group commits as one
+       undo step when fn completes (`command.Undo` reverts every call at
+       once). A throwing fn rolls back every grouped change (the document
+       is exactly as before the call) and the error propagates.
+       Only the drawing tools and the raw image writes are grouped: the
+       other mutating APIs (`sprite.width =`, `selection.select`,
+       `command.*`, ...) keep their own transactions and are not affected
+       by the scope.
        The scope is bound to the document active at enter time: drawing
        into a different document inside the scope (e.g. after opening a new
        file) throws an error and the group is rolled back. The bound

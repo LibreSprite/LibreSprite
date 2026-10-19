@@ -37,6 +37,7 @@ namespace script_api {
     doc::Site site;
 
     doc::Image* image() const { return site.image(); }
+    std::shared_ptr<const doc::Cel> cel() const { return site.cel(); }
   };
 
   // Wrap a non-owning raw pointer in a shared_ptr with a no-op deleter.
