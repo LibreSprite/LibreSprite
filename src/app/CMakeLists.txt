@@ -148,6 +148,7 @@ add_library(app-lib
   cmd/set_mask.cpp
   cmd/set_mask_position.cpp
   cmd/set_palette.cpp
+  cmd/set_pixel.cpp
   cmd/set_pixel_format.cpp
   cmd/set_sprite_size.cpp
   cmd/set_total_frames.cpp
