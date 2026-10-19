@@ -167,6 +167,24 @@ public:
       app::AppScripting::leaveCritical(file);
       return JSON::Value{JSON::Special::Undefined};
     };
+
+    // app.transaction support (the JS glue is in the boot script below):
+    // __transactionEnter() opens the calling script's transaction scope
+    // (or joins the outer one when nested) and returns the env key to
+    // pass to __transactionLeave() ("" when no script env is active: a
+    // no-op). While the scope is open, the script's tools.* calls join
+    // its transaction, so the group commits as one undo step. The scope
+    // also holds the env's critical counter, so a re-run of the script
+    // is refused while it is open (the env is not torn down), as with
+    // app.critical.
+    addFunction("__transactionEnter") = []() -> JSON::Value {
+      return app::AppScripting::enterTransaction();
+    };
+
+    addFunction("__transactionLeave") = [](const std::string& file, bool commit) -> JSON::Value {
+      app::AppScripting::leaveTransaction(file, commit);
+      return JSON::Value{JSON::Special::Undefined};
+    };
   }
 
   std::string init(const std::string&, JSON::Value&) override {
@@ -215,6 +233,35 @@ public:
           );
         // Sync fn: the counter is only held during the call.
         __criticalLeave(key);
+        return result;
+      };
+      // Run fn (sync or async) with a shared transaction: all tools.*
+      // calls inside fn join the transaction and commit as one undo
+      // step when fn settles (a throwing fn rolls the whole group back,
+      // the document is exactly as before the call). Returns fn's
+      // result (a Promise when fn is async), so callers can
+      // `await app.transaction(...)`.
+      app.transaction = function(fn) {
+        if (typeof fn !== "function")
+          throw new TypeError("app.transaction: fn must be a function");
+        const key = __transactionEnter();
+        let result;
+        try {
+          result = fn();
+        } catch (err) {
+          __transactionLeave(key, false); // abort: roll back the group
+          throw err;
+        }
+        // Async fn: hold the scope across the async window, settle it
+        // on resolve (commit) or reject (rollback). The value /
+        // rejection is passed through.
+        if (key && result && typeof result.then === "function")
+          return result.then(
+            v => { __transactionLeave(key, true); return v; },
+            e => { __transactionLeave(key, false); throw e; }
+          );
+        // Sync fn: commit on success.
+        __transactionLeave(key, true);
         return result;
       };
     )";
