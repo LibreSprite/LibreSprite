@@ -1197,6 +1197,39 @@ The value is persisted to storage (keyed by the widget id) and raises the
       calls are allowed (the protection ends when the outermost one
       settles). App exit is not blocked by an active critical section.
 
+    - `transaction(fn)`:
+      - fn: A sync or async function.
+       returns: fn's return value (a Promise when fn is async), so callers
+       can `await app.transaction(...)`.
+       Runs fn with a shared transaction: all `tools.*` calls inside fn
+       join the transaction, so the whole group commits as one undo step
+       when fn completes (`command.Undo` reverts every call at once). A
+       throwing fn rolls back every grouped change (the document is exactly
+       as before the call) and the error propagates.
+       Only the drawing tools are grouped: the other mutating APIs
+       (`sprite.width =`, `selection.select`, `command.*`, ...) keep their
+       own transactions and are not affected by the scope.
+       The scope is bound to the document active at enter time: drawing
+       into a different document inside the scope (e.g. after opening a new
+       file) throws an error and the group is rolled back. The bound
+       document must stay open while the scope is active: the GUI refuses
+       to close it while a scope is open (close it once the scope settles,
+       which happens when the returned promise settles or the script
+       re-runs).
+       Nested `app.transaction` calls are allowed: the inner scope joins
+       the outer transaction (the group still commits as one undo step).
+       Like `app.critical`, the scope must not outlive the script run: if
+       the script is torn down mid-transaction, the open group is rolled
+       back.
+
+       Two strokes inside one transaction are one undo step:
+
+           app.transaction(() => {
+             tools.stroke({ points: [[5, 5], [10, 5]] });
+             tools.stroke({ points: [[20, 5], [25, 5]] });
+           });
+           // One command.Undo() reverts both strokes.
+
    - `documentation()`:
       returns: Nothing
       Prints this text.
@@ -1235,8 +1268,8 @@ the call.
       returns: Nothing
       Runs the tool gesture. The defaults (tool, brush, color, opacity,
       filled) come from the current GUI state. The layer must be visible and
-      editable and the frame must be in range. Grouping several calls into a
-      single undo step (a transaction) is a planned follow-up.
+      editable and the frame must be in range. To group several calls into a
+      single undo step, wrap them in `app.transaction(fn)`.
 
 The `brush` field is an object:
    - `type`: "circle", "square", "line", or "image".

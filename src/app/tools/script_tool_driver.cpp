@@ -14,6 +14,7 @@
 #include "app/app.h"
 #include "app/context_access.h"
 #include "app/document.h"
+#include "app/script/app_scripting.h"
 #include "app/tools/ink.h"
 #include "app/tools/pointer.h"
 #include "app/tools/script_tool_loop.h"
@@ -88,6 +89,22 @@ void run_tool_events(const ScriptToolLoopConfig& cfg, const std::vector<ScriptPo
   if (!open)
     throw std::runtime_error("run_tool_events: the document is not open");
 
+  // Join the script's active transaction scope (app.transaction): the
+  // loop then does not own a Transaction (no commit in dispose; the
+  // scope's commit produces the single undo step). The scope is bound
+  // to the document active when it started; drawing into a different
+  // document would desync its undo history. cfg is const, so the join
+  // goes through a copy.
+  ScriptToolLoopConfig loopCfg = cfg;
+  if (Transaction* activeTx = AppScripting::activeTransaction()) {
+    if (AppScripting::activeTransactionDocument() != cfg.document)
+      throw std::runtime_error(
+        "run_tool_events: the document is not the document the script's "
+        "transaction scope is bound to (the scope is bound to the "
+        "document active when app.transaction started)");
+    loopCfg.externalTransaction = activeTx;
+  }
+
   // The frame must be in range
   doc::Sprite* sprite = cfg.document->sprite();
   if (!sprite || cfg.frame >= sprite->totalFrames())
@@ -107,7 +124,7 @@ void run_tool_events(const ScriptToolLoopConfig& cfg, const std::vector<ScriptPo
 
   std::unique_ptr<ScriptToolLoop> loop;
   try {
-    loop.reset(new ScriptToolLoop(cfg));
+    loop.reset(new ScriptToolLoop(loopCfg));
   }
   catch (const std::runtime_error&) {
     // The config validation errors are already descriptive

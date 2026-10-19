@@ -14,12 +14,15 @@
 #include "delta/Interpreter.hpp"
 #include "delta/Shared.hpp"
 #include "app/app.h"
+#include "app/document.h"
 #include "app/file/script_codec_requests.h"
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
 #include "app/script/script_permission_dialog.h"
 #include "app/script/script_permissions.h"
 #include "app/task_manager.h"
+#include "app/transaction.h"
+#include "app/ui_context.h"
 #include "base/injection.h"
 #include "base/path.h"
 #include "base/range.h"
@@ -41,6 +44,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -54,6 +58,31 @@ namespace {
 // uses it to lazy-load the script that owns an event.
 std::unordered_set<std::string> loadedScripts;
 JSON::Value LS;
+
+// One app.transaction() scope (the per-env stack in ScriptEnv): the
+// outermost scope owns the Transaction it created; a nested scope joins
+// it (the same transaction, owns = false). The scope is bound to the
+// document active at enter time (a nested scope copies the binding, so
+// the whole stack shares one document).
+struct TransactionScope {
+  app::Transaction* transaction;
+  app::Document* document;
+  bool owns;
+};
+
+// True when the document is still open (its undo history is alive). A
+// scope's Transaction holds the bound document's undo-history pointers,
+// so the scope cannot be committed or rolled back once the document is
+// destroyed (at app exit the documents go away before the envs).
+static bool boundDocumentOpen(app::Document* doc) {
+  app::UIContext* ctx = app::UIContext::instance();
+  if (!ctx)
+    return false;
+  for (doc::Document* d : ctx->documents())
+    if (d == doc)
+      return true;
+  return false;
+}
 
 // One interpreter environment per script file: its own QuickJS runtime
 // and context, its own extension set, and its own event handler. Scripts
@@ -73,6 +102,11 @@ struct ScriptEnv {
   // script token is off the interpreter stack there, so the hasToken
   // re-run guard does not apply). Main thread only.
   int criticalCount = 0;
+  // app.transaction() scope stack (the top is the active scope): a
+  // nested scope joins the outer transaction. Each open scope also
+  // holds one critical count (see enterTransaction()), so the same
+  // re-run guard applies. Main thread only.
+  std::vector<TransactionScope> transactionScopes;
 };
 
 // Canonical script path (the REPL env is "::") -> its environment.
@@ -148,6 +182,17 @@ std::string formatReplValue(JSON::Value& value) {
 // app-side state (ext->shutdown(), the event handler) before the
 // interpreter (and its runtime) goes away, then drops the env.
 void destroyEnv(std::map<std::string, ScriptEnv>::iterator it) {
+  // Roll back the open app.transaction() scopes (the Transaction dtor
+  // rolls back the uncommitted commands). Skip when the bound document
+  // is already gone: at app exit the documents are destroyed before
+  // the envs, and the rollback would touch a destroyed undo history.
+  if (!it->second.transactionScopes.empty() &&
+      boundDocumentOpen(it->second.transactionScopes.front().document))
+    for (const auto& scope : it->second.transactionScopes)
+      if (scope.owns)
+        delete scope.transaction;
+  it->second.transactionScopes.clear();
+
   for (auto& ext : it->second.extensions)
     ext->shutdown();
   it->second.eventHandler = JSON::Value{JSON::Special::Undefined};
@@ -742,6 +787,100 @@ namespace app {
       return; // the env is gone: nothing to clear (teardown ignores the counter)
     if (it->second.criticalCount > 0)
       it->second.criticalCount--;
+  }
+
+  // The env that owns the current interpreter token: the script env for
+  // a script token, the REPL env for the unrestricted token,
+  // envs.end() when no JS runs (a C++ call site). Unlike enterCritical(),
+  // the REPL is a valid scope owner: tools.stroke works in the REPL, so
+  // the grouping must work there too.
+  static std::map<std::string, ScriptEnv>::iterator envForCurrentToken() {
+    const void* token = Interpreter::currentToken();
+    if (!token)
+      return envs.end();
+    const std::string key = (token == ScriptPermissions::kUnrestrictedToken)
+        ? std::string{"::"}
+        : std::string{static_cast<const char*>(token)};
+    return envs.find(key);
+  }
+
+  std::string AppScripting::enterTransaction() {
+    auto it = envForCurrentToken();
+    if (it == envs.end())
+      return {}; // no script env (C++ call site): no-op
+
+    auto& scopes = it->second.transactionScopes;
+    if (!scopes.empty()) {
+      // Nested scope: join the outer transaction (no second
+      // Transaction; the outer commit produces the single undo step).
+      scopes.push_back({scopes.back().transaction, scopes.back().document, false});
+    }
+    else {
+      UIContext* ctx = UIContext::instance();
+      if (!ctx)
+        throw std::runtime_error("app.transaction: no UI context is available");
+      // The Transaction reads the active document's undo history; the
+      // scope is bound to that document for its whole lifetime.
+      Document* doc = ctx->activeDocument();
+      if (!doc)
+        throw std::runtime_error("app.transaction: no active document");
+      scopes.push_back({new Transaction(ctx, "Script Execution", ModifyDocument),
+                        doc, true});
+    }
+    // Hold the critical counter too: a re-run must not tear the env
+    // down while the scope is open (the same async continuation concern
+    // as app.critical, covered by the same re-run guard).
+    it->second.criticalCount++;
+    return it->first;
+  }
+
+  void AppScripting::leaveTransaction(const std::string& file, bool commit) {
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return; // the env is gone: nothing to clear (teardown handles it)
+    auto& scopes = it->second.transactionScopes;
+    if (scopes.empty())
+      return; // defensive: unbalanced leave
+    const TransactionScope scope = scopes.back();
+    scopes.pop_back();
+    // Only the outermost scope owns the transaction: commit it, or let
+    // the dtor roll back the uncommitted commands. The dtor is a no-op
+    // once committed, so the object is deleted either way.
+    if (scope.owns) {
+      // The commit and the rollback both read the bound document's undo
+      // history; if the document was destroyed while the scope was open
+      // (a close outside the guard), leaking the transaction is safer
+      // than touching the freed pointers.
+      if (boundDocumentOpen(scope.document)) {
+        if (commit)
+          scope.transaction->commit();
+        delete scope.transaction;
+      }
+    }
+    if (it->second.criticalCount > 0)
+      it->second.criticalCount--;
+  }
+
+  Transaction* AppScripting::activeTransaction() {
+    auto it = envForCurrentToken();
+    if (it == envs.end() || it->second.transactionScopes.empty())
+      return nullptr;
+    return it->second.transactionScopes.back().transaction;
+  }
+
+  Document* AppScripting::activeTransactionDocument() {
+    auto it = envForCurrentToken();
+    if (it == envs.end() || it->second.transactionScopes.empty())
+      return nullptr;
+    return it->second.transactionScopes.back().document;
+  }
+
+  bool AppScripting::transactionScopeHolds(Document* doc) {
+    for (auto& [path, env] : envs)
+      if (!env.transactionScopes.empty() &&
+          env.transactionScopes.front().document == doc)
+        return true;
+    return false;
   }
 
   void AppScripting::afterEval(std::function<void()> fn) {
