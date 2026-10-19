@@ -14,6 +14,8 @@
 #include "app/color.h"
 #include "app/color_utils.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
+#include "app/console.h"
 #include "app/context.h"
 #include "app/context_access.h"
 #include "app/document.h"
@@ -26,6 +28,7 @@
 #include "base/bind.h"
 #include "base/chrono.h"
 #include "base/convert_to.h"
+#include "base/log.h"
 #include "doc/image.h"
 #include "doc/mask.h"
 #include "doc/sprite.h"
@@ -51,17 +54,23 @@ public:
   Command* clone() const override { return new MaskByColorCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
 private:
-  Mask* generateMask(const Sprite* sprite, const Image* image, int xpos, int ypos);
+  Mask* generateMask(const Sprite* sprite, const Image* image, int xpos, int ypos,
+                     app::Color color, int tolerance);
   void maskPreview(const ContextReader& reader);
 
   Window* m_window; // TODO we cannot use a unique_ptr because clone() needs a copy ctor
   ColorButton* m_buttonColor;
   CheckBox* m_checkPreview;
   Slider* m_sliderTolerance;
+  app::Color m_color;
+  int m_tolerance;
+  bool m_hasColor; // true when the color param is given
 };
 
 MaskByColorCommand::MaskByColorCommand()
@@ -69,6 +78,30 @@ MaskByColorCommand::MaskByColorCommand()
             "Mask By Color",
             CmdUIOnlyFlag)
 {
+  m_color = app::Color::fromMask();
+  m_tolerance = 0;
+  m_hasColor = false;
+}
+
+void MaskByColorCommand::onLoadParams(const Params& params)
+{
+  m_color = app::Color::fromMask();
+  m_tolerance = 0;
+  m_hasColor = false;
+  if (params.has_param("color")) {
+    m_color = app::Color::fromString(params.get("color"));
+    m_hasColor = true;
+  }
+  if (params.has_param("tolerance"))
+    m_tolerance = params.get_as<int>("tolerance");
+}
+
+std::vector<CommandParamInfo> MaskByColorCommand::onDescribeParams() const
+{
+  return {
+    {"color", "Color to select, for example rgb{255,0,0,255}. With this, runs without the dialog.", false, ""},
+    {"tolerance", "Color tolerance, 0 to 255.", false, ""},
+  };
 }
 
 bool MaskByColorCommand::onEnabled(Context* context)
@@ -82,19 +115,41 @@ void MaskByColorCommand::onExecute(Context* context)
 {
   const ContextReader reader(context);
   const Sprite* sprite = reader.sprite();
+
+  int xpos, ypos;
+  const Image* image = reader.image(&xpos, &ypos);
+  if (!sprite || !image)
+    return;
+
+  // With the color param, run the mask generation without the dialog.
+  if (m_hasColor) {
+    ContextWriter writer(reader);
+    Document* document(writer.document());
+
+    Transaction transaction(writer.context(), "Mask by Color", DoesntModifyDocument);
+    std::unique_ptr<Mask> mask(generateMask(sprite, image, xpos, ypos,
+                                            m_color, m_tolerance));
+    transaction.execute(new cmd::SetMask(document, mask.get()));
+    transaction.commit();
+
+    document->generateMaskBoundaries();
+    update_screen_for_document(document);
+    return;
+  }
+
+  // The dialog would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("MaskByColor: not available in headless mode\n");
+    Console console(context);
+    console.printf("MaskByColor: not available in headless mode\n");
+    return;
+  }
+
   Box* box1, *box2, *box3, *box4;
   Widget* label_color;
   Widget* label_tolerance;
   Button* button_ok;
   Button* button_cancel;
-
-  if (!App::instance()->isGui() || !sprite)
-    return;
-
-  int xpos, ypos;
-  const Image* image = reader.image(&xpos, &ypos);
-  if (!image)
-    return;
 
   m_window = new Window(Window::WithTitleBar, "Mask by Color");
   box1 = new Box(VERTICAL);
@@ -161,7 +216,9 @@ void MaskByColorCommand::onExecute(Context* context)
 
   if (apply) {
     Transaction transaction(writer.context(), "Mask by Color", DoesntModifyDocument);
-    std::unique_ptr<Mask> mask(generateMask(sprite, image, xpos, ypos));
+    std::unique_ptr<Mask> mask(generateMask(sprite, image, xpos, ypos,
+                                            m_buttonColor->getColor(),
+                                            m_sliderTolerance->getValue()));
     transaction.execute(new cmd::SetMask(document, mask.get()));
     transaction.commit();
 
@@ -179,15 +236,14 @@ void MaskByColorCommand::onExecute(Context* context)
   delete m_window;
 }
 
-Mask* MaskByColorCommand::generateMask(const Sprite* sprite, const Image* image, int xpos, int ypos)
+Mask* MaskByColorCommand::generateMask(const Sprite* sprite, const Image* image,
+                                       int xpos, int ypos,
+                                       app::Color color, int tolerance)
 {
-  int color, tolerance;
-
-  color = color_utils::color_for_image(m_buttonColor->getColor(), sprite->pixelFormat());
-  tolerance = m_sliderTolerance->getValue();
+  int intColor = color_utils::color_for_image(color, sprite->pixelFormat());
 
   std::unique_ptr<Mask> mask(new Mask());
-  mask->byColor(image, color, tolerance);
+  mask->byColor(image, intColor, tolerance);
   mask->offsetOrigin(xpos, ypos);
 
   return mask.release();
@@ -198,7 +254,9 @@ void MaskByColorCommand::maskPreview(const ContextReader& reader)
   if (m_checkPreview->isSelected()) {
     int xpos, ypos;
     const Image* image = reader.image(&xpos, &ypos);
-    std::unique_ptr<Mask> mask(generateMask(reader.sprite(), image, xpos, ypos));
+    std::unique_ptr<Mask> mask(generateMask(reader.sprite(), image, xpos, ypos,
+                                            m_buttonColor->getColor(),
+                                            m_sliderTolerance->getValue()));
     {
       ContextWriter writer(reader);
 
