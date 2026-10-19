@@ -15,12 +15,14 @@
 #include "app/color.h"
 #include "app/color_utils.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/commands/filters/filter_manager_impl.h"
 #include "app/commands/filters/filter_window.h"
 #include "app/context.h"
 #include "app/find_widget.h"
 #include "app/ini_file.h"
 #include "app/load_widget.h"
+#include "app/modules/gui.h"
 #include "app/ui/color_bar.h"
 #include "app/ui/color_button.h"
 #include "base/bind.h"
@@ -116,15 +118,59 @@ public:
   Command* clone() const override { return new ReplaceColorCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  bool m_useUI;
+  bool m_hasFrom;
+  bool m_hasTo;
+  bool m_hasTolerance;
+  app::Color m_from;
+  app::Color m_to;
+  int m_tolerance;
 };
 
 ReplaceColorCommand::ReplaceColorCommand()
   : Command("ReplaceColor",
             "Replace Color",
             CmdRecordableFlag)
+  , m_useUI(true)
+  , m_hasFrom(false)
+  , m_hasTo(false)
+  , m_hasTolerance(false)
+  , m_tolerance(0)
 {
+}
+
+void ReplaceColorCommand::onLoadParams(const Params& params)
+{
+  std::string useUI = params.get("use-ui");
+  m_useUI = (useUI.empty() || (useUI == "true"));
+
+  m_hasFrom = params.has_param("from");
+  if (m_hasFrom)
+    m_from = app::Color::fromString(params.get("from"));
+
+  m_hasTo = params.has_param("to");
+  if (m_hasTo)
+    m_to = app::Color::fromString(params.get("to"));
+
+  m_hasTolerance = params.has_param("tolerance");
+  if (m_hasTolerance)
+    m_tolerance = params.get_as<int>("tolerance");
+}
+
+std::vector<CommandParamInfo> ReplaceColorCommand::onDescribeParams() const
+{
+  return {
+    {"use-ui", "Show the replace color dialog (true or false).", false, "true"},
+    {"from", "Color to replace, for example rgb{255,0,0,255}. With this, runs without the dialog.", false, ""},
+    {"to", "Replacement color, for example rgb{0,0,255,255}.", false, ""},
+    {"tolerance", "Color tolerance, 0 to 255.", false, "0"},
+  };
 }
 
 bool ReplaceColorCommand::onEnabled(Context* context)
@@ -149,6 +195,22 @@ void ReplaceColorCommand::onExecute(Context* context)
                       TARGET_GRAY_CHANNEL |
                       TARGET_ALPHA_CHANNEL |
                       TARGET_INDEX_CHANNEL);
+
+  // Apply directly (no dialog) when use-ui is false, a setting is given,
+  // or we run headless.
+  if (!m_useUI || m_hasFrom || m_hasTo || m_hasTolerance ||
+      !App::instance()->isGui()) {
+    if (m_hasFrom)
+      filter.setFrom(m_from);
+    if (m_hasTo)
+      filter.setTo(m_to);
+    if (m_hasTolerance)
+      filter.setTolerance(m_tolerance);
+
+    filterMgr.applyToTarget();
+    update_screen_for_document(filterMgr.document());
+    return;
+  }
 
   ReplaceColorWindow window(filter, filterMgr);
   if (window.doModal()) {
