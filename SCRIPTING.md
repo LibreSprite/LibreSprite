@@ -1240,6 +1240,76 @@ The value is persisted to storage (keyed by the widget id) and raises the
       Prints this text.
 
 
+# global selection [class Selection]
+## Properties:
+   - `bounds`: read-only. The current selection's bounds as an object
+     `{ x, y, width, height }` in sprite coordinates, or null when
+     there is no (visible) selection.
+
+## Methods:
+   - `select(x, y, w, h)`:
+     - x, y: The top-left corner of the rectangular selection, in
+       sprite coordinates.
+     - w, h: The selection size. Non-positive values deselect.
+      returns: Nothing
+      Replaces the selection with the given rectangle.
+
+   - `selectAll()`:
+     returns: Nothing
+     Replaces the selection with the whole sprite bounds.
+
+   - `deselect()`:
+     returns: Nothing
+     Clears the selection.
+
+   - `lasso(points, options)`:
+     - points: Required. An array of `[x, y]` in sprite coordinates
+       (the same format as `tools.stroke`'s points, without the
+       pressure value). At least one point.
+     - options: Optional. An object with the `mode` and `frame` fields
+       below.
+      returns: Nothing
+      Runs the lasso tool: the freehand loop through the points selects
+      the enclosed region (contour and fill, like the GUI tool).
+
+   - `polygon(points, options)`:
+     - points: Required. An array of `[x, y]` polygon vertices, in
+       sprite coordinates. At least three points.
+     - options: Optional. An object with the `mode` and `frame` fields
+       below.
+      returns: Nothing
+      Runs the polygonal lasso tool: the polygon through the points
+      selects its interior (contour and fill, like the GUI tool).
+
+   - `magicWand(x, y, options)`:
+     - x, y: Required. The pixel to select, in sprite coordinates.
+     - options: Optional. An object with the `mode`, `tolerance`,
+       `contiguous`, `layer` and `frame` fields below.
+     - tolerance: Optional. 0-255. How far a pixel's color may differ
+       from the clicked color and still be selected. Defaults to the
+       tool preference.
+     - contiguous: Optional. A boolean. true selects only the region
+       connected to (x, y); false selects every matching pixel.
+       Defaults to the tool preference.
+     - layer: Optional. The layer index (0 = bottom) whose pixels the
+       wand reads (the floodfill source). Defaults to the active layer.
+      returns: Nothing
+      Runs the magic wand tool: selects the pixels of the clicked color
+      (flood fill, like the GUI tool).
+
+ All methods operate on the active document's selection and are one
+ undo step each (`command.Undo` reverts them); inside
+ `app.transaction(fn)` they join the scope's transaction. The
+ selection is document-wide (it applies to every frame). The `mode`
+ field (lasso, polygon and magicWand) is the selection operation:
+ "replace" (default) replaces the current selection with the tool's
+ region; "add" keeps it and adds the region; "subtract" keeps it and
+ removes the region from it. The `frame` field (all three tool
+ methods) is the frame index, defaulting to the active frame: for
+ magicWand it selects the frame the wand reads, for lasso and polygon
+ it only constrains the tool gesture (the selected region is
+ frame-independent).
+
 # global tools [class Tools]
 ## No Properties.
 
