@@ -62,6 +62,9 @@ namespace app {
     bool previewFilled = false;
     int tolerance = 0;
     bool contiguous = true;
+    // The value returned by getModifiers(). kNone = the loop's default
+    // (kReplaceSelection for the selection inks).
+    tools::ToolLoopModifiers modifiers = tools::ToolLoopModifiers::kNone;
     int sprayWidth = 16;
     int spraySpeed = 32;
     tools::FreehandAlgorithm freehandAlgorithm = tools::FreehandAlgorithm::DEFAULT;
@@ -164,6 +167,7 @@ namespace app {
     int m_opacity;
     int m_tolerance;
     bool m_contiguous;
+    tools::ToolLoopModifiers m_modifiers;
     render::Zoom m_zoom;
     gfx::Point m_celOrigin;
     gfx::Point m_speed;
