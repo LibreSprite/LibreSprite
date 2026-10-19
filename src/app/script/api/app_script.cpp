@@ -28,9 +28,12 @@
 #include "base/launcher.h"
 #include "doc/document.h"
 #include "doc/site.h"
+#include "she/she.h"
 #include "ui/manager.h"
 
+#include <fstream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 class AppObject {
@@ -137,6 +140,40 @@ public:
     clazz.addMethod("redraw") = [](AppObject&) -> JSON::Value {
       ui::Manager::getDefault()->invalidate();
       return JSON::Value{JSON::Special::Undefined};
+    };
+
+    // takeScreenshot(filename) -> saves the whole UI (the display surface,
+    // which also contains the dialogs) as a PNG. Returns false when there
+    // is no display (no ui::Manager). Headless runs capture the virtual
+    // surface of the dummy video driver.
+    clazz.addMethod("takeScreenshot") = [](AppObject&, const std::string& fileName) -> JSON::Value {
+      auto* mgr = ui::Manager::getDefault();
+      if (!mgr || !mgr->getDisplay())
+        return false;
+      she::Surface* src = mgr->getDisplay()->getSurface();
+      if (!src || src->width() <= 0 || src->height() <= 0)
+        return false;
+
+      auto surface = std::shared_ptr<she::Surface>(
+        she::instance()->createRgbaSurface(src->width(), src->height()),
+        [](she::Surface* s) { s->dispose(); });
+      if (!surface)
+        return false;
+
+      src->blitTo(surface.get(), 0, 0, 0, 0, src->width(), src->height());
+
+      auto png = she::instance()->encodeSurfaceAsPNG(surface.get());
+      if (png.empty())
+        throw std::runtime_error{"Failed to encode screenshot as PNG"};
+
+      std::ofstream file(fileName, std::ios::binary | std::ios::trunc);
+      if (!file.good())
+        throw std::runtime_error{"Unable to open file for writing: " + fileName};
+      file.write(reinterpret_cast<const char*>(png.data()),
+                 static_cast<std::streamsize>(png.size()));
+      if (!file.good())
+        throw std::runtime_error{"Failed while writing file: " + fileName};
+      return true;
     };
 
     // createDialog() -> a new Dialog object. The dialog is built (grid layout
