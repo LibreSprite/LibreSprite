@@ -333,7 +333,13 @@ void ScriptToolLoop::setSecondaryColor(doc::color_t color) { m_secondaryColor = 
 int ScriptToolLoop::getOpacity() { return m_opacity; }
 int ScriptToolLoop::getTolerance() { return m_tolerance; }
 bool ScriptToolLoop::getContiguous() { return m_contiguous; }
-tools::ToolLoopModifiers ScriptToolLoop::getModifiers() { return tools::ToolLoopModifiers(0); }
+tools::ToolLoopModifiers ScriptToolLoop::getModifiers() {
+  // The default selection mode replaces the selection (as the GUI),
+  // so the selection ink adds to the mask in the final step.
+  if (m_ink->isSelection())
+    return tools::ToolLoopModifiers::kReplaceSelection;
+  return tools::ToolLoopModifiers(0);
+}
 filters::TiledMode ScriptToolLoop::getTiledMode() { return filters::TiledMode::NONE; }
 bool ScriptToolLoop::getGridVisible() { return false; }
 bool ScriptToolLoop::getSnapToGrid() { return false; }
