@@ -15,6 +15,7 @@
 #include "app/app_render.h"
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
+#include "app/console.h"
 #include "app/context.h"
 #include "app/modules/editors.h"
 #include "app/modules/gfx.h"
@@ -22,6 +23,7 @@
 #include "app/ui/editor/editor.h"
 #include "app/ui/keyboard_shortcuts.h"
 #include "app/ui/status_bar.h"
+#include "base/log.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
 #include "doc/palette.h"
@@ -277,6 +279,14 @@ bool FullscreenPreviewCommand::onEnabled(Context* context)
 // Shows the sprite using the complete screen.
 void FullscreenPreviewCommand::onExecute(Context* context)
 {
+  // Interactive only: the preview window would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("FullscreenPreview: not available in headless mode\n");
+    Console console(context);
+    console.printf("FullscreenPreview: not available in headless mode\n");
+    return;
+  }
+
   Editor* editor = current_editor;
 
   // Cancel operation if current editor does not have a sprite
