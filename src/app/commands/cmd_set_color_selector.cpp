@@ -23,6 +23,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onChecked(Context* context) override;
   void onExecute(Context* context) override;
   std::string onGetFriendlyName() const override;
@@ -56,6 +57,13 @@ void SetColorSelectorCommand::onLoadParams(const Params& params)
   else if (type == "ryb-wheel") {
     m_type = ColorBar::ColorSelector::RYB_WHEEL;
   }
+}
+
+std::vector<CommandParamInfo> SetColorSelectorCommand::onDescribeParams() const
+{
+  return {
+    {"type", "spectrum, tint-shade-tone, wheel (or rgb-wheel) or ryb-wheel.", false, "spectrum"},
+  };
 }
 
 bool SetColorSelectorCommand::onChecked(Context* context)
