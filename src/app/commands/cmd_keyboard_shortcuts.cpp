@@ -636,6 +636,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -652,6 +653,13 @@ KeyboardShortcutsCommand::KeyboardShortcutsCommand()
 void KeyboardShortcutsCommand::onLoadParams(const Params& params)
 {
   m_search = params.get("search");
+}
+
+std::vector<CommandParamInfo> KeyboardShortcutsCommand::onDescribeParams() const
+{
+  return {
+    {"search", "Text to prefill the search box.", false, ""},
+  };
 }
 
 void KeyboardShortcutsCommand::onExecute(Context* context)

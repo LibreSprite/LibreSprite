@@ -71,6 +71,12 @@ protected:
     m_quitting = params.get_as<bool>("quitting");
   }
 
+  std::vector<CommandParamInfo> onDescribeParams() const override {
+    return {
+      {"quitting", "true when the app is quitting (true or false).", false, "false"},
+    };
+  }
+
   void onExecute(Context* context) override {
     Workspace* workspace = App::instance()->workspace();
 

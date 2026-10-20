@@ -28,6 +28,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -48,6 +49,13 @@ ResetSymmetryCommand::ResetSymmetryCommand()
 void ResetSymmetryCommand::onLoadParams(const Params& params)
 {
   m_target = (params.get("target") == "view" ? Target::ViewCenter : Target::Center);
+}
+
+std::vector<CommandParamInfo> ResetSymmetryCommand::onDescribeParams() const
+{
+  return {
+    {"target", "view centers on the view; default centers on the sprite.", false, ""},
+  };
 }
 
 bool ResetSymmetryCommand::onEnabled(Context* context)
