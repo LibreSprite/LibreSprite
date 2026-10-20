@@ -23,6 +23,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onChecked(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -42,6 +43,13 @@ void SetPaletteEntrySizeCommand::onLoadParams(const Params& params)
 {
   if (params.has_param("size"))
     m_size = params.get_as<int>("size");
+}
+
+std::vector<CommandParamInfo> SetPaletteEntrySizeCommand::onDescribeParams() const
+{
+  return {
+    {"size", "Palette entry size in pixels.", false, "7"},
+  };
 }
 
 bool SetPaletteEntrySizeCommand::onChecked(Context* context)

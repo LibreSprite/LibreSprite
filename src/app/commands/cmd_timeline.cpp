@@ -27,6 +27,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
   bool onChecked(Context* ctx) override;
 
@@ -58,6 +59,15 @@ void TimelineCommand::onLoadParams(const Params& params)
   std::string switch_str = params.get("switch");
   if (switch_str == "true") m_switch = true;
   else m_switch = false;
+}
+
+std::vector<CommandParamInfo> TimelineCommand::onDescribeParams() const
+{
+  return {
+    {"open", "true opens the timeline (true or false).", false, "false"},
+    {"close", "true closes the timeline (true or false).", false, "false"},
+    {"switch", "true toggles the timeline; overrides open and close (true or false).", false, "false"},
+  };
 }
 
 void TimelineCommand::onExecute(Context* context)

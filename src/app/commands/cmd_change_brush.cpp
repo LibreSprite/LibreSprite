@@ -38,6 +38,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
   std::string onGetFriendlyName() const override;
 
@@ -68,6 +69,14 @@ void ChangeBrushCommand::onLoadParams(const Params& params)
     m_slot = params.get_as<int>("slot");
   else
     m_slot = 0;
+}
+
+std::vector<CommandParamInfo> ChangeBrushCommand::onDescribeParams() const
+{
+  return {
+    {"change", "increment-size, decrement-size, increment-angle, decrement-angle or custom.", false, ""},
+    {"slot", "Brush slot to pick when change is custom.", false, ""},
+  };
 }
 
 void ChangeBrushCommand::onExecute(Context* context)
