@@ -10,6 +10,7 @@
 #include "doc/color.h"
 
 #include <string>
+#include <vector>
 
 namespace doc {
   class Image;
@@ -21,5 +22,11 @@ namespace app {
                           const std::string& text,
                           doc::color_t color,
                           bool antialias);
+
+  // The .ttf/.otf files in the system font directories
+  // (base::get_font_paths(), recursively), as fullpaths, sorted by
+  // file title (case-insensitive), without duplicates. The same set
+  // the GUI's font picker lists.
+  std::vector<std::string> list_system_fonts();
 
 } // namespace app

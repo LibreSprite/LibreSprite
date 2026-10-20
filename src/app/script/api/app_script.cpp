@@ -25,6 +25,7 @@
 #include "app/script/script_permissions.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui_context.h"
+#include "app/util/freetype_utils.h"
 #include "base/launcher.h"
 #include "doc/document.h"
 #include "doc/site.h"
@@ -190,6 +191,18 @@ public:
           dobj->dialog()->setId(id.c_str());
 
       return JSON::makeNative(dobj);
+    };
+
+    // listFonts() -> the .ttf/.otf files in the system font
+    // directories (the same set the GUI's font picker lists), as
+    // absolute paths. Empty array when none are found. Pass a path
+    // to tools.text's font option.
+    clazz.addMethod("listFonts") = [](AppObject&) -> JSON::Value {
+      JSON::Value arr;
+      auto& a = arr.array();
+      for (const auto& path : app::list_system_fonts())
+        a.push_back(JSON::Value{path});
+      return arr;
     };
 
     // app.critical support (the JS glue is in the boot script below):
