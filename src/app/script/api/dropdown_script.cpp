@@ -32,6 +32,22 @@ public:
       return JSON::Value{JSON::Special::Undefined};
     };
 
+    // removeOption(index) -> remove the option at the given index (a no-op if
+    // out of bounds). If the removed option was selected, the option that
+    // slides into its place stays selected; no change event is raised.
+    cls.addMethod("removeOption") = [](ComboBoxObject& self, double index) -> JSON::Value {
+      if (self.comboBox())
+        self.comboBox()->removeOptionSilent((int)index);
+      return JSON::Value{JSON::Special::Undefined};
+    };
+
+    // clear() -> remove all options; no change event is raised.
+    cls.addMethod("clear") = [](ComboBoxObject& self) -> JSON::Value {
+      if (self.comboBox())
+        self.comboBox()->clearSilent();
+      return JSON::Value{JSON::Special::Undefined};
+    };
+
     // count: the number of options.
     cls.addGetter("count") = [](ComboBoxObject& self) -> JSON::Value {
       return self.comboBox() ? (double)self.comboBox()->getItemCount() : (double)0;
