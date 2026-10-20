@@ -13,6 +13,7 @@
 #include "app/commands/command.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
+#include "app/console.h"
 #include "app/context.h"
 #include "app/context_access.h"
 #include "app/document_access.h"
@@ -29,6 +30,7 @@
 #include "app/ui/editor/standby_state.h"
 #include "app/ui/workspace.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "doc/cel.h"
 #include "doc/image.h"
 #include "doc/layer.h"
@@ -293,7 +295,23 @@ public:
   Command* clone() const override { return new ImportSpriteSheetCommand(*this); }
 
 protected:
-  virtual void onExecute(Context* context) override;
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
+  void onExecute(Context* context) override;
+
+private:
+  // Cuts the tiles out of the sheet and applies them to the document
+  // (shared by the dialog OK path and the param path). Returns false
+  // when the rectangle does not create any tile.
+  bool importSheet(Context* context, Document* document,
+                   DocumentPreferences& docPref, gfx::Rect frameBounds,
+                   bool partialTiles, SpriteSheetType sheetType) const;
+
+  std::string m_filename; // Sheet to open; empty = the current document
+  int m_x, m_y;           // Tile origin (0 when not specified)
+  int m_width, m_height;  // Tile size (0 = not specified)
+  int m_sheetType;        // -1 = not specified, else a SpriteSheetType
+  int m_partialTiles;     // -1 = not specified, else 0/1
 };
 
 ImportSpriteSheetCommand::ImportSpriteSheetCommand()
@@ -301,10 +319,117 @@ ImportSpriteSheetCommand::ImportSpriteSheetCommand()
             "Import Sprite Sheet",
             CmdRecordableFlag)
 {
+  m_x = m_y = m_width = m_height = 0;
+  m_sheetType = -1;
+  m_partialTiles = -1;
+}
+
+void ImportSpriteSheetCommand::onLoadParams(const Params& params)
+{
+  m_filename = params.get("filename");
+
+  m_x = m_y = m_width = m_height = 0;
+  if (params.has_param("x"))      m_x = params.get_as<int>("x");
+  if (params.has_param("y"))      m_y = params.get_as<int>("y");
+  if (params.has_param("width"))  m_width = params.get_as<int>("width");
+  if (params.has_param("height")) m_height = params.get_as<int>("height");
+
+  std::string sheet_type = params.get("sheet-type");
+  if (sheet_type == "horizontal")
+    m_sheetType = (int)SpriteSheetType::Horizontal;
+  else if (sheet_type == "vertical")
+    m_sheetType = (int)SpriteSheetType::Vertical;
+  else if (sheet_type == "rows")
+    m_sheetType = (int)SpriteSheetType::Rows;
+  else if (sheet_type == "columns")
+    m_sheetType = (int)SpriteSheetType::Columns;
+  else
+    m_sheetType = -1;
+
+  std::string partial_tiles = params.get("partial-tiles");
+  if (partial_tiles == "true")
+    m_partialTiles = 1;
+  else if (partial_tiles == "false")
+    m_partialTiles = 0;
+  else
+    m_partialTiles = -1;
+}
+
+std::vector<CommandParamInfo> ImportSpriteSheetCommand::onDescribeParams() const
+{
+  return {
+    {"filename", "Sheet file to open. Empty uses the current document.", false, ""},
+    {"x", "Tile x coordinate in the sheet.", false, "0"},
+    {"y", "Tile y coordinate in the sheet.", false, "0"},
+    {"width", "Tile width in pixels. With height, imports without the dialog.", false, ""},
+    {"height", "Tile height in pixels. With width, imports without the dialog.", false, ""},
+    {"sheet-type", "Tile layout: horizontal, vertical, rows or columns. Uses the document preference when empty.", false, ""},
+    {"partial-tiles", "Import tiles cut by the sprite edges: true or false. Uses the document preference when empty.", false, ""},
+  };
 }
 
 void ImportSpriteSheetCommand::onExecute(Context* context)
 {
+  // Non-interactive: the tile bounds are given, so the dialog is
+  // skipped.
+  if (m_width > 0 && m_height > 0) {
+    Document* document = context->activeDocument();
+
+    if (!m_filename.empty()) {
+      // Open the sheet through the OpenFile command (like app.open).
+      Command* openFile = CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
+      Params params;
+      params.set("filename", m_filename.c_str());
+      context->executeCommand(openFile, params);
+
+      // The sheet was not opened (e.g. the file does not exist).
+      if (document == context->activeDocument()) {
+        Console console(context);
+        console.printf("ImportSpriteSheet: the file %s was not opened\n", m_filename.c_str());
+        return;
+      }
+      document = context->activeDocument();
+    }
+
+    if (!document) {
+      Console console(context);
+      console.printf("ImportSpriteSheet: no document to import the sheet from\n");
+      return;
+    }
+
+    DocumentPreferences& docPref = Preferences::instance().document(document);
+
+    SpriteSheetType sheetType;
+    if (m_sheetType >= 0)
+      sheetType = (SpriteSheetType)m_sheetType;
+    else if (docPref.importSpriteSheet.type() >= SpriteSheetType::Horizontal &&
+             docPref.importSpriteSheet.type() <= SpriteSheetType::Columns)
+      sheetType = docPref.importSpriteSheet.type();
+    else
+      sheetType = SpriteSheetType::Rows;
+
+    bool partialTiles = (m_partialTiles >= 0 ? m_partialTiles == 1
+                                             : docPref.importSpriteSheet.partialTiles());
+
+    if (!importSheet(context, document, docPref,
+                     gfx::Rect(m_x, m_y,
+                               std::max<int>(1, m_width),
+                               std::max<int>(1, m_height)),
+                     partialTiles, sheetType)) {
+      Console console(context);
+      console.printf("ImportSpriteSheet: the specified rectangle does not create any tile\n");
+    }
+    return;
+  }
+
+  // Interactive only: the window would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("ImportSpriteSheet: width and height params are required in headless mode\n");
+    Console console(context);
+    console.printf("ImportSpriteSheet: width and height params are required in headless mode\n");
+    return;
+  }
+
   ImportSpriteSheetWindow window(context);
 
   window.openWindowInForeground();
@@ -313,14 +438,30 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
 
   Document* document = window.document();
   DocumentPreferences* docPref = window.docPref();
-  gfx::Rect frameBounds = window.frameBounds();
-  bool partialTiles = window.partialTilesValue();
-  auto sheetType = window.sheetTypeValue();
 
   ASSERT(document);
+  ASSERT(docPref);
   if (!document)
     return;
 
+  if (!importSheet(context, document, *docPref,
+                   window.frameBounds(), window.partialTilesValue(),
+                   window.sheetTypeValue())) {
+    Alert::show("Import Sprite Sheet"
+      "<<The specified rectangle does not create any tile."
+      "<<Select a rectangle inside the sprite region."
+      "||&OK");
+  }
+}
+
+bool ImportSpriteSheetCommand::importSheet(
+  Context* context,
+  Document* document,
+  DocumentPreferences& docPref,
+  gfx::Rect frameBounds,
+  bool partialTiles,
+  SpriteSheetType sheetType) const
+{
   // The list of frames imported from the sheet
   std::vector<ImageRef> animation;
 
@@ -379,13 +520,8 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
       animation.push_back(resultImage);
     }
 
-    if (animation.size() == 0) {
-      Alert::show("Import Sprite Sheet"
-        "<<The specified rectangle does not create any tile."
-        "<<Select a rectangle inside the sprite region."
-        "||&OK");
-      return;
-    }
+    if (animation.size() == 0)
+      return false;
 
     // The following steps modify the sprite, so we wrap all
     // operations in a undo-transaction.
@@ -422,18 +558,16 @@ void ImportSpriteSheetCommand::onExecute(Context* context)
 
     transaction.commit();
 
-    ASSERT(docPref);
-    if (docPref) {
-      docPref->importSpriteSheet.type(sheetType);
-      docPref->importSpriteSheet.bounds(frameBounds);
-      docPref->importSpriteSheet.partialTiles(partialTiles);
-    }
+    docPref.importSpriteSheet.type(sheetType);
+    docPref.importSpriteSheet.bounds(frameBounds);
+    docPref.importSpriteSheet.partialTiles(partialTiles);
   }
   catch (...) {
     throw;
   }
 
   update_screen_for_document(document);
+  return true;
 }
 
 Command* CommandFactory::createImportSpriteSheetCommand()
