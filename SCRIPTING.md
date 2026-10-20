@@ -467,6 +467,18 @@ color.
       returns: Nothing
       Appends a dropdown option.
 
+    - `removeOption(index)`:
+      - index: The index of the option to remove.
+       returns: Nothing
+      Removes a dropdown option (a no-op if the index is out of bounds). If
+      the removed option was selected, the option that slides into its place
+      stays selected (or none if the list becomes empty). Does not raise the
+      change event.
+
+    - `clear()`:
+       returns: Nothing
+      Removes all options. Does not raise the change event.
+
 The selected option's text is persisted to storage (keyed by the widget id)
 and raises the `<id>_change` event when the selection changes.
 

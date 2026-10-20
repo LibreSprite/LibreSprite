@@ -250,6 +250,36 @@ public:
     m_canRaiseEvent = true;
   }
 
+  // Removes the option at the given index (a no-op if out of bounds).
+  // ui::ComboBox::removeItem() does not adjust the selection (which is
+  // index-based), so it is fixed up here: if the removed option was before
+  // the selection the index shifts down by one; if it was the selected one
+  // the option that slides into its place stays selected (the entry text is
+  // updated). Silent: persists to storage but does not raise the event.
+  void removeOptionSilent(int index) {
+    if (index < 0 || index >= getItemCount())
+      return;
+    const int selected = getSelectedItemIndex();
+    m_canRaiseEvent = false;
+    removeItem(index);
+    if (selected > index)
+      setSelectedItemIndex(selected - 1);
+    else if (selected == index)
+      getEntryWidget()->setText(getValue());
+    script::setStorage(JSON::Value{getValue()}, id(), m_domain);
+    m_canRaiseEvent = true;
+  }
+
+  // Removes all options. Silent: persists to storage but does not raise the
+  // event.
+  void clearSilent() {
+    m_canRaiseEvent = false;
+    removeAllItems();
+    getEntryWidget()->setText("");
+    script::setStorage(JSON::Value{getValue()}, id(), m_domain);
+    m_canRaiseEvent = true;
+  }
+
 protected:
   void onChange() override {
     script::setStorage(JSON::Value{getValue()}, id(), m_domain);
