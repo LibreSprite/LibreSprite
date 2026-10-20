@@ -1205,6 +1205,15 @@ The value is persisted to storage (keyed by the widget id) and raises the
       returns: Nothing
       Creates a dialog window
 
+   - `listFonts()`:
+      returns: An array of absolute paths to the .ttf/.otf font files
+      in the system font directories (the same set the GUI's font
+      picker shows), sorted by file name. An empty array when no
+      fonts are found. Pass a path to `tools.text`'s `font` option:
+
+          tools.text({ x: 0, y: 0, string: "hi",
+                       font: app.listFonts()[0], size: 12 });
+
    - `critical(fn)`:
      - fn: A sync or async function.
       returns: fn's return value (a Promise when fn is async), so callers
@@ -1434,7 +1443,7 @@ Every method also accepts these common options:
       - font: Required. A TTF/OTF font file path. An absolute path is used
         as is; a relative path resolves against the script's directory
         (as in `fs.*`). There is no system-font lookup - the font must be
-        a file.
+        a file (see `app.listFonts` for the available font files).
       - size: Required. The font size in pixels, 1-999.
       - color: Optional. A 32-bit color in 8888 RGBA format (the
         `pixelColor.rgba` convention). Defaults to the GUI foreground
