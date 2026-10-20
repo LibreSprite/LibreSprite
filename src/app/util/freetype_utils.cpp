@@ -11,6 +11,9 @@
 
 #include "app/util/freetype_utils.h"
 
+#include "base/fs.h"
+#include "base/path.h"
+#include "base/string.h"
 #include "doc/blend_funcs.h"
 #include "doc/blend_internals.h"
 #include "doc/color.h"
@@ -19,7 +22,10 @@
 #include "ft/face.h"
 #include "ft/lib.h"
 
+#include <algorithm>
 #include <memory>
+#include <queue>
+#include <set>
 #include <stdexcept>
 
 namespace app {
@@ -97,6 +103,46 @@ doc::Image* render_text(const std::string& fontfile, int fontsize,
   }
 
   return (image ? image.release(): nullptr);
+}
+
+std::vector<std::string> list_system_fonts()
+{
+  // A list of fullpaths to every file found in all font directories
+  // (fontDirs, recursively).
+  std::queue<std::string> fontDirs;
+  for (auto& dir : base::get_font_paths())
+    fontDirs.push(dir);
+
+  std::vector<std::string> files;
+  std::set<std::string> seen;
+  while (!fontDirs.empty()) {
+    std::string fontDir = fontDirs.front();
+    fontDirs.pop();
+
+    auto fontDirFiles = base::list_files(fontDir);
+    for (const auto& file : fontDirFiles) {
+      std::string fullpath = base::join_path(fontDir, file);
+      if (base::is_directory(fullpath))
+        fontDirs.push(fullpath); // Add subdirectory
+      else if (seen.insert(fullpath).second)
+        files.push_back(fullpath);
+    }
+  }
+
+  // Sort all files by "file title"
+  std::sort(
+    files.begin(), files.end(),
+    [](const std::string& a, const std::string& b){
+      return base::utf8_icmp(base::get_file_title(a), base::get_file_title(b)) < 0;
+    });
+
+  std::vector<std::string> fonts;
+  for (const auto& file : files) {
+    auto ext = base::string_to_lower(base::get_file_extension(file));
+    if (ext == "ttf" || ext == "otf")
+      fonts.push_back(file);
+  }
+  return fonts;
 }
 
 } // namespace app

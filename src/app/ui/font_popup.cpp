@@ -20,7 +20,6 @@
 #include "base/bind.h"
 #include "base/fs.h"
 #include "base/path.h"
-#include "base/string.h"
 #include "doc/conversion_she.h"
 #include "doc/image.h"
 #include "doc/image_ref.h"
@@ -39,7 +38,6 @@
 #include <windows.h>
 #endif
 
-#include <queue>
 #include <map>
 
 namespace app {
@@ -145,40 +143,9 @@ FontPopup::FontPopup()
 
   m_popup->view()->attachToView(&m_listBox);
 
-  std::queue<std::string> fontDirs;
-  for (auto& dir : base::get_font_paths())
-      fontDirs.push(dir);
-
-  // Create a list of fullpaths to every font found in all font
-  // directories (fontDirs)
-  std::vector<std::string> files;
-  while (!fontDirs.empty()) {
-    std::string fontDir = fontDirs.front();
-    fontDirs.pop();
-
-    auto fontDirFiles = base::list_files(fontDir);
-    for (const auto& file : fontDirFiles) {
-      std::string fullpath = base::join_path(fontDir, file);
-      if (base::is_directory(fullpath))
-        fontDirs.push(fullpath); // Add subdirectory
-      else
-        files.push_back(fullpath);
-    }
-  }
-
-  // Sort all files by "file title"
-  std::sort(
-    files.begin(), files.end(),
-    [](const std::string& a, const std::string& b){
-      return base::utf8_icmp(base::get_file_title(a), base::get_file_title(b)) < 0;
-    });
-
-  // Create one FontItem for each font
-  for (auto& file : files) {
-    auto ext = base::string_to_lower(base::get_file_extension(file));
-    if (ext == "ttf" || ext == "otf")
-      m_listBox.addChild(new FontItem(file));
-  }
+  // Create one FontItem for each font (the system font directories)
+  for (const auto& file : list_system_fonts())
+    m_listBox.addChild(new FontItem(file));
 
   if (m_listBox.children().empty())
     m_listBox.addChild(new ListItem("No system fonts were found"));
