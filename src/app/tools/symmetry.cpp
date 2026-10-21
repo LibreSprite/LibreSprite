@@ -48,11 +48,14 @@ void VerticalSymmetry::generateStrokes(const Stroke& mainStroke, Strokes& stroke
 void Diagonal45Symmetry::generateStrokes(const Stroke& mainStroke, Strokes& strokes,
                                          ToolLoop* loop)
 {
+  int adjustX = (loop->getBrush()->bounds().w % 2);
+  int adjustY = (loop->getBrush()->bounds().h % 2);
+
   strokes.push_back(mainStroke);
 
   Stroke stroke2;
   for (const auto& pt : mainStroke)
-    stroke2.addPoint({m_x - (pt.y - m_y), m_y - (pt.x - m_x), pt.pressure});
+    stroke2.addPoint({m_x - (pt.y - m_y) - adjustX, m_y - (pt.x - m_x) - adjustY, pt.pressure});
   strokes.push_back(stroke2);
 }
 
@@ -84,6 +87,8 @@ void Rotational180Symmetry::generateStrokes(const Stroke& mainStroke, Strokes& s
 void Rotational90Symmetry::generateStrokes(const Stroke& mainStroke, Strokes& strokes,
                                          ToolLoop* loop)
 {
+  int adjustX = (loop->getBrush()->bounds().w % 2);
+
   strokes.push_back(mainStroke);
 
   // Each of the 3 companion strokes is the previous quadrant's stroke
@@ -94,7 +99,7 @@ void Rotational90Symmetry::generateStrokes(const Stroke& mainStroke, Strokes& st
     for (const auto& pt : prev) {
       int dx = pt.x - m_x;
       int dy = pt.y - m_y;
-      stroke.addPoint({m_x - dy, m_y + dx, pt.pressure});
+      stroke.addPoint({m_x - dy - adjustX, m_y + dx, pt.pressure});
     }
     strokes.push_back(stroke);
     prev = stroke;
