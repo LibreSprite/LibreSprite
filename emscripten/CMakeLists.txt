@@ -56,8 +56,9 @@ include_directories(
 )
 
 include_directories(${SDL2_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-# The default pthread stack (64k) is too small for the app thread
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s DEFAULT_PTHREAD_STACK_SIZE=8MB -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
+# The default pthread stack (64k) is too small for the app thread.
+# Keep SVG decoding enabled for the SVG file support in this branch.
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s DEFAULT_PTHREAD_STACK_SIZE=8MB -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\",\"svg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
 set(CMAKE_EXECUTABLE_SUFFIX .html)
 
 set_source_files_properties(${SRC}/app/file/ase_format.cpp PROPERTIES COMPILE_FLAGS "-s USE_ZLIB=1")
@@ -68,7 +69,7 @@ set_source_files_properties(${SRC}/app/util/freetype_utils.cpp PROPERTIES COMPIL
 set_source_files_properties(${SRC}/she/common/freetype_font.cpp PROPERTIES COMPILE_FLAGS "-s USE_FREETYPE=1")
 set_source_files_properties(${SRC}/she/sdl2/sdl2_display.cpp PROPERTIES COMPILE_FLAGS "-s USE_FREETYPE=1 -s USE_SDL=2")
 set_source_files_properties(${SRC}/she/sdl2/sdl2_surface.cpp PROPERTIES COMPILE_FLAGS "-s USE_FREETYPE=1 -s USE_SDL=2")
-set_source_files_properties(${SRC}/she/sdl2/she.cpp PROPERTIES COMPILE_FLAGS "-s USE_FREETYPE=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]'")
+set_source_files_properties(${SRC}/she/sdl2/she.cpp PROPERTIES COMPILE_FLAGS "-s USE_FREETYPE=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\",\"svg\"]'")
 
 
 set(SRC_FILES
@@ -382,6 +383,8 @@ set(SRC_FILES
   ${SRC}/app/file/pixly_format.cpp
   ${SRC}/app/file/png_format.cpp
   ${SRC}/app/file/she_format.cpp
+  ${SRC}/app/file/svg_dialect.cpp
+  ${SRC}/app/file/svg_format.cpp
   ${SRC}/app/file/split_filename.cpp
   ${SRC}/app/file/tga_format.cpp
   ${SRC}/app/file_selector.cpp
