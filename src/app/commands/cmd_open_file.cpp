@@ -15,6 +15,8 @@
 #include "app/console.h"
 #include "app/document.h"
 #include "app/file/file.h"
+#include "app/file/file_formats_manager.h"
+#include "app/file/script_file_format.h"
 #include "app/file_selector.h"
 #include "app/job.h"
 #include "app/modules/editors.h"
@@ -24,6 +26,7 @@
 #include "app/ui_context.h"
 #include "base/bind.h"
 #include "base/path.h"
+#include "base/string.h"
 #include "base/thread.h"
 #include "doc/sprite.h"
 #include "ui/ui.h"
@@ -32,6 +35,24 @@
 #include <memory>
 
 namespace app {
+
+// True when a load format claiming this file's extension is a script
+// format: FileOp::operateLoad tries the matched formats in priority
+// order, so a script codec may run even when a built-in matches the
+// extension first.
+static bool hasScriptLoader(const std::string& filename) {
+  std::string extension = base::string_to_lower(base::get_file_extension(filename));
+  for (auto format : FileFormatsManager::instance()->support(FILE_SUPPORT_LOAD)) {
+    for (auto& supported : base::split(format->extensions(), ',')) {
+      if (supported == extension) {
+        if (dynamic_cast<ScriptFileFormat*>(format))
+          return true;
+        break;
+      }
+    }
+  }
+  return false;
+}
 
 class OpenFileCommand : public Command {
 public:
@@ -139,8 +160,27 @@ void OpenFileCommand::onExecute(Context* context)
         unrecent = true;
       }
       else {
-        OpenFileJob task(fop.get());
-        task.showProgressWindow();
+        // A script codec must run on the main thread in headless: the
+        // reply is pumped by the headless pump, and a Job worker would
+        // leave the main thread blocked in waitJob() with nothing to
+        // pump the reply (deadlock). Built-in formats keep the Job path.
+        if (!App::instance()->isGui() && hasScriptLoader(m_filename)) {
+          try {
+            fop->operate(nullptr);
+          }
+          catch (const std::exception& e) {
+            fop->setError("Error loading file:\n%s", e.what());
+          }
+
+          if (fop->isStop() && fop->document())
+            delete fop->releaseDocument();
+
+          fop->done();
+        }
+        else {
+          OpenFileJob task(fop.get());
+          task.showProgressWindow();
+        }
 
         // Post-load processing, it is called from the GUI because may require user intervention.
         fop->postLoad();

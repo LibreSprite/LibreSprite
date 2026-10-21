@@ -60,4 +60,32 @@ FileFormat* FileFormatsManager::getFileFormatByExtension(const char* extension)
   return nullptr;
 }
 
+void FileFormatsManager::registerScriptFormat(const std::string& scriptPath,
+                                              const std::string& name,
+                                              const std::string& extensions,
+                                              bool load, bool save)
+{
+  // The prior registration for this script path (if any), as a raw
+  // pointer: the pushes below may reallocate m_scriptFormats.
+  FileFormat* oldFormat = nullptr;
+  for (auto& reg : m_scriptFormats)
+    if (reg->path == scriptPath)
+      oldFormat = reg->format.get();
+
+  // Publish the new registration first so the registry key is live
+  // throughout; the stale Provides then refuses to erase the fresh entry
+  // (its destructor only removes entries it still owns).
+  m_scriptFormats.push_back(std::make_unique<ScriptFormatRegistration>(
+    std::make_unique<ScriptFileFormat>(scriptPath, name, extensions, load, save),
+    scriptPath));
+  m_formats.emplace_back(scriptPath);
+
+  if (oldFormat) {
+    m_formats.erase(std::find_if(m_formats.begin(), m_formats.end(),
+      [oldFormat](const auto& ff){ return ff.get() == oldFormat; }));
+    m_scriptFormats.erase(std::find_if(m_scriptFormats.begin(), m_scriptFormats.end(),
+      [oldFormat](const auto& reg){ return reg->format.get() == oldFormat; }));
+  }
+}
+
 } // namespace app
