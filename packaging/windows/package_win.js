@@ -12,7 +12,7 @@ const blacklist = [
 	"usp10.dll", "comctl32.dll", "wsock32.dll", "netapi32.dll", "userenv.dll",
 	"avicap32.dll", "avrt.dll", "psapi.dll", "mswsock.dll", "glu32.dll",
 	"bcrypt.dll", "rpcrt4.dll", "hid.dll", "dbghelp.dll",
-	"d3d11.dll", "dxgi.dll", "dwrite.dll"
+	"d3d11.dll", "dxgi.dll", "dwrite.dll", "ucrtbase.dll"
 ];
 
 async function call(file, {args, grep, callback}) {
@@ -54,7 +54,7 @@ function copyDependencies(exe, target) {
         callback: (_, dll) => {
             if (!dll)
                 throw 0;
-            if (!blacklist.includes(dll.toLowerCase())) {
+            if (!blacklist.includes(dll.toLowerCase()) && !/^api-ms-win-/i.test(dll)) {
                 blacklist.push(dll.toLowerCase());
                 addImport(dll, [...searchDir]);
             }
