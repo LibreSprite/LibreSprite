@@ -64,9 +64,9 @@ Fedora:
 
 ### Windows dependencies
 
-To install the required dependencies with msys2, run the following in mingw32:
+To install the required dependencies with msys2, run the following in the MSYS2 UCRT64 shell:
 
-    pacman -S base-devel mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-make mingw-w64-i686-openssl mingw-w64-i686-freetype mingw-w64-i686-giflib mingw-w64-i686-libjpeg-turbo mingw-w64-i686-libpng mingw-w64-i686-libwebp mingw-w64-i686-pixman mingw-w64-i686-SDL2 mingw-w64-i686-SDL2_image mingw-w64-i686-tinyxml2 mingw-w64-i686-zlib mingw-w64-i686-libarchive
+    pacman -S base-devel mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-make mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-freetype mingw-w64-ucrt-x86_64-giflib mingw-w64-ucrt-x86_64-libjpeg-turbo mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-libwebp mingw-w64-ucrt-x86_64-pixman mingw-w64-ucrt-x86_64-SDL2 mingw-w64-ucrt-x86_64-SDL2_image mingw-w64-ucrt-x86_64-tinyxml2 mingw-w64-ucrt-x86_64-zlib mingw-w64-ucrt-x86_64-libarchive
 
 ### MacOS dependencies
 
@@ -98,7 +98,7 @@ To compile LibreSprite, run the following commands:
 
 ### Windows details
 
-Run the following in mingw32.exe:
+Run the following in the MSYS2 UCRT64 shell:
 
     cmake -G Ninja ..
 

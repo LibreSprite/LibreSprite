@@ -20,28 +20,28 @@ jobs:
     steps:
     - uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: UCRT64
         release: false
         update: false
         install: >-
           base-devel
           git
-          mingw-w64-x86_64-nodejs
-          mingw-w64-x86_64-openssl
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-make
-          mingw-w64-x86_64-freetype
-          mingw-w64-x86_64-giflib
-          mingw-w64-x86_64-libjpeg-turbo
-          mingw-w64-x86_64-libpng
-          mingw-w64-x86_64-libwebp
-          mingw-w64-x86_64-pixman
-          mingw-w64-x86_64-SDL2
-          mingw-w64-x86_64-SDL2_image
-          mingw-w64-x86_64-tinyxml2
-          mingw-w64-x86_64-zlib
-          mingw-w64-x86_64-libarchive
+          mingw-w64-ucrt-x86_64-nodejs
+          mingw-w64-ucrt-x86_64-openssl
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-cmake
+          mingw-w64-ucrt-x86_64-make
+          mingw-w64-ucrt-x86_64-freetype
+          mingw-w64-ucrt-x86_64-giflib
+          mingw-w64-ucrt-x86_64-libjpeg-turbo
+          mingw-w64-ucrt-x86_64-libpng
+          mingw-w64-ucrt-x86_64-libwebp
+          mingw-w64-ucrt-x86_64-pixman
+          mingw-w64-ucrt-x86_64-SDL2
+          mingw-w64-ucrt-x86_64-SDL2_image
+          mingw-w64-ucrt-x86_64-tinyxml2
+          mingw-w64-ucrt-x86_64-zlib
+          mingw-w64-ucrt-x86_64-libarchive
 
     - uses: actions/checkout@v7
       with:
