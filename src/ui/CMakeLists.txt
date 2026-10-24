@@ -71,4 +71,5 @@ target_link_libraries(ui-lib
   clip
   gfx-lib
   base-lib
+  app-lib #we depend on the i18n functions inside app-lib
   ${PIXMAN_LIBRARY})
