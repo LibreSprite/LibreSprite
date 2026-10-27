@@ -42,6 +42,8 @@
 #include "gfx/region.h"
 #include "render/render.h"
 
+#include <cmath>
+
 namespace app {
 
 template<typename T>
@@ -707,11 +709,13 @@ void PixelsMovement::drawParallelogram(
 {
   tools::RotationAlgorithm rotAlgo = Preferences::instance().selection.rotationAlgorithm();
 
-  // If the angle and the scale weren't modified, we should use the
-  // fast rotation algorithm, as it's pixel-perfect match with the
-  // original selection when just a translation is applied.
-  if (m_currentData.angle() == 0.0 &&
-      gfx::Rect(m_currentData.bounds()).size() == src->size()) {
+  // If the angle is a multiple of 90 degrees and the scale wasn't
+  // modified, we should use the fast rotation algorithm, as it's a
+  // pixel-perfect match with the original selection (RotSprite
+  // alters pixels even for these exact angles).
+  const double quarterTurns = m_currentData.angle() / (PI / 2.0);
+  const bool isQuarterMultiple = std::fabs(quarterTurns - std::round(quarterTurns)) < 1e-4;
+  if (isQuarterMultiple && gfx::Rect(m_currentData.bounds()).size() == src->size()) {
     rotAlgo = tools::RotationAlgorithm::FAST;
   }
 
