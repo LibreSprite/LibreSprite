@@ -552,12 +552,10 @@ double Color::getValue() const
       return 0.0;
 
     case Color::RgbType:
-      return Hsv(Rgb(m_value.rgb.r,
-                     m_value.rgb.g,
-                     m_value.rgb.b)).value() * 100.0;
+      return rgb_luma(m_value.rgb.r, m_value.rgb.g, m_value.rgb.b);
 
     case Color::HsvType:
-      return m_value.hsv.v;
+      return rgb_luma(getRed(), getGreen(), getBlue());
 
     case Color::GrayType:
       return 100.0 * m_value.gray.g / 255.0;
@@ -566,9 +564,7 @@ double Color::getValue() const
       int i = m_value.index;
       if (i >= 0 && i < get_current_palette()->size()) {
         uint32_t c = get_current_palette()->getEntry(i);
-        return Hsv(Rgb(rgba_getr(c),
-                       rgba_getg(c),
-                       rgba_getb(c))).value() * 100.0;
+        return rgba_luma(c);
       }
       else
         return 0.0;
