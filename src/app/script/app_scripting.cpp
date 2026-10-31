@@ -14,6 +14,7 @@
 #include "delta/Interpreter.hpp"
 #include "delta/Shared.hpp"
 #include "app/app.h"
+#include "app/file/script_codec_requests.h"
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
 #include "app/script/script_permission_dialog.h"
@@ -67,6 +68,11 @@ struct ScriptEnv {
   // unrestricted token for the REPL env): the interpreter pushes it
   // around every JS entry point.
   const void* token = nullptr;
+  // app.critical() depth: while > 0 a re-run may not tear the env down
+  // (an async continuation of the script may still be pending - the
+  // script token is off the interpreter stack there, so the hasToken
+  // re-run guard does not apply). Main thread only.
+  int criticalCount = 0;
 };
 
 // Canonical script path (the REPL env is "::") -> its environment.
@@ -296,6 +302,10 @@ namespace app {
 
   void AppScripting::clearEventHooks() {
     eventHooks.clear();
+    // The lazy-load markers go with the hooks: a script whose listen
+    // headers disappear from the folders is not auto-loaded again by a
+    // queued event after the menu is rebuilt.
+    loadedScripts.clear();
     if (listener) {
       ui::Manager::getDefault()->removeMessageListener(listener.get());
       listener.reset();
@@ -307,6 +317,10 @@ namespace app {
     // is torn down.
     tickTimer.reset();
     clearEventHooks();
+    // Fail the in-flight codec requests: the main loop stops pumping here,
+    // so their replies would never be delivered, and a FileOp worker
+    // waiting on one would hold the process exit for the backstop.
+    app::ScriptCodecRequests::cancelAll();
     // Destroy the envs (and any script-owned dialogs/widgets they hold) so
     // they don't outlive the ui::Manager.
     teardownEnvs();
@@ -382,10 +396,20 @@ namespace app {
       if (normPath.empty())
         continue; // no script has been run yet: drop the event
 
+      // A script that is mid-run (its eval has not completed yet) owns its
+      // events already: loadedScripts is only updated when the run
+      // completes, so the lazy load below would refuse the re-run and drop
+      // the event. Deliver to the running env instead (the codec dispatch
+      // raises events from inside a script's own command call).
+      auto runIt = envs.find(normPath);
+      const bool midRun = runIt != envs.end() &&
+        Interpreter::hasToken(runIt->second.token);
+
       // Lazily load the script that owns this event (first-event load for
       // ///listen scripts). Re-queue the event so the "init" event fired
       // by evalFile is delivered before it (legacy load-then-fire order).
-      if (loadedScripts.find(normPath) == loadedScripts.end()) {
+      if (!midRun &&
+          loadedScripts.find(normPath) == loadedScripts.end()) {
         if (AppScripting::evalFile(normPath)) {
           pendingEvents << [&](auto& q){ q.push_back(std::move(ev)); };
           continue;
@@ -421,6 +445,19 @@ namespace app {
     // The event is routed to its owning env (or lazily loads the script)
     // when it is drained; no env is needed here.
     pendingEvents << [&](auto& q){ q.emplace_back(fileName, event); };
+  }
+
+  void AppScripting::fireBootEvents() {
+    JSON::Value event;
+    event.push_back("app_boot");
+    auto range = eventHooks.equal_range("app_boot");
+    for (auto& entry : base::range{range})
+      raiseEvent(entry.second, event);
+    // Batch/shell modes have no message loop, and the GUI message loop
+    // has not started yet: drain the queue now so the boot handlers
+    // (and each script's "init" event) run before App::initialize
+    // returns.
+    drainEventQueue();
   }
 
   bool AppScripting::eval(const std::string& code, const std::string& path) {
@@ -490,6 +527,16 @@ namespace app {
       // this call runs in.
       if (Interpreter::hasToken(it->second.token)) {
         routeToConsole("Script already running, re-run it later: " + canonicalPath);
+        return false;
+      }
+      // Also refuse while an app.critical() section is open: an async
+      // continuation may be pending (the token is off the stack there)
+      // and tearing the env down would free its runtime mid-flight.
+      // Refuse without tearing down - the running instance keeps working.
+      // (teardownEnvs() at app exit ignores the counter: a hung critical
+      // section must not make the app impossible to quit.)
+      if (it->second.criticalCount > 0) {
+        routeToConsole("Script has pending critical work, re-run it later: " + canonicalPath);
         return false;
       }
       destroyEnv(it);
@@ -569,6 +616,11 @@ namespace app {
     for (auto& [path, env] : envs)
       env.engine->tick();
     drainEventQueue();
+    flushAfterEval();
+    // Expire the in-flight script codec requests whose watchdog window
+    // passed (a no-reply codec must not hang the open/save waiting for
+    // it). Runs on the main thread, between JS calls only.
+    app::ScriptCodecRequests::sweepExpired();
     for (auto& [path, env] : envs)
       for (auto& ext : env.extensions)
         ext->tick();
@@ -611,6 +663,7 @@ namespace app {
       for (auto& [path, env] : envs)
         env.engine->tick();
       drainEventQueue();
+      flushAfterEval();
       milliseconds nextWake{0};
       for (auto& [path, env] : envs) {
         for (auto& ext : env.extensions) {
@@ -666,6 +719,29 @@ namespace app {
     if (token && token != ScriptPermissions::kUnrestrictedToken)
       return std::string{static_cast<const char*>(token)};
     return activeScript;
+  }
+
+  std::string AppScripting::enterCritical() {
+    // Resolve the env via the active script token so the counter is owned
+    // by the script that called app.critical(). The token's string is the
+    // env's map key (the same reverse lookup as getFileName()).
+    const void* token = Interpreter::currentToken();
+    if (!token || token == ScriptPermissions::kUnrestrictedToken)
+      return {}; // no script token (REPL, C++ call site): no-op
+    const std::string file{static_cast<const char*>(token)};
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return {};
+    it->second.criticalCount++;
+    return file;
+  }
+
+  void AppScripting::leaveCritical(const std::string& file) {
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return; // the env is gone: nothing to clear (teardown ignores the counter)
+    if (it->second.criticalCount > 0)
+      it->second.criticalCount--;
   }
 
   void AppScripting::afterEval(std::function<void()> fn) {
