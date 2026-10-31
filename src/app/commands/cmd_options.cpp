@@ -10,6 +10,7 @@
 #endif
 
 #include "app/app.h"
+#include "app/console.h"
 #include "app/modules/i18n.h"
 #include "app/commands/command.h"
 #include "app/context.h"
@@ -23,6 +24,7 @@
 #include "base/bind.h"
 #include "base/convert_to.h"
 #include "base/fs.h"
+#include "base/log.h"
 #include "base/path.h"
 #include "doc/image.h"
 #include "render/render.h"
@@ -648,6 +650,14 @@ OptionsCommand::OptionsCommand()
 
 void OptionsCommand::onExecute(Context* context)
 {
+  // Interactive only: the dialog would block headless.
+  if (!App::instance()->isGui()) {
+    LOG("Options: not available in headless mode\n");
+    Console console(context);
+    console.printf("Options: not available in headless mode\n");
+    return;
+  }
+
   static int curSection = 0;
 
   OptionsWindow window(context, curSection);

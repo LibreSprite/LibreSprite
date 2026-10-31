@@ -148,6 +148,7 @@ add_library(app-lib
   cmd/set_mask.cpp
   cmd/set_mask_position.cpp
   cmd/set_palette.cpp
+  cmd/set_pixel.cpp
   cmd/set_pixel_format.cpp
   cmd/set_sprite_size.cpp
   cmd/set_total_frames.cpp
@@ -311,6 +312,7 @@ add_library(app-lib
   file/file_format.cpp
   file/file_formats_manager.cpp
   file/palette_file.cpp
+  file/script_file_format.cpp
   file/split_filename.cpp
   ${file_formats}
   file_selector.cpp
@@ -356,6 +358,7 @@ add_library(app-lib
   script/api/document_script.cpp
   script/api/dropdown_script.cpp
   script/api/entry_script.cpp
+  script/api/file_script.cpp
   script/api/filesystem_script.cpp
   script/api/http_internal.cpp
   script/api/http_script.cpp
@@ -378,6 +381,7 @@ add_library(app-lib
   script/api/storage_internal.cpp
   script/api/textbox_script.cpp
   script/api/timer_script.cpp
+  script/api/tools_script.cpp
 
   send_crash.cpp
   shade.cpp
@@ -389,6 +393,8 @@ add_library(app-lib
   tools/intertwine.cpp
   tools/pick_ink.cpp
   tools/point_shape.cpp
+  tools/script_tool_driver.cpp
+  tools/script_tool_loop.cpp
   tools/stroke.cpp
   tools/symmetry.cpp
   tools/tool_box.cpp

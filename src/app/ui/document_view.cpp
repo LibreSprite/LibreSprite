@@ -23,6 +23,7 @@
 #include "app/modules/editors.h"
 #include "app/modules/palettes.h"
 #include "app/pref/preferences.h"
+#include "app/script/app_scripting.h"
 #include "app/transaction.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui/editor/editor_customization_delegate.h"
@@ -222,6 +223,18 @@ void DocumentView::onClonedFrom(WorkspaceView* from)
 
 bool DocumentView::onCloseView(Workspace* workspace, bool quitting)
 {
+  // A script's app.transaction() scope may be bound to this document:
+  // destroying it would dangle the scope's undo-history pointers, so
+  // refuse the close (app exit is exempt: teardownEnvs() handles it).
+  if (!quitting && AppScripting::transactionScopeHolds(m_document)) {
+    Alert::show("Warning"
+                "<<The document cannot be closed: a script "
+                "<<transaction is running on it."
+                "<<Close the document when the script finishes."
+                "||&OK");
+    return false;
+  }
+
   if (m_editor->isMovingPixels())
     m_editor->dropMovingPixels();
 

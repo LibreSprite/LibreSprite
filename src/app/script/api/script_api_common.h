@@ -19,6 +19,8 @@
 
 #include <memory>
 
+#include "doc/site.h"
+
 namespace script_api {
 
   // Stateless marker "sites" for proxy classes whose methods re-resolve the
@@ -26,6 +28,17 @@ namespace script_api {
   struct SpriteSite {};
   struct SelectionSite {};
   struct PixelColorSite {};
+
+  // Re-resolving site for the `Image` wrapper: holds the (document, layer,
+  // frame) slot the image was taken from and re-resolves the doc::Image* on
+  // every access, so an image object replaced underneath (cel trim, canvas
+  // resize) does not dangle the wrapper.
+  struct ImageSite {
+    doc::Site site;
+
+    doc::Image* image() const { return site.image(); }
+    std::shared_ptr<const doc::Cel> cel() const { return site.cel(); }
+  };
 
   // Wrap a non-owning raw pointer in a shared_ptr with a no-op deleter.
   template<typename T>

@@ -14,11 +14,15 @@
 #include "delta/Interpreter.hpp"
 #include "delta/Shared.hpp"
 #include "app/app.h"
+#include "app/document.h"
+#include "app/file/script_codec_requests.h"
 #include "app/resource_finder.h"
 #include "app/script/app_scripting.h"
 #include "app/script/script_permission_dialog.h"
 #include "app/script/script_permissions.h"
 #include "app/task_manager.h"
+#include "app/transaction.h"
+#include "app/ui_context.h"
 #include "base/injection.h"
 #include "base/path.h"
 #include "base/range.h"
@@ -40,6 +44,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -54,6 +59,31 @@ namespace {
 std::unordered_set<std::string> loadedScripts;
 JSON::Value LS;
 
+// One app.transaction() scope (the per-env stack in ScriptEnv): the
+// outermost scope owns the Transaction it created; a nested scope joins
+// it (the same transaction, owns = false). The scope is bound to the
+// document active at enter time (a nested scope copies the binding, so
+// the whole stack shares one document).
+struct TransactionScope {
+  app::Transaction* transaction;
+  app::Document* document;
+  bool owns;
+};
+
+// True when the document is still open (its undo history is alive). A
+// scope's Transaction holds the bound document's undo-history pointers,
+// so the scope cannot be committed or rolled back once the document is
+// destroyed (at app exit the documents go away before the envs).
+static bool boundDocumentOpen(app::Document* doc) {
+  app::UIContext* ctx = app::UIContext::instance();
+  if (!ctx)
+    return false;
+  for (doc::Document* d : ctx->documents())
+    if (d == doc)
+      return true;
+  return false;
+}
+
 // One interpreter environment per script file: its own QuickJS runtime
 // and context, its own extension set, and its own event handler. Scripts
 // do not share globals; the REPL is the dedicated "::" env, running
@@ -67,6 +97,16 @@ struct ScriptEnv {
   // unrestricted token for the REPL env): the interpreter pushes it
   // around every JS entry point.
   const void* token = nullptr;
+  // app.critical() depth: while > 0 a re-run may not tear the env down
+  // (an async continuation of the script may still be pending - the
+  // script token is off the interpreter stack there, so the hasToken
+  // re-run guard does not apply). Main thread only.
+  int criticalCount = 0;
+  // app.transaction() scope stack (the top is the active scope): a
+  // nested scope joins the outer transaction. Each open scope also
+  // holds one critical count (see enterTransaction()), so the same
+  // re-run guard applies. Main thread only.
+  std::vector<TransactionScope> transactionScopes;
 };
 
 // Canonical script path (the REPL env is "::") -> its environment.
@@ -142,6 +182,17 @@ std::string formatReplValue(JSON::Value& value) {
 // app-side state (ext->shutdown(), the event handler) before the
 // interpreter (and its runtime) goes away, then drops the env.
 void destroyEnv(std::map<std::string, ScriptEnv>::iterator it) {
+  // Roll back the open app.transaction() scopes (the Transaction dtor
+  // rolls back the uncommitted commands). Skip when the bound document
+  // is already gone: at app exit the documents are destroyed before
+  // the envs, and the rollback would touch a destroyed undo history.
+  if (!it->second.transactionScopes.empty() &&
+      boundDocumentOpen(it->second.transactionScopes.front().document))
+    for (const auto& scope : it->second.transactionScopes)
+      if (scope.owns)
+        delete scope.transaction;
+  it->second.transactionScopes.clear();
+
   for (auto& ext : it->second.extensions)
     ext->shutdown();
   it->second.eventHandler = JSON::Value{JSON::Special::Undefined};
@@ -296,6 +347,10 @@ namespace app {
 
   void AppScripting::clearEventHooks() {
     eventHooks.clear();
+    // The lazy-load markers go with the hooks: a script whose listen
+    // headers disappear from the folders is not auto-loaded again by a
+    // queued event after the menu is rebuilt.
+    loadedScripts.clear();
     if (listener) {
       ui::Manager::getDefault()->removeMessageListener(listener.get());
       listener.reset();
@@ -307,6 +362,10 @@ namespace app {
     // is torn down.
     tickTimer.reset();
     clearEventHooks();
+    // Fail the in-flight codec requests: the main loop stops pumping here,
+    // so their replies would never be delivered, and a FileOp worker
+    // waiting on one would hold the process exit for the backstop.
+    app::ScriptCodecRequests::cancelAll();
     // Destroy the envs (and any script-owned dialogs/widgets they hold) so
     // they don't outlive the ui::Manager.
     teardownEnvs();
@@ -382,10 +441,20 @@ namespace app {
       if (normPath.empty())
         continue; // no script has been run yet: drop the event
 
+      // A script that is mid-run (its eval has not completed yet) owns its
+      // events already: loadedScripts is only updated when the run
+      // completes, so the lazy load below would refuse the re-run and drop
+      // the event. Deliver to the running env instead (the codec dispatch
+      // raises events from inside a script's own command call).
+      auto runIt = envs.find(normPath);
+      const bool midRun = runIt != envs.end() &&
+        Interpreter::hasToken(runIt->second.token);
+
       // Lazily load the script that owns this event (first-event load for
       // ///listen scripts). Re-queue the event so the "init" event fired
       // by evalFile is delivered before it (legacy load-then-fire order).
-      if (loadedScripts.find(normPath) == loadedScripts.end()) {
+      if (!midRun &&
+          loadedScripts.find(normPath) == loadedScripts.end()) {
         if (AppScripting::evalFile(normPath)) {
           pendingEvents << [&](auto& q){ q.push_back(std::move(ev)); };
           continue;
@@ -421,6 +490,19 @@ namespace app {
     // The event is routed to its owning env (or lazily loads the script)
     // when it is drained; no env is needed here.
     pendingEvents << [&](auto& q){ q.emplace_back(fileName, event); };
+  }
+
+  void AppScripting::fireBootEvents() {
+    JSON::Value event;
+    event.push_back("app_boot");
+    auto range = eventHooks.equal_range("app_boot");
+    for (auto& entry : base::range{range})
+      raiseEvent(entry.second, event);
+    // Batch/shell modes have no message loop, and the GUI message loop
+    // has not started yet: drain the queue now so the boot handlers
+    // (and each script's "init" event) run before App::initialize
+    // returns.
+    drainEventQueue();
   }
 
   bool AppScripting::eval(const std::string& code, const std::string& path) {
@@ -490,6 +572,16 @@ namespace app {
       // this call runs in.
       if (Interpreter::hasToken(it->second.token)) {
         routeToConsole("Script already running, re-run it later: " + canonicalPath);
+        return false;
+      }
+      // Also refuse while an app.critical() section is open: an async
+      // continuation may be pending (the token is off the stack there)
+      // and tearing the env down would free its runtime mid-flight.
+      // Refuse without tearing down - the running instance keeps working.
+      // (teardownEnvs() at app exit ignores the counter: a hung critical
+      // section must not make the app impossible to quit.)
+      if (it->second.criticalCount > 0) {
+        routeToConsole("Script has pending critical work, re-run it later: " + canonicalPath);
         return false;
       }
       destroyEnv(it);
@@ -569,6 +661,11 @@ namespace app {
     for (auto& [path, env] : envs)
       env.engine->tick();
     drainEventQueue();
+    flushAfterEval();
+    // Expire the in-flight script codec requests whose watchdog window
+    // passed (a no-reply codec must not hang the open/save waiting for
+    // it). Runs on the main thread, between JS calls only.
+    app::ScriptCodecRequests::sweepExpired();
     for (auto& [path, env] : envs)
       for (auto& ext : env.extensions)
         ext->tick();
@@ -611,6 +708,7 @@ namespace app {
       for (auto& [path, env] : envs)
         env.engine->tick();
       drainEventQueue();
+      flushAfterEval();
       milliseconds nextWake{0};
       for (auto& [path, env] : envs) {
         for (auto& ext : env.extensions) {
@@ -666,6 +764,123 @@ namespace app {
     if (token && token != ScriptPermissions::kUnrestrictedToken)
       return std::string{static_cast<const char*>(token)};
     return activeScript;
+  }
+
+  std::string AppScripting::enterCritical() {
+    // Resolve the env via the active script token so the counter is owned
+    // by the script that called app.critical(). The token's string is the
+    // env's map key (the same reverse lookup as getFileName()).
+    const void* token = Interpreter::currentToken();
+    if (!token || token == ScriptPermissions::kUnrestrictedToken)
+      return {}; // no script token (REPL, C++ call site): no-op
+    const std::string file{static_cast<const char*>(token)};
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return {};
+    it->second.criticalCount++;
+    return file;
+  }
+
+  void AppScripting::leaveCritical(const std::string& file) {
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return; // the env is gone: nothing to clear (teardown ignores the counter)
+    if (it->second.criticalCount > 0)
+      it->second.criticalCount--;
+  }
+
+  // The env that owns the current interpreter token: the script env for
+  // a script token, the REPL env for the unrestricted token,
+  // envs.end() when no JS runs (a C++ call site). Unlike enterCritical(),
+  // the REPL is a valid scope owner: tools.stroke works in the REPL, so
+  // the grouping must work there too.
+  static std::map<std::string, ScriptEnv>::iterator envForCurrentToken() {
+    const void* token = Interpreter::currentToken();
+    if (!token)
+      return envs.end();
+    const std::string key = (token == ScriptPermissions::kUnrestrictedToken)
+        ? std::string{"::"}
+        : std::string{static_cast<const char*>(token)};
+    return envs.find(key);
+  }
+
+  std::string AppScripting::enterTransaction() {
+    auto it = envForCurrentToken();
+    if (it == envs.end())
+      return {}; // no script env (C++ call site): no-op
+
+    auto& scopes = it->second.transactionScopes;
+    if (!scopes.empty()) {
+      // Nested scope: join the outer transaction (no second
+      // Transaction; the outer commit produces the single undo step).
+      scopes.push_back({scopes.back().transaction, scopes.back().document, false});
+    }
+    else {
+      UIContext* ctx = UIContext::instance();
+      if (!ctx)
+        throw std::runtime_error("app.transaction: no UI context is available");
+      // The Transaction reads the active document's undo history; the
+      // scope is bound to that document for its whole lifetime.
+      Document* doc = ctx->activeDocument();
+      if (!doc)
+        throw std::runtime_error("app.transaction: no active document");
+      scopes.push_back({new Transaction(ctx, "Script Execution", ModifyDocument),
+                        doc, true});
+    }
+    // Hold the critical counter too: a re-run must not tear the env
+    // down while the scope is open (the same async continuation concern
+    // as app.critical, covered by the same re-run guard).
+    it->second.criticalCount++;
+    return it->first;
+  }
+
+  void AppScripting::leaveTransaction(const std::string& file, bool commit) {
+    auto it = envs.find(file);
+    if (it == envs.end())
+      return; // the env is gone: nothing to clear (teardown handles it)
+    auto& scopes = it->second.transactionScopes;
+    if (scopes.empty())
+      return; // defensive: unbalanced leave
+    const TransactionScope scope = scopes.back();
+    scopes.pop_back();
+    // Only the outermost scope owns the transaction: commit it, or let
+    // the dtor roll back the uncommitted commands. The dtor is a no-op
+    // once committed, so the object is deleted either way.
+    if (scope.owns) {
+      // The commit and the rollback both read the bound document's undo
+      // history; if the document was destroyed while the scope was open
+      // (a close outside the guard), leaking the transaction is safer
+      // than touching the freed pointers.
+      if (boundDocumentOpen(scope.document)) {
+        if (commit)
+          scope.transaction->commit();
+        delete scope.transaction;
+      }
+    }
+    if (it->second.criticalCount > 0)
+      it->second.criticalCount--;
+  }
+
+  Transaction* AppScripting::activeTransaction() {
+    auto it = envForCurrentToken();
+    if (it == envs.end() || it->second.transactionScopes.empty())
+      return nullptr;
+    return it->second.transactionScopes.back().transaction;
+  }
+
+  Document* AppScripting::activeTransactionDocument() {
+    auto it = envForCurrentToken();
+    if (it == envs.end() || it->second.transactionScopes.empty())
+      return nullptr;
+    return it->second.transactionScopes.back().document;
+  }
+
+  bool AppScripting::transactionScopeHolds(Document* doc) {
+    for (auto& [path, env] : envs)
+      if (!env.transactionScopes.empty() &&
+          env.transactionScopes.front().document == doc)
+        return true;
+    return false;
   }
 
   void AppScripting::afterEval(std::function<void()> fn) {

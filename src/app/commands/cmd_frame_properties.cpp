@@ -33,6 +33,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -69,6 +70,13 @@ void FramePropertiesCommand::onLoadParams(const Params& params)
     m_target = SPECIFIC_FRAME;
     m_frame = frame_t(base::convert_to<int>(frame)-1);
   }
+}
+
+std::vector<CommandParamInfo> FramePropertiesCommand::onDescribeParams() const
+{
+  return {
+    {"frame", "all, current or a 1-based frame number.", false, ""},
+  };
 }
 
 bool FramePropertiesCommand::onEnabled(Context* context)

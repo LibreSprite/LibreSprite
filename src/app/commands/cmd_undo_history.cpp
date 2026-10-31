@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/cmd.h"
 #include "app/commands/command.h"
 #include "app/console.h"
@@ -20,6 +21,7 @@
 #include "app/modules/gui.h"
 #include "app/modules/palettes.h"
 #include "base/bind.h"
+#include "base/log.h"
 #include "base/mem_utils.h"
 #include "doc/context_observer.h"
 #include "doc/documents_observer.h"
@@ -243,6 +245,14 @@ UndoHistoryCommand::UndoHistoryCommand()
 
 void UndoHistoryCommand::onExecute(Context* ctx)
 {
+  // Interactive only: the history panel has no use headless.
+  if (!App::instance()->isGui()) {
+    LOG("UndoHistory: not available in headless mode\n");
+    Console console(ctx);
+    console.printf("UndoHistory: not available in headless mode\n");
+    return;
+  }
+
   if (!g_window)
     g_window = new UndoHistoryWindow(ctx);
 

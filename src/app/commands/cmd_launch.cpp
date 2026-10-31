@@ -23,6 +23,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -48,6 +49,13 @@ void LaunchCommand::onLoadParams(const Params& params)
   if (m_type == Url && !m_path.empty() && m_path[0] == '/') {
     m_path = WEBSITE + m_path.substr(1);
   }
+}
+
+std::vector<CommandParamInfo> LaunchCommand::onDescribeParams() const
+{
+  return {
+    {"path", "URL to open; a leading / is resolved against the site.", false, ""},
+  };
 }
 
 void LaunchCommand::onExecute(Context* context)

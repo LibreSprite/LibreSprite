@@ -9,8 +9,10 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/app_menus.h"
 #include "app/commands/command.h"
+#include "app/console.h"
 #include "app/context.h"
 #include "app/file_selector.h"
 #include "app/modules/gui.h"
@@ -23,6 +25,7 @@
 #include "app/ui/skin/skin_theme.h"
 #include "base/bind.h"
 #include "base/fs.h"
+#include "base/log.h"
 #include "base/path.h"
 #include "base/scoped_value.h"
 #include "base/split_string.h"
@@ -633,6 +636,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -651,8 +655,24 @@ void KeyboardShortcutsCommand::onLoadParams(const Params& params)
   m_search = params.get("search");
 }
 
+std::vector<CommandParamInfo> KeyboardShortcutsCommand::onDescribeParams() const
+{
+  return {
+    {"search", "Text to prefill the search box.", false, ""},
+  };
+}
+
 void KeyboardShortcutsCommand::onExecute(Context* context)
 {
+  // Interactive only: the dialog would block headless. The import/export
+  // file selectors are only reachable from the window.
+  if (!App::instance()->isGui()) {
+    LOG("KeyboardShortcuts: not available in headless mode\n");
+    Console console(context);
+    console.printf("KeyboardShortcuts: not available in headless mode\n");
+    return;
+  }
+
   // Here we copy the m_search field because
   // KeyboardShortcutsWindow::fillAllLists() modifies this same
   // KeyboardShortcutsCommand instance (so m_search will be "")

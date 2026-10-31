@@ -268,6 +268,19 @@ built-in behavior of the widget) and raises the `<id>_click` event.
 
 
 # [class Image]
+The wrapper re-resolves its site's image on every call (the site is the
+document, layer and frame the image was taken from): a stroke's cel trim or a
+canvas resize may replace (or remove) the image object underneath. When the
+site no longer has an image, every method throws.
+
+`putPixel`, `putImageData` and `clear` are raw, format-dependent writes and
+are undoable: each call is one undo step (`command.Undo` reverts it), and a
+loop wrapped in `app.transaction(fn)` commits as one undo step. For drawing
+(blending, brushes, shapes) use `app.tools`. The bulk idiom is
+`getImageData()` -> mutate the array in JS -> `putImageData(data)` (one undo
+step). A write into a non-active document's image makes that document active
+(the same side effect as `sprite.save`); the undo lands in its history.
+
 ## Properties:
    - `format`: read-only. The PixelFormat of the image.
    - `stride`: read-only. The number of bytes per image row.
@@ -278,9 +291,12 @@ built-in behavior of the widget) and raises the `<id>_click` event.
    - `putPixel(x, y, color)`:
      - x: integer
      - y: integer
-     - color: a 32-bit color in 8888 RGBA format.
+     - color: a 32-bit color in 8888 RGBA format. On indexed images it is a
+       palette index (raw write, no palette conversion).
       returns: Nothing
-      writes the color onto the image at the the given coordinate.
+      writes the color onto the image at the given coordinate. Out of bounds
+      is a no-op. One undo step; inside `app.transaction(fn)` the calls join
+      the scope's transaction.
 
    - `getImageData()`:
       returns: All pixels in a Uint8Array
@@ -289,7 +305,9 @@ built-in behavior of the widget) and raises the `<id>_click` event.
    - `putImageData(data)`:
      - data: All of the pixels in the image.
       returns: Nothing
-      writes the given pixels onto the image. Must be the same size as the image.
+      writes the given pixels onto the image. Must be the same size as the
+      image. One undo step; inside `app.transaction(fn)` the calls join the
+      scope's transaction.
 
    - `getPNGData()`:
       returns: The image as a Base64-encoded PNG string.
@@ -298,7 +316,8 @@ built-in behavior of the widget) and raises the `<id>_click` event.
    - `clear(color)`:
      - color: a 32-bit color in 8888 RGBA format.
       returns: Nothing
-      clears the image with the specified color.
+      clears the image with the specified color. One undo step; inside
+      `app.transaction(fn)` the calls join the scope's transaction.
 
    - `getPixel(x, y)`:
      - x: integer
@@ -447,6 +466,18 @@ color.
      - text: The option text.
       returns: Nothing
       Appends a dropdown option.
+
+    - `removeOption(index)`:
+      - index: The index of the option to remove.
+       returns: Nothing
+      Removes a dropdown option (a no-op if the index is out of bounds). If
+      the removed option was selected, the option that slides into its place
+      stays selected (or none if the list becomes empty). Does not raise the
+      change event.
+
+    - `clear()`:
+       returns: Nothing
+      Removes all options. Does not raise the change event.
 
 The selected option's text is persisted to storage (keyed by the widget id)
 and raises the `<id>_change` event when the selection changes.
@@ -1108,7 +1139,7 @@ The value is persisted to storage (keyed by the widget id) and raises the
 # [class Cel]
 ## Properties:
    - `frame`:
-   - `image`:
+   - `image`: the cel's image (see class Image for its re-resolving behavior).
    - `y`:
    - `x`:
 
@@ -1162,9 +1193,10 @@ The value is persisted to storage (keyed by the widget id) and raises the
    - `isHeadless`: read-only. True when running without a visible UI (--batch/--shell).
    - `activeDocument`: read-only. Returns the currently active Document.
    - `command`: read-only. Returns an object with functions for running commands.
+   - `tools`: read-only. Returns the tools object (freehand drawing tools).
    - `activeSprite`: read-only. Returns the currently active Sprite.
    - `activeLayerNumber`: read-only. Returns the number of the current layer.
-   - `activeImage`: read-only, can be null. Returns the current layer/frame's image.
+   - `activeImage`: read-only, can be null. Returns the current layer/frame's image (see class Image for its re-resolving behavior).
    - `pixelColor`: read-only. Returns an object with functions for color conversion.
    - `activeFrameNumber`: read-only. Returns the number of the currently active animation frame.
 
@@ -1185,10 +1217,294 @@ The value is persisted to storage (keyed by the widget id) and raises the
       returns: Nothing
       Creates a dialog window
 
+   - `listFonts()`:
+      returns: An array of absolute paths to the .ttf/.otf font files
+      in the system font directories (the same set the GUI's font
+      picker shows), sorted by file name. An empty array when no
+      fonts are found. Pass a path to `tools.text`'s `font` option:
+
+          tools.text({ x: 0, y: 0, string: "hi",
+                       font: app.listFonts()[0], size: 12 });
+
+   - `critical(fn)`:
+     - fn: A sync or async function.
+      returns: fn's return value (a Promise when fn is async), so callers
+      can `await app.critical(...)`.
+      Runs fn with the script's environment protected from teardown. While
+      fn runs - including any async work it awaits - re-running the script
+      is refused and the environment is not torn down, so an async
+      continuation cannot outlive its environment. Nested `app.critical`
+      calls are allowed (the protection ends when the outermost one
+      settles). App exit is not blocked by an active critical section.
+
+    - `transaction(fn)`:
+      - fn: A sync or async function.
+       returns: fn's return value (a Promise when fn is async), so callers
+       can `await app.transaction(...)`.
+       Runs fn with a shared transaction: all `tools.*` calls and the raw
+       image writes (`image.putPixel`, `image.putImageData`, `image.clear`)
+       inside fn join the transaction, so the whole group commits as one
+       undo step when fn completes (`command.Undo` reverts every call at
+       once). A throwing fn rolls back every grouped change (the document
+       is exactly as before the call) and the error propagates.
+       Only the drawing tools and the raw image writes are grouped: the
+       other mutating APIs (`sprite.width =`, `selection.select`,
+       `command.*`, ...) keep their own transactions and are not affected
+       by the scope.
+       The scope is bound to the document active at enter time: drawing
+       into a different document inside the scope (e.g. after opening a new
+       file) throws an error and the group is rolled back. The bound
+       document must stay open while the scope is active: the GUI refuses
+       to close it while a scope is open (close it once the scope settles,
+       which happens when the returned promise settles or the script
+       re-runs).
+       Nested `app.transaction` calls are allowed: the inner scope joins
+       the outer transaction (the group still commits as one undo step).
+       Like `app.critical`, the scope must not outlive the script run: if
+       the script is torn down mid-transaction, the open group is rolled
+       back.
+
+       Two strokes inside one transaction are one undo step:
+
+           app.transaction(() => {
+             tools.stroke({ points: [[5, 5], [10, 5]] });
+             tools.stroke({ points: [[20, 5], [25, 5]] });
+           });
+           // One command.Undo() reverts both strokes.
+
    - `documentation()`:
       returns: Nothing
       Prints this text.
 
+
+# global selection [class Selection]
+## Properties:
+   - `bounds`: read-only. The current selection's bounds as an object
+     `{ x, y, width, height }` in sprite coordinates, or null when
+     there is no (visible) selection.
+
+## Methods:
+   - `select(x, y, w, h)`:
+     - x, y: The top-left corner of the rectangular selection, in
+       sprite coordinates.
+     - w, h: The selection size. Non-positive values deselect.
+      returns: Nothing
+      Replaces the selection with the given rectangle.
+
+   - `selectAll()`:
+     returns: Nothing
+     Replaces the selection with the whole sprite bounds.
+
+   - `deselect()`:
+     returns: Nothing
+     Clears the selection.
+
+   - `lasso(points, options)`:
+     - points: Required. An array of `[x, y]` in sprite coordinates
+       (the same format as `tools.stroke`'s points, without the
+       pressure value). At least one point.
+     - options: Optional. An object with the `mode` and `frame` fields
+       below.
+      returns: Nothing
+      Runs the lasso tool: the freehand loop through the points selects
+      the enclosed region (contour and fill, like the GUI tool).
+
+   - `polygon(points, options)`:
+     - points: Required. An array of `[x, y]` polygon vertices, in
+       sprite coordinates. At least three points.
+     - options: Optional. An object with the `mode` and `frame` fields
+       below.
+      returns: Nothing
+      Runs the polygonal lasso tool: the polygon through the points
+      selects its interior (contour and fill, like the GUI tool).
+
+   - `magicWand(x, y, options)`:
+     - x, y: Required. The pixel to select, in sprite coordinates.
+     - options: Optional. An object with the `mode`, `tolerance`,
+       `contiguous`, `layer` and `frame` fields below.
+     - tolerance: Optional. 0-255. How far a pixel's color may differ
+       from the clicked color and still be selected. Defaults to the
+       tool preference.
+     - contiguous: Optional. A boolean. true selects only the region
+       connected to (x, y); false selects every matching pixel.
+       Defaults to the tool preference.
+     - layer: Optional. The layer index (0 = bottom) whose pixels the
+       wand reads (the floodfill source). Defaults to the active layer.
+      returns: Nothing
+      Runs the magic wand tool: selects the pixels of the clicked color
+      (flood fill, like the GUI tool).
+
+ All methods operate on the active document's selection and are one
+ undo step each (`command.Undo` reverts them); inside
+ `app.transaction(fn)` they join the scope's transaction. The
+ selection is document-wide (it applies to every frame). The `mode`
+ field (lasso, polygon and magicWand) is the selection operation:
+ "replace" (default) replaces the current selection with the tool's
+ region; "add" keeps it and adds the region; "subtract" keeps it and
+ removes the region from it. The `frame` field (all three tool
+ methods) is the frame index, defaulting to the active frame: for
+ magicWand it selects the frame the wand reads, for lasso and polygon
+ it only constrains the tool gesture (the selected region is
+ frame-independent).
+
+# global tools [class Tools]
+## No Properties.
+
+Runs a GUI drawing-tool gesture with synthetic pointer events, the same GUI
+drawing pipeline as the mouse. Each method is one tool gesture and one undo
+step (`command.Undo` reverts it); the target document becomes active after the
+call. Coordinates are sprite-space integers (like `image.putPixel`); negative
+values are allowed for shapes crossing the edge (the pipeline clips them like
+the GUI). The layer must be visible and editable and the frame must be in
+range. To group several calls into a single undo step, wrap them in
+`app.transaction(fn)`. A stroke's commit trims the cel, which replaces (or
+removes) the cel's image object; an `Image` wrapper re-resolves on every call
+(see class Image).
+
+Every method also accepts these common options:
+   - tool: Optional. A tool id. Defaults to the method's tool (`stroke`
+     defaults to the GUI's active tool).
+   - ink: Optional. An ink id override (e.g. "paint", "eraser",
+     "replace_fg_with_bg"). Defaults to the tool's ink.
+   - brush: Optional. A brush object with the fields below. Defaults to the
+     GUI's active brush for the tool.
+   - color: Optional. A 32-bit color in 8888 RGBA format (the
+     `pixelColor.rgba` convention). Sets the foreground color. Defaults to
+     the GUI foreground color.
+   - opacity: Optional. 0-255. Defaults to the tool preference.
+   - layer: Optional. The layer index (0 = bottom). Defaults to the active
+     layer.
+   - frame: Optional. The frame index. Defaults to the active frame.
+
+## Methods:
+   - `stroke(options)`:
+     - options: an object; only `points` is required, plus the common options.
+     - tool: Optional. "pencil", "eraser", "spray", "contour", "blur", or
+       "jumble". Defaults to the GUI's active tool (throws when the active
+       tool is not a supported freehand tool).
+     - filled: Optional. A boolean, for fill-optional tools (contour is
+       always filled). Defaults to the tool preference.
+     - points: Required. An array of `[x, y]` or `[x, y, pressure]` in sprite
+       coordinates. `pressure` is 0-1 (default 1.0). At least one point.
+      returns: Nothing
+      Runs the freehand tool gesture. The defaults (tool, brush, color,
+      opacity, filled) come from the current GUI state.
+
+   - `line(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. The line start, in sprite coordinates.
+     - x2, y2: Required. The line end, in sprite coordinates.
+      returns: Nothing
+      Runs the line tool.
+
+   - `rectangle(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. One corner of the rectangle, in sprite coordinates.
+     - x2, y2: Required. The opposite corner, in sprite coordinates.
+     - filled: Optional. A boolean (default false). false draws the outline,
+       true draws a solid rectangle.
+      returns: Nothing
+      Runs the rectangle tool.
+
+   - `ellipse(options)`:
+     - options: an object; `x1`, `y1`, `x2`, `y2` are required, plus the
+       common options.
+     - x1, y1: Required. One end of the ellipse bounding box, in sprite
+       coordinates.
+     - x2, y2: Required. The opposite end of the bounding box, in sprite
+       coordinates.
+     - filled: Optional. A boolean (default false). false draws the outline,
+       true draws a solid ellipse.
+      returns: Nothing
+      Runs the ellipse tool.
+
+   - `curve(options)`:
+     - options: an object; `x1` through `y4` are required, plus the common
+       options.
+     - x1, y1: Required. The curve start, in sprite coordinates.
+     - x2, y2: Required. The first control point.
+     - x3, y3: Required. The second control point.
+     - x4, y4: Required. The curve end.
+      returns: Nothing
+      Runs the curve tool: a cubic bezier from (x1,y1) to (x4,y4) with
+      control points (x2,y2) and (x3,y3). The outline is drawn, not filled.
+
+   - `fill(options)`:
+     - options: an object; `x` and `y` are required, plus the common options.
+     - x, y: Required. The pixel to fill, in sprite coordinates.
+     - tolerance: Optional. 0-255. How far a pixel's color may differ from
+       the clicked color and still be filled. Defaults to the tool
+       preference.
+     - contiguous: Optional. A boolean (default the tool preference). true
+       fills only the region connected to (x, y); false fills every matching
+       pixel in the image.
+      returns: Nothing
+      Runs the paint bucket tool.
+
+    - `text(options)`:
+      - options: an object; `x`, `y`, `string`, `font` and `size` are
+        required, plus `color`, `antialias`, `layer` and `frame` (the
+        `tool`, `ink`, `brush` and `opacity` options do not apply).
+      - x, y: Required. Where the text's top-left lands, in sprite
+        coordinates. Negative values are allowed; the text is clipped to
+        the sprite bounds.
+      - string: Required. The text to render (a single line: a newline
+        does not start a new line).
+      - font: Required. A TTF/OTF font file path. An absolute path is used
+        as is; a relative path resolves against the script's directory
+        (as in `fs.*`). There is no system-font lookup - the font must be
+        a file (see `app.listFonts` for the available font files).
+      - size: Required. The font size in pixels, 1-999.
+      - color: Optional. A 32-bit color in 8888 RGBA format (the
+        `pixelColor.rgba` convention). Defaults to the GUI foreground
+        color.
+      - antialias: Optional. A boolean. Defaults to the text tool
+        preference.
+      - layer, frame: As in the common options.
+       returns: Nothing
+       Rasterizes the text (the same rendering as the GUI's Insert Text
+       command) and composites it into the target layer's cel. One undo
+       step (`command.Undo` reverts it); inside `app.transaction(fn)` the
+       call joins the scope's transaction. The write is clipped to the
+       sprite bounds, and with a visible selection only the selected
+       pixels receive the text. Text fully outside the sprite draws
+       nothing. For an indexed sprite the text is converted to the
+       sprite's palette (best fit, no dithering).
+
+The `brush` field is an object:
+   - `type`: "circle", "square", "line", or "image".
+   - `size`: 1-256, the brush diameter (ignored for `image`).
+   - `angle`: 0-359, in degrees (for square/line brushes).
+   - `pattern`: "aligned_to_source", "aligned_to_destination", or "paint_brush".
+   - `image`: An `Image` object (a cel image or a loaded file); required when
+     `type` is "image". The image is stamped along the stroke.
+
+
+# Script Events
+
+Scripts register for events in the leading `///` comment block at the top
+of the file: each `///listen` line adds one event name to the script.
+Events are delivered to the event handler, which is set with
+`setEventHandler(fn)` (the script's `onEvent` function is registered
+automatically for backward compatibility). The handler receives the event
+name as its first argument, followed by the event's payload.
+
+   - `init`:
+     Raised once, when the script is loaded. If a `///listen` script is
+     loaded by an incoming event (its first event arrives before the
+     script has run), `init` is raised before that event.
+
+   - `app_boot`:
+     Raised once per process, at startup. Scripts that declare
+     `///listen app_boot` are loaded at startup and receive the event
+     before the files from the command line are opened. The event
+     carries no payload (the script can read `app.isHeadless` and
+     `LS.version`).
+
+Other events carry their own payload (for example, dialog buttons raise
+`<id>_click` with a modifier-mask argument).
 
 # Script Permissions
 

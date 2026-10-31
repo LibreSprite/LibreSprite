@@ -381,6 +381,7 @@ set(SRC_FILES
   ${SRC}/app/file/pcx_format.cpp
   ${SRC}/app/file/pixly_format.cpp
   ${SRC}/app/file/png_format.cpp
+  ${SRC}/app/file/script_file_format.cpp
   ${SRC}/app/file/she_format.cpp
   ${SRC}/app/file/split_filename.cpp
   ${SRC}/app/file/tga_format.cpp
@@ -419,6 +420,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/document_script.cpp
   ${SRC}/app/script/api/dropdown_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
+  ${SRC}/app/script/api/file_script.cpp
   ${SRC}/app/script/api/filesystem_script.cpp
   ${SRC}/app/script/api/http_internal.cpp
   ${SRC}/app/script/api/http_internal_wasm.cpp
@@ -441,6 +443,7 @@ set(SRC_FILES
   ${SRC}/app/script/api/storage_internal.cpp
   ${SRC}/app/script/api/textbox_script.cpp
   ${SRC}/app/script/api/timer_script.cpp
+  ${SRC}/app/script/api/tools_script.cpp
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp
   ${SRC}/app/script/script_menu.cpp
@@ -456,6 +459,8 @@ set(SRC_FILES
   ${SRC}/app/tools/intertwine.cpp
   ${SRC}/app/tools/pick_ink.cpp
   ${SRC}/app/tools/point_shape.cpp
+  ${SRC}/app/tools/script_tool_driver.cpp
+  ${SRC}/app/tools/script_tool_loop.cpp
   ${SRC}/app/tools/stroke.cpp
   ${SRC}/app/tools/symmetry.cpp
   ${SRC}/app/tools/tool_box.cpp
