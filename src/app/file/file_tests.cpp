@@ -23,7 +23,7 @@ using namespace app;
 TEST(File, SeveralSizes)
 {
   // Register all possible image formats.
-  FileFormatsManager::instance()->registerAllFormats();
+  FileFormatsManager::instance();
   std::vector<char> fn(256);
   app::Context ctx;
 
@@ -57,6 +57,8 @@ TEST(File, SeveralSizes)
 
       {
         app::Document* doc = load_document(&ctx, &fn[0]);
+        ASSERT_NE(nullptr, doc);
+        ASSERT_NE(nullptr, doc->sprite());
         ASSERT_EQ(w, doc->sprite()->width());
         ASSERT_EQ(h, doc->sprite()->height());
 

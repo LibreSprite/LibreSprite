@@ -110,20 +110,20 @@ TEST(Remap, ToExpandPalette)
 
 TEST(Remap, BetweenPalettesChangeMask)
 {
-  Palette a(frame_t(0), 4);
-  Palette b(frame_t(0), 4);
+  auto a = Palette::create(4);
+  auto b = Palette::create(4);
 
-  a.setEntry(0, rgba(255, 0, 0, 255));
-  a.setEntry(1, rgba(0, 255, 0, 255));
-  a.setEntry(2, rgba(0, 0, 255, 255));
-  a.setEntry(3, rgba(255, 255, 255, 255));
+  a->setEntry(0, rgba(255, 0, 0, 255));
+  a->setEntry(1, rgba(0, 255, 0, 255));
+  a->setEntry(2, rgba(0, 0, 255, 255));
+  a->setEntry(3, rgba(255, 255, 255, 255));
 
-  b.setEntry(0, rgba(255, 255, 255, 255));
-  b.setEntry(1, rgba(0, 255, 0, 255));
-  b.setEntry(2, rgba(0, 0, 255, 255));
-  b.setEntry(3, rgba(255, 0, 0, 255));
+  b->setEntry(0, rgba(255, 255, 255, 255));
+  b->setEntry(1, rgba(0, 255, 0, 255));
+  b->setEntry(2, rgba(0, 0, 255, 255));
+  b->setEntry(3, rgba(255, 0, 0, 255));
 
-  Remap map = create_remap_to_change_palette(&a, &b, 0, true);
+  Remap map = create_remap_to_change_palette(a.get(), b.get(), 0, true);
 
   EXPECT_EQ(3, map[0]);
   EXPECT_EQ(1, map[1]);
@@ -137,20 +137,20 @@ TEST(Remap, BetweenPalettesChangeMask)
 
 TEST(Remap, BetweenPalettesDontChangeMask)
 {
-  Palette a(frame_t(0), 4);
-  Palette b(frame_t(0), 4);
+  auto a = Palette::create(4);
+  auto b = Palette::create(4);
 
-  a.setEntry(0, rgba(0, 0, 0, 255));
-  a.setEntry(1, rgba(0, 255, 255, 255));
-  a.setEntry(2, rgba(0, 0, 0, 255));
-  a.setEntry(3, rgba(255, 0, 0, 255));
+  a->setEntry(0, rgba(0, 0, 0, 255));
+  a->setEntry(1, rgba(0, 255, 255, 255));
+  a->setEntry(2, rgba(0, 0, 0, 255));
+  a->setEntry(3, rgba(255, 0, 0, 255));
 
-  b.setEntry(0, rgba(255, 0, 0, 255));
-  b.setEntry(1, rgba(0, 255, 255, 255));
-  b.setEntry(2, rgba(0, 0, 0, 255));
-  b.setEntry(3, rgba(0, 0, 0, 255));
+  b->setEntry(0, rgba(255, 0, 0, 255));
+  b->setEntry(1, rgba(0, 255, 255, 255));
+  b->setEntry(2, rgba(0, 0, 0, 255));
+  b->setEntry(3, rgba(0, 0, 0, 255));
 
-  Remap map = create_remap_to_change_palette(&a, &b, 2, true);
+  Remap map = create_remap_to_change_palette(a.get(), b.get(), 2, true);
 
   EXPECT_EQ(3, map[0]);
   EXPECT_EQ(1, map[1]);
@@ -164,20 +164,20 @@ TEST(Remap, BetweenPalettesDontChangeMask)
 
 TEST(Remap, BetweenPalettesDontChangeMaskForced)
 {
-  Palette a(frame_t(0), 4);
-  Palette b(frame_t(0), 4);
+  auto a = Palette::create(4);
+  auto b = Palette::create(4);
 
-  a.setEntry(0, rgba(0, 0, 0, 255));
-  a.setEntry(1, rgba(0, 255, 255, 255));
-  a.setEntry(2, rgba(0, 0, 0, 255));
-  a.setEntry(3, rgba(255, 0, 0, 255));
+  a->setEntry(0, rgba(0, 0, 0, 255));
+  a->setEntry(1, rgba(0, 255, 255, 255));
+  a->setEntry(2, rgba(0, 0, 0, 255));
+  a->setEntry(3, rgba(255, 0, 0, 255));
 
-  b.setEntry(0, rgba(255, 0, 0, 255));
-  b.setEntry(1, rgba(0, 255, 255, 255));
-  b.setEntry(2, rgba(0, 0, 0, 255));
-  b.setEntry(3, rgba(0, 0, 0, 255));
+  b->setEntry(0, rgba(255, 0, 0, 255));
+  b->setEntry(1, rgba(0, 255, 255, 255));
+  b->setEntry(2, rgba(0, 0, 0, 255));
+  b->setEntry(3, rgba(0, 0, 0, 255));
 
-  Remap map = create_remap_to_change_palette(&a, &b, 2, false);
+  Remap map = create_remap_to_change_palette(a.get(), b.get(), 2, false);
 
   EXPECT_EQ(3, map[0]);
   EXPECT_EQ(1, map[1]);
@@ -191,19 +191,19 @@ TEST(Remap, BetweenPalettesDontChangeMaskForced)
 
 TEST(Remap, BetweenPalettesNonInvertible)
 {
-  Palette a(frame_t(0), 4);
-  Palette b(frame_t(0), 3);
+  auto a = Palette::create(4);
+  auto b = Palette::create(3);
 
-  a.setEntry(0, rgba(0, 0, 0, 255));
-  a.setEntry(1, rgba(64, 0, 0, 255));
-  a.setEntry(2, rgba(0, 255, 0, 255));
-  a.setEntry(3, rgba(0, 0, 128, 255));
+  a->setEntry(0, rgba(0, 0, 0, 255));
+  a->setEntry(1, rgba(64, 0, 0, 255));
+  a->setEntry(2, rgba(0, 255, 0, 255));
+  a->setEntry(3, rgba(0, 0, 128, 255));
 
-  b.setEntry(0, rgba(0, 255, 0, 255));
-  b.setEntry(1, rgba(0, 0, 0, 255));
-  b.setEntry(2, rgba(64, 0, 0, 255));
+  b->setEntry(0, rgba(0, 255, 0, 255));
+  b->setEntry(1, rgba(0, 0, 0, 255));
+  b->setEntry(2, rgba(64, 0, 0, 255));
 
-  Remap map = create_remap_to_change_palette(&a, &b, 0, true);
+  Remap map = create_remap_to_change_palette(a.get(), b.get(), 0, true);
 
   EXPECT_EQ(1, map[0]);
   EXPECT_EQ(2, map[1]);

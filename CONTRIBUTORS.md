@@ -1,4 +1,5 @@
 # Contributors to LibreSprite
+* Ribbon-otter
 * Add your name here!
 
 ## Shout-outs
