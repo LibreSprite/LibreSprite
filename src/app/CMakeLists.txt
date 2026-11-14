@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C) 2021-2026  LibreSprite contributors
 
 # Generate a ui::Widget for each widget in a XML file
 file(GLOB widget_files ${CMAKE_SOURCE_DIR}/data/widgets/*.xml)
@@ -148,6 +148,7 @@ add_library(app-lib
   cmd/set_mask.cpp
   cmd/set_mask_position.cpp
   cmd/set_palette.cpp
+  cmd/set_pixel.cpp
   cmd/set_pixel_format.cpp
   cmd/set_sprite_size.cpp
   cmd/set_total_frames.cpp
@@ -251,6 +252,7 @@ add_library(app-lib
   commands/cmd_remove_layer.cpp
   commands/cmd_repeat_last_export.cpp
   commands/cmd_reselect_mask.cpp
+  commands/cmd_reset_symmetry.cpp
   commands/cmd_reverse_frames.cpp
   commands/cmd_rotate.cpp
   commands/cmd_run_script.cpp
@@ -310,6 +312,7 @@ add_library(app-lib
   file/file_format.cpp
   file/file_formats_manager.cpp
   file/palette_file.cpp
+  file/script_file_format.cpp
   file/split_filename.cpp
   ${file_formats}
   file_selector.cpp
@@ -337,31 +340,48 @@ add_library(app-lib
   resource_finder.cpp
 
   script/app_scripting.cpp
-  script/app_scripting.h
-  script/console_delegate.cpp
   script/script_menu.cpp
-  script/script_menu.h
+  script/script_permission_dialog.cpp
+  script/script_permissions.cpp
 
   script/api/app_script.cpp
   script/api/button_script.cpp
+  script/api/checkbox_script.cpp
+  script/api/colorbutton_script.cpp
+  script/api/child_process_script.cpp
+  script/api/child_process_script_wasm.cpp
   script/api/cel_script.cpp
   script/api/colormode_script.cpp
   script/api/command_script.cpp
   script/api/console_script.cpp
   script/api/dialog_script.cpp
   script/api/document_script.cpp
+  script/api/dropdown_script.cpp
+  script/api/entry_script.cpp
+  script/api/file_script.cpp
+  script/api/filesystem_script.cpp
+  script/api/http_internal.cpp
+  script/api/http_script.cpp
+  script/api/server_script.cpp
+  script/api/server_script_wasm.cpp
   script/api/image_script.cpp
   script/api/imageview_script.cpp
   script/api/intentry_script.cpp
-  script/api/entry_script.cpp
   script/api/layer_script.cpp
   script/api/label_script.cpp
+  script/api/linklabel_script.cpp
+  script/api/listbox_script.cpp
   script/api/pixelcolor_script.cpp
   script/api/palette_script.cpp
   script/api/palettelistbox_script.cpp
   script/api/storage_script.cpp
   script/api/sprite_script.cpp
   script/api/selection_script.cpp
+  script/api/slider_script.cpp
+  script/api/storage_internal.cpp
+  script/api/textbox_script.cpp
+  script/api/timer_script.cpp
+  script/api/tools_script.cpp
 
   send_crash.cpp
   shade.cpp
@@ -373,6 +393,8 @@ add_library(app-lib
   tools/intertwine.cpp
   tools/pick_ink.cpp
   tools/point_shape.cpp
+  tools/script_tool_driver.cpp
+  tools/script_tool_loop.cpp
   tools/stroke.cpp
   tools/symmetry.cpp
   tools/tool_box.cpp
@@ -473,3 +495,7 @@ add_library(app-lib
   ${data_recovery_files}
   ${generated_files})
 endif()
+
+# The script API includes httplib.h (http_internal.cpp): link the target so
+# its compile definitions (CPPHTTPLIB_OPENSSL_SUPPORT) match httplib.cpp.
+target_link_libraries(app-lib PRIVATE httplib)

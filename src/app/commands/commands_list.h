@@ -1,6 +1,6 @@
 // Aseprite
 // Copyright (C) 2001-2016  David Capello
-// Copyright (C) 2021-2025  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -106,6 +106,7 @@ FOR_EACH_COMMAND(RepeatLastExport)
 FOR_EACH_COMMAND(ReplaceColor)
 FOR_EACH_COMMAND(RescanScripts)
 FOR_EACH_COMMAND(ReselectMask)
+FOR_EACH_COMMAND(ResetSymmetry)
 FOR_EACH_COMMAND(ReverseFrames)
 FOR_EACH_COMMAND(Rotate)
 FOR_EACH_COMMAND(RunScript)

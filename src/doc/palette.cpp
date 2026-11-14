@@ -1,5 +1,6 @@
-// Aseprite Document Library
-// Copyright (c) 2001-2016 David Capello
+// Document Library
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2026      LibreSprite contributors
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -83,7 +84,12 @@ void Palette::setFrame(frame_t frame)
 
 void Palette::setEntry(int i, color_t color)
 {
-  ASSERT(i >= 0 && i < size());
+  // File-format-derived indices (palette/color chunks with attacker-
+  // controlled counts) reach this directly - ASSERT alone compiles out in
+  // release builds and previously let an out-of-range index write past
+  // m_colors. Real, always-on bounds check.
+  if (i < 0 || i >= size())
+    return;
 
   m_colors[i] = color;
   ++m_modifications;

@@ -1,5 +1,5 @@
 // Aseprite    - Copyright (C) 2001-2016  David Capello
-// LibreSprite - Copyright (C) 2018-2021  LibreSprite contributors
+// LibreSprite - Copyright (C) 2018-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -35,6 +35,7 @@
 #include "app/pref/preferences.h"
 #include "app/recent_files.h"
 #include "app/resource_finder.h"
+#include "app/script/api/storage_internal.h"
 #include "app/script/app_scripting.h"
 #include "app/send_crash.h"
 #include "app/shell.h"
@@ -65,8 +66,8 @@
 #include "doc/palette.h"
 #include "doc/site.h"
 #include "doc/sprite.h"
+#include "delta/JSON.hpp"
 #include "render/render.h"
-#include "script/engine.h"
 #include "script/engine_delegate.h"
 #include "she/display.h"
 #include "she/error.h"
@@ -132,6 +133,7 @@ App::App()
   , m_legacy(nullptr)
   , m_isGui(false)
   , m_isShell(false)
+  , m_isHeadless(false)
   , m_exporter(nullptr)
 {
   ASSERT(m_instance == NULL);
@@ -142,7 +144,10 @@ void App::initialize(const AppOptions& options)
 {
   m_isGui = options.startUI();
   m_isShell = options.startShell();
-  if (m_isGui)
+  m_isHeadless = options.startBatch() || options.startShell();
+  // The ui system (widget registry) is also needed headless: the gui
+  // module creates a ui::Manager, which registers its widgets.
+  if (m_isGui || options.startBatch() || options.startShell())
     m_uiSystem.reset(new ui::UISystem);
 
   m_coreModules = std::make_unique<CoreModules>();
@@ -162,7 +167,11 @@ void App::initialize(const AppOptions& options)
   }
 
   m_modules = std::make_unique<Modules>(createLogInDesktop);
-  m_legacy = std::make_unique<LegacyModules>(isGui() ? REQUIRE_INTERFACE: 0);
+  // --batch/--shell also install the gui module (display + ui::Manager):
+  // the display runs on SDL's dummy video driver, so ui::Manager is
+  // non-null in every mode that executes code.
+  m_legacy = std::make_unique<LegacyModules>(
+    (options.startUI() || options.startBatch() || options.startShell()) ? REQUIRE_INTERFACE: 0);
   m_brushes.reset(new AppBrushes);
 
   if (options.hasExporterParams())
@@ -179,11 +188,10 @@ void App::initialize(const AppOptions& options)
   // palette from an old format palette to the new one, etc.
   load_default_palette(options.paletteFileName());
 
-  // Initialize GUI interface
+  // Initialize GUI interface (headless runs build it invisibly)
   UIContext* ctx = UIContext::instance();
-  if (isGui()) {
-    LOG("GUI mode\n");
-    script::EngineDelegate::setDefault("gui");
+  if (isGui() || isHeadless()) {
+    LOG(isGui() ? "GUI mode\n" : "Headless mode (UI runs invisibly)\n");
 
     // Setup the GUI cursor and redraw screen
 
@@ -201,8 +209,8 @@ void App::initialize(const AppOptions& options)
     app_rebuild_documents_tabs();
     app_default_statusbar_message();
 
-    // Recover data
-    if (m_modules->hasRecoverySessions())
+    // Recover data (GUI only)
+    if (isGui() && m_modules->hasRecoverySessions())
       m_mainWindow->showDataRecovery(m_modules->recovery());
 
     m_mainWindow->openWindow();
@@ -211,6 +219,12 @@ void App::initialize(const AppOptions& options)
     ui::Manager::getDefault()->invalidate();
   }
 
+  // Deliver the "app_boot" event to every "///listen app_boot" script.
+  // The menu scan (MainWindow constructor) has already populated the
+  // hooks, and the event is drained synchronously, so the handlers run
+  // before the options processing below opens the CLI files.
+  app::AppScripting::fireBootEvents();
+
   // Procress options
   LOG("Processing options...\n");
 
@@ -218,6 +232,11 @@ void App::initialize(const AppOptions& options)
   bool trim = false;
   Params cropParams;
   SpriteSheetType sheetType = SpriteSheetType::None;
+
+  // Keeps alive any FrameTag created below from --frame-range: it's
+  // handed to m_exporter as a raw pointer and must outlive the
+  // "Export" block further down where exportSheet() consumes it.
+  std::vector<std::unique_ptr<FrameTag>> ownedFrameTags;
 
   // Open file specified in the command line
   if (!options.values().empty()) {
@@ -232,6 +251,10 @@ void App::initialize(const AppOptions& options)
     std::string filenameFormat;
     std::string frameTagName;
     std::string frameRange;
+
+    // --set key=value pairs seen so far: applied to each --script's
+    // storage domain when it runs.
+    std::vector<std::pair<std::string, std::string>> setValues;
 
     for (const auto& value : options.values()) {
       const AppOptions::Option* opt = value.option();
@@ -503,10 +526,28 @@ void App::initialize(const AppOptions& options)
         }
         // --script <filename>
         else if (opt == &options.script()) {
-          script::EngineDelegate::setDefault("stdout");
-          script::Engine::setDefault("js");
+          // Seed the script's storage domain (its BASENAME) with the
+          // --set values before the script runs.
+          auto domain = base::get_file_name(value.value());
+          for (const auto& sv : setValues)
+            script::setCliStorage(JSON::Value{sv.second}, sv.first, domain);
+
           AppScripting engine;
-          engine.evalFile(value.value());
+          // A failed run aborts the rest of the command line (app_main
+          // turns the exception into a non-zero exit code).
+          if (!engine.evalFile(value.value()))
+            throw std::runtime_error("script run failed: " + value.value());
+        }
+        // --set key=value
+        else if (opt == &options.set()) {
+          // Storage value for the --script runs that follow (repeatable;
+          // the last value for a key wins).
+          auto pos = value.value().find('=');
+          if (pos == std::string::npos || pos == 0)
+            throw std::runtime_error("--set needs a key and a value separated by =\n"
+                                     "Usage: --set key=value\n"
+                                     "E.g. --set host=127.0.0.1");
+          setValues.emplace_back(value.value().substr(0, pos), value.value().substr(pos + 1));
         }
         // --list-layers
         else if (opt == &options.listLayers()) {
@@ -573,8 +614,10 @@ void App::initialize(const AppOptions& options)
                                            "Usage: --frame-range from,to\n"
                                            "E.g. --frame-range 0,99");
 
-                frameTag = new FrameTag(base::convert_to<frame_t>(splitRange[0]),
-                                        base::convert_to<frame_t>(splitRange[1]));
+                ownedFrameTags.push_back(std::make_unique<FrameTag>(
+                    base::convert_to<frame_t>(splitRange[0]),
+                    base::convert_to<frame_t>(splitRange[1])));
+                frameTag = ownedFrameTags.back().get();
             }
 
             if (!importLayer.empty()) {
@@ -651,19 +694,28 @@ void App::run()
     app::SendCrash sendCrash;
     sendCrash.search();
 
+    // Pump the scripting engine (timers, promises, queued events) once
+    // per UI message-loop iteration.
+    app::AppScripting::startTickPump();
+
     // Run the GUI main message loop
     ui::Manager::getDefault()->run();
   }
 
   // Start shell to execute scripts.
   if (m_isShell) {
-    script::EngineDelegate::setDefault("stdout");
-    script::Engine::setDefault("js");
     AppScripting engine;
     engine.printLastResult();
     Shell shell;
     shell.run(engine);
   }
+
+  // Headless script pump: without a UI message loop nothing drives
+  // AppScripting::tick(), so async script work (timers, promises, fetch,
+  // HTTPServer) would never run. Pump until the script is idle so the
+  // process can exit.
+  if (!isGui() && !m_isShell && !AppScripting::getFileName().empty())
+    AppScripting::runHeadlessPump();
 
   // Destroy all documents in the UIContext.
   const doc::Documents& docs = m_modules->m_ui_context.documents();
@@ -685,7 +737,7 @@ void App::run()
     delete doc;
   }
 
-  if (isGui()) {
+  if (isGui() || isHeadless()) {
     // Destroy the window.
     m_mainWindow.reset(nullptr);
   }
@@ -704,6 +756,11 @@ App::~App()
     // Remove LibreSprite handlers
     LOG("ASE: Uninstalling\n");
 
+    // Tear down the script engine (and any script-owned dialogs/widgets)
+    // before the ui::Manager, so their ui::Timer members are removed from
+    // the Timer registry before ~Manager runs Timer::checkNoTimers().
+    app::AppScripting::shutdown();
+
     // Delete file formats.
     FileFormatsManager::destroyInstance();
 
@@ -719,6 +776,19 @@ App::~App()
     // Destroy the loaded gui.xml data.
     delete KeyboardShortcuts::instance();
     delete GuiXml::instance();
+
+    // Safety net if run() was interrupted by an exception: mirror its
+    // teardown (documents, then main window) while App::instance() is valid.
+    {
+      const doc::Documents& docs = m_modules->m_ui_context.documents();
+      while (!docs.empty()) {
+        doc::Document* doc = docs.back();
+        doc->close();
+        delete doc;
+      }
+      if (isGui() || isHeadless())
+        m_mainWindow.reset(nullptr);
+    }
 
     m_instance = nullptr;
   }
@@ -845,7 +915,7 @@ void app_refresh_screen()
 // document is modified).
 void app_rebuild_documents_tabs()
 {
-  if (App::instance()->isGui()) {
+  if (App::instance()->isGui() || App::instance()->isHeadless()) {
     App::instance()->workspace()->updateTabs();
     App::instance()->updateDisplayTitleBar();
   }

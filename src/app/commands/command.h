@@ -9,6 +9,7 @@
 
 #include "app/commands/command_factory.h"
 #include <string>
+#include <vector>
 
 namespace app {
   class Context;
@@ -17,6 +18,14 @@ namespace app {
   enum CommandFlags {
     CmdUIOnlyFlag     = 0x00000001,
     CmdRecordableFlag = 0x00000002,
+  };
+
+  // One parameter a command reads in onLoadParams (see onDescribeParams).
+  struct CommandParamInfo {
+    std::string name;
+    std::string description;
+    bool required;
+    std::string defaultValue;
   };
 
   class Command {
@@ -30,12 +39,14 @@ namespace app {
     std::string friendlyName() const;
 
     void loadParams(const Params& params);
+    std::vector<CommandParamInfo> describeParams() const;
     bool isEnabled(Context* context);
     bool isChecked(Context* context);
     void execute(Context* context);
 
   protected:
     virtual void onLoadParams(const Params& params);
+    virtual std::vector<CommandParamInfo> onDescribeParams() const;
     virtual bool onEnabled(Context* context);
     virtual bool onChecked(Context* context);
     virtual void onExecute(Context* context);

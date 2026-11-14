@@ -37,7 +37,12 @@ Console::Console(Context* ctx)
   : m_withUI(false)
 {
   if (ctx)
-    m_withUI = (ctx->isUIAvailable());
+    // Headless runs have no human: print errors to stdout instead of
+    // opening the invisible "Errors Console" window.
+    m_withUI =
+      (ctx->isUIAvailable() &&
+       App::instance() &&
+       App::instance()->isGui());
   else
     m_withUI =
       (App::instance()->isGui() &&

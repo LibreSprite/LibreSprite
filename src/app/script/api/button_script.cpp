@@ -1,46 +1,38 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "app/script/app_scripting.h"
-
-#include "script/script_object.h"
-#include "ui/button.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
 #include "app/script/api/widget_script.h"
 
-class ButtonWidgetScriptObject : public WidgetScriptObject {
-    std::string m_text;
+#include <memory>
+#include <string>
 
+class ButtonExtension : public Extension {
 public:
-    ButtonWidgetScriptObject() {
-        addProperty("text",
-                    [this]{return m_text;},
-                    [this](const std::string& text){
-                        if (auto button = getWidget<ui::Button>())
-                            button->setText(text);
-                        m_text = text;
-                        return text;
-                    });
-    }
+  ButtonExtension() {
+    auto& cls = addClass<void, ButtonObject>("Button");
+    // The button is created by DialogObject::addButton() (C++), not `new
+    // Button()` in JS, but delta requires a non-null constructor.
+    cls.setConstructor() = []() -> std::shared_ptr<ButtonObject> {
+      return std::make_shared<ButtonObject>();
+    };
 
-    DisplayType getDisplayType() override {return DisplayType::Inline;}
+    addWidgetId<ButtonObject>(cls);
 
-    Handle build() override {
-        auto scriptFileName = app::AppScripting::getFileName();
-        auto button = new ui::Button(m_text);
-        auto handle = button->handle();
-        button->Click.connect([=](ui::Event&){
-          if (handle) {
-            app::AppScripting::raiseEvent(scriptFileName, {button->id() + "_click"});
-          }
-        });
-        return handle;
-    }
+    cls.addGetter("text") = [](ButtonObject& self) -> JSON::Value {
+      return self.button() ? std::string{self.button()->text()} : std::string{};
+    };
+    cls.addSetter("text") = [](ButtonObject& self, JSON::Value& v) {
+      if (self.button())
+        self.button()->setText(v.toString());
+    };
+  }
 };
 
-static script::ScriptObject::Regular<ButtonWidgetScriptObject> _SO("ButtonWidgetScriptObject", {
-        "widget" + std::to_string(ui::kButtonWidget)
-    });
+static di::provide<Extension, ButtonExtension> buttonExt{"button"};

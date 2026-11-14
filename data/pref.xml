@@ -72,11 +72,17 @@
       <value id="SOUTH" value="7" />
       <value id="SOUTHEAST" value="8" />
     </enum>
+    <!-- Bit flags so axes can be combined (bit-ored) freely. ROTATIONAL_180
+         and ROTATIONAL_90 are exclusive: enabling either clears/ignores
+         every other bit. -->
     <enum id="SymmetryMode">
       <value id="NONE" value="0" />
       <value id="HORIZONTAL" value="1" />
       <value id="VERTICAL" value="2" />
-      <value id="BOTH" value="3" />
+      <value id="DIAGONAL_45" value="4" />
+      <value id="DIAGONAL_135" value="8" />
+      <value id="ROTATIONAL_180" value="16" />
+      <value id="ROTATIONAL_90" value="32" />
     </enum>
   </types>
 

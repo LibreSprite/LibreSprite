@@ -1,0 +1,11 @@
+image: fedora:28
+
+meson-build:
+    script:
+    - dnf -y install dnf-plugins-core
+    - dnf -y groupinstall buildsys-build
+    - dnf -y builddep pixman
+    - dnf -y install ninja-build
+    - python3 -m pip install meson>=0.52.1
+    - meson build
+    - ninja -C build test

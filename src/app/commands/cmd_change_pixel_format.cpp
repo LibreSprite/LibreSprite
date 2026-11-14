@@ -32,6 +32,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   bool onChecked(Context* context) override;
   void onExecute(Context* context) override;
@@ -58,6 +59,14 @@ void ChangePixelFormatCommand::onLoadParams(const Params& params)
     m_dithering = DitheringMethod::ORDERED;
   else
     m_dithering = DitheringMethod::NONE;
+}
+
+std::vector<CommandParamInfo> ChangePixelFormatCommand::onDescribeParams() const
+{
+  return {
+    {"format", "Target pixel format: rgb, grayscale or indexed.", false, "rgb"},
+    {"dithering", "Dithering when converting to indexed: none or ordered.", false, "none"},
+  };
 }
 
 bool ChangePixelFormatCommand::onEnabled(Context* context)

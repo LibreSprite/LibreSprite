@@ -1,5 +1,5 @@
 # Aseprite     | Copyright (C) 2001-2016  David Capello
-# LibreSprite  | Copyright (C)      2021  LibreSprite contributors
+# LibreSprite  | Copyright (C) 2021-2026  LibreSprite contributors
 
 ######################################################################
 # Common definitions for all Aseprite libraries/projects
@@ -36,7 +36,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:script-lib>")
+  set(KEEP_INJECTIONS_BEGIN "-WHOLEARCHIVE:$<TARGET_FILE:app-lib> -WHOLEARCHIVE:$<TARGET_FILE:delta>")
   set(KEEP_INJECTIONS_END "")
 endif()
 
@@ -83,9 +83,7 @@ add_subdirectory(filters)
 add_subdirectory(fixmath)
 add_subdirectory(flic)
 add_subdirectory(gfx)
-add_subdirectory(net)
 add_subdirectory(render)
-add_subdirectory(script)
 add_subdirectory(she)
 add_subdirectory(ui)
 endif()
@@ -130,13 +128,13 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   fixmath-lib
   flic-lib
   gfx-lib
-  net-lib
   render-lib
-  script-lib
   she
   ui-lib
   undo
+  delta
   ${KEEP_INJECTIONS_END}
+  httplib
   ${LibArchive_LIBRARY}
   ${TINYXML2_LIBRARY}
   ${JPEG_LIBRARIES}
@@ -144,7 +142,6 @@ target_link_libraries(libresprite ${KEEP_INJECTIONS_BEGIN}
   ${PNG_LIBRARIES}
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
-  ${V8_LIBRARIES}
   ${FREETYPE_LIBRARIES}
   ${PLATFORM_LIBS})
 

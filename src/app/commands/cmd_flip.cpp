@@ -55,6 +55,14 @@ void FlipCommand::onLoadParams(const Params& params)
                                             doc::algorithm::FlipHorizontal);
 }
 
+std::vector<CommandParamInfo> FlipCommand::onDescribeParams() const
+{
+  return {
+    {"target", "mask flips the selection; default flips the sprite.", false, ""},
+    {"orientation", "horizontal or vertical.", false, "horizontal"},
+  };
+}
+
 bool FlipCommand::onEnabled(Context* context)
 {
   return context->checkFlags(ContextFlags::ActiveDocumentIsWritable);

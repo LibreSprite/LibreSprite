@@ -4,6 +4,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# CMake 3.28+ scans C++20 sources for modules, and its scanner fails on Emscripten's -s flags
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 add_definitions(-DEMSCRIPTEN -DHAVE_CONFIG_H)
 set(EMSCRIPTEN on)
@@ -12,40 +14,50 @@ set(USE_SDL2_BACKEND on)
 
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/../third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/../third_party/simpleini)
-set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/../third_party/duktape)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/../third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/../third_party/qoi)
 
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/pixman
-        ${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/tinyxml2
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman/pixman
+        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman
         ${SIMPLEINI_DIR}
-        ${DUKTAPE_DIR}
         ${MODP_B64_DIR}
         ${QOI_DIR}
 )
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/third_party/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/tinyxml2 ${CMAKE_CURRENT_SOURCE_DIR}/../build/tinyxml2/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../android/pixman/ ${CMAKE_CURRENT_SOURCE_DIR}/../build/pixman/)
+# The subdirectory targets below must be compiled with the same flags as the
+# final link: a pthreads (shared-memory) module needs atomics in every object
+# No -flto: with the current emscripten, LTO breaks wasm exception handling
+# (the first thrown C++ exception traps the worker thread at runtime)
+set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -fwasm-exceptions -s SUPPORT_LONGJMP=wasm")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
+
+# Keep the library outputs in this build's own tree: the native build owns
+# ../build/ and the two must not overwrite each other's objects and archives
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ ${CMAKE_CURRENT_BINARY_DIR}/third_party/)
+# QuickJS's libc only defines _GNU_SOURCE (for environ and sighandler_t) on __linux__
+target_compile_definitions(quickjs PRIVATE _GNU_SOURCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/tinyxml2 ${CMAKE_CURRENT_BINARY_DIR}/tinyxml2/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pixman/ ${CMAKE_CURRENT_BINARY_DIR}/pixman/)
 
 set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 set(GENSRC ${CMAKE_CURRENT_SOURCE_DIR}/../build/src)
 
 include_directories(
   ${SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../third_party
   ${GENSRC}/base
-  ${SRC}/observable
+  ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/observable
   ${GENSRC}/app
 )
 
-set(USE_FLAGS "-O3 -pthread -s USE_PTHREADS=1 -flto -fwasm-exceptions -s SUPPORT_LONGJMP=wasm")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
 include_directories(${SDL2_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s EXPORTED_FUNCTIONS=_main,_onPointerEvent -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
+# The default pthread stack (64k) is too small for the app thread
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} -s DEFAULT_PTHREAD_STACK_SIZE=8MB -s EXPORTED_FUNCTIONS=_main,_onPointerEvent,_onTouchPointer,_onTypedText,_onTypedKey -s EXPORTED_RUNTIME_METHODS=cwrap -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -sPTHREAD_POOL_SIZE=4 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_FREETYPE=1 -s USE_ZLIB=1 -s USE_GIFLIB=1 -s USE_LIBJPEG=1 -s USE_LIBPNG -s SDL2_IMAGE_FORMATS='[\"png\",\"jpg\"]' -Wl,-u,fileno -Wl,-u,_emscripten_run_callback_on_thread --preload-file ../../build/bin/data@/data")
 set(CMAKE_EXECUTABLE_SUFFIX .html)
 
 set_source_files_properties(${SRC}/app/file/ase_format.cpp PROPERTIES COMPILE_FLAGS "-s USE_ZLIB=1")
@@ -61,13 +73,13 @@ set_source_files_properties(${SRC}/she/sdl2/she.cpp PROPERTIES COMPILE_FLAGS "-s
 
 set(SRC_FILES
   ${GENSRC}/app/pref.xml.cpp
-  ${DUKTAPE_DIR}/duktape.c
   # ${SRC}/app/color_tests.cpp
   # ${SRC}/app/document_api_tests.cpp
   # ${SRC}/app/document_range_tests.cpp
   # ${SRC}/app/errno_tests.cpp
   # ${SRC}/app/file/file_tests.cpp
   # ${SRC}/app/file/split_filename_tests.cpp
+  ${SRC}/app/file/qoi_format.cpp
   ${SRC}/app/file/webp_format.cpp
   # ${SRC}/app/filename_formatter_tests.cpp
   # ${SRC}/app/ini_file_tests.cpp
@@ -120,8 +132,6 @@ set(SRC_FILES
   # ${SRC}/observable/tests/signals.cpp
   # ${SRC}/render/ordered_dither_tests.cpp
   # ${SRC}/render/render_tests.cpp
-  # ${SRC}/script/lua/engine.cpp
-  # ${SRC}/script/v8/engine.cpp
   # ${SRC}/she/alleg4/alleg_display.cpp
   # ${SRC}/she/alleg4/alleg_surface.cpp
   # ${SRC}/she/alleg4/display_events.cpp
@@ -297,6 +307,7 @@ set(SRC_FILES
   ${SRC}/app/commands/cmd_repeat_last_export.cpp
   ${SRC}/app/commands/cmd_rescan_scripts.cpp
   ${SRC}/app/commands/cmd_reselect_mask.cpp
+  ${SRC}/app/commands/cmd_reset_symmetry.cpp
   ${SRC}/app/commands/cmd_reverse_frames.cpp
   ${SRC}/app/commands/cmd_rotate.cpp
   ${SRC}/app/commands/cmd_run_script.cpp
@@ -370,6 +381,7 @@ set(SRC_FILES
   ${SRC}/app/file/pcx_format.cpp
   ${SRC}/app/file/pixly_format.cpp
   ${SRC}/app/file/png_format.cpp
+  ${SRC}/app/file/script_file_format.cpp
   ${SRC}/app/file/she_format.cpp
   ${SRC}/app/file/split_filename.cpp
   ${SRC}/app/file/tga_format.cpp
@@ -398,27 +410,45 @@ set(SRC_FILES
   ${SRC}/app/resource_finder.cpp
   ${SRC}/app/script/api/app_script.cpp
   ${SRC}/app/script/api/button_script.cpp
+  ${SRC}/app/script/api/checkbox_script.cpp
+  ${SRC}/app/script/api/colorbutton_script.cpp
   ${SRC}/app/script/api/cel_script.cpp
   ${SRC}/app/script/api/colormode_script.cpp
   ${SRC}/app/script/api/console_script.cpp
   ${SRC}/app/script/api/command_script.cpp
   ${SRC}/app/script/api/dialog_script.cpp
   ${SRC}/app/script/api/document_script.cpp
+  ${SRC}/app/script/api/dropdown_script.cpp
   ${SRC}/app/script/api/entry_script.cpp
+  ${SRC}/app/script/api/file_script.cpp
+  ${SRC}/app/script/api/filesystem_script.cpp
+  ${SRC}/app/script/api/http_internal.cpp
+  ${SRC}/app/script/api/http_internal_wasm.cpp
+  ${SRC}/app/script/api/http_script.cpp
+  ${SRC}/app/script/api/server_script.cpp
+  ${SRC}/app/script/api/server_script_wasm.cpp
   ${SRC}/app/script/api/image_script.cpp
   ${SRC}/app/script/api/imageview_script.cpp
   ${SRC}/app/script/api/intentry_script.cpp
   ${SRC}/app/script/api/label_script.cpp
   ${SRC}/app/script/api/layer_script.cpp
+  ${SRC}/app/script/api/linklabel_script.cpp
+  ${SRC}/app/script/api/listbox_script.cpp
   ${SRC}/app/script/api/palette_script.cpp
   ${SRC}/app/script/api/palettelistbox_script.cpp
   ${SRC}/app/script/api/pixelcolor_script.cpp
   ${SRC}/app/script/api/selection_script.cpp
+  ${SRC}/app/script/api/slider_script.cpp
   ${SRC}/app/script/api/sprite_script.cpp
+  ${SRC}/app/script/api/storage_internal.cpp
+  ${SRC}/app/script/api/textbox_script.cpp
+  ${SRC}/app/script/api/timer_script.cpp
+  ${SRC}/app/script/api/tools_script.cpp
   ${SRC}/app/script/api/storage_script.cpp
   ${SRC}/app/script/app_scripting.cpp
-  ${SRC}/app/script/console_delegate.cpp
   ${SRC}/app/script/script_menu.cpp
+  ${SRC}/app/script/script_permission_dialog.cpp
+  ${SRC}/app/script/script_permissions.cpp
   ${SRC}/app/send_crash.cpp
   ${SRC}/app/shade.cpp
   ${SRC}/app/shell.cpp
@@ -429,6 +459,8 @@ set(SRC_FILES
   ${SRC}/app/tools/intertwine.cpp
   ${SRC}/app/tools/pick_ink.cpp
   ${SRC}/app/tools/point_shape.cpp
+  ${SRC}/app/tools/script_tool_driver.cpp
+  ${SRC}/app/tools/script_tool_loop.cpp
   ${SRC}/app/tools/stroke.cpp
   ${SRC}/app/tools/symmetry.cpp
   ${SRC}/app/tools/tool_box.cpp
@@ -639,16 +671,10 @@ set(SRC_FILES
   ${SRC}/gfx/region.cpp
   ${SRC}/gfx/rgb.cpp
   ${SRC}/main/main.cpp
-  ${SRC}/net/http_request.cpp
-  ${SRC}/net/http_request_wasm.cpp
-  ${SRC}/net/http_response.cpp
-  ${SRC}/observable/obs/connection.cpp
   ${SRC}/render/get_sprite_pixel.cpp
   ${SRC}/render/quantization.cpp
   ${SRC}/render/render.cpp
   ${SRC}/render/zoom.cpp
-  ${SRC}/script/cout_delegate.cpp
-  ${SRC}/script/duktape/engine.cpp
   ${SRC}/she/common/freetype_font.cpp
   ${SRC}/she/sdl2/sdl2_display.cpp
   ${SRC}/she/sdl2/sdl2_surface.cpp
@@ -703,12 +729,16 @@ set(SRC_FILES
 
 add_executable(libresprite ${SRC_FILES})
 
+# SDL2, SDL2_image and SDL2_ttf come from Emscripten's ports (-s USE_SDL...)
+# No httplib: the web build performs script HTTP with the browser fetch()
+# (http_internal_wasm.cpp) and has no sockets.
 target_link_libraries( libresprite
-                        SDL2
-                        SDL2_image
-                        SDL2_ttf
                         tinyxml2
                         pixman
                         modp_b64
                         simpleini
+                        "LINKER:--whole-archive"
+                        delta
+                        "LINKER:--no-whole-archive"
+                        obs
                       )

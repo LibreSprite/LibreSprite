@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2026       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -34,6 +34,11 @@ namespace app {
     void goForward();
     void goUp();
     void goInsideFolder();
+
+    // Called when the user presses Enter while typing/pasting a path
+    // into the location (address bar) entry. Returns true to consume
+    // the key press.
+    bool onLocationEntryEnter();
 
     // Shows the dialog to select a file in the program.
     std::string show(const std::string& title,

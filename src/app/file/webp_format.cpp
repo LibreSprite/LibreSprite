@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2015  Gabriel Rauter, David Capello
-// LibreSprite | Copyright (C) 2021  LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -114,6 +114,8 @@ bool WebPFormat::onLoad(FileOp* fop)
   fop->sequenceSetHasAlpha(config.input.has_alpha != 0);
 
   Image* image = fop->sequenceImage(IMAGE_RGB, config.input.width, config.input.height);
+  if (!image)
+    return false;
 
   config.output.colorspace = MODE_RGBA;
   config.output.u.RGBA.rgba = (uint8_t*)image->getPixelAddress(0, 0);
@@ -317,9 +319,9 @@ base::SharedPtr<FormatOptions> WebPFormat::onGetFormatOptions(FileOp* fop)
   if (!webp_options)
     webp_options.reset(new WebPOptions);
 
-  // Non-interactive mode
+  // Non-interactive mode (headless runs have a UI but no human)
   if (!fop->context() ||
-      !fop->context()->isUIAvailable())
+      !App::instance()->isGui())
     return webp_options;
 
   try {

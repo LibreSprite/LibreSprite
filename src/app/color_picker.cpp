@@ -39,6 +39,9 @@ void ColorPicker::pickColor(const doc::Site& site,
   m_alpha = 255;
   m_color = app::Color::fromMask();
 
+  if (!sprite)
+    return;
+
   // Check tiled mode
   if (sprite && site.document()) {
     const app::Document* doc = static_cast<const app::Document*>(site.document());

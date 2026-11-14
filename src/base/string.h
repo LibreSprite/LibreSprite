@@ -39,7 +39,7 @@ namespace base {
 
     // Based on Allegro Unicode code (allegro/src/unicode.c)
     utf8_iteratorT& operator++() {
-      int c = *m_internal;
+      int c = static_cast<unsigned char>(*m_internal);
       ++m_internal;
 
       if (c & 0x80) {
@@ -50,7 +50,7 @@ namespace base {
         c &= (1<<(8-n))-1;
 
         while (--n > 0) {
-          int t = *m_internal;
+          int t = static_cast<unsigned char>(*m_internal);
           ++m_internal;
 
           if ((!(t & 0x80)) || (t & 0x40)) {
@@ -79,7 +79,7 @@ namespace base {
 
     const int operator*() const {
       SubIterator it = m_internal;
-      int c = *it;
+      int c = static_cast<unsigned char>(*it);
       ++it;
 
       if (c & 0x80) {
@@ -90,7 +90,7 @@ namespace base {
         c &= (1<<(8-n))-1;
 
         while (--n > 0) {
-          int t = *it;
+          int t = static_cast<unsigned char>(*it);
           ++it;
 
           if ((!(t & 0x80)) || (t & 0x40))

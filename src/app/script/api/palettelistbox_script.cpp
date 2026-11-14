@@ -1,65 +1,48 @@
 // LibreSprite
-// Copyright (C) 2021  LibreSprite contributors
+// Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation.
 
-#include "app/ui/palette_listbox.h"
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
 #include "app/script/api/widget_script.h"
-#include "app/script/app_scripting.h"
 #include "doc/palette.h"
-#include "script/value.h"
-#include "script/engine.h"
-#include "ui/widget.h"
 
-namespace script {
-  void setStorage(const script::Value& value, const std::string& key, const std::string& domain);
-}
+#include <memory>
+#include <string>
 
-class CustomPaletteListBox : public app::PaletteListBox {
-  std::string m_fileName;
+class PaletteListBoxExtension : public Extension {
 public:
+  PaletteListBoxExtension() {
+    auto& cls = addClass<void, PaletteListBoxObject>("PaletteListBox");
+    // The listbox is created by DialogObject::addPaletteListBox() (C++), not
+    // `new PaletteListBox()` in JS, but delta requires a non-null constructor.
+    cls.setConstructor() = []() -> std::shared_ptr<PaletteListBoxObject> {
+      return std::make_shared<PaletteListBoxObject>();
+    };
 
-  CustomPaletteListBox(const std::string& fileName) : m_fileName(fileName) {
-  }
+    addWidgetId<PaletteListBoxObject>(cls);
 
-  void onChange() override {
-    script::setStorage(selectedPaletteName(), id(), m_fileName);
-    app::AppScripting::raiseEvent(m_fileName, {id() + "_change"});
+    // selected: the name of the currently selected palette ("" if none).
+    cls.addGetter("selected") = [](PaletteListBoxObject& self) -> JSON::Value {
+      auto* lb = self.listbox();
+      return lb ? std::string{lb->selectedPaletteName()} : std::string{};
+    };
+
+    // addPalette(name) -> create a 1-color doc::Palette, add it to the listbox
+    // under `name`, and return it as a `Palette` JS object.
+    cls.addMethod("addPalette") = [](PaletteListBoxObject& self, const std::string& name) -> JSON::Value {
+      auto* lb = self.listbox();
+      if (!lb)
+        return JSON::Value{JSON::Special::Null};
+      auto pal = doc::Palette::create(1);
+      lb->addPalette(pal, name);
+      return JSON::makeNative(pal);
+    };
   }
 };
 
-class PaletteListBoxWidgetScriptObject : public WidgetScriptObject {
-public:
-  PaletteListBoxWidgetScriptObject() {
-    addProperty("selected", [this]{return listbox()->selectedPaletteName();});
-    addMethod("addPalette", &PaletteListBoxWidgetScriptObject::addPalette);
-  }
-
-  script::ScriptObject* addPalette(const std::string& name) {
-    auto listbox = this->listbox();
-    auto pal = doc::Palette::create(1);
-    auto palSO = getEngine()->getScriptObject(pal.get());
-    palSO->setWrapped(pal->handle(), false);
-    listbox->addPalette(pal, name);
-    return palSO;
-  }
-
-  CustomPaletteListBox* listbox() {
-    auto listbox = handle<ui::Widget, CustomPaletteListBox>();
-    if (!listbox)
-      throw script::ObjectDestroyedException{};
-    return listbox;
-  }
-
-  DisplayType getDisplayType() override {return DisplayType::Block;}
-
-  Handle build() override {
-    return new CustomPaletteListBox(app::AppScripting::getFileName());
-  }
-};
-
-static script::ScriptObject::Regular<PaletteListBoxWidgetScriptObject> _SO("PalettelistboxWidgetScriptObject", {
-    "widget" + std::to_string(ui::kListItemWidget)
-  });
+static di::provide<Extension, PaletteListBoxExtension> paletteListBoxExt{"palettelistbox"};

@@ -40,6 +40,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
   std::string onGetFriendlyName() const override;
@@ -77,6 +78,15 @@ void ScrollCommand::onLoadParams(const Params& params)
 
   int quantity = params.get_as<int>("quantity");
   m_quantity = std::max<int>(1, quantity);
+}
+
+std::vector<CommandParamInfo> ScrollCommand::onDescribeParams() const
+{
+  return {
+    {"direction", "left, right, up or down.", false, ""},
+    {"units", "pixel, tile-width, tile-height, zoomed-pixel, zoomed-tile-width, zoomed-tile-height, viewport-width or viewport-height.", false, ""},
+    {"quantity", "Units to scroll; at least 1.", false, "1"},
+  };
 }
 
 bool ScrollCommand::onEnabled(Context* context)

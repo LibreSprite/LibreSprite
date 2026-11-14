@@ -9,6 +9,7 @@
 
 #include "base/injection.h"
 #include "base/shared_ptr.h"
+#include "app/file/format_options.h"
 
 #include <vector>
 
@@ -27,10 +28,10 @@
 #define FILE_SUPPORT_FRAME_TAGS         0x00001000
 #define FILE_SUPPORT_BIG_PALETTES       0x00002000 // Palettes w/more than 256 colors
 #define FILE_SUPPORT_PALETTE_WITH_ALPHA 0x00004000
+#define FILE_SUPPORT_PALETTE_WITH_ONEALPHA 0x00008000
 
 namespace app {
 
-  class FormatOptions;
   class FileFormat;
   class FileOp;
 

@@ -11,8 +11,8 @@
 
 #include "app/app.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/context_access.h"
-#include "app/document_api.h"
 #include "app/document_api.h"
 #include "app/find_widget.h"
 #include "app/load_widget.h"
@@ -33,8 +33,13 @@ public:
   Command* clone() const override { return new NewLayerSetCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  std::string m_name;
 };
 
 NewLayerSetCommand::NewLayerSetCommand()
@@ -42,6 +47,18 @@ NewLayerSetCommand::NewLayerSetCommand()
             "New Layer Set",
             CmdRecordableFlag)
 {
+}
+
+void NewLayerSetCommand::onLoadParams(const Params& params)
+{
+  m_name = params.get("name");
+}
+
+std::vector<CommandParamInfo> NewLayerSetCommand::onDescribeParams() const
+{
+  return {
+    {"name", "Name of the new folder. Empty opens the dialog (headless uses \"New Folder\").", false, ""},
+  };
 }
 
 bool NewLayerSetCommand::onEnabled(Context* context)
@@ -55,16 +72,25 @@ void NewLayerSetCommand::onExecute(Context* context)
   ContextWriter writer(context);
   Document* document(writer.document());
   Sprite* sprite(writer.sprite());
+  std::string name;
 
-  // load the window widget
-  std::unique_ptr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer_set"));
+  // With a name param, create the folder without the dialog.
+  if (!m_name.empty())
+    name = m_name;
+  else if (!App::instance()->isGui())
+    name = "New Folder";
+  else {
+    // load the window widget
+    std::unique_ptr<Window> window(app::load_widget<Window>("new_layer.xml", "new_layer_set"));
 
-  window->openWindowInForeground();
+    window->openWindowInForeground();
 
-  if (window->closer() != window->findChild("ok"))
-    return;
+    if (window->closer() != window->findChild("ok"))
+      return;
 
-  std::string name = window->findChild("name")->text();
+    name = window->findChild("name")->text();
+  }
+
   Layer* layer;
   {
     Transaction transaction(writer.context(), "New Layer");

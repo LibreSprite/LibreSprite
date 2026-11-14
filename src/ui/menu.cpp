@@ -720,6 +720,8 @@ bool MenuItem::onProcessMessage(Message* msg)
         bool select_first = static_cast<OpenMenuItemMessage*>(msg)->select_first();
 
         ASSERT(base != NULL);
+        if (!base)
+          return true;
         ASSERT(base->is_processing);
         ASSERT(hasSubmenu());
 
@@ -808,6 +810,8 @@ bool MenuItem::onProcessMessage(Message* msg)
         Window* window;
 
         ASSERT(base != NULL);
+        if (!base)
+          return true;
         ASSERT(base->is_processing);
 
         MenuBox* menubox = m_submenu_menubox;
@@ -852,6 +856,8 @@ bool MenuItem::onProcessMessage(Message* msg)
     case kTimerMessage:
       if (static_cast<TimerMessage*>(msg)->timer() == m_submenu_timer.get()) {
         MenuBaseData* base = get_base(this);
+        if (!base)
+          return true;
 
         ASSERT(hasSubmenu());
 
@@ -1039,6 +1045,8 @@ void MenuItem::openSubmenu(bool select_first)
   // Get the 'base'
   MenuBaseData* base = get_base(this);
   ASSERT(base != NULL);
+  if (!base)
+    return;
   ASSERT(base->is_processing == false);
 
   // Reset flags

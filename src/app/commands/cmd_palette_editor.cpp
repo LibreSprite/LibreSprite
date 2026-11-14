@@ -529,6 +529,7 @@ void PaletteEntryEditor::setAbsolutePaletteEntryChannel(ColorSliders::Channel ch
           switch (channel) {
             case ColorSliders::Red:
               r = color.getRed();
+              break;
             case ColorSliders::Green:
               g = color.getGreen();
               break;

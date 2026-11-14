@@ -57,6 +57,8 @@ void BackgroundFromLayer::onExecute()
     // get the image from the sprite's stock of images
     Image* cel_image = cel->image();
     ASSERT(cel_image);
+    if (!cel_image)
+      continue;
 
     clear_image(bg_image.get(), bgcolor);
     render::composite_image(

@@ -1,6 +1,6 @@
 // LibreSprite
 // Copyright (C) 2015-2016  David Capello
-// Copyright (C) 2023 LibreSprite contributors
+// Copyright (C) 2023-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -10,248 +10,314 @@
 #include "config.h"
 #endif
 
+#include "delta/Extension.hpp"
+#include "delta/JSON.hpp"
+#include "di.hpp"
+#include "app/script/api/script_api_common.h"
+#include "app/script/api/widget_script.h"
+
+#include "app/app.h"
 #include "app/commands/commands.h"
 #include "app/commands/params.h"
 #include "app/document.h"
-#include "app/document_api.h"
-#include "base/launcher.h"
 #include "app/modules/editors.h"
 #include "app/script/app_scripting.h"
-#include "app/task_manager.h"
-#include "app/ui/dialog.h"
-#include "app/ui/document_view.h"
+#include "app/script/script_permissions.h"
 #include "app/ui/editor/editor.h"
 #include "app/ui_context.h"
+#include "app/util/freetype_utils.h"
+#include "base/launcher.h"
+#include "doc/document.h"
 #include "doc/site.h"
-#include "script/engine.h"
-#include "script/engine_delegate.h"
-#include "script/script_object.h"
-#include "ui/widget.h"
+#include "she/she.h"
+#include "ui/manager.h"
 
-#include <sstream>
+#include <fstream>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
-class DudScriptObject : public script::InternalScriptObject {
+class AppObject {
 public:
-  void makeGlobal(const std::string& name) override {
-    globalName = name;
+  static app::Document* activeDocument() {
+    return app::UIContext::instance()->activeDocument();
   }
-  std::string globalName;
 };
-static script::InternalScriptObject::Regular<DudScriptObject> dud("DudScriptObject");
 
-namespace dialog {
-ui::Widget* getDialogById(const std::string&);
-}
-
-namespace app {
-
-class AppScriptObject : public script::ScriptObject {
+class AppExtension : public Extension {
 public:
-  inject<ScriptObject> m_pixelColor{"pixelColor"};
-  inject<ScriptObject> m_command{"command"};
+  AppExtension() {
+    auto& clazz = addClass<void, AppObject>("App");
+    clazz.setConstructor() = []() -> std::shared_ptr<AppObject> {
+      return std::make_shared<AppObject>();
+    };
 
-  AppScriptObject() {
-    addProperty("activeFrameNumber", [this]{return updateSite() ? m_site.frame() : 0;})
-      .doc("read-only. Returns the number of the currently active animation frame.");
+    clazz.addGetter("activeFrameNumber") = [](AppObject&) -> JSON::Value {
+      if (!app::current_editor)
+        return (double)0;
+      return (double)app::current_editor->getSite().frame();
+    };
 
-    addProperty("activeLayerNumber", [this]{return updateSite() ? m_site.layerIndex() : 0;})
-      .doc("read-only. Returns the number of the current layer.");
+    clazz.addGetter("activeLayerNumber") = [](AppObject&) -> JSON::Value {
+      if (!app::current_editor)
+        return (double)0;
+      return (double)static_cast<int>(app::current_editor->getSite().layerIndex());
+    };
 
-    addProperty("activeImage", [this]{
-        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().image() : nullptr);
-    }).doc("read-only, can be null. Returns the current layer/frame's image.");
+    // The wrapper re-resolves its site's image on every call (see ImageSite):
+    // a stroke's cel trim or a canvas resize may replace the image object.
+    clazz.addGetter("activeImage") = [](AppObject&) -> JSON::Value {
+      if (!app::current_editor)
+        return JSON::Value{JSON::Special::Null};
+      auto site = app::current_editor->getSite();
+      if (!site.image())
+        return JSON::Value{JSON::Special::Null};
+      return JSON::makeNative(std::make_shared<script_api::ImageSite>(site));
+    };
 
-    addProperty("activeSprite", [this]{
-        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().sprite() : nullptr);
-    }).doc("read-only. Returns the currently active Sprite.");
+    // The `Sprite` proxy re-resolves the active document, so a fresh
+    // SpriteSite behaves identically to the `sprite` global.
+    clazz.addGetter("activeSprite") = [](AppObject&) -> JSON::Value {
+      if (!AppObject::activeDocument())
+        return JSON::Value{JSON::Special::Null};
+      return JSON::makeNative(std::make_shared<script_api::SpriteSite>());
+    };
 
-    addProperty("activeDocument", [this]{
-        return getEngine()->getScriptObject(app::current_editor ? app::current_editor->getSite().document() : nullptr);
-    }).doc("read-only. Returns the currently active Document.");
+    clazz.addGetter("activeDocument") = [](AppObject&) -> JSON::Value {
+      auto* doc = AppObject::activeDocument();
+      if (!doc)
+        return JSON::Value{JSON::Special::Null};
+      return JSON::makeNative(script_api::wrap<doc::Document>(doc));
+    };
 
-    addProperty("pixelColor", [this]{return m_pixelColor.get();})
-      .doc("read-only. Returns an object with functions for color conversion.");
+    clazz.addGetter("version") = [](AppObject&) -> JSON::Value {
+      return std::string{VERSION};
+    };
 
-    addProperty("command", [this]{return m_command.get();})
-      .doc("read-only. Returns an object with functions for running commands.");
-
-    addProperty("version", []{return script::Value{VERSION};})
-      .doc("read-only. Returns LibreSprite's current version as a string.");
-
-    addProperty("platform", []() -> std::string {
+    clazz.addGetter("platform") = [](AppObject&) -> JSON::Value {
       #ifdef EMSCRIPTEN
-      return "emscripten";
-      #elif _WIN32
-      return "windows";
-      #elif __APPLE__
-      return "macos";
-      #elif ANDROID
-      return "android";
+      return std::string{"emscripten"};
+      #elif defined(_WIN32)
+      return std::string{"windows"};
+      #elif defined(__APPLE__)
+      return std::string{"macos"};
+      #elif defined(ANDROID)
+      return std::string{"android"};
       #else
-      return "linux";
+      return std::string{"linux"};
       #endif
-    }).doc("read-only. Returns one of: emscripten, windows, macos, android, linux.");
+    };
 
-    addMethod("documentation", &AppScriptObject::documentation)
-      .doc("Prints this text.");
+    clazz.addGetter("isHeadless") = [](AppObject&) -> JSON::Value {
+      return JSON::Value{app::App::instance()->isHeadless()};
+    };
 
-    addMethod("createDialog", &AppScriptObject::createDialog)
-      .doc("Creates a dialog window");
+    clazz.addMethod("open") = [](AppObject&, const std::string& fn) -> JSON::Value {
+      if (fn.empty())
+        return JSON::Value{JSON::Special::Null};
+      auto* ctx = app::UIContext::instance();
+      auto* oldDoc = ctx->activeDocument();
+      auto* openCmd = app::CommandsModule::instance()->getCommandByName(app::CommandId::OpenFile);
+      app::Params params;
+      params.set("filename", fn.c_str());
+      ctx->executeCommand(openCmd, params);
+      auto* newDoc = ctx->activeDocument();
+      if (newDoc == oldDoc)
+        return JSON::Value{JSON::Special::Null};
+      return JSON::makeNative(script_api::wrap<doc::Document>(newDoc));
+    };
 
-    addMethod("yield", &AppScriptObject::yield)
-      .doc("Schedules a yield event on the next frame")
-      .docArg("event", "Name of the event to be raised. The default is yield.");
-
-    addMethod("open", &AppScriptObject::open)
-      .doc("Opens a document for editing");
-
-    addMethod("launch", &AppScriptObject::launch);
-
-    addMethod("redraw", &AppScriptObject::redraw);
-
-    makeGlobal("app");
-  }
-
-  void redraw() {
-    ui::Manager::getDefault()->invalidate();
-  }
-
-  void yield(const std::string& event, int cycles) {
-    auto fileName = app::AppScripting::getFileName();
-    TaskManager::instance().delayed([=, this] {
-      if (cycles > 0) {
-        yield(event, cycles - 1);
-        return;
+    // A script-controlled target is an RCE risk; it is gated on the
+    // per-script, user-approved app.launch permission (the same grant
+    // covers child_process.spawn/exec).
+    clazz.addMethod("launch") = [](AppObject&, const std::string& cmd) -> JSON::Value {
+      if (!app::ScriptPermissions::check(app::ScriptPermissions::kAppLaunch)) {
+        app::AppScripting::consolePrint(app::ScriptPermissions::denyMessage(app::ScriptPermissions::kAppLaunch));
+        return JSON::Value{false};
       }
-      app::AppScripting::raiseEvent(fileName, {event.empty() ? "yield" : event});
-    });
+      return base::launcher::open_file(cmd);
+    };
+
+    clazz.addMethod("redraw") = [](AppObject&) -> JSON::Value {
+      ui::Manager::getDefault()->invalidate();
+      return JSON::Value{JSON::Special::Undefined};
+    };
+
+    // takeScreenshot(filename) -> saves the whole UI (the display surface,
+    // which also contains the dialogs) as a PNG. Returns false when there
+    // is no display (no ui::Manager). Headless runs capture the virtual
+    // surface of the dummy video driver.
+    clazz.addMethod("takeScreenshot") = [](AppObject&, const std::string& fileName) -> JSON::Value {
+      auto* mgr = ui::Manager::getDefault();
+      if (!mgr || !mgr->getDisplay())
+        return false;
+      she::Surface* src = mgr->getDisplay()->getSurface();
+      if (!src || src->width() <= 0 || src->height() <= 0)
+        return false;
+
+      auto surface = std::shared_ptr<she::Surface>(
+        she::instance()->createRgbaSurface(src->width(), src->height()),
+        [](she::Surface* s) { s->dispose(); });
+      if (!surface)
+        return false;
+
+      src->blitTo(surface.get(), 0, 0, 0, 0, src->width(), src->height());
+
+      auto png = she::instance()->encodeSurfaceAsPNG(surface.get());
+      if (png.empty())
+        throw std::runtime_error{"Failed to encode screenshot as PNG"};
+
+      std::ofstream file(fileName, std::ios::binary | std::ios::trunc);
+      if (!file.good())
+        throw std::runtime_error{"Unable to open file for writing: " + fileName};
+      file.write(reinterpret_cast<const char*>(png.data()),
+                 static_cast<std::streamsize>(png.size()));
+      if (!file.good())
+        throw std::runtime_error{"Failed while writing file: " + fileName};
+      return true;
+    };
+
+    // createDialog() -> a new Dialog object. The dialog is built (grid layout
+    // + openWindow) after the current eval finishes (see DialogObject).
+    // Requires a ui::Manager: headless --batch/--shell runs create one on
+    // the dummy video driver (the dialog is painted into the virtual
+    // surface), so it returns null only when no manager exists at all.
+    clazz.addMethod("createDialog") = [](AppObject&, const std::string& id) -> JSON::Value {
+      if (!ui::Manager::getDefault())
+        return JSON::Value{JSON::Special::Null};
+
+      auto dobj = std::make_shared<DialogObject>();
+      if (!id.empty())
+          dobj->dialog()->setId(id.c_str());
+
+      return JSON::makeNative(dobj);
+    };
+
+    // listFonts() -> the .ttf/.otf files in the system font
+    // directories (the same set the GUI's font picker lists), as
+    // absolute paths. Empty array when none are found. Pass a path
+    // to tools.text's font option.
+    clazz.addMethod("listFonts") = [](AppObject&) -> JSON::Value {
+      JSON::Value arr;
+      auto& a = arr.array();
+      for (const auto& path : app::list_system_fonts())
+        a.push_back(JSON::Value{path});
+      return arr;
+    };
+
+    // app.critical support (the JS glue is in the boot script below):
+    // __criticalEnter() increments the calling script's env critical
+    // counter and returns the env key to pass to __criticalLeave() (""
+    // when no script token is active: a no-op). While the counter is > 0
+    // a re-run of the script is refused (the env is not torn down), so an
+    // async continuation of the script cannot outlive its env.
+    addFunction("__criticalEnter") = []() -> JSON::Value {
+      return app::AppScripting::enterCritical();
+    };
+
+    addFunction("__criticalLeave") = [](const std::string& file) -> JSON::Value {
+      app::AppScripting::leaveCritical(file);
+      return JSON::Value{JSON::Special::Undefined};
+    };
+
+    // app.transaction support (the JS glue is in the boot script below):
+    // __transactionEnter() opens the calling script's transaction scope
+    // (or joins the outer one when nested) and returns the env key to
+    // pass to __transactionLeave() ("" when no script env is active: a
+    // no-op). While the scope is open, the script's tools.* calls join
+    // its transaction, so the group commits as one undo step. The scope
+    // also holds the env's critical counter, so a re-run of the script
+    // is refused while it is open (the env is not torn down), as with
+    // app.critical.
+    addFunction("__transactionEnter") = []() -> JSON::Value {
+      return app::AppScripting::enterTransaction();
+    };
+
+    addFunction("__transactionLeave") = [](const std::string& file, bool commit) -> JSON::Value {
+      app::AppScripting::leaveTransaction(file, commit);
+      return JSON::Value{JSON::Special::Undefined};
+    };
   }
 
-  ScriptObject* createDialog(const std::string& id) {
-    auto dialog = getEngine()->create<ui::Dialog>();
-    if (!dialog)
-      return nullptr;
-
-    if (!id.empty())
-      dialog->set("id", id);
-
-    return dialog;
-  }
-
-  void documentation() {
-    std::stringstream out;
-    if (!this->get("activeDocument")) {
-      return;
-    }
-
-    auto& internalRegistry = script::InternalScriptObject::getRegistry();
-    auto originalDefault = internalRegistry[""];
-    script::InternalScriptObject::setDefault("DudScriptObject");
-
-    for (auto& entry : script::ScriptObject::getRegistry()) {
-      if (entry.first.empty())
-        continue;
-      inject<ScriptObject> so{entry.first};
-      auto internal = dynamic_cast<DudScriptObject*>(so->getInternalScriptObject());
-      if (!internal)
-        continue;
-
-      out << "# ";
-      if (!internal->globalName.empty())
-        out << "global " << internal->globalName << " ";
-
-      std::string className = entry.first;
-      auto dot = className.rfind("ScriptObject");
-      if (dot != std::string::npos)
-        className.resize(dot);
-
-      out << "[class " << className << "]" << std::endl;
-
-      if (internal->properties.empty()) {
-        out << "## No Properties." << std::endl;
-      } else {
-        out << "## Properties: " << std::endl;
-        for (auto& propEntry : internal->properties) {
-          auto& prop = propEntry.second;
-          out << "   - `" << propEntry.first << "`: " << prop.docStr << std::endl;
+  std::string init(const std::string&, JSON::Value&) override {
+    return R"(
+      globalThis.app = new App();
+      // Lazily expose the pixelColor / command globals as sub-objects (the
+      // same instances as the top-level globals). Resolved on access so the
+      // order in which the other extensions' boot scripts run doesn't matter.
+      Object.defineProperty(app, "pixelColor", {
+        configurable: true, get: function() { return globalThis.pixelColor; }
+      });
+      Object.defineProperty(app, "command", {
+        configurable: true, get: function() { return globalThis.command; }
+      });
+      Object.defineProperty(app, "tools", {
+        configurable: true, get: function() { return globalThis.tools; }
+      });
+      // Yield to the event loop: a Promise resolved on the next tick (the
+      // timer extension fires it). Scripts use `await app.yield()`.
+      app.yield = function() {
+        return new Promise(function(resolve) { setTimeout(resolve, 0); });
+      };
+      // Run fn (sync or async) with the env protected from teardown: while
+      // fn runs - including any async work it awaits - a re-run of the
+      // script is refused and the env is not torn down, so an async
+      // continuation cannot outlive its env. Returns fn's result (a
+      // Promise when fn is async), so callers can `await app.critical(...)`.
+      app.critical = function(fn) {
+        if (typeof fn !== "function")
+          throw new TypeError("app.critical: fn must be a function");
+        const key = __criticalEnter();
+        let result;
+        try {
+          result = fn();
+        } catch (err) {
+          __criticalLeave(key);
+          throw err;
         }
-      }
-
-      out << std::endl;
-
-      if (internal->functions.empty()) {
-        out << "## No Methods." << std::endl;
-      } else {
-        out << "## Methods: " << std::endl;
-        for (auto& funcEntry : internal->functions) {
-          auto& func = funcEntry.second;
-          out << "   - `" << funcEntry.first << "(";
-          bool first = true;
-          for (auto& arg : func.docArgs) {
-            if (!first) out << ", ";
-            first = false;
-            out << arg.name;
-          }
-          out << ")`: " << std::endl;
-
-          for (auto& arg : func.docArgs) {
-            out << "     - " << arg.name << ": " << arg.docStr << std::endl;
-          }
-
-          out << "      returns: " << func.docReturnsStr << std::endl;
-
-          if (!func.docStr.empty())
-            out << "      " << func.docStr << std::endl;
-
-          out << std::endl;
+        // Async fn: hold the counter across the async window, release it on
+        // settle (resolve or reject - a rejecting fn must not leave the
+        // counter set). The value / rejection is passed through.
+        if (key && result && typeof result.then === "function")
+          return result.then(
+            v => { __criticalLeave(key); return v; },
+            e => { __criticalLeave(key); throw e; }
+          );
+        // Sync fn: the counter is only held during the call.
+        __criticalLeave(key);
+        return result;
+      };
+      // Run fn (sync or async) with a shared transaction: all tools.*
+      // calls inside fn join the transaction and commit as one undo
+      // step when fn settles (a throwing fn rolls the whole group back,
+      // the document is exactly as before the call). Returns fn's
+      // result (a Promise when fn is async), so callers can
+      // `await app.transaction(...)`.
+      app.transaction = function(fn) {
+        if (typeof fn !== "function")
+          throw new TypeError("app.transaction: fn must be a function");
+        const key = __transactionEnter();
+        let result;
+        try {
+          result = fn();
+        } catch (err) {
+          __transactionLeave(key, false); // abort: roll back the group
+          throw err;
         }
-      }
-      out << std::endl << std::endl;
-    }
-
-    std::cout << out.str() << std::endl;
-
-    // inject<script::EngineDelegate>{}->onConsolePrint(out.str().c_str());
-
-    internalRegistry[""] = originalDefault;
+        // Async fn: hold the scope across the async window, settle it
+        // on resolve (commit) or reject (rollback). The value /
+        // rejection is passed through.
+        if (key && result && typeof result.then === "function")
+          return result.then(
+            v => { __transactionLeave(key, true); return v; },
+            e => { __transactionLeave(key, false); throw e; }
+          );
+        // Sync fn: commit on success.
+        __transactionLeave(key, true);
+        return result;
+      };
+    )";
   }
-
-  bool updateSite() {
-    app::Document* doc = UIContext::instance()->activeDocument();
-    app::DocumentView* m_view = UIContext::instance()->getFirstDocumentView(doc);
-    if (!m_view)
-      return false;
-    m_view->getSite(&m_site);
-    return true;
-  }
-
-  script::Value open(const std::string& fn) {
-    if (fn.empty())
-      return {};
-    auto oldDoc = static_cast<doc::Document*>(UIContext::instance()->activeDocument());
-    Command* openCommand = CommandsModule::instance()->getCommandByName(CommandId::OpenFile);
-    Params params;
-    params.set("filename", fn.c_str());
-    UIContext::instance()->executeCommand(openCommand, params);
-    auto newDoc = static_cast<doc::Document*>(UIContext::instance()->activeDocument());
-    if (newDoc == oldDoc)
-      return {};
-    return getEngine()->getScriptObject(newDoc);
-  }
-
-  bool launch(const std::string& cmd) {
-    return base::launcher::open_file(cmd);
-  }
-
-  void App_exit() {
-    Command* exitCommand = CommandsModule::instance()->getCommandByName(CommandId::Exit);
-    UIContext::instance()->executeCommand(exitCommand);
-  }
-
-  std::unordered_map<ui::Widget*, ScriptObject*> m_dialogScriptObjects;
-  doc::Site m_site;
 };
 
-static script::ScriptObject::Regular<AppScriptObject> reg("AppScriptObject", {"global"});
-
-}
+static di::provide<Extension, AppExtension> appExt{"app"};

@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/cmd/set_mask.h"
 #include "app/commands/command.h"
 #include "app/commands/params.h"
@@ -34,6 +35,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 };
@@ -51,6 +53,13 @@ void LoadMaskCommand::onLoadParams(const Params& params)
   m_filename = params.get("filename");
 }
 
+std::vector<CommandParamInfo> LoadMaskCommand::onDescribeParams() const
+{
+  return {
+    {"filename", ".msk mask file to load. Empty opens the file dialog.", false, ""},
+  };
+}
+
 bool LoadMaskCommand::onEnabled(Context* context)
 {
   return context->checkFlags(ContextFlags::ActiveDocumentIsWritable);
@@ -62,7 +71,8 @@ void LoadMaskCommand::onExecute(Context* context)
 
   std::string filename = m_filename;
 
-  if (context->isUIAvailable()) {
+  // Interactive only: the file selector would block headless.
+  if (App::instance()->isGui()) {
     filename = app::show_file_selector(
       "Load .msk File", filename, "msk",
       FileSelectorType::Open);

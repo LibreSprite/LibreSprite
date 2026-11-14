@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -285,11 +285,10 @@ bool StandbyState::onMouseDown(Editor* editor, MouseMessage* msg)
     for (auto& handle : handles) {
       if (handle.rect().contains(msg->position())) {
         auto& symmetry = Preferences::instance().document(editor->document()).symmetry;
-        const auto& axis = handle.axis();
-        auto& axisPos = axis == Axis::HORIZONTAL ? symmetry.xAxis : symmetry.yAxis;
 
         editor->setState(
-          EditorStatePtr(new MovingSymmetryState(editor, msg, axis, axisPos)));
+          EditorStatePtr(new MovingSymmetryState(editor, msg, handle.axis(),
+                                                  symmetry.xAxis, symmetry.yAxis)));
         return true;
       }
     }
@@ -675,10 +674,24 @@ bool StandbyState::Decorator::onSetCursor(tools::Ink* ink, Editor* editor, const
   if (getSymmetryHandles(editor, handles)) {
     for (auto& handle : handles) {
       if (handle.rect().contains(mouseScreenPos)) {
-        if (handle.axis() == Axis::HORIZONTAL)
-          editor->showMouseCursor(kSizeWECursor);
-        else
-          editor->showMouseCursor(kSizeNSCursor);
+        switch (handle.axis()) {
+          case Axis::HORIZONTAL:
+            editor->showMouseCursor(kSizeWECursor);
+            break;
+          case Axis::VERTICAL:
+            editor->showMouseCursor(kSizeNSCursor);
+            break;
+          case Axis::DIAGONAL_45:
+            editor->showMouseCursor(kSizeNECursor);
+            break;
+          case Axis::DIAGONAL_135:
+            editor->showMouseCursor(kSizeNWCursor);
+            break;
+          case Axis::ROTATIONAL_180:
+          case Axis::ROTATIONAL_90:
+            editor->showMouseCursor(kMoveCursor);
+            break;
+        }
         return true;
       }
     }
@@ -745,6 +758,10 @@ bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, SymmetryHandles
 
     gfx::Rect spriteBounds = editor->sprite()->bounds();
     gfx::Rect editorViewport = View::getView(editor)->viewportBounds();
+    // Diagonal guide lines must never be clipped past the canvas edges
+    // (unlike the viewport, which may extend well beyond the sprite).
+    gfx::Rect diagonalClipRect =
+      editor->editorToScreen(spriteBounds).createIntersection(editorViewport);
     skin::SkinTheme* theme = static_cast<skin::SkinTheme*>(CurrentTheme::get());
     she::Surface* part = theme->parts.transformationHandle()->bitmap(0);
     gfx::Point pt1, pt2;
@@ -781,6 +798,43 @@ bool StandbyState::Decorator::getSymmetryHandles(Editor* editor, SymmetryHandles
         SymmetryHandle(gfx::Rect(pt1.x, pt1.y, part->width(), part->height()), Axis::VERTICAL));
       handles.push_back(
         SymmetryHandle(gfx::Rect(pt2.x, pt2.y, part->width(), part->height()), Axis::VERTICAL));
+    }
+
+    // Diagonal and rotational axes share the same draggable origin point
+    // (xAxis, yAxis), so their guide lines always cross there.
+    gfx::Point origin = editor->editorToScreen(
+      gfx::Point(spriteBounds.x + symmetry.xAxis(), spriteBounds.y + symmetry.yAxis()));
+
+    if (mode & (int)app::gen::SymmetryMode::DIAGONAL_45) {
+      if (clip_diagonal_symmetry_line(origin, -1, diagonalClipRect, pt1, pt2)) {
+        handles.push_back(
+          SymmetryHandle(gfx::Rect(pt1.x-part->width()/2, pt1.y-part->height()/2, part->width(), part->height()), Axis::DIAGONAL_45));
+        handles.push_back(
+          SymmetryHandle(gfx::Rect(pt2.x-part->width()/2, pt2.y-part->height()/2, part->width(), part->height()), Axis::DIAGONAL_45));
+      }
+    }
+
+    if (mode & (int)app::gen::SymmetryMode::DIAGONAL_135) {
+      if (clip_diagonal_symmetry_line(origin, +1, diagonalClipRect, pt1, pt2)) {
+        handles.push_back(
+          SymmetryHandle(gfx::Rect(pt1.x-part->width()/2, pt1.y-part->height()/2, part->width(), part->height()), Axis::DIAGONAL_135));
+        handles.push_back(
+          SymmetryHandle(gfx::Rect(pt2.x-part->width()/2, pt2.y-part->height()/2, part->width(), part->height()), Axis::DIAGONAL_135));
+      }
+    }
+
+    if (mode & (int)app::gen::SymmetryMode::ROTATIONAL_180) {
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(origin.x-part->width()/2, origin.y-part->height()/2, part->width(), part->height()), Axis::ROTATIONAL_180));
+    }
+
+    // Rotational-90's four quadrants all pivot around a single shared origin
+    // point (unlike rotational-180's crosshair marker, both share the same
+    // single-handle idea), so drag it as one handle rather than as separate
+    // horizontal/vertical line handles.
+    if (mode & (int)app::gen::SymmetryMode::ROTATIONAL_90) {
+      handles.push_back(
+        SymmetryHandle(gfx::Rect(origin.x-part->width()/2, origin.y-part->height()/2, part->width(), part->height()), Axis::ROTATIONAL_90));
     }
 
     return true;

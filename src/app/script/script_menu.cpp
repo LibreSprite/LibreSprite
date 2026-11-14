@@ -1,5 +1,5 @@
 // LibreSprite
-// Copyright (C) 2021 LibreSprite contributors
+// Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -20,8 +20,6 @@
 #include "base/path.h"
 #include "base/fs.h"
 #include "base/string.h"
-#include "script/script_object.h"
-#include "script/engine.h"
 
 namespace app {
 using namespace ui;

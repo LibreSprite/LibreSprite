@@ -43,7 +43,7 @@ option(ENABLE_TESTS       "Enable the unit tests" off)
 option(FULLSCREEN_PLATFORM "Enable fullscreen by default" off)
 
 option(USE_SDL2_BACKEND "Use SDL2 backend" on)
-option(USE_V8_SANDBOX "Use V8 Sandbox" off)
+option(USE_SDL3_BACKEND "Use SDL3 backend" off)
 
 ######################################################################
 # Profile build type
@@ -96,16 +96,27 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_PROFILE "${CMAKE_BINARY_DIR}/bin")
 set(EASYTAB_DIR         ${CMAKE_SOURCE_DIR}/third_party/EasyTab)
 set(LOADPNG_DIR         ${CMAKE_SOURCE_DIR}/third_party/loadpng)
 set(SIMPLEINI_DIR       ${CMAKE_SOURCE_DIR}/third_party/simpleini)
-set(DUKTAPE_DIR         ${CMAKE_SOURCE_DIR}/third_party/duktape)
-set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs)
+set(QUICKJS_DIR         ${CMAKE_SOURCE_DIR}/third_party/quickjs-amalgam)
 set(MODP_B64_DIR        ${CMAKE_SOURCE_DIR}/third_party/modp_b64)
 set(QOI_DIR             ${CMAKE_SOURCE_DIR}/third_party/qoi)
+set(DELTA_DIR           ${CMAKE_SOURCE_DIR}/third_party/delta)
 
 # Search in the "cmake" directory for additional CMake modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Put libraries into "lib".
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
+
+# Release builds from a git tag: the version is supplied by the workflow
+# (the tag is the single source of truth).
+option(RELEASE_TAG "Building a release from a git tag" OFF)
+if(RELEASE_TAG)
+  if(NOT DEFINED RELEASE_VERSION)
+    message(FATAL_ERROR "RELEASE_VERSION must be set when RELEASE_TAG is enabled")
+  endif()
+  add_definitions(-DRELEASE_TAG)
+  add_definitions(-DRELEASE_VERSION="${RELEASE_VERSION}")
+endif()
 
 ######################################################################
 # Common definitions to compile all sources (app code and third party)
@@ -200,56 +211,12 @@ include_directories(${GIF_INCLUDE_DIRS})
 find_package(JPEG REQUIRED)
 include_directories(${JPEG_INCLUDE_DIRS})
 
-# v8
-find_package(V8 QUIET)
-if(V8_FOUND)
-  include_directories(${V8_INCLUDE_DIR})
-  add_definitions(-DSCRIPT_ENGINE_V8=1)
-
-  include(CheckCXXSourceRuns)
-  set(CMAKE_REQUIRED_LIBRARIES ${V8_LIBRARY} ${V8_LIBBASE_LIBRARY} ${V8_LIBPLATFORM_LIBRARY})
-  set(CMAKE_REQUIRED_INCLUDES ${V8_INCLUDE_DIR})
-  message(STATUS ${V8_POINTER_COMPRESSION_OUTPUT})
-  # Since V8_COMPRESS_POINTERS is not defined here, the resulting program would
-  # die if the system v8 library had enabled pointer compression.
-  check_cxx_source_runs("
-    #include <v8.h>
-    #include <libplatform/libplatform.h>
-    int main(void) {
-      v8::V8::InitializeICU();
-      static std::unique_ptr<v8::Platform> m_platform;
-      m_platform = v8::platform::NewDefaultPlatform();
-      v8::V8::InitializePlatform(m_platform.get());
-      v8::V8::Initialize();
-      return 0;
-    }
-	" DISABLE_POINTER_COMPRESSION)
-
-  # pointers compression doesn't work on 32bit machines
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    if(DISABLE_POINTER_COMPRESSION EQUAL 1)
-      message(STATUS "Disabling V8 pointer compression")
-    else()
-      message(STATUS "Enabling V8 pointer compression")
-      add_definitions(-DV8_COMPRESS_POINTERS)
-    endif()
-  endif()
-
-  if (USE_V8_SANDBOX)
-    add_definitions(-DV8_ENABLE_SANDBOX)
-  endif()
-
-  message(STATUS "Optional V8 library found. Enabling V8 scripting engine.")
-else()
-  message(STATUS "Optional V8 library NOT found. Disabling V8 scripting engine.")
-endif()
-
-
-find_package(CURL REQUIRED)
-include_directories(${CURL_INCLUDE_DIRS})
 endif()
 # simpleini
 include_directories(${SIMPLEINI_DIR})
+
+# delta
+include_directories(${DELTA_DIR})
 
 ######################################################################
 # Platform specific stuff
@@ -264,6 +231,16 @@ if(USE_SDL2_BACKEND)
   include_directories(${SDL2_INCLUDE_DIRS})
   find_package(SDL2_IMAGE REQUIRED)
   include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
+endif()
+
+# SDL3 backend
+if(USE_SDL3_BACKEND)
+  add_definitions(-DUSE_SDL3_BACKEND)
+
+  find_package(SDL3 REQUIRED CONFIG REQUIRED)
+  include_directories(${SDL3_INCLUDE_DIRS})
+  find_package(SDL3_image REQUIRED)
+  include_directories(${SDL3_IMAGE_INCLUDE_DIRS})
 endif()
 
 # -- Unix --
@@ -323,8 +300,9 @@ if(WIN32)
     kernel32 user32 gdi32 comdlg32 ole32 winmm
     shlwapi psapi wininet comctl32 dbghelp)
 
-  # Windows XP is the minimum supported platform.
-  add_definitions(-D_WIN32_WINNT=0x0501 -DWINVER=0x0501)
+  # Windows 10 is the minimum supported platform. cpp-httplib (the
+  # script fetch API) hard-errors below _WIN32_WINNT 0x0A00.
+  add_definitions(-D_WIN32_WINNT=0x0A00 -DWINVER=0x0A00)
 
   # We need Unicode support
   add_definitions(-DUNICODE -D_UNICODE)

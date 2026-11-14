@@ -36,6 +36,11 @@ void Command::loadParams(const Params& params)
   onLoadParams(params);
 }
 
+std::vector<CommandParamInfo> Command::describeParams() const
+{
+  return onDescribeParams();
+}
+
 bool Command::isEnabled(Context* context)
 {
   try {
@@ -69,6 +74,14 @@ void Command::execute(Context* context)
 void Command::onLoadParams(const Params& params)
 {
   // do nothing
+}
+
+/**
+ * Documents the parameters read in onLoadParams.
+ */
+std::vector<CommandParamInfo> Command::onDescribeParams() const
+{
+  return {};
 }
 
 /**

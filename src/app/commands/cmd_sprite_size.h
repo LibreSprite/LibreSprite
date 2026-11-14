@@ -31,6 +31,7 @@ namespace app {
 
   protected:
     virtual void onLoadParams(const Params& params) override;
+    virtual std::vector<CommandParamInfo> onDescribeParams() const override;
     virtual bool onEnabled(Context* context) override;
     virtual void onExecute(Context* context) override;
 

@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2016  David Capello
+// Aseprite    | Copyright (C) 2001-2016  David Capello
+// LibreSprite | Copyright (C) 2026       LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -106,6 +106,7 @@ namespace app {
     class DropPixelsField;
     class AutoSelectLayerField;
     class SymmetryField;
+    class SymmetryOptionsField;
 
     BrushTypeField* m_brushType;
     BrushAngleField* m_brushAngle;
@@ -136,6 +137,7 @@ namespace app {
     doc::BrushRef m_activeBrush;
     ui::Label* m_selectBoxHelp;
     SymmetryField* m_symmetry;
+    SymmetryOptionsField* m_symmetryOptions;
     base::ScopedConnection m_sizeConn;
     base::ScopedConnection m_angleConn;
     base::ScopedConnection m_opacityConn;

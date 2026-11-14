@@ -1,5 +1,5 @@
-// Aseprite    | Copyright (C) 2001-2016  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2021-2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/context.h"
 #include "app/document.h"
 #include "app/file/file.h"
@@ -191,6 +192,12 @@ bool AseFormat::onLoad(FileOp* fop)
     return false;
   }
 
+  if (header.width == 0 || header.height == 0 ||
+      header.width > kMaxFileImageDimension || header.height > kMaxFileImageDimension) {
+    fop->setError("Invalid ASE file: bad width/height\n");
+    return false;
+  }
+
   // Create the new sprite
   std::unique_ptr<Sprite> sprite(new Sprite(header.depth == 32 ? IMAGE_RGB:
       header.depth == 16 ? IMAGE_GRAYSCALE: IMAGE_INDEXED,
@@ -333,6 +340,8 @@ bool AseFormat::onLoad(FileOp* fop)
   }
 
   fop->createDocument(sprite.get());
+  // cppcheck-suppress ignoredReturnValue ; releasing ownership is the
+  // point, sprite is now owned by the Document created above.
   sprite.release();
 
   if (ferror(f)) {
@@ -348,23 +357,18 @@ bool AseFormat::onPostLoad(FileOp* fop)
 {
   LayerFolder* folder = fop->document()->sprite()->folder();
 
-  // Forward Compatibility: In 1.1 we convert a file with layer groups
-  // (saved with 1.2) as top level layers
-  std::string ver = VERSION;
-  bool flat = (ver[0] == '1' &&
-               ver[1] == '.' &&
-               ver[2] == '1');
-  if (flat && ase_has_groups(folder)) {
+  // Flatten any group layers into top-level layers so the rest of the app
+  // (which assumes a flat layer list, e.g. the timeline) keeps working.
+  if (ase_has_groups(folder)) {
     if (fop->context() &&
-        fop->context()->isUIAvailable() &&
+        App::instance()->isGui() &&
         ui::Alert::show("Warning"
-                        "<<The selected file \"%s\" has layer groups."
-                        "<<Do you want to open it with \"%s %s\" anyway?"
-                        "<<"
-                        "<<Note: Layers inside groups will be converted to top level layers."
-                        "||&Yes||&No",
+                        "<<The file \"%s\" contains layer groups, which %s does not support."
+                        "<<Open it anyway? Layers inside groups will become top-level layers"
+                        "<<named \"Group-Layer\", and the groups will be lost if you save the file."
+                        "||&Open||&Cancel",
                         base::get_file_name(fop->filename()).c_str(),
-                        PACKAGE, ver.c_str()) != 1) {
+                        PACKAGE) != 1) {
       return false;
     }
     ase_ungroup_all(folder);
@@ -740,8 +744,22 @@ static std::shared_ptr<Palette> ase_file_read_palette_chunk(FILE* f, const Palet
   int to = fgetl(f);
   ase_file_read_padding(f, 8);
 
+  // newSize/from/to are raw 32-bit fields with no format-level upper bound.
+  // Palette::setEntry() below is bounds-checked so this loop can't corrupt
+  // memory either way, but an oversized newSize is still a multi-GB
+  // resize() attempt, and an oversized `to` is a CPU-exhaustion DoS
+  // (reading past real EOF for up to ~2 billion iterations). Cap both to a
+  // sane ceiling.
+  constexpr int kMaxPaletteSize = 65536;
+  if (newSize < 0 || newSize > kMaxPaletteSize)
+    newSize = 0;
   if (newSize > 0)
     pal->resize(newSize);
+
+  if (from < 0)
+    from = 0;
+  if (to > kMaxPaletteSize - 1)
+    to = kMaxPaletteSize - 1;
 
   for (int c=from; c<=to; ++c) {
     int flags = fgetw(f);
@@ -842,12 +860,26 @@ static Layer* ase_file_read_layer_chunk(FILE* f, ASE_Header* header, Sprite* spr
     layer->setName(name.c_str());
 
     // Child level
+    LayerFolder* parent = NULL;
     if (child_level == *current_level)
-      (*previous_layer)->parent()->addLayer(layer);
-    else if (child_level > *current_level)
-      static_cast<LayerFolder*>(*previous_layer)->addLayer(layer);
-    else if (child_level < *current_level)
-      (*previous_layer)->parent()->parent()->addLayer(layer);
+      parent = (*previous_layer)->parent();
+    else if (child_level > *current_level && (*previous_layer)->isFolder())
+      parent = static_cast<LayerFolder*>(*previous_layer);
+    else if (child_level < *current_level) {
+      // Ascend as many levels as the child_level dropped (a drop can
+      // skip several nested groups at once, not just one level).
+      parent = (*previous_layer)->parent();
+      for (int lvl = *current_level; lvl > child_level && parent; --lvl)
+        parent = parent->parent();
+    }
+
+    if (!parent) {
+      // Corrupt/unexpected child level sequence: fall back to the root
+      // folder instead of crashing on a NULL/invalid parent.
+      parent = sprite->folder();
+    }
+
+    parent->addLayer(layer);
 
     *previous_layer = layer;
     *current_level = child_level;
@@ -1048,6 +1080,15 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
   while (true) {
     size_t input_bytes;
 
+    // chunk_size (hence chunk_end) is attacker-controlled and can
+    // understate the bytes the cel header itself already consumed - if
+    // ftell() has already passed chunk_end, `chunk_end - ftell(f)` below
+    // would wrap around (unsigned - larger value) into a huge input_bytes,
+    // reading the rest of the file into a fixed 4096-byte buffer. Bail out
+    // first instead.
+    if (static_cast<long>(chunk_end) <= ftell(f))
+      break;
+
     if (ftell(f)+compressed.size() > chunk_end) {
       input_bytes = chunk_end - ftell(f); // Remaining bytes
       ASSERT(input_bytes < compressed.size());
@@ -1059,11 +1100,17 @@ static void read_compressed_image(FILE* f, Image* image, size_t chunk_end, FileO
       input_bytes = compressed.size();
 
     size_t bytes_read = fread(&compressed[0], 1, input_bytes, f);
-    zstream.next_in = (Bytef*)&compressed[0];
+    // A chunk_size that overstates the bytes actually left in the file
+    // (attacker-controlled) would otherwise spin forever here: once ftell()
+    // stops advancing at real EOF, input_bytes never reaches 0 even though
+    // fread() keeps returning 0 bytes every iteration. Bail out instead.
+    if (bytes_read == 0)
+      break;
+    zstream.next_in = reinterpret_cast<Bytef*>(&compressed[0]);
     zstream.avail_in = bytes_read;
 
     do {
-      zstream.next_out = (Bytef*)&scanline[0];
+      zstream.next_out = reinterpret_cast<Bytef*>(&scanline[0]);
       zstream.avail_out = scanline.size();
 
       err = inflate(&zstream, Z_NO_FLUSH);
@@ -1123,12 +1170,12 @@ static void write_compressed_image(FILE* f, const Image* image)
 
     pixel_io.write_scanline(address, image->width(), &scanline[0]);
 
-    zstream.next_in = (Bytef*)&scanline[0];
+    zstream.next_in = reinterpret_cast<Bytef*>(&scanline[0]);
     zstream.avail_in = scanline.size();
     int flush = (y == image->height()-1 ? Z_FINISH: Z_NO_FLUSH);
 
     do {
-      zstream.next_out = (Bytef*)&compressed[0];
+      zstream.next_out = reinterpret_cast<Bytef*>(&compressed[0]);
       zstream.avail_out = compressed.size();
 
       // Compress
@@ -1190,7 +1237,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int w = fgetw(f);
       int h = fgetw(f);
 
-      if (w > 0 && h > 0) {
+      if (w > 0 && h > 0 && w <= kMaxFileImageDimension && h <= kMaxFileImageDimension) {
         ImageRef image(Image::create(pixelFormat, w, h));
 
         // Read pixel data
@@ -1245,7 +1292,7 @@ static Cel* ase_file_read_cel_chunk(FILE* f, Sprite* sprite, frame_t frame,
       int w = fgetw(f);
       int h = fgetw(f);
 
-      if (w > 0 && h > 0) {
+      if (w > 0 && h > 0 && w <= kMaxFileImageDimension && h <= kMaxFileImageDimension) {
         ImageRef image(Image::create(pixelFormat, w, h));
 
         // Try to read pixel data
@@ -1387,6 +1434,9 @@ static Mask* ase_file_read_mask_chunk(FILE* f)
 
   ase_file_read_padding(f, 8);
   std::string name = ase_file_read_string(f);
+
+  if (w > kMaxFileImageDimension || h > kMaxFileImageDimension)
+    return nullptr;
 
   mask = new Mask();
   mask->setName(name.c_str());
@@ -1542,19 +1592,21 @@ static bool ase_has_groups(LayerFolder* folder)
   return false;
 }
 
-static void ase_ungroup_all(LayerFolder* folder)
+// Recursively walks "folder" (in stack order) collecting every image
+// layer (renamed to reflect the group chain it was found in) and every
+// group folder found underneath it, both in depth-first order.
+static void ase_collect_flattened_layers(LayerFolder* folder, LayerFolder* root,
+                                          LayerList& outImageLayers, LayerList& outFolders)
 {
-  LayerFolder* root = folder->sprite()->folder();
-  LayerList list = folder->getLayersList();
-
-  for (Layer* child : list) {
+  for (Layer* child : folder->getLayersList()) {
     if (child->isFolder()) {
-      ase_ungroup_all(static_cast<LayerFolder*>(child));
-      folder->removeLayer(child);
+      ase_collect_flattened_layers(static_cast<LayerFolder*>(child), root,
+                                    outImageLayers, outFolders);
+      outFolders.push_back(child);
     }
-    else if (folder != root) {
-      // Create a new name adding all group layer names
-      {
+    else {
+      if (folder != root) {
+        // Create a new name adding all group layer names
         std::string name;
         for (Layer* layer=child; layer!=root; layer=layer->parent()) {
           if (!name.empty())
@@ -1563,16 +1615,40 @@ static void ase_ungroup_all(LayerFolder* folder)
         }
         child->setName(name);
       }
-
-      folder->removeLayer(child);
-      root->addLayer(child);
+      outImageLayers.push_back(child);
     }
   }
+}
 
-  if (folder != root) {
-    ASSERT(folder->getLayersCount() == 0);
+// Moves every image layer nested inside a group directly under "root",
+// preserving their original relative stacking order, and destroys the
+// (now-empty) groups. Unlike a naive "reparent as we go" approach, this
+// avoids moving layers to the top of the stack, which would silently
+// reorder the visible composition of files with more than one group.
+static void ase_ungroup_all(LayerFolder* root)
+{
+  LayerList imageLayers, folders;
+  ase_collect_flattened_layers(root, root, imageLayers, folders);
+
+  // Detach every collected layer/folder from its current parent first,
+  // so none of the folders we are about to delete still owns a layer
+  // (or nested folder) we need to keep.
+  for (Layer* layer : imageLayers)
+    layer->parent()->removeLayer(layer);
+  for (Layer* folder : folders)
+    folder->parent()->removeLayer(folder);
+
+  for (Layer* folder : folders) {
+    ASSERT(static_cast<LayerFolder*>(folder)->getLayersCount() == 0);
     delete folder;
   }
+
+  // Re-add the image layers to the root, in their original relative
+  // stacking order.
+  for (Layer* layer : imageLayers)
+    root->addLayer(layer);
+
+  ASSERT(!ase_has_groups(root));
 }
 
 } // namespace app

@@ -1,13 +1,13 @@
 // Aseprite
 // Copyright (C) 2015-2016 by David Capello
 
-var col = app.pixelColor
-var img = app.activeImage
+const col = app.pixelColor
+const img = app.activeImage
 
-for (y=0; y<img.height; ++y) {
-  for (x=0; x<img.width; ++x) {
-    var c = img.getPixel(x, y)
-    var v = (col.rgbaR(c)+
+for (let y=0; y<img.height; ++y) {
+  for (let x=0; x<img.width; ++x) {
+    const c = img.getPixel(x, y)
+    const v = (col.rgbaR(c)+
              col.rgbaG(c)+
              col.rgbaB(c))/3
 

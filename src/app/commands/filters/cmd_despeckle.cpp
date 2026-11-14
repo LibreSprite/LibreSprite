@@ -11,6 +11,7 @@
 
 #include "app/app.h"
 #include "app/commands/command.h"
+#include "app/commands/params.h"
 #include "app/commands/filters/filter_manager_impl.h"
 #include "app/commands/filters/filter_window.h"
 #include "app/context.h"
@@ -18,6 +19,7 @@
 #include "app/find_widget.h"
 #include "app/ini_file.h"
 #include "app/load_widget.h"
+#include "app/modules/gui.h"
 #include "app/pref/preferences.h"
 #include "base/bind.h"
 #include "doc/mask.h"
@@ -87,15 +89,43 @@ public:
   Command* clone() const override { return new DespeckleCommand(*this); }
 
 protected:
+  void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
+
+private:
+  bool m_useUI;
+  int m_width;
+  int m_height;
 };
 
 DespeckleCommand::DespeckleCommand()
   : Command("Despeckle",
             "Despeckle",
             CmdRecordableFlag)
+  , m_useUI(true)
+  , m_width(0)
+  , m_height(0)
 {
+}
+
+void DespeckleCommand::onLoadParams(const Params& params)
+{
+  std::string useUI = params.get("use-ui");
+  m_useUI = (useUI.empty() || (useUI == "true"));
+
+  m_width = (params.has_param("width") ? params.get_as<int>("width") : 0);
+  m_height = (params.has_param("height") ? params.get_as<int>("height") : 0);
+}
+
+std::vector<CommandParamInfo> DespeckleCommand::onDescribeParams() const
+{
+  return {
+    {"use-ui", "Show the despeckle dialog (true or false).", false, "true"},
+    {"width", "Kernel width in pixels. With this, runs without the dialog.", false, "3"},
+    {"height", "Kernel height in pixels. With this, runs without the dialog.", false, "3"},
+  };
 }
 
 bool DespeckleCommand::onEnabled(Context* context)
@@ -119,6 +149,18 @@ void DespeckleCommand::onExecute(Context* context)
                       TARGET_GREEN_CHANNEL |
                       TARGET_BLUE_CHANNEL |
                       TARGET_GRAY_CHANNEL);
+
+  // Apply directly (no dialog) when use-ui is false, a size is given,
+  // or we run headless.
+  if (!m_useUI || (m_width >= 1 || m_height >= 1) || !App::instance()->isGui()) {
+    int width = (m_width >= 1 ? m_width : filter.getWidth());
+    int height = (m_height >= 1 ? m_height : filter.getHeight());
+    filter.setSize(width, height);
+
+    filterMgr.applyToTarget();
+    update_screen_for_document(filterMgr.document());
+    return;
+  }
 
   DespeckleWindow window(filter, filterMgr);
   if (window.doModal()) {

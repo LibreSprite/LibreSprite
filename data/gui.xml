@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Aseprite    | Copyright (C) 2001-2016  David Capello -->
-<!-- LibreSprite | Copyright (C) 2017-2025  LibreSprite contributors -->
-<gui version="1.2-dev">
+<!-- Aseprite    | Copyright (C) 2001-2016 David Capello -->
+<!-- LibreSprite | Copyright (C) 2017-2026 LibreSprite contributors -->
+<gui version="1.3-dev">
   <!-- Keyboard shortcuts -->
   <keyboard version="1">
 
@@ -108,6 +108,7 @@
       <key command="ShowGrid" shortcut="Shift+G" />
       <key command="ShowPixelGrid" shortcut="Alt+Shift+G" />
       <key command="SnapToGrid" shortcut="Shift+S" />
+      <key command="TiledMode" shortcut="Shift+T"><param name="axis" value="both" /></key>
       <key command="SetLoopSection" shortcut="F2" />
       <key command="ShowOnionSkin" shortcut="F3" />
       <key command="Timeline" shortcut="Tab" label="TIME">
@@ -766,6 +767,14 @@
           </item>
         </menu>
         <item command="SymmetryMode" text="S&amp;ymmetry Options" />
+        <menu text="Symmetry &amp;Axes">
+          <item command="ResetSymmetry" text="Reset Symmetry to &amp;Center">
+            <param name="target" value="center" />
+          </item>
+          <item command="ResetSymmetry" text="Reset Symmetry to &amp;View Center">
+            <param name="target" value="view" />
+          </item>
+        </menu>
         <separator />
         <item command="SetLoopSection" text="Set &amp;Loop Section" />
         <item command="ShowOnionSkin" text="Show &amp;Onion Skin" />

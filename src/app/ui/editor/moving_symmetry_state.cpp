@@ -1,5 +1,5 @@
-// Aseprite    | Copyright (C) 2015  David Capello
-// LibreSprite | Copyright (C) 2021  LibreSprite contributors
+// Aseprite    | Copyright (C) 2015       David Capello
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -21,10 +21,13 @@ using namespace ui;
 
 MovingSymmetryState::MovingSymmetryState(Editor* editor, MouseMessage* msg,
                                          Axis axis,
-                                         Option<int>& axisPos)
+                                         Option<int>& xAxis,
+                                         Option<int>& yAxis)
   : m_symmetryAxis(axis)
-  , m_symmetryAxisPos(axisPos)
-  , m_symmetryAxisStart(axisPos())
+  , m_xAxis(xAxis)
+  , m_yAxis(yAxis)
+  , m_xAxisStart(xAxis())
+  , m_yAxisStart(yAxis())
 {
   m_mouseStart = editor->screenToEditor(msg->position());
   editor->captureMouse();
@@ -45,17 +48,21 @@ bool MovingSymmetryState::onMouseMove(Editor* editor, MouseMessage* msg)
 {
   gfx::Point newCursorPos = editor->screenToEditor(msg->position());
   gfx::Point delta = newCursorPos - m_mouseStart;
-  int pos = 0;
 
-  if (m_symmetryAxis == Axis::HORIZONTAL) {
-    pos = m_symmetryAxisStart + delta.x;
-    pos = MID(1, pos, editor->sprite()->width()-1);
+  switch (m_symmetryAxis) {
+    case Axis::HORIZONTAL:
+      m_xAxis(MID(1, m_xAxisStart + delta.x, editor->sprite()->width()-1));
+      break;
+    case Axis::VERTICAL:
+      m_yAxis(MID(1, m_yAxisStart + delta.y, editor->sprite()->height()-1));
+      break;
+    default:
+      // Diagonal and rotational axes share a single draggable origin point,
+      // so both coordinates move freely with the mouse.
+      m_xAxis(MID(1, m_xAxisStart + delta.x, editor->sprite()->width()-1));
+      m_yAxis(MID(1, m_yAxisStart + delta.y, editor->sprite()->height()-1));
+      break;
   }
-  else {
-    pos = m_symmetryAxisStart + delta.y;
-    pos = MID(1, pos, editor->sprite()->height()-1);
-  }
-  m_symmetryAxisPos(pos);
 
   // Redraw the editor.
   editor->invalidate();
@@ -66,14 +73,22 @@ bool MovingSymmetryState::onMouseMove(Editor* editor, MouseMessage* msg)
 
 bool MovingSymmetryState::onUpdateStatusBar(Editor* editor)
 {
-  if (m_symmetryAxis == Axis::HORIZONTAL)
-    StatusBar::instance()->setStatusText
-      (0, "Left %3d Right %3d", m_symmetryAxisPos(),
-       editor->sprite()->width() - m_symmetryAxisPos());
-  else
-    StatusBar::instance()->setStatusText
-      (0, "Top %3d Bottom %3d", m_symmetryAxisPos(),
-       editor->sprite()->height() - m_symmetryAxisPos());
+  switch (m_symmetryAxis) {
+    case Axis::HORIZONTAL:
+      StatusBar::instance()->setStatusText
+        (0, "Left %3d Right %3d", m_xAxis(),
+         editor->sprite()->width() - m_xAxis());
+      break;
+    case Axis::VERTICAL:
+      StatusBar::instance()->setStatusText
+        (0, "Top %3d Bottom %3d", m_yAxis(),
+         editor->sprite()->height() - m_yAxis());
+      break;
+    default:
+      StatusBar::instance()->setStatusText
+        (0, "Pos %3d %3d", m_xAxis(), m_yAxis());
+      break;
+  }
 
   return true;
 }

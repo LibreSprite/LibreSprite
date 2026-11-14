@@ -135,11 +135,7 @@ Image* convert_pixel_format(
             ASSERT(dst_it != dst_end);
             c = *src_it;
 
-            g = 255 * Hsv(Rgb(rgba_getr(c),
-                              rgba_getg(c),
-                              rgba_getb(c))).valueInt() / 100;
-
-            *dst_it = graya(g, rgba_geta(c));
+            *dst_it = graya(rgba_luma(c), rgba_geta(c));
           }
           ASSERT(dst_it == dst_end);
           break;
@@ -274,13 +270,8 @@ Image* convert_pixel_format(
               *dst_it = graya(0, 0);
             else {
               c = palette->getEntry(c);
-              r = rgba_getr(c);
-              g = rgba_getg(c);
-              b = rgba_getb(c);
-              a = rgba_geta(c);
 
-              g = 255 * Hsv(Rgb(r, g, b)).valueInt() / 100;
-              *dst_it = graya(g, a);
+              *dst_it = graya(rgba_luma(c), rgba_geta(c));
             }
           }
           ASSERT(dst_it == dst_end);

@@ -1,0 +1,117 @@
+name: Web (wasm)
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # The web build reuses the native build's generated sources (build/src/)
+    # and data (build/bin/data), so the native build runs first.
+    if: ${{ !contains(github.event.head_commit.message, 'NO_SW_CHANGE') && !contains(github.event.pull_request.body, 'NO_SW_CHANGE') }}
+    runs-on: ubuntu-latest
+    env:
+      EMSDK_VERSION: 6.0.10
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Check for git tag
+      id: check_tag
+      run: |
+        TAG=$(git describe --exact-match --tags 2>/dev/null) || true
+        if [ -n "$TAG" ]; then
+          echo "has_tag=true" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        else
+          echo "has_tag=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Get short commit hash
+      id: commit
+      run: |
+        SHORT_HASH=$(git rev-parse --short HEAD)
+        echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+    - name: Prepare release version
+      run: |
+        sed -i "s/\"local build\"/\"${{ steps.commit.outputs.short_hash }}\"/g" src/config.h
+    # install dependencies (same as cmakeLinux.yml)
+    - name: update
+      run: sudo apt-get update
+    - name: boost
+      run: |
+        sudo apt-get install g++ libfreetype6-dev libgif-dev libgtest-dev libjpeg-dev libpixman-1-dev libpng-dev libsdl2-dev libsdl2-image-dev libtinyxml2-dev libwebp-dev libx11-dev libxcursor-dev ninja-build libnode-dev zlib1g-dev libarchive-dev libfuse2
+        # noble's apt cmake is 3.28 (the project needs >= 4.1) and system pip is PEP 668
+        curl -fsSL -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-linux-x86_64.tar.gz
+        sudo tar -xzf /tmp/cmake.tar.gz -C /usr/local --strip-components=1
+    - name: git
+      run: git submodule update --init --recursive
+    - name: mkdir
+      run: mkdir build
+    - name: cmake
+      run: |
+        cd build
+        if [ "${{ steps.check_tag.outputs.has_tag }}" = "true" ]; then
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_TAG=ON \
+            -DRELEASE_VERSION="${{ steps.check_tag.outputs.version }}" ..
+        else
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+        fi
+        ninja libresprite
+    - name: Install emsdk
+      run: |
+        git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+        cd emsdk
+        ./emsdk install $EMSDK_VERSION
+        ./emsdk activate $EMSDK_VERSION
+    - name: Cache emscripten ports
+      uses: actions/cache@v6
+      with:
+        # emcc caches in the emsdk install dir here (EM_CACHE is not set)
+        path: emsdk/upstream/emscripten/cache
+        key: emscripten-${{ env.EMSDK_VERSION }}
+    - name: Pre-build the freetype port
+      run: |
+        # A fresh emsdk cache hits a port-cache assert on the first link
+        # (emscripten-core/emscripten#20204); a no-op when the port is cached.
+        # No -flto: LTO ports cache under lto/, but the sdl2_ttf port
+        # sub-build (nested in the final link) requests the non-LTO
+        # libfreetype.a.
+        source emsdk/emsdk_env.sh
+        echo 'int main(){}' > /tmp/dummy.c
+        emcc -O2 -pthread -sUSE_FREETYPE /tmp/dummy.c -o /tmp/dummy.js
+    - name: cmake (web)
+      run: |
+        source emsdk/emsdk_env.sh
+        emcmake cmake -S emscripten -B emscripten/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        ninja -C emscripten/build
+    - name: Stage web build
+      run: |
+        mkdir web
+        cp emscripten/build/libresprite.html emscripten/build/libresprite.js emscripten/build/libresprite.wasm emscripten/build/libresprite.data web/
+        cp emscripten/index.html web/
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.check_tag.outputs.has_tag == 'true' && format('libresprite-{0}-web', steps.check_tag.outputs.tag) || 'libresprite-web' }}
+        path: |
+          web/*
+        if-no-files-found: error
+    - name: Package release zip
+      if: ${{ steps.check_tag.outputs.has_tag == 'true' }}
+      run: |
+        cd web
+        zip -r ../libresprite-${{ steps.check_tag.outputs.tag }}-web.zip .
+    - name: Attach the zip to the release
+      if: ${{ steps.check_tag.outputs.has_tag == 'true' }}
+      uses: softprops/action-gh-release@v3
+      with:
+        files: libresprite-${{ steps.check_tag.outputs.tag }}-web.zip
+        fail_on_unmatched_files: true

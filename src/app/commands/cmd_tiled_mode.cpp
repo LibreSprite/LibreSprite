@@ -1,5 +1,5 @@
-// Aseprite
-// Copyright (C) 2001-2015  David Capello
+// Aseprite    | Copyright (C) 2001-2015 David Capello
+// LibreSprite | Copyright (C) 2026 LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -25,6 +25,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   bool onChecked(Context* context) override;
   void onExecute(Context* context) override;
@@ -50,6 +51,13 @@ void TiledModeCommand::onLoadParams(const Params& params)
   else if (mode == "y") m_mode = filters::TiledMode::Y_AXIS;
 }
 
+std::vector<CommandParamInfo> TiledModeCommand::onDescribeParams() const
+{
+  return {
+    {"axis", "both, x or y axis to tile; empty turns tiling off.", false, ""},
+  };
+}
+
 bool TiledModeCommand::onEnabled(Context* ctx)
 {
   return ctx->checkFlags(ContextFlags::ActiveDocumentIsWritable |
@@ -65,7 +73,8 @@ bool TiledModeCommand::onChecked(Context* ctx)
 void TiledModeCommand::onExecute(Context* ctx)
 {
   const Document* doc = ctx->activeDocument();
-  Preferences::instance().document(doc).tiled.mode(m_mode);
+  auto& tiled = Preferences::instance().document(doc).tiled;
+  tiled.mode(tiled.mode() == m_mode ? filters::TiledMode::NONE : m_mode);
 }
 
 Command* CommandFactory::createTiledModeCommand()

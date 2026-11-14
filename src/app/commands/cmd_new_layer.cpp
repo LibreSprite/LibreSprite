@@ -38,6 +38,7 @@ public:
 
 protected:
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   bool onEnabled(Context* context) override;
   void onExecute(Context* context) override;
 
@@ -65,6 +66,15 @@ void NewLayerCommand::onLoadParams(const Params& params)
   m_ask = (params.get("ask") == "true");
   m_top = (params.get("top") == "true");
   m_name = params.get("name");
+}
+
+std::vector<CommandParamInfo> NewLayerCommand::onDescribeParams() const
+{
+  return {
+    {"ask", "Ask the user for the layer name (true or false).", false, "false"},
+    {"top", "Create the layer on top; false inserts it above the active layer.", false, "false"},
+    {"name", "Layer name. Empty generates a \"Layer N\" name.", false, ""},
+  };
 }
 
 bool NewLayerCommand::onEnabled(Context* context)

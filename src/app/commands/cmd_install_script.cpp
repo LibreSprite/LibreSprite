@@ -39,6 +39,7 @@ protected:
   }
 
   void onLoadParams(const Params& params) override;
+  std::vector<CommandParamInfo> onDescribeParams() const override;
   void onExecute(Context* context) override;
 
 private:
@@ -55,6 +56,13 @@ InstallScriptCommand::InstallScriptCommand()
 void InstallScriptCommand::onLoadParams(const Params& params)
 {
   m_filename = params.get("filename");
+}
+
+std::vector<CommandParamInfo> InstallScriptCommand::onDescribeParams() const
+{
+  return {
+    {"filename", "Script file to copy to the scripts folder.", true, ""},
+  };
 }
 
 void InstallScriptCommand::onExecute(Context* ctx)

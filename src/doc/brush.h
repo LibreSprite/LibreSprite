@@ -1,5 +1,6 @@
-// Aseprite Document Library
-// Copyright (c) 2001-2016 David Capello
+// Document Library
+// Aseprite    | Copyright (C) 2001-2016 David Capello
+// LibreSprite | Copyright (C) 2026      LibreSprite contributors 
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -20,7 +21,7 @@ namespace doc {
   class Brush {
   public:
     static const int kMinBrushSize = 1;
-    static const int kMaxBrushSize = 64;
+    static const int kMaxBrushSize = 256;
 
     enum class ImageColor { MainColor, BackgroundColor };
 

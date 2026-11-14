@@ -1,5 +1,5 @@
 // Aseprite    | Copyright (C) 2001-2015  David Capello
-// LibreSprite | Copyright (C) 2021       LibreSprite contributors
+// LibreSprite | Copyright (C) 2021-2026  LibreSprite contributors
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include "app/app.h"
 #include "app/console.h"
 #include "app/context.h"
 #include "app/document.h"
@@ -75,7 +76,8 @@ class GifFormat : public FileFormat {
       FILE_SUPPORT_INDEXED |
       FILE_SUPPORT_FRAMES |
       FILE_SUPPORT_PALETTES |
-      FILE_SUPPORT_GET_FORMAT_OPTIONS;
+      FILE_SUPPORT_GET_FORMAT_OPTIONS |
+      FILE_SUPPORT_PALETTE_WITH_ONEALPHA;
   }
 
   bool onLoad(FileOp* fop) override;
@@ -200,6 +202,17 @@ public:
   }
 
   bool decode() {
+    // The Logical Screen Descriptor's Width/Height are raw 16-bit fields
+    // with no validation upstream - reject before any Image::create/Sprite
+    // allocation (createSprite() below) rather than after a multi-gigabyte
+    // allocation attempt from just the header.
+    if (m_spriteBounds.w <= 0 || m_spriteBounds.h <= 0 ||
+        m_spriteBounds.w > kMaxFileImageDimension ||
+        m_spriteBounds.h > kMaxFileImageDimension) {
+      m_fop->setError("Invalid GIF file: bad screen width/height\n");
+      return false;
+    }
+
     GifRecordType recType;
 
     // Read record by record
@@ -598,6 +611,14 @@ private:
         if (i == static_cast<color_t>(m_localTransparentIndex))
           continue;
 
+        // The raw pixel-index byte comes straight from the LZW-decoded
+        // frame data and isn't bound to this colormap's actual
+        // ColorCount - unlike the sibling compositeIndexedImageToIndexed(),
+        // which safely goes through m_remap[]. Skip out-of-range indices
+        // instead of reading past colormap->Colors.
+        if (!colormap || static_cast<int>(i) >= colormap->ColorCount)
+          continue;
+
         i = rgba(
           colormap->Colors[i].Red,
           colormap->Colors[i].Green,
@@ -747,7 +768,7 @@ private:
   int m_filesize;
   std::unique_ptr<Sprite> m_sprite;
   gfx::Rect m_spriteBounds;
-  LayerImage* m_layer;
+  LayerImage* m_layer = nullptr;
   int m_frameNum;
   bool m_opaque;
   DisposalMethod m_disposalMethod;
@@ -845,7 +866,7 @@ public:
       m_quantizeColormaps = true;
     }
 
-    m_transparentIndex = (m_hasBackground ? -1: m_bgIndex);
+    m_transparentIndex = m_bgIndex;
 
     if (m_hasBackground)
       m_clearColor = m_sprite->palette(0)->getEntry(m_bgIndex);
@@ -1085,7 +1106,7 @@ private:
           ASSERT(it != bits.end());
 
           color_t color = *it;
-          int i;
+          int i = m_transparentIndex;
 
           if (rgba_geta(color) >= 128) {
             i = framePalette->findExactMatch(
@@ -1099,13 +1120,6 @@ private:
                                    rgba_getg(color),
                                    rgba_getb(color),
                                    255);
-          }
-          else {
-            ASSERT(m_transparentIndex >= 0);
-            if (m_transparentIndex >= 0)
-              i = m_transparentIndex;
-            else
-              i = m_bgIndex;
           }
 
           ASSERT(i >= 0);
@@ -1257,9 +1271,9 @@ private:
   int m_loop;
   ImageBufferPtr m_frameImageBuf;
   ImageRef m_images[3];
-  Image* m_previousImage;
-  Image* m_currentImage;
-  Image* m_nextImage;
+  Image* m_previousImage = nullptr;
+  Image* m_currentImage = nullptr;
+  Image* m_nextImage = nullptr;
 };
 
 bool GifFormat::onSave(FileOp* fop)
@@ -1289,9 +1303,9 @@ base::SharedPtr<FormatOptions> GifFormat::onGetFormatOptions(FileOp* fop)
   if (!gif_options)
     gif_options.reset(new GifOptions);
 
-  // Non-interactive mode
+  // Non-interactive mode (headless runs have a UI but no human)
   if (!fop->context() ||
-      !fop->context()->isUIAvailable())
+      !App::instance()->isGui())
     return gif_options;
 
   try {
