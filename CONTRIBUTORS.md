@@ -1,5 +1,97 @@
 # Contributors to LibreSprite
-* Add your name here!
+
+* Adnan Maolood (nanoslayer)
+* Alexander Wilms
+* Bisher Almasri
+* Blaadick
+* casswedson
+* charredlatte
+* CJ (@orbitalmartian8)
+* congusbongus
+* corey-andrews
+* cyberdork33
+* D0ct0rDave
+* Daniel Praźmo
+* Dimensional Space
+* Douglas Rhine (@dgcampea)
+* Drew Vogel
+* DublikuntMux
+* emidevops
+* Felipe Manga
+* Glacie (@GlacieAwn)
+* Jacob Powell
+* Jaffacakelover
+* jjhaggar
+* jn64
+* KELO (@KELO-R)
+* killerdevildog
+* kkeian
+* KrowK1ng
+* Lonami
+* Lucas Pires Camargo
+* Mauricio Ordoñez
+* MintStudios
+* nogira
+* opsu (@opsuu)
+* Perry Hugh
+* Rémi Verschelde
+* ribbon-otter
+* Ricardo Subtil
+* rudeowl
+* Samuel (@Samueru-sama)
+* SaQurata
+* score (@seejay.11)
+* Shoozza
+* SoundDrill31
+* TheHackerCoding
+* throwaway1037
+* veganaiZe
+* Victor Aguirre
+* Zughy
+* 大眼仔旭 (@wcxu21)
+
+* Add your name here! (alphabetical order)
+
+## Aseprite contributors (pre-fork)
+
+* Aravin
+* Aurélien Gâteau
+* Azamat H. Hackimov
+* Benoit Favre
+* blackmiaool
+* Carlo "zED" Caputo
+* Crispin Hitchings-Anstice
+* David Capello
+* Etienne Faisant
+* Fabio Arnold
+* Gabriel Rauter
+* Gauthier Billot
+* Getty
+* hasufell
+* Hunter99
+* Ilya Barygin
+* Jaume Delclòs Coll
+* Jay Pinkman
+* JJHaggar
+* Joel Madigan
+* Jonathan (@greenbigfrog)
+* Jonathan Whiting
+* Josef Kuchař
+* Juan José Conti
+* KAMiKAZOW
+* Manuel Quiñones
+* Matthias Mailänder
+* Mikołaj Siedlarek
+* msisinni
+* Nathaniel Sheppard
+* Rémi Verschelde
+* Romain Giraud
+* ripesunflower
+* Simos Xenitellis
+* suve
+* Tony Narlock
+* Wend1go
+* Ying Ruei Liang (KK)
 
 ## Shout-outs
 LibreSprite includes color palettes created by:
