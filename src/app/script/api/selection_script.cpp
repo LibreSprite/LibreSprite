@@ -16,6 +16,7 @@
 #include "app/color.h"
 #include "app/document.h"
 #include "app/modules/editors.h"
+#include "app/modules/gui.h"
 #include "app/pref/preferences.h"
 #include "app/tools/script_tool_driver.h"
 #include "app/tools/script_tool_loop.h"
@@ -212,9 +213,11 @@ public:
       doc::Mask newMask;
       if (w > 0 && h > 0)
         newMask.replace(gfx::Rect((int)x, (int)y, (int)w, (int)h));
-      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::DoesntModifyDocument);
       tx.execute(new app::cmd::SetMask(doc, &newMask));
       tx.commit();
+      doc->generateMaskBoundaries();
+      update_screen_for_document(doc);
       return {};
     };
 
@@ -222,17 +225,21 @@ public:
       auto* doc = activeDocument();
       doc::Mask newMask;
       newMask.replace(doc->sprite()->bounds());
-      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::DoesntModifyDocument);
       tx.execute(new app::cmd::SetMask(doc, &newMask));
       tx.commit();
+      doc->generateMaskBoundaries();
+      update_screen_for_document(doc);
       return {};
     };
 
     clazz.addMethod("deselect") = [](SelectionSite&) -> JSON::Value {
       auto* doc = activeDocument();
-      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::ModifyDocument);
+      app::Transaction tx(app::UIContext::instance(), "Script Execution", app::DoesntModifyDocument);
       tx.execute(new app::cmd::DeselectMask(doc));
       tx.commit();
+      doc->generateMaskBoundaries();
+      update_screen_for_document(doc);
       return {};
     };
 
@@ -299,6 +306,12 @@ public:
       app::run_tool_events(cfg, app::one_point(gfx::Point((int)x, (int)y)));
       return {};
     };
+  }
+
+  std::string init(const std::string& language, JSON::Value& settings) override {
+    if (language != "js")
+      return "";
+    return "globalThis.selection = new Selection();";
   }
 };
 
