@@ -1,0 +1,21 @@
+<!-- LibreSprite -->
+<gui>
+<window text="SVG Options" id="svg_options">
+  <vbox>
+    <separator text="Scale:" left="true" horizontal="true" />
+    <slider min="1" max="32" id="scale" width="128" />
+
+    <label id="info" text="Sharp at all scales." />
+
+    <separator horizontal="true" />
+
+    <hbox>
+      <boxfiller />
+      <hbox homogeneous="true">
+        <button text="&amp;OK" closewindow="true" id="ok" magnet="true" minwidth="60" />
+        <button text="&amp;Cancel" closewindow="true" />
+      </hbox>
+    </hbox>
+  </vbox>
+</window>
+</gui>
